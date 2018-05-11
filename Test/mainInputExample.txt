@@ -16,9 +16,10 @@
 %%-----------------------------------------------------------------------------%%
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
 %%-----------------------------------------------------------------------------%%
-Time	    0.1	a280                 % Time step \t Total simulation time
-Tramp		6                       % Numerical ramp to be imposed to the waves. It is given as number of periods of the specified wave with the largest period.
-LinStiff	6.1e5,6.1e5,5.4e8       % Linear mooring stiffness in surge, sway, yaw
+TimeStep    0.1	                    % Time step
+TimeTotal  	280						% Total simulation time
+TimeRamp	6                       % Numerical ramp to be imposed to the waves. It is given as number of periods of the specified wave with the largest period.
+LinStiff	6.1e5,6.1e5,5.4e8       % Linear mooring stiffness in surge, sway, yaw. MUDAR PRA SER UMA MATRIZ
 
 
 
