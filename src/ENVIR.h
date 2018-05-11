@@ -31,7 +31,7 @@ private:
     Data to specify the numerical analysis
     */
     double m_timeStep;
-    double m_maxTime;
+    double m_timeTotal;
     double m_timeRamp;
     double m_currentTime;
     char m_timeIntegrationMethod; // 1: 4th order Runge-Kutta
@@ -53,7 +53,13 @@ public:
     /*
     Setters used to set the data read from the input file.
     */
-    void readTimeStepAndMaxTime(const std::string &data);
+    void readTimeStep(const std::string &data);
+    void readTimeTotal(const std::string &data);
+    void readTimeRamp(const std::string &data);
+    void readLinStiff(const std::string &data);
+    void readGrav(const std::string &data);
+    void readWatDens(const std::string &data);
+    void readWatDepth(const std::string &data);
 
 };
 
