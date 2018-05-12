@@ -25,25 +25,32 @@ public:
 
 
 
-/* 
-Additional functions related to input/output 
-*/
+/*****************************************************
+    Additional functions related to input/output 
+*****************************************************/
+
+// Verify whether a string contains a comment, marked by a '%'
 bool thereIsCommentInString(const std::string& str);
 
+// Verify whether a string has content, i.e. if it is not empty, it is not just
+// white spaces or tabs, and it does not start with a comment mark ('%')
 bool hasContent(const std::string &str);
 
+// Remove comments from string, marked by a '%'
 void removeComments(std::string &str);
 
 std::string getKeyword(const std::string &str);
 
+// Get the part of the string after the keyword, excluding the '\t' or white-space
 std::string getData(const std::string &str);
 
+// Tokenize a string using a given delimiter
 std::vector<std::string> stringTokenize(const std::string &str, const std::string &delim = " \t");
 
 
-/* 
-Function templates 
-*/
+/*****************************************************
+	Function templates 
+*****************************************************/
 
 // string2num: used to convert from string to a numerical type (double, float, int...)
 // Returns True if the conversion is succesful and False if it is not
