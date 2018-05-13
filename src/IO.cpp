@@ -5,6 +5,11 @@
 #include <cstdlib> // For exit()
 #include <string>
 
+
+/*****************************************************
+    Implementation of class functions
+*****************************************************/
+
 // Function responsible for reading the input file and assigning what is read to the FOWT and ENVIR classes
 void IO::readInputFile(const std::string &inFlNm, FOWT &fowt, ENVIR &envir)
 {
@@ -64,18 +69,19 @@ void IO::print2outFile(const std::string &outFlNm)
 
 
 
-/*
+/*****************************************************
     Additional functions related to input/output 
-*/
+*****************************************************/
 
-// Verify whether there is a comment in a string
+// Verify whether a string contains a comment, marked by a '%'
 bool thereIsCommentInString(const std::string& str)
 {
     return (str.find("%") != std::string::npos);
 }
 
 
-// Verify whether a string has content (in the context of data from the input file)
+// Verify whether a string has content, i.e. if it is not empty, it is not just
+// white spaces or tabs, and it does not start with a comment mark ('%')
 bool hasContent(const std::string &str)
 {
     // Empty strings have no content
@@ -94,21 +100,18 @@ void removeComments(std::string &str)
 }
 
 
-
 std::string getKeyword(const std::string &str)
 {
+    // Get the first part of the string, the one before the first '\t' or white-space
     return str.substr(0, str.find_first_of(" \t"));
 }
 
-
-
-// Pensar no caso em que a linha tem só keyword quando deveria ter dado tmbm. Que erro retornar? Como checar?
+// Get the part of the string after the keyword, excluding the '\t' or white-space
 std::string getData(const std::string &str)
 {
     std::string aux_str = str.substr(str.find_first_of(" \t", 0));
     return aux_str.substr(aux_str.find_first_not_of(" \t"));
 }
-
 
 // Tokenize a string using a given delimiter
 std::vector<std::string> stringTokenize(const std::string &str, const std::string &delim)
