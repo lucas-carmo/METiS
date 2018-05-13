@@ -10,10 +10,8 @@
 - Armadillo (details in the readme file provided with Armadillo): 
     1. Download at http://arma.sourceforge.net
     2. Extract files
-    3. In a terminal window, change into the directory that was created by unpacking Armadillo, and type `cmake .` (the full stop separated from "cmake" by a space is important);
-
+    3. In a terminal window, change into the directory that was created by unpacking Armadillo, and type `cmake .` (the full stop separated from "cmake" by a space is important)
     4. To generate the run-time armadillo library, type `make`
-
     5. Type `sudo make install`
 
 
@@ -38,5 +36,5 @@ Or
     cd METiS/bash_scripts
     .\build_and_run -ca         # Compile all the files in /src/, link and run
 
-This process will be conducted with CMake in the future.
+This process will be conducted with CMake in the future (I don't know when).
 
