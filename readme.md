@@ -2,9 +2,10 @@
 
 ### Linux
 - Ensure a C++ compiler is installed. Otherwise, a suggestion is to run the following command:
-        sudo apt-get install g++
+    sudo apt-get install g++
 
-- CMake: sudo apt-get install cmake
+- CMake: 
+    sudo apt-get install cmake
 
 - OpenBLAS: sudo apt-get install libopenblass-dev
 
