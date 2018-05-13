@@ -5,7 +5,7 @@
 
 - CMake: `sudo apt-get install cmake`
 
-- OpenBLAS: `sudo apt-get install libopenblass-dev`
+- OpenBLAS: `sudo apt-get install libopenblass-dev`    *(other options are available, but I suggest this one)*
 
 - Armadillo (details in the readme file provided with Armadillo): 
     1. Download at http://arma.sourceforge.net
@@ -30,12 +30,12 @@ If only one of the source files is modified, it is not necessary to compile the 
 
 To make this process easier, a bash script named **build_and_run.sh** is included in the folder **bash_scripts**. It can be run as
 
-    cd bash_scripts
+    cd METiS/bash_scripts
     .\build_and_run             # Just link and run METiS
 
 Or
 
-    cd bash_scripts
+    cd METiS/bash_scripts
     .\build_and_run -ca         # Compile all the files in /src/, link and run
 
 This process will be conducted with CMake in the future.
