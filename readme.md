@@ -24,8 +24,6 @@ After installing all the previous dependencies/third party tools listed above, M
     g++ -o METiS -O2 *.o -larmadillo        # Link the resulting object files and Armadillo
     ./METiS                                 # Run METiS
 
-If only one of the source files is modified, it is not necessary to compile the whole project. In this case, compiling only the file that was modified is enough, i.e. `g++ -c METiS/src/exampleFile.cpp`. Linking and running are still done with the same commands.
-
 To make this process easier, a bash script named **build_and_run.sh** is included in the folder **bash_scripts**. It can be run as
 
     cd METiS/bash_scripts

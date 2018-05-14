@@ -19,9 +19,8 @@ int main()
 {
 	FOWT fowt;
 	ENVIR envir;
-
-    //std::string inFlNm = "Test/mainInputExample.txt";
-    std::string inFlNm = "../Test/mainInputExample.txt";
+    
+    std::string inFlNm = "Test/mainInputExample.txt";
 
     IO::readInputFile(inFlNm, fowt, envir);
 
