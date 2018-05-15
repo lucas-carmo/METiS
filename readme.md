@@ -1,11 +1,11 @@
 ## Installing dependencies/third party tools:
 
 ### Linux
-- Ensure a C++ compiler is installed. Otherwise, a suggestion is to run the following command: `sudo apt-get install g++`
+- Ensure a C++ compiler is installed. Otherwise, a suggestion is to install g++: `sudo apt-get install g++`
 
-- CMake: `sudo apt-get install cmake`
+- Install CMake: `sudo apt-get install cmake`
 
-- OpenBLAS: `sudo apt-get install libopenblass-dev`    *(other options are available, but I suggest this one)*
+- OpenBLAS: `sudo apt-get install libopenblass-dev`    *(other options are available, like MKL, but I suggest this one)*
 
 - Armadillo (details in the readme file provided with Armadillo): 
     1. Download at http://arma.sourceforge.net

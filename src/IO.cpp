@@ -107,7 +107,7 @@ std::string getKeyword(const std::string &str)
 }
 
 // Get the part of the string after the keyword, excluding the '\t' or white-space
-std::string getData(const std::string &str)
+std::string getContent(const std::string &str)
 {
     std::string aux_str = str.substr(str.find_first_of(" \t", 0));
     return aux_str.substr(aux_str.find_first_not_of(" \t"));
