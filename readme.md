@@ -5,7 +5,7 @@
 
 - CMake: `sudo apt-get install cmake`
 
-- OpenBLAS: `sudo apt-get install libopenblass-dev`    *(other options are available, but I suggest this one)*
+- OpenBLAS: `sudo apt-get install libopenblass-dev`    *(other options are available, like MKL, but I suggest this one)*
 
 - Armadillo (details in the readme file provided with Armadillo): 
     1. Download at http://arma.sourceforge.net

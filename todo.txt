@@ -1,9 +1,4 @@
-Notebook principal:
-- Adicionar as seguintes extensions no visual studio code:
-    Markdown all in one
-    SpellChecker
 
-- Abrir a pasta do METiS no VScode, ao invés da pasta /src/
 
 PC TPN
 - Reorganizar o projeto no Visual Studio e escrever a parte do readme sobre configuração no windows

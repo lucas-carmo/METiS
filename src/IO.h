@@ -42,7 +42,7 @@ void removeComments(std::string &str);
 std::string getKeyword(const std::string &str);
 
 // Get the part of the string after the keyword, excluding the '\t' or white-space
-std::string getData(const std::string &str);
+std::string getContent(const std::string &str);
 
 // Tokenize a string using a given delimiter
 std::vector<std::string> stringTokenize(const std::string &str, const std::string &delim = " \t");
@@ -68,5 +68,21 @@ inline bool string2num(const std::string& sString, T &tX)
 template <typename T>
 inline bool readDataFromString(const std::string& inString, T &tX)
 {
-}
+	std::vector<std::string> input = stringTokenize(getContent( inString ), " \t");
 
+	// 1) Verify if input contains exactly 1 element (corresponding to timeStep)
+    if ( input.size() != 1 ){
+        std::cout << "Deu ruim \n";
+		return false;
+	}
+
+    // 2) Convert input from string to its corresponding numeric format (double, float, ...)
+	if ( !string2num(input.at(0), tX) )
+	{
+        // Throw an exception if the conversion fails
+		std::cout << "Deu ruim \n";
+		return false;
+	}		
+
+	return true;
+}
