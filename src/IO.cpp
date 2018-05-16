@@ -9,9 +9,13 @@
 /*****************************************************
     Implementation of class functions
 *****************************************************/
+static void IO::setInputFilePath(const std::string &inFlNm)
+{
+    m_inputFilePath = inFlNm;
+}
 
 // Function responsible for reading the input file and assigning what is read to the FOWT and ENVIR classes
-void IO::readInputFile(const std::string &inFlNm, FOWT &fowt, ENVIR &envir)
+void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 {
     std::ifstream inFl(inFlNm);
     if (!inFl)

@@ -22,7 +22,8 @@ int main()
     
     std::string inFlNm = "Test/mainInputExample.txt";
 
-    IO::readInputFile(inFlNm, fowt, envir);
+    IO::setInputFilePath(inFlNm);
+    IO::readInputFile(fowt, envir);
 
 	//int ii;
 	//std::cin >> ii;

@@ -23,6 +23,7 @@ After installing all the previous dependencies/third party tools listed above, M
     g++ -o METiS -O2 *.o -larmadillo        # Link the resulting object files and Armadillo
     ./METiS                                 # Run METiS
 
+TODO: Test later whether compilling with `-lopenblas` changes anything
 To make this process easier, a bash script named **build_and_run.sh** is included in the folder **bash_scripts**. It can be run as
 
     cd METiS/bash_scripts
