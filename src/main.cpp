@@ -13,6 +13,7 @@
 #include "IO.h" // IO is a pure static class that manages input/output
 #include "ENVIR.h"
 
+#include <stdlib.h>
 
 
 int main()
@@ -25,8 +26,8 @@ int main()
     IO::setInputFilePath(inFlNm);
     IO::readInputFile(fowt, envir);
 
-	//int ii;
-	//std::cin >> ii;
+	int ii;
+	std::cin >> ii;
 
 	return 0;
 }

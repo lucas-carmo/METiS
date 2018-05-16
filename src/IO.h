@@ -10,7 +10,7 @@
 class IO
 {
 private:
-	static std::string m_inputFilePath;
+	static std::string m_inFilePath;
 
 	static std::string m_header;
 	static bool m_shouldWriteHeader;
@@ -19,12 +19,14 @@ private:
 	static bool m_shouldWriteOutputTimeStep;
 
 public:
-	static void setInputFilePath(const std::string &inFlNm);
+	static void setInputFilePath(const std::string &inFlPath);
+
 	static void readInputFile(FOWT &fowt, ENVIR &envir);
 	//static bool checkData(); // Depende do tipo de analise a ser feita
 	
 	static void print2outFile(const std::string &outFlNm);
 };
+
 
 
 

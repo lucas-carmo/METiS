@@ -6,22 +6,31 @@
 #include <string>
 
 
+
+/*****************************************************
+	Defining and initializing static member variables
+*****************************************************/
+std::string IO::m_inFilePath = "";
+
+
+
 /*****************************************************
     Implementation of class functions
 *****************************************************/
-static void IO::setInputFilePath(const std::string &inFlNm)
+void IO::setInputFilePath(const std::string &inFlPath)
 {
-    m_inputFilePath = inFlNm;
+	m_inFilePath = inFlPath;
 }
 
 // Function responsible for reading the input file and assigning what is read to the FOWT and ENVIR classes
 void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 {
-    std::ifstream inFl(inFlNm);
+    std::ifstream inFl(m_inFilePath);
     if (!inFl)
     {
-        std::cerr << "Unable to open " << inFlNm << " for reading";
-        exit(1);
+        std::cerr << "Unable to open " << m_inFilePath << " for reading";
+		return;
+        //exit(1);
     }
 
 
