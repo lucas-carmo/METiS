@@ -11,6 +11,7 @@ void ENVIR::readTimeStep(const std::string &data)
 }
 
 
+
 void ENVIR::readTimeTotal(const std::string &data)
 {
     readDataFromString(data, m_timeTotal);
@@ -24,3 +25,7 @@ void ENVIR::readTimeRamp(const std::string &data)
     readDataFromString(data, m_timeRamp);
     std::cout << "Time Ramp: " << m_timeRamp << "\n";
 }
+
+
+
+

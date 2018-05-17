@@ -74,7 +74,8 @@ inline bool readDataFromString(const std::string& inString, T &tX)
 	std::vector<std::string> input = stringTokenize(getContent( inString ), " \t");
 
 	// 1) Verify if input contains exactly 1 element (corresponding to timeStep)
-    if ( input.size() != 1 ){
+    if ( input.size() != 1 )
+	{
         std::cout << "Deu ruim \n";
 		return false;
 	}
