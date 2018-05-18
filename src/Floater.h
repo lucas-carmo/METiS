@@ -6,7 +6,7 @@
 #include "MorisonElement.h"
 
 
-using namespace arma; // For armadillo stuff
+using namespace arma; // For armadillo classes
 
 class Floater
 {
@@ -17,7 +17,6 @@ private:
 	std::vector< std::reference_wrapper<MorisonElement> > m_morisonElements;	
 
 public:
-	void readLinStiff(const std::string &data);
 
 	//mat rotatMat(const vec &FOWTpos);
 	//vec hydrodynamicForce(const ENVIR &envir, const vec &FOWTpos, const vec &FOWTvel, const vec &FOWTacc);

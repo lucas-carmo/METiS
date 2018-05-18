@@ -3,6 +3,9 @@
 #include <armadillo>
 #include "Floater.h"
 
+
+using namespace arma; // For armadillo classes
+
 class FOWT
 {
 private:
@@ -17,10 +20,8 @@ private:
 	vec m_linStiff;
 
 public:
-	FOWT()
-	{
-		m_linStiff(3);
-	}
+	FOWT() : m_linStiff(3)
+	{}
 
 	/*
 	Setters used to set the data read from the input file.

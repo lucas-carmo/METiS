@@ -54,21 +54,27 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
         // Read data base on keywords
         if ( getKeyword(strInput) == "TimeStep" )
         {
-            envir.readTimeStep( strInput );
+            envir.readTimeStep( getData(strInput) );
             continue;
         }
 
         if ( getKeyword(strInput) == "TimeTotal" )
         {
-            envir.readTimeTotal( strInput );
+            envir.readTimeTotal( getData(strInput) );
             continue;
         }
 
         if (getKeyword(strInput) == "TimeRamp")
         {
-            envir.readTimeRamp( strInput );
+            envir.readTimeRamp( getData(strInput) );
             continue;
         }
+
+        if (getKeyword(strInput) == "LinStiff")
+        {
+            fowt.readLinStiff( getData(strInput) );
+            continue;
+        }        
     }
 }
 
@@ -120,22 +126,38 @@ std::string getKeyword(const std::string &str)
 }
 
 // Get the part of the string after the keyword, excluding the '\t' or white-space
-std::string getContent(const std::string &str)
+std::string getData(const std::string &str)
 {
     std::string aux_str = str.substr(str.find_first_of(" \t", 0));
     return aux_str.substr(aux_str.find_first_not_of(" \t"));
 }
 
-// Tokenize a string using a given delimiter
+// Tokenize a string using a given delimiter.
+// Return a std::vector with the resulting strings at the different elements
 std::vector<std::string> stringTokenize(const std::string &str, const std::string &delim)
 {
     std::vector<std::string> tokens;
     std::string aux = str;
 
-    while( hasContent(aux) ) {
-        aux = aux.substr(aux.find_first_not_of(delim)); // Get the part of aux after the first delimiter
+    while( hasContent(aux) ) 
+    {
+        if ( aux.find_first_not_of(delim) == std::string::npos ) // Check if there is something besides delimiters in the line
+        {
+            std::cout << "The string provided has only delimiters.";
+            break;
+        }
+
+        aux = aux.substr(aux.find_first_not_of(delim)); // Get the part of aux starting at the first character that is not a delimiter
         tokens.push_back( aux.substr(0, aux.find_first_of(delim)) ); // Take content before next delimiter and add to tokens
-        aux = aux.substr(aux.find_first_of(delim, 0)); // Keep in aux everything after the second delimiter, including the delimiter
+
+        if ( aux.find_first_of(delim, 0) != std::string::npos ) // If there is another delimiter in the string...
+        {
+            aux = aux.substr(aux.find_first_of(delim, 0)); // ... keep in aux everything after the second delimiter, including the delimiter
+        }
+        else // Otherwise, we have already included the last element in tokens, so we can end this loop.
+        {
+            break;
+        }    
     }
 
     return tokens;
