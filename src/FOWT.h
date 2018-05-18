@@ -14,7 +14,19 @@ private:
 	vec m_vel;
 	vec m_acc;
 
+	vec m_linStiff;
+
 public:
+	FOWT()
+	{
+		m_linStiff(3);
+	}
+
+	/*
+	Setters used to set the data read from the input file.
+	*/
+	void readLinStiff(const std::string &data);
+
 	//vec hydroForce(const ENVIR &envir);
 	////vec aeroForce(const ENVIR &envir);
 	////vec mooringForce(const ENVIR &envir);

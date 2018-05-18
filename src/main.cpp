@@ -25,8 +25,8 @@ int main()
     IO::setInputFilePath(inFlNm);
     IO::readInputFile(fowt, envir);
 
-	//int ii;
-	//std::cin >> ii;
+	int ii;
+	std::cin >> ii;
 
 	return 0;
 }
