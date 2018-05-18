@@ -128,8 +128,15 @@ std::string getKeyword(const std::string &str)
 // Get the part of the string after the keyword, excluding the '\t' or white-space
 std::string getData(const std::string &str)
 {
-    std::string aux_str = str.substr(str.find_first_of(" \t", 0));
-    return aux_str.substr(aux_str.find_first_not_of(" \t"));
+    if ( str.find_first_of(" \t", 0) != std::string::npos )
+    {
+        std::string aux_str = str.substr(str.find_first_of(" \t", 0));
+        return aux_str.substr(aux_str.find_first_not_of(" \t"));
+    }
+    else
+    {
+        return str;
+    }    
 }
 
 // Tokenize a string using a given delimiter.
