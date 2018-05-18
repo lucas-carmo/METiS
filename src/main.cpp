@@ -13,7 +13,6 @@
 #include "IO.h" // IO is a pure static class that manages input/output
 #include "ENVIR.h"
 
-#include <stdlib.h>
 
 
 int main()

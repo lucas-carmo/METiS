@@ -56,7 +56,6 @@ public:
     void readTimeStep(const std::string &data);
     void readTimeTotal(const std::string &data);
     void readTimeRamp(const std::string &data);
-    void readLinStiff(const std::string &data);
     void readGrav(const std::string &data);
     void readWatDens(const std::string &data);
     void readWatDepth(const std::string &data);
