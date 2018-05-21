@@ -13,11 +13,11 @@ private:
 	//Tower m_tower;
 	//Rotor m_rotor;
 	//Nacelle m_nacelle;
+	vec m_linStiff;
+	
 	vec m_pos;
 	vec m_vel;
-	vec m_acc;
-
-	vec m_linStiff;
+	vec m_acc;	
 
 public:
 	FOWT() : m_linStiff(3)
