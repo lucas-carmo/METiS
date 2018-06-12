@@ -22,7 +22,8 @@ void IO::setInputFilePath(const std::string &inFlPath)
 	m_inFilePath = inFlPath;
 }
 
-// Function responsible for reading the input file and assigning what is read to the FOWT and ENVIR classes
+// This is the main input function.
+// It is responsible for reading the input file line by line and assigning what is read to the FOWT and ENVIR classes
 void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 {
     std::ifstream inFl(m_inFilePath);
@@ -39,19 +40,21 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
         std::string strInput;
         std::getline(inFl, strInput);
 
-        if ( hasContent(strInput) )
+        if ( !hasContent(strInput) )
         {
-            if ( thereIsCommentInString(strInput) )
-            {
-                removeComments(strInput);
-            }
+			continue;
         }
-        else
-        {
-            continue;
-        }
+        
+		if (thereIsCommentInString(strInput))
+		{
+			removeComments(strInput);
+		}
 
-        // Read data base on keywords
+        /* 
+		Read data based on keywords
+		*/
+
+		// Read data to envir class
         if ( getKeyword(strInput) == "TimeStep" )
         {
             envir.readTimeStep( getData(strInput) );
@@ -70,11 +73,45 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
             continue;
         }
 
-        if (getKeyword(strInput) == "LinStiff")
-        {
-            fowt.readLinStiff( getData(strInput) );
-            continue;
-        }        
+		if (getKeyword(strInput) == "Grav")
+		{
+			envir.readGrav(getData(strInput));
+			continue;
+		}
+
+		if (getKeyword(strInput) == "WatDens")
+		{
+			envir.readWatDens(getData(strInput));
+			continue;
+		}
+
+		if (getKeyword(strInput) == "WatDepth")
+		{
+			envir.readWatDepth(getData(strInput));
+			continue;
+		}
+
+
+
+		// Read data to envir class
+		if (getKeyword(strInput) == "LinStiff")
+		{
+			fowt.readLinStiff(getData(strInput));
+			continue;
+		}
+
+		if (getKeyword(strInput) == "FloaterMass")
+		{
+			fowt.readFloaterMass(getData(strInput));
+			continue;
+		}
+
+		if (getKeyword(strInput) == "FloaterCoG")
+		{
+			fowt.readFloaterCoG(getData(strInput));
+			continue;
+		}
+
     }
 }
 

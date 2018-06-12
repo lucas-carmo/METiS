@@ -19,7 +19,6 @@
 TimeStep    0.1	                    % Time step
 TimeTotal  	280						% Total simulation time
 TimeRamp	6                       % Numerical ramp to be imposed to the waves. It is given as number of periods of the specified wave with the largest period.
-LinStiff	6.1e5,6.1e5,5.4e8       % Linear mooring stiffness in surge, sway, yaw. MUDAR PRA SER UMA MATRIZ
 
 
 
@@ -48,6 +47,7 @@ END
 FloaterMass		1.4267e7 
 FloaterCoG		0,0,-13.46
 FloaterInertia	6.827e9,6.827e9,1.226e10 % Adicionar os outros momentos de inércia
+LinStiff		6.1e5,6.1e5,5.4e8        % Linear mooring stiffness in surge, sway, yaw. MUDAR PRA SER UMA MATRIZ
 
 
 

@@ -24,6 +24,7 @@ After installing all the previous dependencies/third party tools listed above, M
     ./METiS                                 # Run METiS
 
 TODO: Test later whether compilling with `-lopenblas` changes anything
+
 To make this process easier, a bash script named **build_and_run.sh** is included in the folder **bash_scripts**. It can be run as
 
     cd METiS/bash_scripts
@@ -32,7 +33,7 @@ To make this process easier, a bash script named **build_and_run.sh** is include
 Or
 
     cd METiS/bash_scripts
-    .\build_and_run -ca         # Compile all the files in /src/, link and run
+    .\build_and_run -ca         # Compile all the files in ./src/, move the resulting object files to ./obj/, link and run
 
 This process will be conducted with CMake in the future (I don't know when).
 

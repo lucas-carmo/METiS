@@ -53,6 +53,8 @@ std::string getData(const std::string &str);
 std::vector<std::string> stringTokenize(const std::string &str, const std::string &delim = " \t");
 
 
+
+
 /*****************************************************
 	Function templates 
 *****************************************************/
@@ -75,11 +77,10 @@ inline bool readDataFromString(const std::string& inString, T &tX)
 {
 	std::vector<std::string> input = stringTokenize(inString, " \t");
 
-	// 1) Verify if input contains exactly 1 element (corresponding to timeStep)
+	// 1) Verify if input contains exactly 1 element
     if ( input.size() != 1 )
 	{
-        std::cout << "Deu ruim \n";
-		return false;
+        std::cout << "More than one entry in line COLOCAR. Considering only the first one. \n";		
 	}
 
     // 2) Convert input from string to its corresponding numeric format (double, float, ...)

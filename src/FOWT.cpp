@@ -1,6 +1,11 @@
 #include "FOWT.h"
 #include "IO.h"
 
+
+/*****************************************************
+	Setters used to set the data read from the input file.
+*****************************************************/
+
 void FOWT::readLinStiff(const std::string &data)
 {
     // The mooring line stiffness in surge, sway and yaw are separated by commas in the input string
@@ -16,5 +21,19 @@ void FOWT::readLinStiff(const std::string &data)
         readDataFromString( input.at(ii), m_linStiff(ii) );
     }    
     
-    std::cout << "Linear Stiffness: " << m_linStiff << "\n";
+    std::cout << "Linear Stiffness: \n" << m_linStiff << "\n";
+}
+
+
+/*
+	Floater properties
+*/
+void FOWT::readFloaterMass(const std::string &data)
+{
+	m_floater.readMass(data);
+}
+
+void FOWT::readFloaterCoG(const std::string &data)
+{
+	m_floater.readCoG(data);
 }

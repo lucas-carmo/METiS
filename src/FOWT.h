@@ -23,11 +23,23 @@ public:
 	FOWT() : m_linStiff(3)
 	{}
 
-	/*
-	Setters used to set the data read from the input file.
-	*/
+
+	/*****************************************************
+		Setters used to set the data read from the input file.
+	*****************************************************/
 	void readLinStiff(const std::string &data);
 
+	/* 
+		Floater properties
+	*/
+	void readFloaterMass(const std::string &data);
+	void readFloaterCoG(const std::string &data);
+
+
+
+	/*****************************************************
+		NEED TO NAME THIS SECTION
+	*****************************************************/
 	//vec hydroForce(const ENVIR &envir);
 	////vec aeroForce(const ENVIR &envir);
 	////vec mooringForce(const ENVIR &envir);

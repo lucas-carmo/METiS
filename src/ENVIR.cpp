@@ -28,4 +28,28 @@ void ENVIR::readTimeRamp(const std::string &data)
 
 
 
+void ENVIR::readGrav(const std::string &data)
+{
+	readDataFromString(data, m_watDens);
+	std::cout << "Gravity: " << m_watDens << "\n";
+}
+
+
+
+void ENVIR::readWatDens(const std::string &data)
+{
+	readDataFromString(data, m_gravity);
+	std::cout << "Water Density: " << m_gravity << "\n";
+}
+
+
+
+void ENVIR::readWatDepth(const std::string &data)
+{
+	readDataFromString(data, m_watDepth);
+	std::cout << "Water Depth: " << m_watDepth << "\n";
+}
+
+
+
 
