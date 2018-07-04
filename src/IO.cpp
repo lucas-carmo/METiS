@@ -3,7 +3,6 @@
 #include <fstream> // Include file input/output classes
 #include <iostream>
 #include <cstdlib> // For exit()
-#include <string>
 
 
 
@@ -55,37 +54,37 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		*/
 
 		// Read data to envir class
-        if ( getKeyword(strInput) == "TimeStep" )
+        if ( caseInsCompare(getKeyword(strInput), "TimeStep") )
         {
             envir.readTimeStep( getData(strInput) );
             continue;
         }
 
-        if ( getKeyword(strInput) == "TimeTotal" )
+        if ( caseInsCompare(getKeyword(strInput), "TimeTotal") )
         {
             envir.readTimeTotal( getData(strInput) );
             continue;
         }
 
-        if (getKeyword(strInput) == "TimeRamp")
+        if ( caseInsCompare(getKeyword(strInput), "TimeRamp") )
         {
             envir.readTimeRamp( getData(strInput) );
             continue;
         }
 
-		if (getKeyword(strInput) == "Grav")
+		if ( caseInsCompare(getKeyword(strInput), "Grav") )
 		{
 			envir.readGrav(getData(strInput));
 			continue;
 		}
 
-		if (getKeyword(strInput) == "WatDens")
+		if ( caseInsCompare(getKeyword(strInput), "WatDens") )
 		{
 			envir.readWatDens(getData(strInput));
 			continue;
 		}
 
-		if (getKeyword(strInput) == "WatDepth")
+		if ( caseInsCompare(getKeyword(strInput), "WatDepth") )
 		{
 			envir.readWatDepth(getData(strInput));
 			continue;
@@ -94,24 +93,30 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 
 		// Read data to envir class
-		if (getKeyword(strInput) == "LinStiff")
+		if (  caseInsCompare(getKeyword(strInput), "LinStiff") )
 		{
 			fowt.readLinStiff(getData(strInput));
 			continue;
 		}
 
-		if (getKeyword(strInput) == "FloaterMass")
+		if (  caseInsCompare(getKeyword(strInput), "FloaterMass") )
 		{
 			fowt.readFloaterMass(getData(strInput));
 			continue;
 		}
 
-		if (getKeyword(strInput) == "FloaterCoG")
+		if (  caseInsCompare(getKeyword(strInput), "FloaterCoG") )
 		{
 			fowt.readFloaterCoG(getData(strInput));
 			continue;
 		}
 
+
+		//if ( caseInsCompare(getKeyword(strInput), "Wave") )
+		//{
+		//	fowt.readFloaterCoG(getData(strInput));
+		//	continue;
+		//}
     }
 }
 
@@ -205,4 +210,27 @@ std::vector<std::string> stringTokenize(const std::string &str, const std::strin
     }
 
     return tokens;
+}
+
+
+// Convert lowercase letter to uppercase and compare if they are equal
+inline bool caseInsCharCompareN(char a, char b) {
+	return(std::toupper(a) == std::toupper(b));
+}
+
+// Same thing for wchar
+inline bool caseInsCharCompareW(wchar_t a, wchar_t b) {
+	return(std::towupper(a) == std::towupper(b));
+}
+
+// Compare each character of the strings to see if they match
+bool caseInsCompare(const std::string& s1, const std::string& s2) {
+	return((s1.size() == s2.size()) &&
+		std::equal(s1.begin(), s1.end(), s2.begin(), caseInsCharCompareN));
+}
+
+// Same thing for wstring
+bool caseInsCompare(const std::wstring& s1, const std::wstring& s2) {
+	return((s1.size() == s2.size()) &&
+		std::equal(s1.begin(), s1.end(), s2.begin(), caseInsCharCompareW));
 }

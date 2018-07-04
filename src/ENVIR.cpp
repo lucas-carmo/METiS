@@ -51,5 +51,8 @@ void ENVIR::readWatDepth(const std::string &data)
 }
 
 
+void ENVIR::readWave(const std::string &data)
+{
 
+}
 

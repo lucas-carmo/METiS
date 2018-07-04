@@ -15,6 +15,7 @@ private:
 	vec m_CoG; // Coordinates of center of gravity. It is a 3x1 array, but since armadillo matrices do not have compile-time sizes, size will be defined latter.
 	vec m_inertia; // Moments and products of inertia. It is a 6x1 array. Actually, it is a symmetric 3x3 matrix, hence 3 elements are simply repeated.
 	std::vector< std::reference_wrapper<MorisonElement> > m_morisonElements;	
+	std::vector< vec > m_nodes;
 
 public:
 	Floater() : m_CoG(3)

@@ -4,7 +4,6 @@
    em um so lugar
 */
 
-
 #include <iostream>
 #include <chrono> // For std::chrono functions. It is useful to time the code and verify whether one method or another will be more performant
 #include <armadillo> // Linear algebra library with usage similar to MATLAB
