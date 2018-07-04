@@ -19,21 +19,12 @@
 ### **Compiling and running**
 After installing all the previous dependencies/third party tools listed above, METiS can be compiled, linked and run using the following commands:
 
-    g++ -c METiS/src/*.cpp                  # Compile all the source files
-    g++ -o METiS -O2 *.o -larmadillo        # Link the resulting object files and Armadillo
+    g++ src/*.cpp METiS -O2 - larmadillo    # Compile the source files and link with Armadillo
     ./METiS                                 # Run METiS
-
-TODO: Test later whether compilling with `-lopenblas` changes anything
 
 To make this process easier, a bash script named **build_and_run.sh** is included in the folder **bash_scripts**. It can be run as
 
-    cd METiS/bash_scripts
-    .\build_and_run             # Just link the files in ./obj/ and run METiS
-
-Or
-
-    cd METiS/bash_scripts
-    .\build_and_run -ca         # Compile all the files in ./src/, move the resulting object files to ./obj/, link and run
+    .\build_and_run             # Compile the source files and link with Armadillo + move METiS to bin folder + run METiS
 
 This process will be conducted with CMake in the future (I don't know when).
 
@@ -51,7 +42,7 @@ This process will be conducted with CMake in the future (I don't know when).
 - Modify **include/armadillo_bits/config.hpp** to indicate which libraries are currently available on your system (see the readme file provided with Armadillo for details).
 
 - Configure a project in your IDE (the procedure below is given for Visual Studio):
-    1. Create a new empty project;
+    1. Create a new Empty Project or a new Windows Console Application;
     2. If you are using Visual Studio 2017 or above, downgrade your project to Visual Studio 2015. This is done by right clicking on the project name and selecting **Properties**. In **Configuration Properties**, find **Platform Toolset** and change it to **Visual Studio 2015 (v140)**. I honestly don't know why this is necessary;
     3. Add all the files included in **/src/** (except for Armadillo's **include** folder) to the project;       
     4. Locate the MKL folder. It is usually in **C:\Program Files (x86)\IntelSWTools\compiler_and_libraries_xxxx/mkl**;
