@@ -9,8 +9,8 @@
 #include <armadillo> // Linear algebra library with usage similar to MATLAB
 #include <string>
 
-#include "FOWT.h"
 #include "IO.h" // IO is a pure static class that manages input/output
+#include "FOWT.h"
 #include "ENVIR.h"
 
 

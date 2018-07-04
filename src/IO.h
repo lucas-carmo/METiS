@@ -28,6 +28,7 @@ public:
 	//static bool checkData(); // Depende do tipo de analise a ser feita
 	
 	static void print2outFile(const std::string &outFlNm);
+	static void print2CheckVariables(const FOWT &fowt, const ENVIR &envir); // Print the members of fowt and envir. Useful for debugging.
 };
 
 

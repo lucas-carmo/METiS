@@ -5,10 +5,12 @@
 #include <vector>
 
 
+/*****************************************************
+	Setters
+*****************************************************/
 void Floater::readMass(const std::string &data)
 {
 	readDataFromString(data, m_mass);
-	std::cout << "Floater Mass: " << m_mass << "\n";
 }
 
 void Floater::readCoG(const std::string &data)
@@ -25,11 +27,36 @@ void Floater::readCoG(const std::string &data)
 	{
 		readDataFromString(input.at(ii), m_CoG(ii));
 	}
-
-	std::cout << "CoG: \n" << m_CoG << "\n";
 }
 
 
+/*****************************************************
+	Getters
+*****************************************************/
+
+/*std::string output = "";
+for (int ii = 0; ii < m_linStiff.n_elem; ++ii)
+{
+	output = output + " " + std::to_string(m_linStiff(ii));
+}
+return output;*/
+
+
+std::string Floater::printMass() const
+{
+	return std::to_string(m_mass);
+}
+
+std::string Floater::printCoG() const
+{
+	std::string output = "(" + std::to_string( m_CoG(0) );
+	for (int ii = 1; ii < m_CoG.n_elem; ++ii)
+	{
+		output = output + "," + std::to_string( m_CoG(ii) );
+	}
+	
+	return output + ")";
+}
 
 //mat Floater::rotatMat(const vec &FOWTpos)
 //{}

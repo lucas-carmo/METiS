@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <armadillo>
 #include "Floater.h"
 
@@ -25,16 +26,18 @@ public:
 
 
 	/*****************************************************
-		Setters used to set the data read from the input file.
+		Setters
 	*****************************************************/
 	void readLinStiff(const std::string &data);
+	void setFloater(const Floater &floater);
 
-	/* 
-		Floater properties
-	*/
-	void readFloaterMass(const std::string &data);
-	void readFloaterCoG(const std::string &data);
+	
 
+	/*****************************************************
+		Getters
+	*****************************************************/
+	std::string printLinStiff() const;
+	std::string printFloater() const;
 
 
 	/*****************************************************

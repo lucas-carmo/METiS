@@ -25,66 +25,71 @@ void IO::setInputFilePath(const std::string &inFlPath)
 // It is responsible for reading the input file line by line and assigning what is read to the FOWT and ENVIR classes
 void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 {
-    std::ifstream inFl(m_inFilePath);
-    if (!inFl)
-    {
-        std::cerr << "Unable to open " << m_inFilePath << " for reading";
+	std::ifstream inFl(m_inFilePath);
+	if (!inFl)
+	{
+		std::cerr << "Unable to open " << m_inFilePath << " for reading";
 		return;
-        //exit(1);
-    }
+		//exit(1);
+	}
 
 
-    while (inFl)
-    {
-        std::string strInput;
-        std::getline(inFl, strInput);
+	// Classes that are members of FOWT and ENVIR
+	Floater floater;
 
-        if ( !hasContent(strInput) )
-        {
+
+	// Read file line by line
+	while (inFl)
+	{
+		std::string strInput;
+		std::getline(inFl, strInput);
+
+		if (!hasContent(strInput))
+		{
 			continue;
-        }
-        
+		}
+
 		if (thereIsCommentInString(strInput))
 		{
 			removeComments(strInput);
 		}
 
-        /* 
+		/*
 		Read data based on keywords
 		*/
 
 		// Read data to envir class
-        if ( caseInsCompare(getKeyword(strInput), "TimeStep") )
-        {
-            envir.readTimeStep( getData(strInput) );
-            continue;
-        }
+		if (caseInsCompare(getKeyword(strInput), "TimeStep"))
+		{
+			envir.readTimeStep(getData(strInput));
+			continue;
+		}
 
-        if ( caseInsCompare(getKeyword(strInput), "TimeTotal") )
-        {
-            envir.readTimeTotal( getData(strInput) );
-            continue;
-        }
+		if (caseInsCompare(getKeyword(strInput), "TimeTotal"))
+		{
+			envir.readTimeTotal(getData(strInput));
+			continue;
+		}
 
-        if ( caseInsCompare(getKeyword(strInput), "TimeRamp") )
-        {
-            envir.readTimeRamp( getData(strInput) );
-            continue;
-        }
+		if (caseInsCompare(getKeyword(strInput), "TimeRamp"))
+		{
+			envir.readTimeRamp(getData(strInput));
+			continue;
+		}
 
-		if ( caseInsCompare(getKeyword(strInput), "Grav") )
+		if (caseInsCompare(getKeyword(strInput), "Grav"))
 		{
 			envir.readGrav(getData(strInput));
 			continue;
 		}
 
-		if ( caseInsCompare(getKeyword(strInput), "WatDens") )
+		if (caseInsCompare(getKeyword(strInput), "WatDens"))
 		{
 			envir.readWatDens(getData(strInput));
 			continue;
 		}
 
-		if ( caseInsCompare(getKeyword(strInput), "WatDepth") )
+		if (caseInsCompare(getKeyword(strInput), "WatDepth"))
 		{
 			envir.readWatDepth(getData(strInput));
 			continue;
@@ -93,40 +98,57 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 
 		// Read data to envir class
-		if (  caseInsCompare(getKeyword(strInput), "LinStiff") )
+		if (caseInsCompare(getKeyword(strInput), "LinStiff"))
 		{
 			fowt.readLinStiff(getData(strInput));
 			continue;
 		}
 
-		if (  caseInsCompare(getKeyword(strInput), "FloaterMass") )
+		if (caseInsCompare(getKeyword(strInput), "FloaterMass"))
 		{
-			fowt.readFloaterMass(getData(strInput));
+			floater.readMass(getData(strInput));
 			continue;
 		}
 
-		if (  caseInsCompare(getKeyword(strInput), "FloaterCoG") )
+		if (caseInsCompare(getKeyword(strInput), "FloaterCoG"))
 		{
-			fowt.readFloaterCoG(getData(strInput));
+			floater.readCoG(getData(strInput));
 			continue;
 		}
 
 
-		//if ( caseInsCompare(getKeyword(strInput), "Wave") )
-		//{
-		//	fowt.readFloaterCoG(getData(strInput));
-		//	continue;
-		//}
-    }
+		if (caseInsCompare(getKeyword(strInput), "Wave"))
+		{
+			// A list of Waves is supposed to follow the "Wave keyword"
+			//fowt.readFloaterCoG(getData(strInput));
+			continue;
+		}
+	}
+
+	fowt.setFloater(floater);
+
+	IO::print2CheckVariables(fowt, envir);
 }
-
 
 void IO::print2outFile(const std::string &outFlNm)
 {}
 
 
+// Print the members of fowt and envir. Useful for debugging.
+void IO::print2CheckVariables(const FOWT &fowt, const ENVIR &envir)
+{
+	std::cout << "FOWT:\n";
+	std::cout << "Linear Stiffness:\t" << fowt.printLinStiff() << '\n';
+	std::cout << "Floater:\n" << fowt.printFloater();
 
-
+	std::cout << "\n\n\nENVIR:\n";
+	std::cout << "Time Step:\t" << envir.printTimeStep() << '\n';
+	std::cout << "Total Time:\t" << envir.printTimeTotal() << '\n';
+	std::cout << "Time Ramp:\t" << envir.printTimeRamp() << '\n';
+	std::cout << "Gravity:\t" << envir.printGrav() << '\n';
+	std::cout << "Water Density:\t" << envir.printWatDens() << '\n';
+	std::cout << "Water Depth:\t" << envir.printWatDepth() << '\n';
+}
 
 
 

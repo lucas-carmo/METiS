@@ -2,6 +2,7 @@
 
 #include "MorisonElement.h"
 
+#include <string>
 #include <vector> // For std::vector
 #include <functional> // For std::reference_wrapper
 #include <armadillo> // Linear algebra library with usage similar to MATLAB
@@ -21,8 +22,20 @@ public:
 	Floater() : m_CoG(3)
 	{}
 
+
+	/*****************************************************
+		Setters
+	*****************************************************/
 	void readMass(const std::string &data);
 	void readCoG(const std::string &data);
+
+
+	/*****************************************************
+		Getters
+	*****************************************************/
+	std::string printMass() const;
+	std::string printCoG() const;
+
 
 	//mat rotatMat(const vec &FOWTpos);
 	//vec hydrodynamicForce(const ENVIR &envir, const vec &FOWTpos, const vec &FOWTvel, const vec &FOWTacc);

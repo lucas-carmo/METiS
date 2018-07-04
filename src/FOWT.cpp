@@ -3,7 +3,7 @@
 
 
 /*****************************************************
-	Setters used to set the data read from the input file.
+	Setters
 *****************************************************/
 
 void FOWT::readLinStiff(const std::string &data)
@@ -16,24 +16,41 @@ void FOWT::readLinStiff(const std::string &data)
         std::cout << "Deu ruim \n";		
 	}
     
-    for ( int ii = 0; ii < 3; ++ii)
+    for ( int ii = 0; ii < 3; ++ii )
     {
         readDataFromString( input.at(ii), m_linStiff(ii) );
     }    
-    
-    std::cout << "Linear Stiffness: \n" << m_linStiff << "\n";
 }
 
 
-/*
-	Floater properties
-*/
-void FOWT::readFloaterMass(const std::string &data)
+void FOWT::setFloater(const Floater &floater)
 {
-	m_floater.readMass(data);
+	m_floater = floater;
 }
 
-void FOWT::readFloaterCoG(const std::string &data)
+
+
+
+/*****************************************************
+	Getters
+*****************************************************/
+std::string FOWT::printLinStiff() const
+{	
+	std::string output = "(" + std::to_string( m_linStiff(0) );
+	for ( int ii = 1; ii < m_linStiff.n_elem; ++ii )
+	{
+		output = output + "," + std::to_string( m_linStiff(ii) );
+	}
+	return output + ")";
+}
+
+
+std::string FOWT::printFloater() const
 {
-	m_floater.readCoG(data);
+	std::string output = "";
+
+	output = output + "\tMass:\t" + m_floater.printMass() + "\n";
+	output = output + "\tCoG:\t" + m_floater.printCoG() + "\n";
+
+	return output;
 }

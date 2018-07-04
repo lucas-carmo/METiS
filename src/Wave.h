@@ -5,13 +5,17 @@ private:
     double m_direction;
 
 public:
-    // Getters
-    double getAmplitude();
-    double getPeriod();
-    double getDirection();
-
-    // Setters
+	/*****************************************************
+		Setters
+	*****************************************************/
     void setAmplitude();
     void setPeriod();
     void setDirection();
+
+	/*****************************************************
+		Getters
+	*****************************************************/
+	double getAmplitude();
+	double getPeriod();
+	double getDirection();
 };

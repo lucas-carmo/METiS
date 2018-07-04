@@ -4,10 +4,13 @@
 #include <iostream>
 #include <vector>
 
+
+/*****************************************************
+	Setters
+*****************************************************/
 void ENVIR::readTimeStep(const std::string &data)
 {
     readDataFromString(data, m_timeStep);
-    std::cout << "Time Step: " << m_timeStep << "\n";
 }
 
 
@@ -15,7 +18,6 @@ void ENVIR::readTimeStep(const std::string &data)
 void ENVIR::readTimeTotal(const std::string &data)
 {
     readDataFromString(data, m_timeTotal);
-    std::cout << "Total Time: " << m_timeTotal << "\n";
 }
 
 
@@ -23,7 +25,6 @@ void ENVIR::readTimeTotal(const std::string &data)
 void ENVIR::readTimeRamp(const std::string &data)
 {
     readDataFromString(data, m_timeRamp);
-    std::cout << "Time Ramp: " << m_timeRamp << "\n";
 }
 
 
@@ -31,7 +32,6 @@ void ENVIR::readTimeRamp(const std::string &data)
 void ENVIR::readGrav(const std::string &data)
 {
 	readDataFromString(data, m_watDens);
-	std::cout << "Gravity: " << m_watDens << "\n";
 }
 
 
@@ -39,7 +39,6 @@ void ENVIR::readGrav(const std::string &data)
 void ENVIR::readWatDens(const std::string &data)
 {
 	readDataFromString(data, m_gravity);
-	std::cout << "Water Density: " << m_gravity << "\n";
 }
 
 
@@ -47,7 +46,6 @@ void ENVIR::readWatDens(const std::string &data)
 void ENVIR::readWatDepth(const std::string &data)
 {
 	readDataFromString(data, m_watDepth);
-	std::cout << "Water Depth: " << m_watDepth << "\n";
 }
 
 
@@ -56,3 +54,40 @@ void ENVIR::readWave(const std::string &data)
 
 }
 
+
+
+/*****************************************************
+	Getters
+*****************************************************/
+std::string ENVIR::printTimeStep() const
+{
+	return std::to_string(m_timeStep);
+}
+
+std::string ENVIR::printTimeTotal() const
+{
+	return std::to_string(m_timeTotal);
+}
+
+std::string ENVIR::printTimeRamp() const
+{
+	return std::to_string(m_timeRamp);
+}
+
+std::string ENVIR::printGrav() const
+{
+	return std::to_string(m_gravity);
+}
+
+std::string ENVIR::printWatDens() const
+{
+	return std::to_string(m_watDens);
+}
+
+std::string ENVIR::printWatDepth() const
+{
+	return std::to_string(m_watDepth);
+}
+
+//std::string ENVIR::printWave() const
+//{}

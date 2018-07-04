@@ -1,6 +1,22 @@
 #include "Wave.h"
 
-// Getters
+
+/*****************************************************
+	Setters
+*****************************************************/
+void Wave::setAmplitude()
+{}
+
+void Wave::setPeriod()
+{}
+
+void Wave::setDirection()
+{}
+
+
+/*****************************************************
+	Getters
+*****************************************************/
 //double Wave::getAmplitude()
 //{}
 //
@@ -11,12 +27,4 @@
 //{}
 
 
-// Setters
-void Wave::setAmplitude()
-{}
 
-void Wave::setPeriod()
-{}
-
-void Wave::setDirection()
-{}

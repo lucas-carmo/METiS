@@ -50,9 +50,9 @@ public:
     // Default constructor
     // ENVIR();
 
-    /*
-    Setters used to set the data read from the input file.
-    */
+	/*****************************************************
+		Setters
+	*****************************************************/
     void readTimeStep(const std::string &data);
     void readTimeTotal(const std::string &data);
     void readTimeRamp(const std::string &data);
@@ -60,5 +60,16 @@ public:
     void readWatDens(const std::string &data);
     void readWatDepth(const std::string &data);
 	void readWave(const std::string &data);
+
+	/*****************************************************
+		Getters
+	*****************************************************/
+	std::string printTimeStep() const;
+	std::string printTimeTotal() const;
+	std::string printTimeRamp() const;
+	std::string printGrav() const;
+	std::string printWatDens() const;
+	std::string printWatDepth() const;
+	//std::string printWave() const;
 };
 
