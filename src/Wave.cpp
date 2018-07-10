@@ -21,10 +21,7 @@ void Wave::readRegWave(const std::string &wholeWaveLine)
 	// 3) Direction of propagation	
 	std::vector<std::string> input = stringTokenize(getData(wholeWaveLine), " \t");
 
-	// VERIFICACAO DAS KEYWORDS TEM QUE VIR AQUI
-	// Ao inves de copiar valores, usar inicializacao uniforme?
-	// IDEIA: Ao inves de ler os valores aqui, usar um constructor com um flag pra cada tipo de wave keyword
-
+	// Test if the keyword is known
 	if ( !caseInsCompare(getKeyword(wholeWaveLine), "TRWave") 
 	  && !caseInsCompare(getKeyword(wholeWaveLine), "FRWave") 
 	  && !caseInsCompare(getKeyword(wholeWaveLine), "WRWave") )
@@ -35,17 +32,20 @@ void Wave::readRegWave(const std::string &wholeWaveLine)
 	}
 
 
+	// Check if there are exactly three inputs (Wave height, period/frequency/angular frequency, and direction)
 	if (input.size() != 3)
 	{
 		std::cout << "Error in line" << IO::getInLineNumber() 
 		          << ": TRWave, FRWave and WRWave should be followed by three numbers"
 				  << " separated by tabs ('\\t') or spaces specifying"
-				  << " the wave Height, Period/Frequency/Angular Frequency and Direction." 
+				  << " the wave Height, Period/Frequency/Angular Frequency, and Direction." 
 				  << " However, you provided " << input.size() << " elements \n";
 				  
 		return;
 	}
 
+
+	// Finally, read wave data
 	readDataFromString(input.at(0), m_height);
 	readDataFromString(input.at(2), m_direction);
 
