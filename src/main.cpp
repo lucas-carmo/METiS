@@ -3,7 +3,7 @@
    do input deram certo, coisa do tipo. Assim facilita a manutencao, pq se quiser mudar mensagem de erro ou coisa do tipo, mudo
    em um so lugar
 
-   TODO: Criar uma função dentro da classe IO pra leitura de linha, pra colocar o getLine e o update line number juntos e não ter que ficar lembrando disso
+   TODO: Talvez fazer dos nodes uma classe a parte, pra deixar os IDs como int e não como double
 
    TODO: No IO.cpp, adicionar um warning pra caso a keyword seja desconhecida. Provavelmente
    fique melhor trocar aqueles ifs por cases
