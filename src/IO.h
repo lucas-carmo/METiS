@@ -24,6 +24,7 @@ private:
 
 public:
 	static void setInputFilePath(const std::string &inFlPath);
+	static unsigned int getInLineNumber();
 
 	static void readInputFile(FOWT &fowt, ENVIR &envir);
 	//static bool checkData(); // Depende do tipo de analise a ser feita
