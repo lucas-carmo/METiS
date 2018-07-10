@@ -14,6 +14,7 @@ class IO
 {
 private:
 	static std::string m_inFilePath;
+	static unsigned int m_inLineNumber; // Stores the current line number while reading the input file
 
 	static std::string m_header;
 	static bool m_shouldWriteHeader;
@@ -23,6 +24,7 @@ private:
 
 public:
 	static void setInputFilePath(const std::string &inFlPath);
+	static unsigned int getInLineNumber();
 
 	static void readInputFile(FOWT &fowt, ENVIR &envir);
 	//static bool checkData(); // Depende do tipo de analise a ser feita
@@ -30,8 +32,6 @@ public:
 	static void print2outFile(const std::string &outFlNm);
 	static void print2CheckVariables(const FOWT &fowt, const ENVIR &envir); // Print the members of fowt and envir. Useful for debugging.
 };
-
-
 
 
 /*****************************************************
@@ -110,7 +110,7 @@ inline bool readDataFromString(const std::string& inString, T &tX)
 	if ( !string2num(input.at(0), tX) )
 	{
         // Throw an exception if the conversion fails
-		std::cout << "Deu ruim \n";
+		std::cout << "Conversion failed in readDataFromString() \n";
 		return false;
 	}		
 

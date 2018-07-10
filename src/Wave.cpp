@@ -1,30 +1,108 @@
 #include "Wave.h"
+#include "IO.h"
+#include <vector>
 
 
 /*****************************************************
 	Setters
 *****************************************************/
-void Wave::setAmplitude()
-{}
 
-void Wave::setPeriod()
-{}
+// READ REGULAR WAVES
+// The string "wholeWaveLine" must contain the keyword that specifies how to read the wave data:
+// 1) TRWave for regular waves specified by their period
+// 2) FRWavefor regular waves specified by their frequency
+// 3) WRWave for regular waves specified by their angular frequency
+void Wave::readRegWave(const std::string &wholeWaveLine)
+{	
+	// Wave characteristics are divided by a space or a tab.
+	// The characteristics are 
+	// 1) Wave height
+	// 2) Wave period OR wave frequency OR wave angular frequency
+	// 3) Direction of propagation	
+	std::vector<std::string> input = stringTokenize(getData(wholeWaveLine), " \t");
 
-void Wave::setDirection()
-{}
+	// VERIFICACAO DAS KEYWORDS TEM QUE VIR AQUI
+	// Ao inves de copiar valores, usar inicializacao uniforme?
+	// IDEIA: Ao inves de ler os valores aqui, usar um constructor com um flag pra cada tipo de wave keyword
+
+	if ( !caseInsCompare(getKeyword(wholeWaveLine), "TRWave") 
+	  && !caseInsCompare(getKeyword(wholeWaveLine), "FRWave") 
+	  && !caseInsCompare(getKeyword(wholeWaveLine), "WRWave") )
+	{
+		std::cout << "Error in line " << IO::getInLineNumber() 
+		          << ": Unknown keyword '" << getKeyword(wholeWaveLine) << "' \n";
+		return;
+	}
+
+
+	if (input.size() != 3)
+	{
+		std::cout << "Error in line" << IO::getInLineNumber() 
+		          << ": TRWave, FRWave and WRWave should be followed by three numbers"
+				  << " separated by tabs ('\t') or spaces specifying"
+				  << " the wave Height, Period/Frequency/Angular Frequency and Direction." 
+				  << " However, you provided " << input.size() << " elements \n";
+				  
+		return;
+	}
+
+	readDataFromString(input.at(0), m_height);
+	readDataFromString(input.at(2), m_direction);
+
+	if ( caseInsCompare(getKeyword(wholeWaveLine), "TRWave") )
+	{
+		readDataFromString(input.at(1), m_period);	
+	}
+
+	if ( caseInsCompare(getKeyword(wholeWaveLine), "FRWave") )
+	{	
+		double frequency{0};
+		readDataFromString(input.at(1), frequency);	
+
+		if (frequency == 0)
+		{
+			std::cout << "Deu ruim";
+		}
+		else 
+		{
+			m_period = 1/frequency;
+		}
+	}	
+
+	if ( caseInsCompare(getKeyword(wholeWaveLine), "WRWave") )
+	{	
+		double omega{0};
+		readDataFromString(input.at(1), omega);	
+
+		if (omega == 0)
+		{
+			std::cout << "Deu ruim";
+		}
+		else
+		{
+			m_period = 2*M_PI/omega;
+		}
+	}		
+}
 
 
 /*****************************************************
 	Getters
 *****************************************************/
-//double Wave::getAmplitude()
-//{}
-//
-//double Wave::getPeriod()
-//{}
-//
-//double Wave::getDirection()
-//{}
+double Wave::getHeight() const
+{
+	return m_height;
+}
+
+double Wave::getPeriod() const
+{
+	return m_period;
+}
+
+double Wave::getDirection() const
+{
+	return m_direction;
+}
 
 
 

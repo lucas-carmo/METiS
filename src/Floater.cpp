@@ -23,7 +23,7 @@ void Floater::readCoG(const std::string &data)
 		std::cout << "Deu ruim \n";
 	}
 
-	for (int ii = 0; ii < 3; ++ii)
+	for (int ii = 0; ii < input.size(); ++ii)
 	{
 		readDataFromString(input.at(ii), m_CoG(ii));
 	}

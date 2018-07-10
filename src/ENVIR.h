@@ -47,8 +47,8 @@ private:
     bool m_TwrLoads;
 
 public:
-    // Default constructor
-    // ENVIR();
+    // ENVIR()
+    // {}
 
 	/*****************************************************
 		Setters
@@ -59,7 +59,7 @@ public:
     void readGrav(const std::string &data);
     void readWatDens(const std::string &data);
     void readWatDepth(const std::string &data);
-	void readWave(const std::string &data);
+	void addWave(const Wave &wave);
 
 	/*****************************************************
 		Getters
@@ -70,6 +70,6 @@ public:
 	std::string printGrav() const;
 	std::string printWatDens() const;
 	std::string printWatDepth() const;
-	//std::string printWave() const;
+	std::string printWave() const;
 };
 

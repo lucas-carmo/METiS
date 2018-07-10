@@ -31,12 +31,11 @@ WatDepth	200
 
 
 Wave
-% WRWAVE \t Amplitude \t Angular frequency \t Direction (in degrees)
-% FRWAVE \t Amplitude \t Frequency         \t Direction (in degrees)
-% TRWAVE \t Amplitude \t Period            \t Direction (in degrees)
-% KRWAVE \t Amplitude \t Wave number       \t Direction (in degrees)
-% LRWAVE \t Amplitude \t Wave length       \t Direction (in degrees)
-TRWAVE	1	10	45
+% WRWAVE \t Height \t Angular frequency \t Direction (in degrees)
+% FRWAVE \t Height \t Frequency         \t Direction (in degrees)
+% TRWAVE \t Height \t Period            \t Direction (in degrees)
+TRWAVE	2	10	45
+WRWAVE  4   5  60
 END
 
 

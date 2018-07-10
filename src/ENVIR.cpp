@@ -49,9 +49,9 @@ void ENVIR::readWatDepth(const std::string &data)
 }
 
 
-void ENVIR::readWave(const std::string &data)
+void ENVIR::addWave(const Wave &wave)
 {
-
+	m_wave.push_back( wave );
 }
 
 
@@ -89,5 +89,15 @@ std::string ENVIR::printWatDepth() const
 	return std::to_string(m_watDepth);
 }
 
-//std::string ENVIR::printWave() const
-//{}
+std::string ENVIR::printWave() const
+{
+	std::string output = "";
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		output = output + "Wave #" + std::to_string(ii) + "\n";
+		output = output + "Height: " + std::to_string( m_wave.at(ii).getHeight() ) + "\n";
+		output = output + "Period: " + std::to_string( m_wave.at(ii).getPeriod() ) + "\n";
+		output = output + "Direction: " + std::to_string( m_wave.at(ii).getDirection() ) + "\n\n";
+	}
+	return output;
+}

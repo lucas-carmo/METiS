@@ -10,6 +10,7 @@
 	Defining and initializing static member variables
 *****************************************************/
 std::string IO::m_inFilePath = "";
+unsigned int IO::m_inLineNumber = 0;
 
 
 
@@ -21,11 +22,17 @@ void IO::setInputFilePath(const std::string &inFlPath)
 	m_inFilePath = inFlPath;
 }
 
+unsigned int IO::getInLineNumber()
+{
+	return m_inLineNumber;
+}
+
 // This is the main input function.
 // It is responsible for reading the input file line by line and assigning what is read to the FOWT and ENVIR classes
 void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 {
 	std::ifstream inFl(m_inFilePath);
+
 	if (!inFl)
 	{
 		std::cerr << "Unable to open " << m_inFilePath << " for reading";
@@ -35,14 +42,14 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 
 	// Classes that are members of FOWT and ENVIR
-	Floater floater;
-
+	Floater floater;		
 
 	// Read file line by line
 	while (inFl)
 	{
 		std::string strInput;
 		std::getline(inFl, strInput);
+		++m_inLineNumber; // Update counter for lineNumber
 
 		if (!hasContent(strInput))
 		{
@@ -120,8 +127,40 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		if (caseInsCompare(getKeyword(strInput), "Wave"))
 		{
 			// A list of Waves is supposed to follow the "Wave keyword"
-			//fowt.readFloaterCoG(getData(strInput));
-			continue;
+			// 1) While the END keyword is not reached
+			//Outro std::getline
+			// 2) getKeyword == algum dos tipos de onda
+			// 		2.1) Initializa uma "Wave wave" e passa os parâmetros dependendo da keyword
+			// 3) getKeyword == END
+			//		3.1) Termina
+			// 4) getKeyword == Qualquer outra coisa
+			//		4.1) Erro					
+			//fowt.readFloaterCoG(getData(strInput));			
+			std::getline(inFl, strInput);
+			++m_inLineNumber; // Update counter for lineNumber
+
+			while (!caseInsCompare(getKeyword(strInput), "END") && inFl) 		
+			{							
+				if (!hasContent(strInput))
+				{
+					std::getline(inFl, strInput);
+					++m_inLineNumber; // Update counter for lineNumber
+
+					continue;
+				}
+
+				if (thereIsCommentInString(strInput))
+				{
+					removeComments(strInput);
+				}			
+
+				Wave wave;	
+				wave.readRegWave(strInput);	
+				envir.addWave(wave); // Add this wave to the environment
+				
+				std::getline(inFl, strInput);
+				++m_inLineNumber;
+			}			
 		}
 	}
 
@@ -148,6 +187,7 @@ void IO::print2CheckVariables(const FOWT &fowt, const ENVIR &envir)
 	std::cout << "Gravity:\t" << envir.printGrav() << '\n';
 	std::cout << "Water Density:\t" << envir.printWatDens() << '\n';
 	std::cout << "Water Depth:\t" << envir.printWatDepth() << '\n';
+	std::cout << "Waves: \t" << envir.printWave() << '\n';
 }
 
 
@@ -163,8 +203,10 @@ bool thereIsCommentInString(const std::string& str)
 }
 
 
-// Verify whether a string has content, i.e. if it is not empty, it is not just
-// white spaces or tabs, and it does not start with a comment mark ('%')
+// Verify whether a string has content, i.e. if:
+// 1) it is not empty
+// 2) it is not just white spaces or tabs
+// 3) it does not start with a comment mark ('%')
 bool hasContent(const std::string &str)
 {
     // Empty strings have no content
