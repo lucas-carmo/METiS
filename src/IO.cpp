@@ -22,11 +22,6 @@ void IO::setInputFilePath(const std::string &inFlPath)
 	m_inFilePath = inFlPath;
 }
 
-unsigned int IO::getInLineNumber()
-{
-	return m_inLineNumber;
-}
-
 // This is the main input function.
 // It is responsible for reading the input file line by line and assigning what is read to the FOWT and ENVIR classes
 void IO::readInputFile(FOWT &fowt, ENVIR &envir)
