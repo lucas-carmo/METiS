@@ -165,9 +165,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					removeComments(strInput);
 				}			
 
-				Wave wave;	
-				wave.readRegWave(strInput);	
-				envir.addWave(wave); // Add this wave to the environment
+				envir.addWave( Wave(strInput) ); // Add this wave to the environment
 				
 				IO::readLineInputFile(strInput);
 			}			

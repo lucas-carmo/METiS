@@ -4,15 +4,14 @@
 
 
 /*****************************************************
-	Setters
+	Constructor
 *****************************************************/
 
-// READ REGULAR WAVES
 // The string "wholeWaveLine" must contain the keyword that specifies how to read the wave data:
 // 1) TRWave for regular waves specified by their period
 // 2) FRWavefor regular waves specified by their frequency
 // 3) WRWave for regular waves specified by their angular frequency
-void Wave::readRegWave(const std::string &wholeWaveLine)
+Wave::Wave(const std::string &wholeWaveLine)
 {	
 	// Wave characteristics are divided by a space or a tab.
 	// The characteristics are 

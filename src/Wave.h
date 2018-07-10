@@ -16,10 +16,8 @@ public:
 		: m_height(height), m_period(period), m_direction(direction)
 	{}
 
-	/*****************************************************
-		Setters
-	*****************************************************/
-    void readRegWave(const std::string &wholeWaveLine);
+	Wave(const std::string &wholeWaveLine);
+
 
 	/*****************************************************
 		Getters
