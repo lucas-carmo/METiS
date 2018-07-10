@@ -61,7 +61,7 @@ void Wave::readRegWave(const std::string &wholeWaveLine)
 
 		if (frequency == 0)
 		{
-			std::cout << "Deu ruim";
+			std::cout << "Wave frequency must be different from zero.\n";
 		}
 		else 
 		{
@@ -76,7 +76,7 @@ void Wave::readRegWave(const std::string &wholeWaveLine)
 
 		if (omega == 0)
 		{
-			std::cout << "Deu ruim";
+			std::cout << "Wave frequency must be different from zero.\n";
 		}
 		else
 		{
@@ -89,17 +89,17 @@ void Wave::readRegWave(const std::string &wholeWaveLine)
 /*****************************************************
 	Getters
 *****************************************************/
-double Wave::getHeight() const
+double Wave::height() const
 {
 	return m_height;
 }
 
-double Wave::getPeriod() const
+double Wave::period() const
 {
 	return m_period;
 }
 
-double Wave::getDirection() const
+double Wave::direction() const
 {
 	return m_direction;
 }

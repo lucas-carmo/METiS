@@ -95,9 +95,9 @@ std::string ENVIR::printWave() const
 	for (int ii = 0; ii < m_wave.size(); ++ii)
 	{
 		output = output + "Wave #" + std::to_string(ii) + "\n";
-		output = output + "Height: " + std::to_string( m_wave.at(ii).getHeight() ) + "\n";
-		output = output + "Period: " + std::to_string( m_wave.at(ii).getPeriod() ) + "\n";
-		output = output + "Direction: " + std::to_string( m_wave.at(ii).getDirection() ) + "\n\n";
+		output = output + "Height: " + std::to_string( m_wave.at(ii).height() ) + "\n";
+		output = output + "Period: " + std::to_string( m_wave.at(ii).period() ) + "\n";
+		output = output + "Direction: " + std::to_string( m_wave.at(ii).direction() ) + "\n\n";
 	}
 	return output;
 }

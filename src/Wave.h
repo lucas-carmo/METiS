@@ -23,9 +23,9 @@ public:
 	/*****************************************************
 		Getters
 	*****************************************************/
-	double getHeight() const;
-	double getPeriod() const;
-	double getDirection() const;
+	double height() const;
+	double period() const;
+	double direction() const;
 
 	/*****************************************************
 		Wave properties derived from the others
