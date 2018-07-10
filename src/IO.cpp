@@ -152,8 +152,13 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			//fowt.readFloaterCoG(getData(strInput));			
 			IO::readLineInputFile(strInput);
 
-			while (!caseInsCompare(getKeyword(strInput), "END") && m_inFl) 		
+			while (!caseInsCompare(getKeyword(strInput), "END")) 		
 			{							
+				if (!m_inFl)
+				{
+					std::cout << "\n\n\n End of file reached before END keyword in WAVE specification.\n\n";
+					return;
+				}
 				if (!hasContent(strInput))
 				{
 					IO::readLineInputFile(strInput);
@@ -170,6 +175,36 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				IO::readLineInputFile(strInput);
 			}			
 		}
+
+
+		if (caseInsCompare(getKeyword(strInput), "Nodes"))
+		{
+			IO::readLineInputFile(strInput);
+
+			while (!caseInsCompare(getKeyword(strInput), "END"))
+			{
+				if (!m_inFl)
+				{
+					std::cout << "\n\n\n End of file reached before END keyword in NODES specification.\n\n";
+					return;
+				}
+				if (!hasContent(strInput))
+				{
+					IO::readLineInputFile(strInput);
+					continue;
+				}
+
+				if (thereIsCommentInString(strInput))
+				{
+					removeComments(strInput);
+				}
+
+				floater.addNode(strInput);
+
+				IO::readLineInputFile(strInput);
+			}
+		}
+
 	}
 
 	fowt.setFloater(floater);

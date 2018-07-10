@@ -13,13 +13,13 @@ class Floater
 {
 private:
 	double m_mass;
-	vec m_CoG; // Coordinates of center of gravity. It is a 3x1 array, but since armadillo matrices do not have compile-time sizes, size will be defined latter.
+	vec::fixed<3> m_CoG; // Coordinates of center of gravity.
 	vec m_inertia; // Moments and products of inertia. It is a 6x1 array. Actually, it is a symmetric 3x3 matrix, hence 3 elements are simply repeated.
 	std::vector< std::reference_wrapper<MorisonElement> > m_morisonElements;	
-	std::vector< vec > m_nodes;
+	std::vector< vec::fixed<4> > m_nodes;
 
 public:
-	Floater() : m_CoG(3)
+	Floater() : m_CoG(fill::zeros)
 	{}
 
 
@@ -28,6 +28,7 @@ public:
 	*****************************************************/
 	void readMass(const std::string &data);
 	void readCoG(const std::string &data);
+	void addNode(const std::string &data);
 
 
 	/*****************************************************
@@ -35,6 +36,7 @@ public:
 	*****************************************************/
 	std::string printMass() const;
 	std::string printCoG() const;
+	std::string printNodes() const;
 
 
 	//mat rotatMat(const vec &FOWTpos);

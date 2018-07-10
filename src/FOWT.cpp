@@ -51,6 +51,7 @@ std::string FOWT::printFloater() const
 
 	output = output + "\tMass:\t" + m_floater.printMass() + "\n";
 	output = output + "\tCoG:\t" + m_floater.printCoG() + "\n";
+	output = output + "\tNodes:\n" + m_floater.printNodes() + "\n";
 
 	return output;
 }

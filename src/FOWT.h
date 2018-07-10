@@ -14,14 +14,14 @@ private:
 	//Tower m_tower;
 	//Rotor m_rotor;
 	//Nacelle m_nacelle;
-	vec m_linStiff;
+	vec::fixed<3> m_linStiff;
 	
-	vec m_pos;
-	vec m_vel;
-	vec m_acc;	
+	vec::fixed<3> m_pos;
+	vec::fixed<3> m_vel;
+	vec::fixed<3> m_acc;
 
 public:
-	FOWT() : m_linStiff(3)
+	FOWT() : m_linStiff(fill::zeros)
 	{}
 
 
