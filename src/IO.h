@@ -14,6 +14,7 @@ class IO
 {
 private:
 	static std::string m_inFilePath;
+	static std::ifstream m_inFl;
 	static unsigned int m_inLineNumber; // Stores the current line number while reading the input file
 
 	static std::string m_header;
@@ -23,10 +24,11 @@ private:
 	static bool m_shouldWriteOutputTimeStep;
 
 public:
-	static void setInputFilePath(const std::string &inFlPath);
+	static void setInputFile(const std::string &inFlPath);
+	static void readLineInputFile(std::string &strInput);
 	static unsigned int getInLineNumber();
+	static void readInputFile(FOWT &fowt, ENVIR &envir);		
 
-	static void readInputFile(FOWT &fowt, ENVIR &envir);
 	//static bool checkData(); // Depende do tipo de analise a ser feita
 	
 	static void print2outFile(const std::string &outFlNm);

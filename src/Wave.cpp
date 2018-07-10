@@ -39,7 +39,7 @@ void Wave::readRegWave(const std::string &wholeWaveLine)
 	{
 		std::cout << "Error in line" << IO::getInLineNumber() 
 		          << ": TRWave, FRWave and WRWave should be followed by three numbers"
-				  << " separated by tabs ('\t') or spaces specifying"
+				  << " separated by tabs ('\\t') or spaces specifying"
 				  << " the wave Height, Period/Frequency/Angular Frequency and Direction." 
 				  << " However, you provided " << input.size() << " elements \n";
 				  

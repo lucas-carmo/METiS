@@ -10,6 +10,7 @@
 	Defining and initializing static member variables
 *****************************************************/
 std::string IO::m_inFilePath = "";
+std::ifstream IO::m_inFl;
 unsigned int IO::m_inLineNumber = 0;
 
 
@@ -17,9 +18,23 @@ unsigned int IO::m_inLineNumber = 0;
 /*****************************************************
     Implementation of class functions
 *****************************************************/
-void IO::setInputFilePath(const std::string &inFlPath)
+void IO::setInputFile(const std::string &inFlPath)
 {
 	m_inFilePath = inFlPath;
+	m_inFl.open(m_inFilePath);
+
+	if (!m_inFl)
+	{
+		std::cerr << "Unable to open " << m_inFilePath << " for reading";
+		return;
+		//exit(1);
+	}
+}
+
+void IO::readLineInputFile(std::string &strInput)
+{
+	std::getline(m_inFl, strInput);
+	++m_inLineNumber; // Update counter for lineNumber
 }
 
 unsigned int IO::getInLineNumber()
@@ -31,25 +46,24 @@ unsigned int IO::getInLineNumber()
 // It is responsible for reading the input file line by line and assigning what is read to the FOWT and ENVIR classes
 void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 {
-	std::ifstream inFl(m_inFilePath);
+	//std::ifstream inFl(m_inFilePath);
 
-	if (!inFl)
-	{
-		std::cerr << "Unable to open " << m_inFilePath << " for reading";
-		return;
-		//exit(1);
-	}
+	//if (!m_inFl)
+	//{
+	//	std::cerr << "Unable to open " << m_inFilePath << " for reading";
+	//	return;
+	//	//exit(1);
+	//}
 
 
 	// Classes that are members of FOWT and ENVIR
 	Floater floater;		
 
 	// Read file line by line
-	while (inFl)
+	while (m_inFl)
 	{
-		std::string strInput;
-		std::getline(inFl, strInput);
-		++m_inLineNumber; // Update counter for lineNumber
+		std::string strInput;		
+		IO::readLineInputFile(strInput);
 
 		if (!hasContent(strInput))
 		{
@@ -136,16 +150,13 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			// 4) getKeyword == Qualquer outra coisa
 			//		4.1) Erro					
 			//fowt.readFloaterCoG(getData(strInput));			
-			std::getline(inFl, strInput);
-			++m_inLineNumber; // Update counter for lineNumber
+			IO::readLineInputFile(strInput);
 
-			while (!caseInsCompare(getKeyword(strInput), "END") && inFl) 		
+			while (!caseInsCompare(getKeyword(strInput), "END") && m_inFl) 		
 			{							
 				if (!hasContent(strInput))
 				{
-					std::getline(inFl, strInput);
-					++m_inLineNumber; // Update counter for lineNumber
-
+					IO::readLineInputFile(strInput);
 					continue;
 				}
 
@@ -158,8 +169,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				wave.readRegWave(strInput);	
 				envir.addWave(wave); // Add this wave to the environment
 				
-				std::getline(inFl, strInput);
-				++m_inLineNumber;
+				IO::readLineInputFile(strInput);
 			}			
 		}
 	}
@@ -187,7 +197,7 @@ void IO::print2CheckVariables(const FOWT &fowt, const ENVIR &envir)
 	std::cout << "Gravity:\t" << envir.printGrav() << '\n';
 	std::cout << "Water Density:\t" << envir.printWatDens() << '\n';
 	std::cout << "Water Depth:\t" << envir.printWatDepth() << '\n';
-	std::cout << "Waves: \t" << envir.printWave() << '\n';
+	std::cout << "\n" << envir.printWave() << '\n';
 }
 
 

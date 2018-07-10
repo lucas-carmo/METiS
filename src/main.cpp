@@ -25,10 +25,10 @@ int main()
 	FOWT fowt;
 	ENVIR envir;
     
-    std::string inFlNm = "Test/mainInputExample.txt";
-	// std::string inFlNm = "Z:/METiS/Test/mainInputExample.txt";
+    //std::string inFlNm = "Test/mainInputExample.txt";
+	 std::string inFlNm = "Z:/METiS/Test/mainInputExample.txt";
 
-    IO::setInputFilePath(inFlNm);
+    IO::setInputFile(inFlNm);
     IO::readInputFile(fowt, envir);
 
 	int ii;
