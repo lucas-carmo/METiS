@@ -105,14 +105,14 @@ inline bool readDataFromString(const std::string& inString, T &tX)
 	// 1) Verify if input contains exactly 1 element
     if ( input.size() != 1 )
 	{
-        std::cout << "More than one entry in line COLOCAR. Considering only the first one. \n";		
+        std::cout << "More than one entry in line " << IO::getInLineNumber() << ". Considering only the first one. \n";		
 	}
 
     // 2) Convert input from string to its corresponding numeric format (double, float, ...)
 	if ( !string2num(input.at(0), tX) )
 	{
         // Throw an exception if the conversion fails
-		std::cout << "Conversion failed in readDataFromString() \n";
+		std::cout << "Conversion failed in readDataFromString(). Line " << IO::getInLineNumber() << ".\n";
 		return false;
 	}		
 
