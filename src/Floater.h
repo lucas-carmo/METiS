@@ -16,7 +16,8 @@ private:
 	vec::fixed<3> m_CoG; // Coordinates of center of gravity.
 	vec m_inertia; // Moments and products of inertia. It is a 6x1 array. Actually, it is a symmetric 3x3 matrix, hence 3 elements are simply repeated.
 	std::vector< std::reference_wrapper<MorisonElement> > m_morisonElements;	
-	std::vector< vec::fixed<4> > m_nodes;
+	std::vector< unsigned int > m_nodesID;
+	std::vector< vec::fixed<3> > m_nodesCoord;
 
 public:
 	Floater() : m_CoG(fill::zeros)

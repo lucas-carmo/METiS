@@ -38,16 +38,23 @@ void Floater::addNode(const std::string &data)
 
 	if (input.size() != 4)
 	{
-		std::cout << "Deu ruim na leitura dos nós.\n";
+		std::cout << "Deu ruim na leitura dos nos. Linha " << IO::getInLineNumber() << ".\n";
 	}
 
-	vec::fixed<4> node(fill::zeros);
-	for (int ii = 0; ii < input.size(); ++ii)
+	// Read node ID
+	unsigned int nodeID{0};
+	readDataFromString( input.at(0), nodeID );
+	m_nodesID.push_back( nodeID );
+
+
+	// Read node coord
+	vec::fixed<3> nodeCoord(fill::zeros);
+	for (int ii = 0; ii < nodeCoord.n_elem; ++ii)
 	{
-		readDataFromString(input.at(ii), node(ii));
+		readDataFromString( input.at(ii+1), nodeCoord(ii) );
 	}
 
-	m_nodes.push_back( node );
+	m_nodesCoord.push_back( nodeCoord );
 }
 
 
@@ -77,12 +84,12 @@ std::string Floater::printCoG() const
 std::string Floater::printNodes() const
 {
 	std::string output = "";
-	for (int ii = 0; ii < m_nodes.size(); ++ii)
+	for (int ii = 0; ii < m_nodesID.size(); ++ii)
 	{
-		output = output + "( " + std::to_string( m_nodes.at(ii)(0) ) + 
-						  ", " + std::to_string( m_nodes.at(ii)(1) ) +
-			              ", " + std::to_string( m_nodes.at(ii)(2) ) +
-			              ", " + std::to_string( m_nodes.at(ii)(3) ) + " )\n";
+		output = output + "( " + std::to_string( m_nodesID.at(ii) ) + 
+						  ", " + std::to_string( m_nodesCoord.at(ii)(0) ) +
+			              ", " + std::to_string( m_nodesCoord.at(ii)(1) ) +
+			              ", " + std::to_string( m_nodesCoord.at(ii)(2) ) + " )\n";
 	}
 	return output;
 }

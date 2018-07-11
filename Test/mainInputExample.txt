@@ -96,7 +96,7 @@ Nodes                     % Node ID,X coord,Y coord,Z coord
 53,-3.25,0,10             % Y pontoon, upper 2
 54,-22.87,0,10
 
-55,1.625-2.815,10         % Y pontoon, upper 3
+55,1.625,-2.815,10         % Y pontoon, upper 3
 56,11.43,-19.81,10
 
 61,1.625,2.815,-17        % Y pontoon, lower 1
