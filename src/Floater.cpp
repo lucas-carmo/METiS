@@ -44,6 +44,15 @@ void Floater::addNode(const std::string &data)
 	// Read node ID
 	unsigned int nodeID{0};
 	readDataFromString( input.at(0), nodeID );
+
+	if (m_nodesID.size() != 0) // If this is not the first node that will be added to m_nodesID
+	{
+		if (nodeID <= m_nodesID.back()) // Then verify if its ID is larger than the previous one, thus garanteeing that m_nodesID is in ascending order (this is needed to use binary search to find nodes IDs)
+		{
+			std::cout << "Nodes tem que estar organizados em ordem crescente. Erro na linha " << IO::getInLineNumber() << ".\n";
+		}
+	}
+
 	m_nodesID.push_back( nodeID );
 
 

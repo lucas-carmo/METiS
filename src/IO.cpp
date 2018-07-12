@@ -42,8 +42,10 @@ unsigned int IO::getInLineNumber()
 	return m_inLineNumber;
 }
 
-// This is the main input function.
-// It is responsible for reading the input file line by line and assigning what is read to the FOWT and ENVIR classes
+/* 
+	This is the main input function.
+	It is responsible for reading the input file line by line and assigning what is read to the FOWT and ENVIR classes
+*/
 void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 {
 	//std::ifstream inFl(m_inFilePath);
@@ -75,11 +77,11 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			removeComments(strInput);
 		}
 
-		/*
+		/**************************
 		Read data based on keywords
-		*/
+		**************************/
 
-		// Read data to envir class
+		// Read data to envir
 		if (caseInsCompare(getKeyword(strInput), "TimeStep"))
 		{
 			envir.readTimeStep(getData(strInput));
@@ -118,7 +120,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 
 
-		// Read data to envir class
+		// Read data to fowt
 		if (caseInsCompare(getKeyword(strInput), "LinStiff"))
 		{
 			fowt.readLinStiff(getData(strInput));
@@ -159,6 +161,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					std::cout << "\n\n\n End of file reached before END keyword in WAVE specification.\n\n";
 					return;
 				}
+
 				if (!hasContent(strInput))
 				{
 					IO::readLineInputFile(strInput);
@@ -188,6 +191,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					std::cout << "\n\n\n End of file reached before END keyword in NODES specification.\n\n";
 					return;
 				}
+
 				if (!hasContent(strInput))
 				{
 					IO::readLineInputFile(strInput);
@@ -205,6 +209,34 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			}
 		}
 
+
+		if (caseInsCompare(getKeyword(strInput), "Morison_circular"))
+		{
+			IO::readLineInputFile(strInput);
+
+			while (!caseInsCompare(getKeyword(strInput), "END"))
+			{
+				if (!m_inFl)
+				{
+					std::cout << "\n\n\n End of file reached before END keyword in MORISON_CIRCULAR specification.\n\n";
+					return;
+				}
+				if (!hasContent(strInput))
+				{
+					IO::readLineInputFile(strInput);
+					continue;
+				}
+
+				if (thereIsCommentInString(strInput))
+				{
+					removeComments(strInput);
+				}
+
+				//floater.addNode(strInput);
+
+				IO::readLineInputFile(strInput);
+			}
+		}
 	}
 
 	fowt.setFloater(floater);

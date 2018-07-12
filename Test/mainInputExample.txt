@@ -49,8 +49,8 @@ FloaterInertia	6.827e9,6.827e9,1.226e10 % Adicionar os outros momentos de inérc
 LinStiff		6.1e5,6.1e5,5.4e8        % Linear mooring stiffness in surge, sway, yaw. MUDAR PRA SER UMA MATRIZ
 
 
-
-Nodes                     % Node ID,X coord,Y coord,Z coord
+% Nodes ID must be unique and in ascending order
+Nodes                     % Node ID, X coord, Y coord, Z coord
 1,0,0,-20                 % Nodes for main column
 2,0,0,10
 

@@ -19,7 +19,7 @@ private:
 	bool m_botPressFlag;
 
 public:
-	virtual vec hydrostaticForce(const ENVIR &envir);
-	virtual vec morisonForce(const ENVIR &envir);
-	virtual vec heavePlateForce(const ENVIR &envir);	
+	//virtual vec hydrostaticForce(const ENVIR &envir);
+	//virtual vec morisonForce(const ENVIR &envir);
+	//virtual vec heavePlateForce(const ENVIR &envir);	
 };
