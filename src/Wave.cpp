@@ -4,8 +4,11 @@
 
 
 /*****************************************************
-	Constructor
+	Constructors
 *****************************************************/
+Wave::Wave(double height, double period, double direction)
+	: m_height(height), m_period(period), m_direction(direction)
+{}
 
 // The string "wholeWaveLine" must contain the keyword that specifies how to read the wave data:
 // 1) TRWave for regular waves specified by their period
@@ -79,7 +82,7 @@ Wave::Wave(const std::string &wholeWaveLine)
 		}
 		else
 		{
-			m_period = 2*M_PI/omega;
+			m_period = 2*datum::pi/omega;
 		}
 	}		
 }

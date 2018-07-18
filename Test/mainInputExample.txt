@@ -119,11 +119,11 @@ Nodes                     % Node ID, X coord, Y coord, Z coord
 END
 
 
-Morison_circular % Emitir erro se os nós usados não forem encontrados
+Morison_circ % Emitir erro se os nós usados não forem encontrados
 % First node ID \t Second node ID \t Diameter \t Drag coefficient \t Inertia coefficient \t Number of integration points ...
 % ... \t Bottom diameter \t Top diameter \t Axial drag coefficient \t Axial added mass coefficient \t 1 or 0 for calculating dynamic pressure or not
 % The second part of the data above (the ones in the second line) is only required for heave plates. Input 0 for everything if only forces perpendicular to the % axis of the cylinder will be considered
-1	2	6.5	0.56	1.63	25	6.5	6.5	0	0	1
+1	2	6.5	0.56	1.63	25	6.5	6.5	0	0	0	
 11	12	12	0.61	1.63	25	0	0	0	0	0
 13	14	12	0.61	1.63	25	0	0	0	0	0
 15	16	12	0.61	1.63	25	0	0	0	0	0
@@ -145,6 +145,11 @@ Morison_circular % Emitir erro se os nós usados não forem encontrados
 71	72	1.6	0.63	1.63	15	0	0	0	0	0
 73	74	1.6	0.63	1.63	15	0	0	0	0	0
 75	76	1.6	0.63	1.63	15	0	0	0	0	0
+END
+
+
+Morison_rect
+124	125	126	7.10	2.2533	1.7854	5.45	2.2533	2.2533	17	0	0	0	0	0
 END
 
 

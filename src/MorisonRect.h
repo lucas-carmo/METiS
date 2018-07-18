@@ -8,7 +8,7 @@ using namespace arma;
 class MorisonRect : public MorisonElement
 {
 private:
-	vec m_cog2node3;
+	vec::fixed<3> m_cog2node3;
 
 	double m_diam_X;
 	double m_CD_X;
@@ -21,11 +21,9 @@ private:
 	double m_botArea;
 	double m_topArea;
 	double m_axialCD;
-	double m_axialCM;
-	bool m_botPressFlag;
+	double m_axialCa;
 
 public:
-	virtual vec hydrostaticForce(const ENVIR &envir);
-	virtual vec morisonForce(const ENVIR &envir);
-	virtual vec heavePlateForce(const ENVIR &envir);
+	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) override;
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir) override;
 };

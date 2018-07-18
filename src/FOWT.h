@@ -21,8 +21,7 @@ private:
 	vec::fixed<3> m_acc;
 
 public:
-	FOWT() : m_linStiff(fill::zeros)
-	{}
+	FOWT();
 
 
 	/*****************************************************

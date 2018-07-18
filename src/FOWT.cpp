@@ -3,6 +3,13 @@
 
 
 /*****************************************************
+	Constructors
+*****************************************************/
+FOWT::FOWT() : m_linStiff(fill::zeros)
+{}
+
+
+/*****************************************************
 	Setters
 *****************************************************/
 
@@ -52,6 +59,7 @@ std::string FOWT::printFloater() const
 	output = output + "\tMass:\t" + m_floater.printMass() + "\n";
 	output = output + "\tCoG:\t" + m_floater.printCoG() + "\n";
 	output = output + "\tNodes:\n" + m_floater.printNodes() + "\n";
+	output = output + "\tMorison Elements:\n" + m_floater.printMorisonElements() + "\n";
 
 	return output;
 }

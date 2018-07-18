@@ -140,23 +140,13 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		}
 
 
-		if (caseInsCompare(getKeyword(strInput), "Wave"))
-		{
-			// A list of Waves is supposed to follow the "Wave keyword"
-			// 1) While the END keyword is not reached
-			//Outro std::getline
-			// 2) getKeyword == algum dos tipos de onda
-			// 		2.1) Initializa uma "Wave wave" e passa os parâmetros dependendo da keyword
-			// 3) getKeyword == END
-			//		3.1) Termina
-			// 4) getKeyword == Qualquer outra coisa
-			//		4.1) Erro					
-			//fowt.readFloaterCoG(getData(strInput));			
-			IO::readLineInputFile(strInput);
+		if (caseInsCompare(getKeyword(strInput), "Wave")) // A list of Waves is supposed to follow the "Wave keyword"
+		{			
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the keyword Wave
 
-			while (!caseInsCompare(getKeyword(strInput), "END")) 		
+			while (!caseInsCompare(getKeyword(strInput), "END")) // The END keyword indicates the end of the list of waves
 			{							
-				if (!m_inFl)
+				if (!m_inFl) // Signal if the end of file is reached before the end keyword
 				{
 					std::cout << "\n\n\n End of file reached before END keyword in WAVE specification.\n\n";
 					return;
@@ -180,13 +170,13 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		}
 
 
-		if (caseInsCompare(getKeyword(strInput), "Nodes"))
+		if (caseInsCompare(getKeyword(strInput), "Nodes")) // A list of Nodes is supposed to follow the "Wave keyword"
 		{
-			IO::readLineInputFile(strInput);
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the keyword Nodes
 
 			while (!caseInsCompare(getKeyword(strInput), "END"))
 			{
-				if (!m_inFl)
+				if (!m_inFl) // Signal if the end of file is reached before the end keyword
 				{
 					std::cout << "\n\n\n End of file reached before END keyword in NODES specification.\n\n";
 					return;
@@ -203,20 +193,20 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					removeComments(strInput);
 				}
 
-				floater.addNode(strInput);
+				floater.addNode(strInput); // Add this node to the floater
 
 				IO::readLineInputFile(strInput);
 			}
 		}
 
 
-		if (caseInsCompare(getKeyword(strInput), "Morison_circular"))
+		if (caseInsCompare(getKeyword(strInput), "Morison_circ")) // A list of circular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
 		{
-			IO::readLineInputFile(strInput);
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the keyword "Morison_circ"
 
 			while (!caseInsCompare(getKeyword(strInput), "END"))
 			{
-				if (!m_inFl)
+				if (!m_inFl) // Signal if the end of file is reached before the end keyword
 				{
 					std::cout << "\n\n\n End of file reached before END keyword in MORISON_CIRCULAR specification.\n\n";
 					return;
@@ -232,7 +222,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					removeComments(strInput);
 				}
 
-				//floater.addNode(strInput);
+				floater.addMorisonCirc(strInput); // Add this Morison Element to the floater
 
 				IO::readLineInputFile(strInput);
 			}

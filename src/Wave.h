@@ -1,8 +1,6 @@
 #pragma once
 
-#define _USE_MATH_DEFINES
 #include <string>
-#include <math.h>
 
 
 class Wave{
@@ -12,9 +10,10 @@ private:
     double m_direction;
 
 public:
-	Wave(double height = 0, double period = 0, double direction =0)
-		: m_height(height), m_period(period), m_direction(direction)
-	{}
+	/*****************************************************
+		Constructors
+	*****************************************************/
+	Wave(double height = 0, double period = 0, double direction = 0);
 
 	Wave(const std::string &wholeWaveLine);
 
