@@ -11,7 +11,7 @@ protected:
 	vec::fixed<3> m_cog2node1;
 	vec::fixed<3> m_cog2node2;
 
-	double m_numIntPoints;
+	int m_numIntPoints;
 	bool m_botPressFlag;
 	
 
@@ -31,7 +31,7 @@ protected:
 	//vec m_fluidAccTang;
 
 public:
-	MorisonElement(vec cog2node1, vec cog2node2, double numIntPoints, bool botPressFlag);
+	MorisonElement(vec cog2node1, vec cog2node2, int numIntPoints, bool botPressFlag);
 
 	//virtual void updateNodePos(const mat &rotatMatrix, const vec &FOWTpos) = 0;
 	//virtual void updateNodeVel(const mat &rotatMatrix, const vec &FOWTpos, const vec &FOWTvel) = 0;

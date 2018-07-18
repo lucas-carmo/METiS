@@ -23,7 +23,7 @@ public:
 	/*****************************************************
 		Constructors
 	*****************************************************/
-	MorisonCirc(vec cog2node1, vec cog2node2, double numIntPoints, bool botPressFlag, double diam, double CD, double CM,
+	MorisonCirc(vec cog2node1, vec cog2node2, int numIntPoints, bool botPressFlag, double diam, double CD, double CM,
 				double botDiam, double topDiam, double axialCD, double axialCa);
 
 	/*****************************************************

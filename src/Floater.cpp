@@ -94,7 +94,7 @@ void Floater::addMorisonCirc(const std::string &data)
 	double diam = 0;
 	double CD = 0;
 	double CM = 0;
-	double numIntPoints = 0;
+	int numIntPoints = 0;
 	double botDiam = 0;
 	double topDiam = 0;
 	double axialCD = 0;

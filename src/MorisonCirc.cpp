@@ -6,7 +6,7 @@ using namespace arma;
 /*****************************************************
 	Constructors
 *****************************************************/
-MorisonCirc::MorisonCirc(vec cog2node1, vec cog2node2, double numIntPoints, bool botPressFlag, double diam, double CD, double CM,
+MorisonCirc::MorisonCirc(vec cog2node1, vec cog2node2, int numIntPoints, bool botPressFlag, double diam, double CD, double CM,
 						 double botDiam, double topDiam, double axialCD, double axialCa)
 	: MorisonElement(cog2node1, cog2node2, numIntPoints, botPressFlag), m_diam(diam), m_CD(CD), m_CM(CM), m_botDiam(botDiam),
 					 m_topDiam(topDiam), m_axialCD(axialCD), m_axialCa(axialCa)
