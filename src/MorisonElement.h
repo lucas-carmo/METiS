@@ -15,7 +15,7 @@ protected:
 	bool m_botPressFlag;
 	
 
-	//Acho que essas coisas tem que ser calculadas dentro de uma funcao força, e nao como membros da classe
+	//Acho que essas coisas tem que ser calculadas dentro de uma funcao forï¿½a, e nao como membros da classe
 	//vec m_node1pos;
 	//vec m_node2pos;
 
@@ -42,6 +42,7 @@ public:
 	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) = 0;
 	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir) = 0;
 
-	virtual std::string print() = 0;
+	virtual std::string print() const = 0;
+	virtual double diam() const = 0;
 };
 

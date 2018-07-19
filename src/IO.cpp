@@ -230,8 +230,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 	}
 
 	fowt.setFloater(floater);
-
-	IO::print2CheckVariables(fowt, envir);
 }
 
 void IO::print2outFile(const std::string &outFlNm)

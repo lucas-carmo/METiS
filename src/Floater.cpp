@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>    // std::binary_search
+#include <utility> // For std::move
 
 /*****************************************************
 	Constructors
@@ -17,8 +18,6 @@ Floater::Floater()
 	m_CoG.fill(datum::nan);	
 	m_inertia.fill(datum::nan);
 }
-
-
 
 /*****************************************************
 	Setters
@@ -158,15 +157,32 @@ void Floater::addMorisonCirc(const std::string &data)
 	}
 
 
-	// However, Morison Elements are not actually specified by the nodes coordinates, but rather by the distance between the nodes and the floater CoG
-
+	// However, Morison Elements are not actually specified by the nodes coordinates, 
+	// but rather by the distance between the nodes and the floater CoG		
+	if ( m_CoG.has_nan() ) // If this is true, then the CoG of the floater wasn't read yet
+	{
+		std::cout << "Floater CoG should be specified before Morison's Elements. Error in line " << IO::getInLineNumber() << '\n';
+		return;
+	}
+	
 	node1_coord = node1_coord - m_CoG;
 	node2_coord = node2_coord - m_CoG;
 
 	
 	// Create a circular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
-	MorisonCirc morison_element(node1_coord, node2_coord, numIntPoints, botPressFlag, diam, CD, CM, botDiam, topDiam, axialCD, axialCa); // As we are using std::reference_wrapper for m_MorisonElements, we can't use anonymous objects
-	m_MorisonElements.push_back( morison_element );
+	// MorisonCirc morison_element(node1_coord, node2_coord, numIntPoints, botPressFlag, diam, CD, CM, botDiam, topDiam, axialCD, axialCa); // As we are using std::reference_wrapper for m_MorisonElements, we can't use anonymous objects
+	// m_MorisonElements.push_back( morison_element );
+
+	// std::unique_ptr<MorisonCirc> ptr( new MorisonCirc(node1_coord, node2_coord, numIntPoints, 
+	// 									  botPressFlag, diam, CD, CM, botDiam, topDiam, 
+	// 									  axialCD, axialCa) );	
+	// m_MorisonElements.push_back( std::make_unique<MorisonCirc>(node1_coord, node2_coord, numIntPoints, 
+	// 									  botPressFlag, diam, CD, CM, botDiam, topDiam, 
+	// 									  axialCD, axialCa) );
+
+	 m_MorisonElements.push_back( std::make_unique<MorisonCirc>(node1_coord, node2_coord, numIntPoints, 
+	 							  botPressFlag, diam, CD, CM, botDiam, topDiam, 
+	 							  axialCD, axialCa) );
 }
 
 
@@ -212,16 +228,62 @@ std::string Floater::printNodes() const
 
 std::string Floater::printMorisonElements() const
 {
-	std::string output = "";
-	int a = m_MorisonElements.size();
-	int b = 1;
+	std::string output = "";	
+	output = output + "Number of Morison Elements: " + std::to_string(m_MorisonElements.size()) + "\n";
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		std::cout << "Morison Element #" << ii << '\n';
-		m_MorisonElements.at(ii).get().print();
+		// output = output + "Morison Element #" + std::to_string(ii) + "Diameter: " +
+		// 		 std::to_string(m_MorisonElements.at(ii)->diam()) + "\n";
+		output = output + "Morison Element #" + std::to_string(ii) + '\n';
+		output = output + m_MorisonElements.at(ii)->print() + '\n';
 	}
 	return output;
 }
+
+
+
+
+
+
+
+
+/*****************************************************
+	Overloaded operators
+*****************************************************/
+Floater& Floater::operator= (Floater &floater)
+{
+	// Shallow copy for simple member variables
+	m_CoG = floater.m_CoG;
+	m_inertia = floater.m_inertia;
+	m_mass = floater.m_mass;
+	m_nodesCoord = floater.m_nodesCoord;
+	m_nodesID = floater.m_nodesID;
+
+	// The member variables that need deep copying are:
+	// - m_MorisonElements;
+
+	// Check for self-assignment
+    if (this == &floater)
+		return *this;
+
+	// In case there is data in m_MorisonElements
+	m_MorisonElements.clear();
+
+	// Resize m_MorisonElemen to match the size of the one in the input floater
+	m_MorisonElements.resize( floater.m_MorisonElements.size() );
+
+	// Attention:
+	// When we move the unique_ptr that are stored in floater.m_MorisonElements
+	// to *this.m_MorisonElements, floater.m_MorisonElements become null.
+	for (int ii = 0; ii < floater.m_MorisonElements.size(); ++ii)
+	{		
+		m_MorisonElements.at(ii) = std::move(floater.m_MorisonElements.at(ii));
+	}		
+		
+    return *this;	
+}
+
+
 
 //mat Floater::rotatMat(const vec &FOWTpos)
 //{}

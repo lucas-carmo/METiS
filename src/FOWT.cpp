@@ -30,7 +30,7 @@ void FOWT::readLinStiff(const std::string &data)
 }
 
 
-void FOWT::setFloater(const Floater &floater)
+void FOWT::setFloater(Floater &floater)
 {
 	m_floater = floater;
 }

@@ -35,6 +35,7 @@ public:
 	/*****************************************************
 		Printing
 	*****************************************************/
-	virtual std::string print() override;
+	virtual std::string print() const override;
+	virtual double diam() const override;
 };
 

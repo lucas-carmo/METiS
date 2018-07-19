@@ -28,7 +28,11 @@ public:
 		Setters
 	*****************************************************/
 	void readLinStiff(const std::string &data);
-	void setFloater(const Floater &floater);
+
+	// You should be aware that the floater that is passed to this function will have
+	// its vector of MorisonElements (member m_MorisonElements) pointing to nullptr
+	// after this function is terminated.
+	void setFloater(Floater &floater);
 
 	
 

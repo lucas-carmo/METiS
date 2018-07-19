@@ -35,7 +35,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir)
 /*****************************************************
 	Printing
 *****************************************************/
-std::string MorisonCirc::print()
+std::string MorisonCirc::print() const
 {
 	std::string output = "";
 
@@ -51,7 +51,11 @@ std::string MorisonCirc::print()
 	output = output + "Axial Ca:\t" + std::to_string(m_axialCa) + '\n';
 	output = output + "Bot. Press. Flag.:\t" + std::to_string(m_botPressFlag) + '\n';
 
-
-
 	return output;
+}
+
+
+double MorisonCirc::diam() const
+{
+	return m_diam;
 }
