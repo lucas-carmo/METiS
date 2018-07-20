@@ -377,8 +377,8 @@ Floater& Floater::operator= (Floater &floater)
 	m_MorisonElements.resize( floater.m_MorisonElements.size() );
 
 	// Attention:
-	// When we move the unique_ptr that are stored in floater.m_MorisonElements
-	// to *this.m_MorisonElements, floater.m_MorisonElements become null.
+	// When we move the unique_ptr's that are stored in floater.m_MorisonElements
+	// to *this.m_MorisonElements, the pointers in floater.m_MorisonElements become null.
 	for (int ii = 0; ii < floater.m_MorisonElements.size(); ++ii)
 	{		
 		m_MorisonElements.at(ii) = std::move(floater.m_MorisonElements.at(ii));
