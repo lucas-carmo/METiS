@@ -22,7 +22,7 @@ After installing all the previous dependencies/third party tools listed above, M
     g++ src/*.cpp METiS -O2 -larmadillo     # Compile the source files and link with Armadillo
     ./METiS <filePath>                      # Run METiS
 
-To make this process easier, a bash script named **build_and_run.sh** is included in the folder **bash_scripts**. It can be run as
+To make this process easier, a bash script named **build_and_run.sh** is included. It can be run as
 
     .\build_and_run             # Compile the source files and link with Armadillo + move METiS to bin folder + run METiS
 
