@@ -20,20 +20,39 @@
 
 
 
-int main()
+int main(int argc, char *argv[])
 {
 	FOWT fowt;
 	ENVIR envir;
     
-    //std::string inFlNm = "Test/mainInputExample.txt";
-	 std::string inFlNm = "Z:/METiS/Test/mainInputExample.txt";
+	if (argc == 1)
+	{
+		std::string defaultFlNm = "Z:/METiS/Test/mainInputExample.txt";
+		//std::string defaultFlNm = "Test/mainInputExample.txt";
+		
+		std::cout << "No input file provided. Running default example located at ./Test/mainInputExample.txt.\n\n\n";
+		IO::setInputFile(defaultFlNm);
+	}
 
-    IO::setInputFile(inFlNm);
+	else if (argc == 2)
+	{
+		std::cout << "Running METiS with file " << argv[1] << "\n\n\n";
+		IO::setInputFile(argv[1]);
+	}
+
+	else {
+		std::cout << "Please provide only one input file.\n";
+		return 0;
+	}
+    
+
+    //IO::setInputFile(inFlNm);
     IO::readInputFile(fowt, envir);
 
     IO::print2CheckVariables(fowt, envir);
 
-	int ii;
+	std::cout << "\n\n\nMETiS run completed. Press any key to exit.\n";
+	char ii;
 	std::cin >> ii;
 
 	return 0;

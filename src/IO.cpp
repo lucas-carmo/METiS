@@ -48,16 +48,6 @@ unsigned int IO::getInLineNumber()
 */
 void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 {
-	//std::ifstream inFl(m_inFilePath);
-
-	//if (!m_inFl)
-	//{
-	//	std::cerr << "Unable to open " << m_inFilePath << " for reading";
-	//	return;
-	//	//exit(1);
-	//}
-
-
 	// Classes that are members of FOWT and ENVIR
 	Floater floater;		
 
