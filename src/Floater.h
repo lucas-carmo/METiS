@@ -33,7 +33,7 @@ public:
 	void readCoG(const std::string &data);
 	void addNode(const std::string &data);
 	void addMorisonCirc(const std::string &data);
-	//void addMorisonRect(const std::string &data);
+	void addMorisonRect(const std::string &data);
 
 
 	/*****************************************************

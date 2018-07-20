@@ -2,6 +2,19 @@
 
 using namespace arma;
 
+
+/*****************************************************
+    Constructors
+*****************************************************/
+MorisonRect::MorisonRect(vec cog2node1, vec cog2node2, vec cog2node3, int numIntPoints, bool botPressFlag,
+			        	double axialCD, double axialCa, double diam_X, double CD_X, double CM_X,
+				        double diam_Y, double CD_Y, double CM_Y,
+				        double botArea, double topArea)
+            : MorisonElement(cog2node1, cog2node2, numIntPoints, botPressFlag, axialCD, axialCa),
+              m_cog2node3(cog2node3), m_diam_X(diam_X), m_CD_X(CD_X), m_CM_X(CM_X),
+              m_diam_Y(diam_Y), m_CD_Y(CD_Y), m_CM_Y(CM_Y), m_botArea(botArea), m_topArea(topArea)
+{}
+
 /*vec MorisonRect::hydrostaticForce(const ENVIR &envir)
 {}
 

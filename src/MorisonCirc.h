@@ -16,15 +16,14 @@ private:
 
 	double m_botDiam;
 	double m_topDiam;
-	double m_axialCD;
-	double m_axialCa;
 
 public:
 	/*****************************************************
 		Constructors
 	*****************************************************/
-	MorisonCirc(vec cog2node1, vec cog2node2, int numIntPoints, bool botPressFlag, double diam, double CD, double CM,
-				double botDiam, double topDiam, double axialCD, double axialCa);
+	MorisonCirc(vec cog2node1, vec cog2node2, int numIntPoints, bool botPressFlag,
+				double axialCD, double axialCa, double diam, double CD, double CM,
+				double botDiam, double topDiam);
 
 	/*****************************************************
 		Forces acting on the Morison Element
@@ -36,6 +35,5 @@ public:
 		Printing
 	*****************************************************/
 	virtual std::string print() const override;
-	virtual double diam() const override;
 };
 

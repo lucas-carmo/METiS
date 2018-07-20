@@ -10,9 +10,11 @@ class MorisonElement
 protected:
 	vec::fixed<3> m_cog2node1;
 	vec::fixed<3> m_cog2node2;
-
 	int m_numIntPoints;
+
 	bool m_botPressFlag;
+	double m_axialCD;
+	double m_axialCa;
 	
 
 	//Acho que essas coisas tem que ser calculadas dentro de uma funcao for�a, e nao como membros da classe
@@ -31,7 +33,8 @@ protected:
 	//vec m_fluidAccTang;
 
 public:
-	MorisonElement(vec cog2node1, vec cog2node2, int numIntPoints, bool botPressFlag);
+	MorisonElement(vec cog2node1, vec cog2node2, int numIntPoints, 
+				   bool botPressFlag, double axialCD, double axialCa);
 
 	//virtual void updateNodePos(const mat &rotatMatrix, const vec &FOWTpos) = 0;
 	//virtual void updateNodeVel(const mat &rotatMatrix, const vec &FOWTpos, const vec &FOWTvel) = 0;

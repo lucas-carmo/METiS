@@ -6,10 +6,11 @@ using namespace arma;
 /*****************************************************
 	Constructors
 *****************************************************/
-MorisonCirc::MorisonCirc(vec cog2node1, vec cog2node2, int numIntPoints, bool botPressFlag, double diam, double CD, double CM,
-						 double botDiam, double topDiam, double axialCD, double axialCa)
-	: MorisonElement(cog2node1, cog2node2, numIntPoints, botPressFlag), m_diam(diam), m_CD(CD), m_CM(CM), m_botDiam(botDiam),
-					 m_topDiam(topDiam), m_axialCD(axialCD), m_axialCa(axialCa)
+MorisonCirc::MorisonCirc(vec cog2node1, vec cog2node2, int numIntPoints, 
+						 bool botPressFlag, double axialCD, double axialCa,
+						 double diam, double CD, double CM, double botDiam, double topDiam)
+	: MorisonElement(cog2node1, cog2node2, numIntPoints, botPressFlag, axialCD, axialCa), 
+					 m_diam(diam), m_CD(CD), m_CM(CM), m_botDiam(botDiam), m_topDiam(topDiam)
 {}
 
 
@@ -52,10 +53,4 @@ std::string MorisonCirc::print() const
 	output = output + "Bot. Press. Flag.:\t" + std::to_string(m_botPressFlag) + '\n';
 
 	return output;
-}
-
-
-double MorisonCirc::diam() const
-{
-	return m_diam;
 }

@@ -116,6 +116,11 @@ Nodes                     % Node ID, X coord, Y coord, Z coord
 
 75,1.625,-2.815,-16.2     % Cross brace 3
 76,11.43,-19.81,9.13
+
+% Nodes to test rectangular elements
+111,-35.700,0.000,-12.250
+112,-25.668,0.000,-12.250
+113,-35.700,1.000,-12.250
 END
 
 
@@ -149,7 +154,15 @@ END
 
 
 Morison_rect
-124	125	126	7.10	2.2533	1.7854	5.45	2.2533	2.2533	17	0	0	0	0	0
+% Rectangular cylinders: RETP 
+% Requires properties (diameter, drag coeff, added mass coeff, etc) in two different directions, x and y
+% Directions are determined as follows: 	Zlocal is the longitudinal direction, given by (n2 - n1) / |n2-n1| (n1 = node 1, n2 = node 2)
+%										 	Xlocal is given by (n3-n1) / |n3-n1|
+%										 	Ylocal is calculated as cross( Zlocal , Xlocal )
+% First node ID \t Second node ID \t Third node ID \t Diameter in local x \t  Drag coefficient in x\t Inertia coefficient in x \t Diameter in local y \t  Drag coefficient in y\t Inertia coefficient in y \t Number of integration points ...
+% ... \t Bottom surface \t Top surface \t Axial drag coefficient \t Axial added mass coefficient \t 1 or 0 for calculating dynamic pressure or not
+% The second part of the data above (the ones in the second line) is only required for heave plates. Input 0 for everything if only forces perpendicular to the axis of the cylinder will be considered
+111	112	113	7.10	4.0	1.65	5.45	5.0	2.20	17	0	0	0	0	0
 END
 
 
