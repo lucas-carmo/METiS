@@ -46,6 +46,5 @@ public:
 	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir) = 0;
 
 	virtual std::string print() const = 0;
-	virtual double diam() const = 0;
 };
 

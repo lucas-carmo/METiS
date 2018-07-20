@@ -15,14 +15,48 @@ MorisonRect::MorisonRect(vec cog2node1, vec cog2node2, vec cog2node3, int numInt
               m_diam_Y(diam_Y), m_CD_Y(CD_Y), m_CM_Y(CM_Y), m_botArea(botArea), m_topArea(topArea)
 {}
 
-/*vec MorisonRect::hydrostaticForce(const ENVIR &envir)
-{}
+
+/*****************************************************
+	Forces acting on the Morison Element
+*****************************************************/
+vec::fixed<6> MorisonRect::hydrostaticForce(const ENVIR &envir)
+{
+	vec::fixed<6> force(fill::zeros);
+	return force;
+}
+
+vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir)
+{
+	vec::fixed<6> force(fill::zeros);
+	return force;
+}
 
 
-vec MorisonRect::morisonForce(const ENVIR &envir)
-{}
+
+/*****************************************************
+	Printing
+*****************************************************/
+std::string MorisonRect::print() const
+{
+	std::string output = "";
+
+	output = output + "CoG_2_node1:\t(" + std::to_string(m_cog2node1(0)) + ", " + std::to_string(m_cog2node1(1)) + ", " + std::to_string(m_cog2node1(2)) + ")\n";
+	output = output + "CoG_2_node2:\t(" + std::to_string(m_cog2node2(0)) + ", " + std::to_string(m_cog2node2(1)) + ", " + std::to_string(m_cog2node2(2)) + ")\n";
+	output = output + "CoG_2_node3:\t(" + std::to_string(m_cog2node3(0)) + ", " + std::to_string(m_cog2node3(1)) + ", " + std::to_string(m_cog2node3(2)) + ")\n";
+	output = output + "Diameter X:\t" + std::to_string(m_diam_X) + '\n';
+	output = output + "Drag Coeff. X:\t" + std::to_string(m_CD_X) + '\n';
+	output = output + "Inert. Coeff. X:\t" + std::to_string(m_CM_X) + '\n';
+	output = output + "Diameter Y:\t" + std::to_string(m_diam_Y) + '\n';
+	output = output + "Drag Coeff. Y:\t" + std::to_string(m_CD_Y) + '\n';
+	output = output + "Inert. Coeff. Y:\t" + std::to_string(m_CM_Y) + '\n';
+	output = output + "Numb. of Int. Points:\t" + std::to_string(m_numIntPoints) + '\n';
+	output = output + "Bottom diameter:\t" + std::to_string(m_botArea) + '\n';
+	output = output + "Top diameter:\t" + std::to_string(m_topArea) + '\n';
+	output = output + "Axial CD:\t" + std::to_string(m_axialCD) + '\n';
+	output = output + "Axial Ca:\t" + std::to_string(m_axialCa) + '\n';
+	output = output + "Bot. Press. Flag.:\t" + std::to_string(m_botPressFlag) + '\n';
+
+	return output;
+}
 
 
-vec MorisonRect::heavePlateForce(const ENVIR &envir)
-{}
-*/

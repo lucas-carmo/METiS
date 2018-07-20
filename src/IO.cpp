@@ -208,7 +208,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			{
 				if (!m_inFl) // Signal if the end of file is reached before the end keyword
 				{
-					std::cout << "\n\n\n End of file reached before END keyword in MORISON_CIRCULAR specification.\n\n";
+					std::cout << "\n\n\n End of file reached before END keyword in MORISON_CIRc specification.\n\n";
 					return;
 				}
 				if (!hasContent(strInput))
@@ -223,6 +223,35 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				}
 
 				floater.addMorisonCirc(strInput); // Add this Morison Element to the floater
+
+				IO::readLineInputFile(strInput);
+			}
+		}
+
+
+		if (caseInsCompare(getKeyword(strInput), "Morison_rect")) // A list of rectangular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
+		{
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the keyword "Morison_circ"
+
+			while (!caseInsCompare(getKeyword(strInput), "END"))
+			{
+				if (!m_inFl) // Signal if the end of file is reached before the end keyword
+				{
+					std::cout << "\n\n\n End of file reached before END keyword in MORISON_RECT specification.\n\n";
+					return;
+				}
+				if (!hasContent(strInput))
+				{
+					IO::readLineInputFile(strInput);
+					continue;
+				}
+
+				if (thereIsCommentInString(strInput))
+				{
+					removeComments(strInput);
+				}
+
+				floater.addMorisonRect(strInput); // Add this Morison Element to the floater
 
 				IO::readLineInputFile(strInput);
 			}
