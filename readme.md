@@ -19,7 +19,8 @@
 ### **Compiling and running**
 After installing all the previous dependencies/third party tools listed above, METiS can be compiled, linked and run using the following commands:
 
-    g++ src/*.cpp METiS -O2 -larmadillo     # Compile the source files and link with Armadillo
+    g++ -c src/*.cpp                        # Compile the source files
+    g++ -o METiS -O2 *.o -larmadillo        # Link the resulting object files and Armadillo
     ./METiS <filePath>                      # Run METiS
 
 To make this process easier, a bash script named **build_and_run.sh** is included. It can be run as
