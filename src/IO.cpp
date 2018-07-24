@@ -16,7 +16,7 @@ unsigned int IO::m_inLineNumber = 0;
 
 
 /*****************************************************
-    Implementation of class functions
+    Class functions related to Input
 *****************************************************/
 void IO::setInputFile(const std::string &inFlPath)
 {
@@ -31,10 +31,27 @@ void IO::setInputFile(const std::string &inFlPath)
 	}
 }
 
+
+// Read line from input file to string "strInput".
+// The function deals with empty lines and comments using functions "hasContent" and
+// "thereIsCommentInString". Besides, it updates the line number counter inLineNumber
 void IO::readLineInputFile(std::string &strInput)
 {
-	std::getline(m_inFl, strInput);
-	++m_inLineNumber; // Update counter for lineNumber
+	std::getline(m_inFl, strInput); // Read next file line to string strInput
+	++m_inLineNumber; // Update line number counter
+
+	// Repeat this process until the line has some content or end of file is achieved
+	while (!hasContent(strInput) && m_inFl)
+	{		
+		std::getline(m_inFl, strInput);
+		++m_inLineNumber;
+	}
+
+	// Remove comments from line
+	if (thereIsCommentInString(strInput))
+	{
+		removeComments(strInput);
+	}				
 }
 
 unsigned int IO::getInLineNumber()
@@ -42,10 +59,9 @@ unsigned int IO::getInLineNumber()
 	return m_inLineNumber;
 }
 
-/* 
-	This is the main input function.
-	It is responsible for reading the input file line by line and assigning what is read to the FOWT and ENVIR classes
-*/
+
+//	This is the main input function.
+//	It is responsible for reading the input file line by line and assigning what is read to the FOWT and ENVIR classes
 void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 {
 	// Classes that are members of FOWT and ENVIR
@@ -56,16 +72,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 	{
 		std::string strInput;		
 		IO::readLineInputFile(strInput);
-
-		if (!hasContent(strInput))
-		{
-			continue;
-		}
-
-		if (thereIsCommentInString(strInput))
-		{
-			removeComments(strInput);
-		}
 
 		/**************************
 		Read data based on keywords
@@ -142,17 +148,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				if (!hasContent(strInput))
-				{
-					IO::readLineInputFile(strInput);
-					continue;
-				}
-
-				if (thereIsCommentInString(strInput))
-				{
-					removeComments(strInput);
-				}			
-
 				envir.addWave( Wave(strInput) ); // Add this wave to the environment
 				
 				IO::readLineInputFile(strInput);
@@ -170,17 +165,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				{
 					std::cout << "\n\n\n End of file reached before END keyword in NODES specification.\n\n";
 					return;
-				}
-
-				if (!hasContent(strInput))
-				{
-					IO::readLineInputFile(strInput);
-					continue;
-				}
-
-				if (thereIsCommentInString(strInput))
-				{
-					removeComments(strInput);
 				}
 
 				floater.addNode(strInput); // Add this node to the floater
@@ -201,16 +185,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					std::cout << "\n\n\n End of file reached before END keyword in MORISON_CIRc specification.\n\n";
 					return;
 				}
-				if (!hasContent(strInput))
-				{
-					IO::readLineInputFile(strInput);
-					continue;
-				}
-
-				if (thereIsCommentInString(strInput))
-				{
-					removeComments(strInput);
-				}
 
 				floater.addMorisonCirc(strInput); // Add this Morison Element to the floater
 
@@ -230,16 +204,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					std::cout << "\n\n\n End of file reached before END keyword in MORISON_RECT specification.\n\n";
 					return;
 				}
-				if (!hasContent(strInput))
-				{
-					IO::readLineInputFile(strInput);
-					continue;
-				}
-
-				if (thereIsCommentInString(strInput))
-				{
-					removeComments(strInput);
-				}
 
 				floater.addMorisonRect(strInput); // Add this Morison Element to the floater
 
@@ -251,9 +215,13 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 	fowt.setFloater(floater);
 }
 
+
+/*****************************************************
+    Class functions related to Output
+*****************************************************/
+
 void IO::print2outFile(const std::string &outFlNm)
 {}
-
 
 // Print the members of fowt and envir. Useful for debugging.
 void IO::print2CheckVariables(const FOWT &fowt, const ENVIR &envir)

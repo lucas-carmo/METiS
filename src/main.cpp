@@ -27,8 +27,8 @@ int main(int argc, char *argv[])
     
 	if (argc == 1)
 	{
-		std::string defaultFlNm = "Z:/METiS/Test/mainInputExample.txt";
-		//std::string defaultFlNm = "Test/mainInputExample.txt";
+		// std::string defaultFlNm = "Z:/METiS/Test/mainInputExample.txt";
+		std::string defaultFlNm = "Test/mainInputExample.txt";
 		
 		std::cout << "No input file provided. Running default example located at ./Test/mainInputExample.txt.\n\n\n";
 		IO::setInputFile(defaultFlNm);

@@ -13,10 +13,12 @@
 class IO
 {
 private:
+	// Members related to input
 	static std::string m_inFilePath;
 	static std::ifstream m_inFl;
 	static unsigned int m_inLineNumber; // Stores the current line number while reading the input file
 
+	// Members related to output of summary file
 	static std::string m_header;
 	static bool m_shouldWriteHeader;
 
@@ -24,6 +26,7 @@ private:
 	static bool m_shouldWriteOutputTimeStep;
 
 public:
+	// Class functions related to Input
 	static void setInputFile(const std::string &inFlPath);
 	static void readLineInputFile(std::string &strInput);
 	static unsigned int getInLineNumber();
@@ -75,10 +78,6 @@ bool caseInsCompare(const std::string& s1, const std::string& s2);
 
 // Same thing for wstring
 bool caseInsCompare(const std::wstring& s1, const std::wstring& s2);
-
-
-
-
 
 
 
