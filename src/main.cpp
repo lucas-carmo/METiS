@@ -11,7 +11,6 @@
 
 #include <iostream>
 #include <chrono> // For std::chrono functions. It is useful to time the code and verify whether one method or another will be more performant
-#include <unistd.h> // For usleep. THIS WILL SOON BE USELESS
 #include <armadillo> // Linear algebra library with usage similar to MATLAB
 #include <string>
 
@@ -20,6 +19,12 @@
 #include "ENVIR.h"
 
 
+#ifdef __unix__
+# include <unistd.h>
+#elif defined _WIN32
+# include <windows.h>
+#define usleep(x) Sleep((x)/1000)
+#endif
 
 int main(int argc, char *argv[])
 {
