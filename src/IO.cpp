@@ -25,7 +25,7 @@ void IO::setInputFile(const std::string &inFlPath)
 
 	if (!m_inFl)
 	{
-		std::cerr << "Unable to open " << m_inFilePath << " for reading";
+		std::cerr << "Unable to open " << m_inFilePath << " for reading\n";
 		return;
 		//exit(1);
 	}

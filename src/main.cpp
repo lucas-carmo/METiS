@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <chrono> // For std::chrono functions. It is useful to time the code and verify whether one method or another will be more performant
+#include <unistd.h> // For usleep. THIS WILL SOON BE USELESS
 #include <armadillo> // Linear algebra library with usage similar to MATLAB
 #include <string>
 
@@ -25,35 +26,35 @@ int main(int argc, char *argv[])
 	FOWT fowt;
 	ENVIR envir;
     
-	if (argc == 1)
-	{
-		// std::string defaultFlNm = "Z:/METiS/Test/mainInputExample.txt";
-		std::string defaultFlNm = "Test/mainInputExample.txt";
-		
-		std::cout << "No input file provided. Running default example located at ./Test/mainInputExample.txt.\n\n\n";
-		IO::setInputFile(defaultFlNm);
-	}
-
-	else if (argc == 2)
-	{
-		std::cout << "Running METiS with file " << argv[1] << "\n\n\n";
-		IO::setInputFile(argv[1]);
-	}
-
-	else {
-		std::cout << "Please provide only one input file.\n";
+	if (argc < 2)
+	{	
+		// Acho melhor throw exception, escrever pro console, escrever pro log file,
+		// esperar input do usuario e daí terminar
+		std::cout << "Please provide at least one input file.\n";
 		return 0;
 	}
     
+	for (int ii = 1; ii < argc; ++ii)
+	{		
+		std::cout << "Running METiS with file " << argv[ii] << "\n\n\n";
+		IO::setInputFile(argv[ii]);
+		IO::readInputFile(fowt, envir);
+		IO::print2CheckVariables(fowt, envir);
 
-    //IO::setInputFile(inFlNm);
-    IO::readInputFile(fowt, envir);
 
-    IO::print2CheckVariables(fowt, envir);
+		std::cout << '\n';
+		for (int ii = 1; ii < 100; ++ii)
+		{		
+			std::cout << ii << "%" << '\r';		
+			fflush(stdout);
+			usleep(100000);
+		}
+
+	}
 
 	std::cout << "\n\n\nMETiS run completed. Press any key to exit.\n";
-	char ii;
-	std::cin >> ii;
+	char waitInput;
+	std::cin >> waitInput;
 
 	return 0;
 }
