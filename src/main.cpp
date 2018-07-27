@@ -52,14 +52,14 @@ int main(int argc, char *argv[])
 		{		
 			std::cout << ii << "%" << '\r';		
 			fflush(stdout);
-			usleep(100000);
+			usleep(50000);
 		}
 
 	}
 
-	std::cout << "\n\n\nMETiS run completed. Press any key to exit.\n";
-	char waitInput;
-	std::cin >> waitInput;
+	std::cin.sync();
+	std::cout << "\n\n\nMETiS run completed. Press enter to exit.\n";
+	std::cin.get();
 
 	return 0;
 }
