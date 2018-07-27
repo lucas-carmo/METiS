@@ -2,7 +2,10 @@
 
 #include <fstream> // Include file input/output classes
 #include <iostream>
-#include <cstdlib> // For exit()
+#include <stdexcept> // For std::exception
+#include <sys/types.h> // Using this and the one below to check if directories and files exist
+#include <sys/stat.h>
+#include <cstdlib> // for exit()
 
 
 
@@ -13,22 +16,65 @@ std::string IO::m_inFilePath = "";
 std::ifstream IO::m_inFl;
 unsigned int IO::m_inLineNumber = 0;
 
+std::string IO::m_logFilePath = "";
+std::ofstream IO::m_logFl;
+
 
 
 /*****************************************************
     Class functions related to Input
 *****************************************************/
-void IO::setInputFile(const std::string &inFlPath)
+void IO::setFiles(const std::string &inFlPath)
 {
+	// Check whether we are not trying to reset the input file
+	if ( !m_inFilePath.empty() )
+	{
+		std::cin.sync();
+		std::cerr << "You can not reset the input file. Press enter to exit.\n";
+		std::cin.get();
+		exit(1);
+	}
 	m_inFilePath = inFlPath;
-	m_inFl.open(m_inFilePath);
 
+	// Get path of the folder where the input file is located, as that is where the output
+	// will be saved to.
+	std::string folderPath = getFileFolder(m_inFilePath);
+
+	// Path of the output folder
+	std::string outputFolder = folderPath + "/output";
+
+	// Create output folder with name "output".
+	// If a folder (or file) named "output" already exists in folderPath, create a folder named output_1. If the latter exists as well, create output_2 instead.
+	// Keep this process until output_n does not exist and is then created.
+	struct stat info;		
+	std::string outputFolder_original = outputFolder; // Original name of folderPath
+	int ii = 1;	
+	while ( stat(outputFolder.c_str(), &info) == 0 )
+	{
+		outputFolder = outputFolder_original + "_" + std::to_string(ii);			
+		++ii;
+	}
+	system( ("mkdir " + outputFolder).c_str() );
+
+	// Set log file
+	// If we fail to open the log file, print a message to the console screen and terminate the program.
+	// The other error messages will be written to the log file (as well as any other message that is fit to be output).
+	m_logFilePath = outputFolder + "/log.txt";
+	m_logFl.open(m_logFilePath); 
+	if (!m_logFl)
+	{
+		std::cin.sync();
+		std::cerr << "Unable to open file " << m_logFilePath << " for writting. Press enter to exit.\n";
+		std::cin.get();
+		exit(1);
+	}
+
+	// Open input file
+	m_inFl.open(m_inFilePath);
 	if (!m_inFl)
 	{
-		std::cerr << "Unable to open " << m_inFilePath << " for reading\n";
-		return;
-		//exit(1);
-	}
+		throw std::runtime_error("Unable to open file " + m_inFilePath + " for reading.");
+	}	
 }
 
 
@@ -219,6 +265,10 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 /*****************************************************
     Class functions related to Output
 *****************************************************/
+void IO::write2log(const std::string &strInput)
+{
+	m_logFl << strInput << std::endl;
+}
 
 void IO::print2outFile(const std::string &outFlNm)
 {}
@@ -347,4 +397,13 @@ bool caseInsCompare(const std::string& s1, const std::string& s2) {
 bool caseInsCompare(const std::wstring& s1, const std::wstring& s2) {
 	return((s1.size() == s2.size()) &&
 		std::equal(s1.begin(), s1.end(), s2.begin(), caseInsCharCompareW));
+}
+
+
+// Get folder path from a complete file path
+std::string getFileFolder(const std::string& path)
+{
+  size_t found;
+  found = path.find_last_of("/\\");
+  return path.substr(0,found);
 }

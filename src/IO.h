@@ -19,18 +19,28 @@ private:
 	static unsigned int m_inLineNumber; // Stores the current line number while reading the input file
 
 	// Members related to output of summary file
-	static std::string m_header;
-	static bool m_shouldWriteHeader;
+	// static std::string m_header;
+	// static bool m_shouldWriteHeader;
+
+	// Members related to output of log file
+	static std::string m_logFilePath;
+	static std::ofstream m_logFl;
+	
 
 	static std::string m_outputTimeStep; // String with the data that is output at each time step (FOWT position, hydro force components, anything that is a function of time)
 	static bool m_shouldWriteOutputTimeStep;
 
 public:
-	// Class functions related to Input
-	static void setInputFile(const std::string &inFlPath);
+	// Set input file and output files based on the input file path
+	static void setFiles(const std::string &inFlPath);
+
+	// Functions related to Input	
 	static void readLineInputFile(std::string &strInput);
 	static unsigned int getInLineNumber();
-	static void readInputFile(FOWT &fowt, ENVIR &envir);		
+	static void readInputFile(FOWT &fowt, ENVIR &envir);	
+
+	// Functions related to output
+	static void write2log(const std::string &strInput);
 
 	//static bool checkData(); // Depende do tipo de analise a ser feita
 	
@@ -78,6 +88,9 @@ bool caseInsCompare(const std::string& s1, const std::string& s2);
 
 // Same thing for wstring
 bool caseInsCompare(const std::wstring& s1, const std::wstring& s2);
+
+// Get folder path from a complete file path
+std::string getFileFolder(const std::string& path);
 
 
 
