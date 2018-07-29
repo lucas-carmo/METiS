@@ -59,9 +59,7 @@ int main(int argc, char *argv[])
 	}
 	catch(std::exception &exception)
 	{
-		IO::write2log(exception.what());
-		IO::write2log(exception.what());
-		std::cerr << "Standard exception: " << exception.what() << '\n';		
+		IO::writeErrorMessage( "Standard exception: " + std::string(exception.what()) );
 	}
 
 

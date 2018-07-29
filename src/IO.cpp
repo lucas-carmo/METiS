@@ -29,12 +29,17 @@ void IO::setFiles(const std::string &inFlPath)
 	// Check whether we are not trying to reset the input file
 	if ( !m_inFilePath.empty() )
 	{
-		std::cin.sync();
-		std::cerr << "You can not reset the input file. Press enter to exit.\n";
-		std::cin.get();
-		exit(1);
+		throw std::runtime_error("You can not reset the input file. Press enter to exit.\n");
 	}
 	m_inFilePath = inFlPath;
+
+	// Open input file
+	m_inFl.open(m_inFilePath);
+	if (!m_inFl)
+	{
+		throw std::runtime_error("Unable to open file " + m_inFilePath + " for reading.");
+	}	
+
 
 	// Get path of the folder where the input file is located, as that is where the output
 	// will be saved to.
@@ -63,18 +68,8 @@ void IO::setFiles(const std::string &inFlPath)
 	m_logFl.open(m_logFilePath); 
 	if (!m_logFl)
 	{
-		std::cin.sync();
-		std::cerr << "Unable to open file " << m_logFilePath << " for writting. Press enter to exit.\n";
-		std::cin.get();
-		exit(1);
+		throw std::runtime_error("Unable to open file " + m_logFilePath + " for writting. Press enter to exit.\n");
 	}
-
-	// Open input file
-	m_inFl.open(m_inFilePath);
-	if (!m_inFl)
-	{
-		throw std::runtime_error("Unable to open file " + m_inFilePath + " for reading.");
-	}	
 }
 
 
@@ -265,9 +260,15 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 /*****************************************************
     Class functions related to Output
 *****************************************************/
-void IO::write2log(const std::string &strInput)
+void IO::writeErrorMessage(const std::string &strInput)
 {
-	m_logFl << strInput << std::endl;
+	if (m_logFl) // If we are able to write to the log file, do it
+	{
+		m_logFl << strInput << std::endl;
+	}
+
+	// Write to the console, anyway
+	std::cerr << strInput << std::endl;
 }
 
 void IO::print2outFile(const std::string &outFlNm)

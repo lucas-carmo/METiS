@@ -40,7 +40,7 @@ public:
 	static void readInputFile(FOWT &fowt, ENVIR &envir);	
 
 	// Functions related to output
-	static void write2log(const std::string &strInput);
+	static void writeErrorMessage(const std::string &strInput);
 
 	//static bool checkData(); // Depende do tipo de analise a ser feita
 	
