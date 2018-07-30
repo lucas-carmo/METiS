@@ -13,19 +13,21 @@
 class IO
 {
 private:
+	// METiS Version 
+	static constexpr char m_METIS_VERSION[] = "0.0.1";
+
 	// Members related to input
 	static std::string m_inFilePath;
 	static std::ifstream m_inFl;
 	static unsigned int m_inLineNumber; // Stores the current line number while reading the input file
 
-	// Members related to output of summary file
-	// static std::string m_header;
-	// static bool m_shouldWriteHeader;
-
 	// Members related to output of log file
 	static std::string m_logFilePath;
 	static std::ofstream m_logFl;
 	
+	// Members related to output of summary file
+	static std::string m_sumFilePath;
+	static std::ofstream m_sumFl;
 
 	static std::string m_outputTimeStep; // String with the data that is output at each time step (FOWT position, hydro force components, anything that is a function of time)
 	static bool m_shouldWriteOutputTimeStep;
@@ -40,12 +42,14 @@ public:
 	static void readInputFile(FOWT &fowt, ENVIR &envir);	
 
 	// Functions related to output
-	static void writeErrorMessage(const std::string &strInput);
+	static std::string METiS_Header();
+	static void writeErrorMessage(const std::string &str);
+	static void writeWarningMessage(const std::string &str);
+	static void printSumFile(const FOWT &fowt, const ENVIR &envir);
 
 	//static bool checkData(); // Depende do tipo de analise a ser feita
 	
 	static void print2outFile(const std::string &outFlNm);
-	static void print2CheckVariables(const FOWT &fowt, const ENVIR &envir); // Print the members of fowt and envir. Useful for debugging.
 };
 
 

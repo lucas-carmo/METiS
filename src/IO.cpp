@@ -12,12 +12,17 @@
 /*****************************************************
 	Defining and initializing static member variables
 *****************************************************/
+constexpr char IO::m_METIS_VERSION[];
+
 std::string IO::m_inFilePath = "";
 std::ifstream IO::m_inFl;
 unsigned int IO::m_inLineNumber = 0;
 
 std::string IO::m_logFilePath = "";
 std::ofstream IO::m_logFl;
+
+std::string IO::m_sumFilePath;
+std::ofstream IO::m_sumFl;
 
 
 
@@ -48,7 +53,7 @@ void IO::setFiles(const std::string &inFlPath)
 	// Path of the output folder
 	std::string outputFolder = folderPath + "/output";
 
-	// Create output folder with name "output".
+	// Create output folder with name "output" in the same folder as the input file ("folderPath").
 	// If a folder (or file) named "output" already exists in folderPath, create a folder named output_1. If the latter exists as well, create output_2 instead.
 	// Keep this process until output_n does not exist and is then created.
 	struct stat info;		
@@ -62,13 +67,19 @@ void IO::setFiles(const std::string &inFlPath)
 	system( ("mkdir " + outputFolder).c_str() );
 
 	// Set log file
-	// If we fail to open the log file, print a message to the console screen and terminate the program.
-	// The other error messages will be written to the log file (as well as any other message that is fit to be output).
 	m_logFilePath = outputFolder + "/log.txt";
 	m_logFl.open(m_logFilePath); 
 	if (!m_logFl)
 	{
 		throw std::runtime_error("Unable to open file " + m_logFilePath + " for writting. Press enter to exit.\n");
+	}
+
+	// Set summary file
+	m_sumFilePath = outputFolder + "/summary.txt";
+	m_sumFl.open(m_sumFilePath);
+	if (!m_sumFl)
+	{
+		throw std::runtime_error("Unable to open file " + m_sumFilePath + " for writting. Press enter to exit.\n");
 	}
 }
 
@@ -258,37 +269,77 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 
 /*****************************************************
-    Class functions related to Output
+    Class functions related to output
 *****************************************************/
-void IO::writeErrorMessage(const std::string &strInput)
+
+// Returns the header that is later printed to the console and to the summary file (perhaps to other files in the future).
+// I know that making it a function is not optimal in terms of performance, but since it is irrelevant
+// compared to the time spent with the rest of the code, I chose this solutions because it is easier to maintain.
+std::string IO::METiS_Header()
+{
+	std::string header("");
+	header += ">--------<>--------<>--------<+>--------<>--------<>--------<\n";
+	header += ">                                                           <\n";
+	header += ">                        METiS - USP                        <\n";
+	header += ">          Morison Equation Time Domain Simulation          <\n";
+	header += ">              University of Sao Paulo - Brazil             <\n";
+	header += ">                                                           <\n";
+	header += ">                                                    v" + std::string(m_METIS_VERSION) + " <\n";
+	header += ">--------<>--------<>--------<+>--------<>--------<>--------<";	
+
+	return header;
+}
+
+void IO::writeErrorMessage(const std::string &str)
 {
 	if (m_logFl) // If we are able to write to the log file, do it
 	{
-		m_logFl << strInput << std::endl;
+		m_logFl << str << std::endl;
 	}
 
 	// Write to the console, anyway
-	std::cerr << strInput << std::endl;
+	std::cerr << str << std::endl;
 }
+
+void IO::writeWarningMessage(const std::string &str)
+{}
 
 void IO::print2outFile(const std::string &outFlNm)
 {}
 
 // Print the members of fowt and envir. Useful for debugging.
-void IO::print2CheckVariables(const FOWT &fowt, const ENVIR &envir)
-{
-	std::cout << "FOWT:\n";
-	std::cout << "Linear Stiffness:\t" << fowt.printLinStiff() << '\n';
-	std::cout << "Floater:\n" << fowt.printFloater();
+void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
+{	
+	if (!m_sumFl)
+	{
+		throw std::runtime_error("Unable to open file " + m_sumFilePath + " for writting. Press enter to exit.\n");
+	}
 
-	std::cout << "\n\n\nENVIR:\n";
-	std::cout << "Time Step:\t" << envir.printTimeStep() << '\n';
-	std::cout << "Total Time:\t" << envir.printTimeTotal() << '\n';
-	std::cout << "Time Ramp:\t" << envir.printTimeRamp() << '\n';
-	std::cout << "Gravity:\t" << envir.printGrav() << '\n';
-	std::cout << "Water Density:\t" << envir.printWatDens() << '\n';
-	std::cout << "Water Depth:\t" << envir.printWatDepth() << '\n';
-	std::cout << "\n" << envir.printWave() << '\n';
+	// m_sumFl << ">--------<>--------<>--------<+>--------<>--------<>--------<" << std::endl;
+	// m_sumFl << ">                                                           <" << std::endl;
+	// m_sumFl << ">                        METiS - USP                        <" << std::endl;
+	// m_sumFl << ">          Morison Equation Time Domain Simulation          <" << std::endl;
+	// m_sumFl << ">              University of Sao Paulo - Brazil             <" << std::endl;
+	// m_sumFl << ">                                                           <" << std::endl;
+	// m_sumFl << ">                                                   v " << m_METIS_VERSION << " <" << std::endl;
+	// m_sumFl << ">--------<>--------<>--------<+>--------<>--------<>--------<" << std::endl;
+
+	m_sumFl << IO::METiS_Header();
+	m_sumFl << std::endl << std::endl;
+
+
+	m_sumFl << "FOWT:\n";
+	m_sumFl << "Linear Stiffness:\t" << fowt.printLinStiff() << '\n';
+	m_sumFl << "Floater:\n" << fowt.printFloater();
+
+	m_sumFl << "\n\n\nENVIR:\n";
+	m_sumFl << "Time Step:\t" << envir.printTimeStep() << '\n';
+	m_sumFl << "Total Time:\t" << envir.printTimeTotal() << '\n';
+	m_sumFl << "Time Ramp:\t" << envir.printTimeRamp() << '\n';
+	m_sumFl << "Gravity:\t" << envir.printGrav() << '\n';
+	m_sumFl << "Water Density:\t" << envir.printWatDens() << '\n';
+	m_sumFl << "Water Depth:\t" << envir.printWatDepth() << '\n';
+	m_sumFl << "\n" << envir.printWave() << '\n';
 }
 
 
