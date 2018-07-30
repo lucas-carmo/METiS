@@ -34,7 +34,7 @@ void IO::setFiles(const std::string &inFlPath)
 	// Check whether we are not trying to reset the input file
 	if ( !m_inFilePath.empty() )
 	{
-		throw std::runtime_error("You can not reset the input file. Press enter to exit.\n");
+		throw std::runtime_error("You can not reset the input file. Press enter to exit.");
 	}
 	m_inFilePath = inFlPath;
 
@@ -71,7 +71,7 @@ void IO::setFiles(const std::string &inFlPath)
 	m_logFl.open(m_logFilePath); 
 	if (!m_logFl)
 	{
-		throw std::runtime_error("Unable to open file " + m_logFilePath + " for writting. Press enter to exit.\n");
+		throw std::runtime_error("Unable to open file " + m_logFilePath + " for writting. Press enter to exit.");
 	}
 
 	// Set summary file
@@ -79,7 +79,7 @@ void IO::setFiles(const std::string &inFlPath)
 	m_sumFl.open(m_sumFilePath);
 	if (!m_sumFl)
 	{
-		throw std::runtime_error("Unable to open file " + m_sumFilePath + " for writting. Press enter to exit.\n");
+		throw std::runtime_error("Unable to open file " + m_sumFilePath + " for writting. Press enter to exit.");
 	}
 }
 
@@ -196,7 +196,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			{							
 				if (!m_inFl) // Signal if the end of file is reached before the end keyword
 				{
-					std::cout << "\n\n\n End of file reached before END keyword in WAVE specification.\n\n";
+					throw std::runtime_error("End of file reached before END keyword in WAVE specification");
 					return;
 				}
 
@@ -215,7 +215,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			{
 				if (!m_inFl) // Signal if the end of file is reached before the end keyword
 				{
-					std::cout << "\n\n\n End of file reached before END keyword in NODES specification.\n\n";
+					throw std::runtime_error("End of file reached before END keyword in NODES specification");
 					return;
 				}
 
@@ -233,8 +233,8 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			while (!caseInsCompare(getKeyword(strInput), "END"))
 			{
 				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{
-					std::cout << "\n\n\n End of file reached before END keyword in MORISON_CIRc specification.\n\n";
+				{					
+					throw std::runtime_error("End of file reached before END keyword in MORISON_CIRC specification");
 					return;
 				}
 
@@ -253,7 +253,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			{
 				if (!m_inFl) // Signal if the end of file is reached before the end keyword
 				{
-					std::cout << "\n\n\n End of file reached before END keyword in MORISON_RECT specification.\n\n";
+					throw std::runtime_error("End of file reached before END keyword in MORISON_RECT specification");
 					return;
 				}
 
@@ -290,7 +290,7 @@ std::string IO::METiS_Header()
 	return header;
 }
 
-void IO::writeErrorMessage(const std::string &str)
+void IO::writeLogMessage(const std::string &str)
 {
 	if (m_logFl) // If we are able to write to the log file, do it
 	{
@@ -301,8 +301,6 @@ void IO::writeErrorMessage(const std::string &str)
 	std::cerr << str << std::endl;
 }
 
-void IO::writeWarningMessage(const std::string &str)
-{}
 
 void IO::print2outFile(const std::string &outFlNm)
 {}

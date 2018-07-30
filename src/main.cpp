@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 	}
 	catch(std::exception &exception)
 	{
-		IO::writeErrorMessage( "Standard exception: " + std::string(exception.what()) );
+		IO::writeLogMessage( "ERROR: " + std::string(exception.what()) );
 	}
 
 
