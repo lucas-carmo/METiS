@@ -20,7 +20,7 @@ Depois que criar todas as funcoes de leitura separadamente, ver oq da pra transf
 #include "ENVIR.h"
 
 
-
+// TEMPORARY: Needed usleep function to test output of progress bar
 #ifdef __unix__
 # include <unistd.h>
 #elif defined _WIN32
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 		FOWT fowt;
 		ENVIR envir;
 
-		std::cout << IO::METiS_Header() << std::endl << std::endl;
+		std::cout << IO::METiS_Header() << '\n';
 		std::cout << "Running METiS with file " << argv[1] << "\n\n\n";
 		IO::setFiles(argv[1]); // Set paths to input file and output files
 		IO::readInputFile(fowt, envir); // Read data from input file to fowt and envir
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 		for (int ii = 1; ii <= 100; ++ii)
 		{		
 			std::cout << ii << "%" << '\r';		
-			fflush(stdout);
+			std::fflush(stdout);
 			usleep(10000);
 		}		
 	}
@@ -70,3 +70,6 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+
+
+

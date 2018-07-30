@@ -315,17 +315,8 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 		throw std::runtime_error("Unable to open file " + m_sumFilePath + " for writting. Press enter to exit.\n");
 	}
 
-	// m_sumFl << ">--------<>--------<>--------<+>--------<>--------<>--------<" << std::endl;
-	// m_sumFl << ">                                                           <" << std::endl;
-	// m_sumFl << ">                        METiS - USP                        <" << std::endl;
-	// m_sumFl << ">          Morison Equation Time Domain Simulation          <" << std::endl;
-	// m_sumFl << ">              University of Sao Paulo - Brazil             <" << std::endl;
-	// m_sumFl << ">                                                           <" << std::endl;
-	// m_sumFl << ">                                                   v " << m_METIS_VERSION << " <" << std::endl;
-	// m_sumFl << ">--------<>--------<>--------<+>--------<>--------<>--------<" << std::endl;
-
 	m_sumFl << IO::METiS_Header();
-	m_sumFl << std::endl << std::endl;
+	m_sumFl << "\n\n";
 
 
 	m_sumFl << "FOWT:\n";
