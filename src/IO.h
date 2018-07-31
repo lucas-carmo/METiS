@@ -9,13 +9,21 @@
 #include "FOWT.h"
 #include "ENVIR.h"
 
+// Forward declaration of METiS Version
+extern const std::string g_METIS_VERSION;
+
+// Define file separator for current platform
+const char filesep =
+#ifdef _WIN32
+	'\\';
+#else
+	'/';
+#endif
+
 
 class IO
 {
 private:
-	// METiS Version 
-	static constexpr char m_METIS_VERSION[] = "0.0.1";
-
 	// Members related to input
 	static std::string m_inFilePath;
 	static std::ifstream m_inFl;

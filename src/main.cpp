@@ -29,14 +29,19 @@ Depois que criar todas as funcoes de leitura separadamente, ver oq da pra transf
 // #define mkdir(x) CreateDirectory((x), NULL)
 #endif
 
+// METiS Version
+extern const std::string g_METIS_VERSION{ "0.0.1" };
+
 int main(int argc, char *argv[])
 {
-    
+	std::cout << IO::METiS_Header() << '\n';
+
+
 	if (argc != 2)
 	{	
 		// Acho melhor throw exception, escrever pro console, escrever pro log file,
 		// esperar input do usuario e daí terminar
-		std::cout << "Please provide only one input file.\n";
+		std::cout << "Please provide one input file.\n";
 		return 0;
 	}
     
@@ -44,8 +49,7 @@ int main(int argc, char *argv[])
 		FOWT fowt;
 		ENVIR envir;
 
-		std::cout << IO::METiS_Header() << '\n';
-		std::cout << "Running METiS with file " << argv[1] << "\n\n\n";
+		std::cout << "Running METiS with file " << argv[1] << "\n";
 		IO::setFiles(argv[1]); // Set paths to input file and output files
 		IO::readInputFile(fowt, envir); // Read data from input file to fowt and envir
 		IO::printSumFile(fowt, envir);

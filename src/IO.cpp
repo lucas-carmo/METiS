@@ -8,12 +8,9 @@
 #include <cstdlib> // for exit()
 
 
-
 /*****************************************************
 	Defining and initializing static member variables
 *****************************************************/
-constexpr char IO::m_METIS_VERSION[];
-
 std::string IO::m_inFilePath = "";
 std::ifstream IO::m_inFl;
 unsigned int IO::m_inLineNumber = 0;
@@ -51,7 +48,7 @@ void IO::setFiles(const std::string &inFlPath)
 	std::string folderPath = getFileFolder(m_inFilePath);
 
 	// Path of the output folder
-	std::string outputFolder = folderPath + "/output";
+	std::string outputFolder = folderPath + filesep + "output";
 
 	// Create output folder with name "output" in the same folder as the input file ("folderPath").
 	// If a folder (or file) named "output" already exists in folderPath, create a folder named output_1. If the latter exists as well, create output_2 instead.
@@ -67,7 +64,7 @@ void IO::setFiles(const std::string &inFlPath)
 	system( ("mkdir " + outputFolder).c_str() );
 
 	// Set log file
-	m_logFilePath = outputFolder + "/log.txt";
+	m_logFilePath = outputFolder + filesep  + "log.txt";
 	m_logFl.open(m_logFilePath); 
 	if (!m_logFl)
 	{
@@ -75,7 +72,7 @@ void IO::setFiles(const std::string &inFlPath)
 	}
 
 	// Set summary file
-	m_sumFilePath = outputFolder + "/summary.txt";
+	m_sumFilePath = outputFolder + filesep + "summary.txt";
 	m_sumFl.open(m_sumFilePath);
 	if (!m_sumFl)
 	{
@@ -284,8 +281,8 @@ std::string IO::METiS_Header()
 	header += ">          Morison Equation Time Domain Simulation          <\n";
 	header += ">              University of Sao Paulo - Brazil             <\n";
 	header += ">                                                           <\n";
-	header += ">                                                    v" + std::string(m_METIS_VERSION) + " <\n";
-	header += ">--------<>--------<>--------<+>--------<>--------<>--------<";	
+	header += ">                                                   v. " + g_METIS_VERSION + "<\n";
+	header += ">--------<>--------<>--------<+>--------<>--------<>--------<\n";	
 
 	return header;
 }
@@ -314,7 +311,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	}
 
 	m_sumFl << IO::METiS_Header();
-	m_sumFl << "\n\n";
+	m_sumFl << "\n";
 
 
 	m_sumFl << "FOWT:\n";
@@ -445,6 +442,6 @@ bool caseInsCompare(const std::wstring& s1, const std::wstring& s2) {
 std::string getFileFolder(const std::string& path)
 {
   size_t found;
-  found = path.find_last_of("/\\");
+  found = path.find_last_of(filesep);
   return path.substr(0,found);
 }
