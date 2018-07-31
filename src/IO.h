@@ -123,23 +123,20 @@ inline bool string2num(const std::string& sString, T &tX)
 // readDataFromString: used to read data from the string 'inString' into the variable 'tX'
 // Returns True if the conversion is succesful and False if it is not
 template <typename T>
-inline bool readDataFromString(const std::string& inString, T &tX)
+inline void readDataFromString(const std::string& inString, T &tX)
 {
 	std::vector<std::string> input = stringTokenize(inString, " \t");
 
 	// 1) Verify if input contains exactly 1 element
     if ( input.size() != 1 )
 	{
-        std::cout << "More than one entry in line " << IO::getInLineNumber() << ". Considering only the first one. \n";		
+		throw std::runtime_error( "Unable to read data from string [function readDataFromString(const std::string& inString, T &tX) in IO.h]. More than one entry in line " + std::to_string(IO::getInLineNumber()) );
 	}
 
     // 2) Convert input from string to its corresponding numeric format (double, float, ...)
 	if ( !string2num(input.at(0), tX) )
 	{
         // Throw an exception if the conversion fails
-		std::cout << "Conversion failed in readDataFromString(). Line " << IO::getInLineNumber() << ".\n";
-		return false;
+		throw std::runtime_error( "Conversion from string failed [function readDataFromString(const std::string& inString, T &tX) in IO.h]. Bad data type in line " + std::to_string(IO::getInLineNumber()) );
 	}		
-
-	return true;
 }

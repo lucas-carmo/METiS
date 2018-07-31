@@ -43,7 +43,7 @@ END
 %%-----------------------------------------------------------------------------%%
 %%-------------------------- FLOATER DESCRIPTION ------------------------------%%
 %%-----------------------------------------------------------------------------%%
-FloaterMass		1.4267e7 
+FloaterMass		1.4267e7
 FloaterCoG		1,2,-13.46
 FloaterInertia	6.827e9,6.827e9,1.226e10 % Adicionar os outros momentos de inércia
 LinStiff		6.1e5,6.1e5,5.4e8        % Linear mooring stiffness in surge, sway, yaw. MUDAR PRA SER UMA MATRIZ
