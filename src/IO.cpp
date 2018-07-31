@@ -394,7 +394,6 @@ std::vector<std::string> stringTokenize(const std::string &str, const std::strin
     {
         if ( aux.find_first_not_of(delim) == std::string::npos ) // Check if there is something besides delimiters in the line
         {
-            std::cout << "The string provided has only delimiters.";
             break;
         }
 
