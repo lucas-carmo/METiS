@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 		FOWT fowt;
 		ENVIR envir;
 
-		std::cout << "Running METiS with file " << argv[1] << "\n";
+		std::cout << "Running METiS with file '" << argv[1] << "'\n";
 		IO::setFiles(argv[1]); // Set paths to input file and output files
 		IO::readInputFile(fowt, envir); // Read data from input file to fowt and envir
 		IO::printSumFile(fowt, envir);
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 
 
 	std::cin.sync();
-	std::cout << "\n\n\nPress enter to exit.\n";
+	std::cout << "\nPress enter to exit.\n";
 	std::cin.get();
 
 	return 0;

@@ -62,6 +62,7 @@ void IO::setFiles(const std::string &inFlPath)
 		++ii;
 	}
 	system( ("mkdir " + outputFolder).c_str() );
+	std::cout << "Output folder: '" << outputFolder << "'\n";
 
 	// Set log file
 	m_logFilePath = outputFolder + filesep  + "log.txt";
@@ -193,7 +194,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			{							
 				if (!m_inFl) // Signal if the end of file is reached before the end keyword
 				{
-					throw std::runtime_error("End of file reached before END keyword in WAVE specification");
+					throw std::runtime_error("End of file reached before END keyword in WAVE specification.");
 					return;
 				}
 
@@ -212,7 +213,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			{
 				if (!m_inFl) // Signal if the end of file is reached before the end keyword
 				{
-					throw std::runtime_error("End of file reached before END keyword in NODES specification");
+					throw std::runtime_error("End of file reached before END keyword in NODES specification.");
 					return;
 				}
 
@@ -231,7 +232,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			{
 				if (!m_inFl) // Signal if the end of file is reached before the end keyword
 				{					
-					throw std::runtime_error("End of file reached before END keyword in MORISON_CIRC specification");
+					throw std::runtime_error("End of file reached before END keyword in MORISON_CIRC specification.");
 					return;
 				}
 
@@ -250,7 +251,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			{
 				if (!m_inFl) // Signal if the end of file is reached before the end keyword
 				{
-					throw std::runtime_error("End of file reached before END keyword in MORISON_RECT specification");
+					throw std::runtime_error("End of file reached before END keyword in MORISON_RECT specification.");
 					return;
 				}
 
@@ -289,7 +290,7 @@ std::string IO::METiS_Header()
 
 void IO::writeErrorMessage(const std::string &str)
 {	
-	std::string mess = "ERROR: " + str;
+	std::string mess = "\n\nERROR: " + str;
 
 	if (m_logFl) // If we are able to write to the log file, do it
 	{
@@ -302,7 +303,7 @@ void IO::writeErrorMessage(const std::string &str)
 
 void IO::writeWarningMessage(const std::string &str)
 {	
-	std::string mess = "Warning: " + str;
+	std::string mess = "\n\nWarning: " + str;
 	
 	if (m_logFl) // If we are able to write to the log file, do it
 	{
@@ -322,7 +323,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 {	
 	if (!m_sumFl)
 	{
-		throw std::runtime_error("Unable to open file " + m_sumFilePath + " for writting. Press enter to exit.\n");
+		throw std::runtime_error("Unable to open file " + m_sumFilePath + " for writting.");
 	}
 
 	m_sumFl << IO::METiS_Header();

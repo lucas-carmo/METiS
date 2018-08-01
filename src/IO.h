@@ -131,13 +131,13 @@ inline void readDataFromString(const std::string& inString, T &tX)
 	// 1) Verify if input contains exactly 1 element
     if ( input.size() != 1 )
 	{
-		throw std::runtime_error( "Unable to read data from string [function readDataFromString(const std::string& inString, T &tX) in IO.h]. More than one entry in line " + std::to_string(IO::getInLineNumber()) );
+		throw std::runtime_error( "Unable to read data from string. More than one entry in line " + std::to_string(IO::getInLineNumber()) + ". [function readDataFromString(const std::string& inString, T &tX) in IO.h]");
 	}
 
     // 2) Convert input from string to its corresponding numeric format (double, float, ...)
 	if ( !string2num(input.at(0), tX) )
 	{
         // Throw an exception if the conversion fails
-		throw std::runtime_error( "Conversion from string failed [function readDataFromString(const std::string& inString, T &tX) in IO.h]. Bad data type in line " + std::to_string(IO::getInLineNumber()) );
+		throw std::runtime_error( "Conversion from string failed. Bad data type in line " + std::to_string(IO::getInLineNumber()) + ". [function readDataFromString(const std::string& inString, T &tX) in IO.h]");
 	}		
 }

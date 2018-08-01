@@ -68,7 +68,7 @@ void Floater::addNode(const std::string &data)
 	{
 		if (nodeID <= m_nodesID.back()) // Then verify if its ID is larger than the previous one, thus garanteeing that m_nodesID is in ascending order (this is needed to use binary search to find nodes IDs)
 		{
-			throw std::runtime_error( "Nodes must be organized in ascending order. Error in line " + std::to_string(IO::getInLineNumber()) );
+			throw std::runtime_error( "Nodes must be organized in ascending order. Error in line " + std::to_string(IO::getInLineNumber()) + ".");
 		}
 	}
 
