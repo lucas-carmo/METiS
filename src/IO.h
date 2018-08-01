@@ -51,7 +51,8 @@ public:
 
 	// Functions related to output
 	static std::string METiS_Header();
-	static void writeLogMessage(const std::string &str);
+	static void writeErrorMessage(const std::string &str);
+	static void writeWarningMessage(const std::string &str);
 	static void printSumFile(const FOWT &fowt, const ENVIR &envir);
 
 	//static bool checkData(); // Depende do tipo de analise a ser feita

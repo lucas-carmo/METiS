@@ -1,12 +1,13 @@
 #include "Floater.h"
 #include "MorisonCirc.h"
 #include "MorisonRect.h"
-
 #include "IO.h"
+
 #include <iostream>
 #include <vector>
 #include <algorithm>    // std::binary_search
 #include <utility> // For std::move
+#include <stdexcept> // For std::exception
 
 /*****************************************************
 	Constructors
@@ -55,7 +56,8 @@ void Floater::addNode(const std::string &data)
 
 	if (input.size() != 4)
 	{
-		std::cout << "Deu ruim na leitura dos nos. Linha " << IO::getInLineNumber() << ".\n";
+		throw std::runtime_error("Unable to read the node in line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+		return;
 	}
 
 	// Read node ID
@@ -66,7 +68,7 @@ void Floater::addNode(const std::string &data)
 	{
 		if (nodeID <= m_nodesID.back()) // Then verify if its ID is larger than the previous one, thus garanteeing that m_nodesID is in ascending order (this is needed to use binary search to find nodes IDs)
 		{
-			std::cout << "Nodes tem que estar organizados em ordem crescente. Erro na linha " << IO::getInLineNumber() << ".\n";
+			throw std::runtime_error( "Nodes must be organized in ascending order. Error in line " + std::to_string(IO::getInLineNumber()) );
 		}
 	}
 

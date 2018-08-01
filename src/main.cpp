@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 	}
 	catch(std::exception &exception)
 	{
-		IO::writeLogMessage( "ERROR: " + std::string(exception.what()) );
+		IO::writeErrorMessage( std::string(exception.what()) );
 	}
 
 

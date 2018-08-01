@@ -287,15 +287,30 @@ std::string IO::METiS_Header()
 	return header;
 }
 
-void IO::writeLogMessage(const std::string &str)
-{
+void IO::writeErrorMessage(const std::string &str)
+{	
+	std::string mess = "ERROR: " + str;
+
 	if (m_logFl) // If we are able to write to the log file, do it
 	{
-		m_logFl << str << std::endl;
+		m_logFl << mess << std::endl;
 	}
 
 	// Write to the console, anyway
-	std::cerr << str << std::endl;
+	std::cerr << mess << std::endl;
+}
+
+void IO::writeWarningMessage(const std::string &str)
+{	
+	std::string mess = "Warning: " + str;
+	
+	if (m_logFl) // If we are able to write to the log file, do it
+	{
+		m_logFl << mess << std::endl;
+	}
+
+	// Write to the console, anyway
+	std::cerr << mess << std::endl;
 }
 
 
@@ -394,7 +409,7 @@ std::vector<std::string> stringTokenize(const std::string &str, const std::strin
     {
         if ( aux.find_first_not_of(delim) == std::string::npos ) // Check if there is something besides delimiters in the line
         {
-            break;
+            break; // Then we break the while loop and return tokens as an empty std::vector
         }
 
         aux = aux.substr(aux.find_first_not_of(delim)); // Get the part of aux starting at the first character that is not a delimiter
