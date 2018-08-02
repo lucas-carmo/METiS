@@ -290,7 +290,7 @@ std::string IO::METiS_Header()
 
 void IO::writeErrorMessage(const std::string &str)
 {	
-	std::string mess = "\n\nERROR: " + str;
+	std::string mess = "ERROR: " + str;
 
 	if (m_logFl) // If we are able to write to the log file, do it
 	{
@@ -298,12 +298,12 @@ void IO::writeErrorMessage(const std::string &str)
 	}
 
 	// Write to the console, anyway
-	std::cerr << mess << std::endl;
+	std::cerr << "\n\n" << mess << std::endl;
 }
 
 void IO::writeWarningMessage(const std::string &str)
 {	
-	std::string mess = "\n\nWarning: " + str;
+	std::string mess = "Warning: " + str;
 	
 	if (m_logFl) // If we are able to write to the log file, do it
 	{
@@ -311,7 +311,7 @@ void IO::writeWarningMessage(const std::string &str)
 	}
 
 	// Write to the console, anyway
-	std::cerr << mess << std::endl;
+	std::cerr << "\n\n" << mess << std::endl;
 }
 
 

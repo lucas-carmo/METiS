@@ -20,7 +20,7 @@ void FOWT::readLinStiff(const std::string &data)
     
     if ( input.size() != 3 )
     {
-        std::cout << "Deu ruim \n";		
+		throw std::runtime_error("Unable to read linear stiffness in line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 	}
     
     for ( int ii = 0; ii < input.size(); ++ii )

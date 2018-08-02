@@ -37,7 +37,7 @@ void Floater::readCoG(const std::string &data)
 
 	if (input.size() != 3)
 	{
-		std::cout << "Deu ruim \n";
+		throw std::runtime_error("Unable to read the CoG in line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 	}
 
 	for (int ii = 0; ii < input.size(); ++ii)
@@ -110,14 +110,14 @@ void Floater::addMorisonCirc(const std::string &data)
 	// Check number of inputs
 	if (input.size() != 11)
 	{
-		std::cout << "Deu ruim na leitura do cilindro circular da linha " << IO::getInLineNumber() << ".\n";
+		throw std::runtime_error("Unable to read the circular cylinder in line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 		return;
 	}
 
 	// Check whether nodes were specified
 	if (m_nodesID.empty())
 	{
-		std::cout << "Nodes should be specified before Morison's Elements. Error in line " << IO::getInLineNumber() << ".\n";
+		throw std::runtime_error( "Nodes should be specified before Morison Elements. Error in line " + std::to_string(IO::getInLineNumber()) );
 		return;
 	}
 
@@ -144,7 +144,7 @@ void Floater::addMorisonCirc(const std::string &data)
 	}
 	else
 	{
-		std::cout << "Unable to find the first node of the Morison Element specified in line " << IO::getInLineNumber() << ".\n";
+		throw std::runtime_error( "Unable to find the first node of the Morison Element specified in line " + std::to_string(IO::getInLineNumber()) );
 	}
 
 	// Get coordinates of the SECOND node based on its ID
@@ -157,7 +157,7 @@ void Floater::addMorisonCirc(const std::string &data)
 	}
 	else
 	{
-		std::cout << "Unable to find the second node of the Morison Element specified in line " << IO::getInLineNumber() << ".\n";
+		throw std::runtime_error( "Unable to find the second node of the Morison Element specified in line " + std::to_string(IO::getInLineNumber()) );
 	}
 
 
@@ -165,7 +165,7 @@ void Floater::addMorisonCirc(const std::string &data)
 	// but rather by the distance between the nodes and the floater CoG		
 	if ( m_CoG.has_nan() ) // If this is true, then the CoG of the floater wasn't read yet
 	{
-		std::cout << "Floater CoG should be specified before Morison's Elements. Error in line " << IO::getInLineNumber() << ".\n";
+		throw std::runtime_error( "Floater CoG must be specified before Morison Elements. Error in line " + std::to_string(IO::getInLineNumber()) );
 		return;
 	}
 	
@@ -208,14 +208,14 @@ void Floater::addMorisonRect(const std::string &data)
 	// Check number of inputs
 	if (input.size() != 15)
 	{
-		std::cout << "Deu ruim na leitura do cilindro circular da linha " << IO::getInLineNumber() << ".\n";
+		throw std::runtime_error("Unable to read the rectangular cylinder in line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 		return;
 	}
 
 	// Check whether nodes were specified
 	if (m_nodesID.empty())
 	{
-		std::cout << "Nodes should be specified before Morison's Elements. Error in line " << IO::getInLineNumber() << ".\n";
+		throw std::runtime_error( "Nodes should be specified before Morison Elements. Error in line " + std::to_string(IO::getInLineNumber()) );
 		return;
 	}
 
@@ -246,7 +246,7 @@ void Floater::addMorisonRect(const std::string &data)
 	}
 	else
 	{
-		std::cout << "Unable to find the first node of the Morison Element specified in line " << IO::getInLineNumber() << ".\n";
+		throw std::runtime_error( "Unable to find the first node of the Morison Element specified in line " + std::to_string(IO::getInLineNumber()) );
 	}
 
 	// Get coordinates of the SECOND node based on its ID
@@ -259,20 +259,20 @@ void Floater::addMorisonRect(const std::string &data)
 	}
 	else
 	{
-		std::cout << "Unable to find the second node of the Morison Element specified in line " << IO::getInLineNumber() << ".\n";
+		throw std::runtime_error( "Unable to find the second node of the Morison Element specified in line " + std::to_string(IO::getInLineNumber()) );
 	}
 
 	// Get coordinates of the THIRD node based on its ID
 	std::vector<unsigned int>::iterator iter3 = std::find(m_nodesID.begin(), m_nodesID.end(), node3_ID); // Find node by its ID.
 	vec::fixed<3> node3_coord(fill::zeros);
-	if (iter2 != m_nodesID.end())
+	if (iter3 != m_nodesID.end())
 	{
 		auto index = std::distance(m_nodesID.begin(), iter3); // Get index by the distance between the iterator found above and m_nodes.begin()
 		node3_coord = m_nodesCoord.at(index);
 	}
 	else
 	{
-		std::cout << "Unable to find the third node of the Morison Element specified in line " << IO::getInLineNumber() << ".\n";
+		throw std::runtime_error( "Unable to find the third node of the Morison Element specified in line " + std::to_string(IO::getInLineNumber()) );
 	}
 
 
@@ -280,7 +280,7 @@ void Floater::addMorisonRect(const std::string &data)
 	// but rather by the distance between the nodes and the floater CoG		
 	if ( m_CoG.has_nan() ) // If this is true, then the CoG of the floater wasn't read yet
 	{
-		std::cout << "Floater CoG should be specified before Morison's Elements. Error in line " << IO::getInLineNumber() << '\n';
+		throw std::runtime_error( "Floater CoG must be specified before Morison Elements. Error in line " + std::to_string(IO::getInLineNumber()) );
 		return;
 	}
 	
@@ -290,7 +290,7 @@ void Floater::addMorisonRect(const std::string &data)
 
 	
 	 // Create a rectangular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
-	  m_MorisonElements.push_back( std::make_unique<MorisonRect>(node1_coord, node2_coord, node3_coord, numIntPoints,
+	m_MorisonElements.push_back( std::make_unique<MorisonRect>(node1_coord, node2_coord, node3_coord, numIntPoints,
 	  							  botPressFlag, axialCD, axialCa, diam_X, CD_X, CM_X, diam_Y, CD_Y, CM_Y, botArea, topArea) );
 }
 

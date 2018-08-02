@@ -28,8 +28,7 @@ Wave::Wave(const std::string &wholeWaveLine)
 	  && !caseInsCompare(getKeyword(wholeWaveLine), "FRWave") 
 	  && !caseInsCompare(getKeyword(wholeWaveLine), "WRWave") )
 	{
-		std::cout << "Error in line " << IO::getInLineNumber() 
-		          << ": Unknown keyword '" << getKeyword(wholeWaveLine) << "' \n";
+		throw std::runtime_error( "Unknown keyword '" + getKeyword(wholeWaveLine) + "' in line " + std::to_string(IO::getInLineNumber()) + ".");
 		return;
 	}
 
@@ -37,12 +36,7 @@ Wave::Wave(const std::string &wholeWaveLine)
 	// Check if there are exactly three inputs (Wave height, period/frequency/angular frequency, and direction)
 	if (input.size() != 3)
 	{
-		std::cout << "Error in line" << IO::getInLineNumber() 
-		          << ": TRWave, FRWave and WRWave should be followed by three numbers"
-				  << " separated by tabs ('\\t') or spaces specifying"
-				  << " the wave Height, Period/Frequency/Angular Frequency, and Direction." 
-				  << " However, you provided " << input.size() << " elements \n";
-				  
+		throw std::runtime_error("Unable to read the wave in line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");				  
 		return;
 	}
 
@@ -63,7 +57,7 @@ Wave::Wave(const std::string &wholeWaveLine)
 
 		if (frequency == 0)
 		{
-			std::cout << "Wave frequency must be different from zero.\n";
+			throw std::runtime_error( "Wave frequency must be different from zero. Line " + std::to_string(IO::getInLineNumber()) );
 		}
 		else 
 		{
@@ -78,7 +72,7 @@ Wave::Wave(const std::string &wholeWaveLine)
 
 		if (omega == 0)
 		{
-			std::cout << "Wave frequency must be different from zero.\n";
+			throw std::runtime_error( "Wave frequency must be different from zero. Line " + std::to_string(IO::getInLineNumber()) );
 		}
 		else
 		{
