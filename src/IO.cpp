@@ -18,8 +18,12 @@ unsigned int IO::m_inLineNumber = 0;
 std::string IO::m_logFilePath = "";
 std::ofstream IO::m_logFl;
 
-std::string IO::m_sumFilePath;
+std::string IO::m_sumFilePath = "";
 std::ofstream IO::m_sumFl;
+
+std::string IO::m_outFilePath = "";
+std::ofstream IO::m_outFl;
+
 
 
 
@@ -79,6 +83,14 @@ void IO::setFiles(const std::string &inFlPath)
 	{
 		throw std::runtime_error("Unable to open file " + m_sumFilePath + " for writting. Press enter to exit.");
 	}
+
+	// Set formatted output file
+	m_outFilePath = outputFolder + filesep + "output.txt";
+	m_outFl.open(m_outFilePath);
+	if (!m_outFl)
+	{
+		throw std::runtime_error("Unable to open file " + m_outFilePath + " for writting. Press enter to exit.");
+	}	
 }
 
 
@@ -217,7 +229,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				floater.addNode(strInput); // Add this node to the floater
+				envir.addNode(strInput); // Add this node to the floater
 
 				IO::readLineInputFile(strInput);
 			}
@@ -236,7 +248,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				floater.addMorisonCirc(strInput); // Add this Morison Element to the floater
+				floater.addMorisonCirc(strInput, envir); // Add this Morison Element to the floater
 
 				IO::readLineInputFile(strInput);
 			}
@@ -255,7 +267,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				floater.addMorisonRect(strInput); // Add this Morison Element to the floater
+				floater.addMorisonRect(strInput, envir); // Add this Morison Element to the floater
 
 				IO::readLineInputFile(strInput);
 			}
@@ -298,7 +310,7 @@ void IO::writeErrorMessage(const std::string &str)
 	}
 
 	// Write to the console, anyway
-	std::cerr << "\n\n" << mess << std::endl;
+	std::cout << "\n\n" << mess << std::endl;
 }
 
 void IO::writeWarningMessage(const std::string &str)
@@ -311,11 +323,20 @@ void IO::writeWarningMessage(const std::string &str)
 	}
 
 	// Write to the console, anyway
-	std::cerr << "\n\n" << mess << std::endl;
+	std::cout << "\n\n" << mess << std::endl;
 }
 
 
-void IO::print2outFile(const std::string &outFlNm)
+void IO::print2outFile(const std::string &str)
+{
+	if (!m_outFl)
+	{
+		throw std::runtime_error("Unable to write to formatted output file.");
+	}
+}
+
+
+void IO::newLineOutFile()
 {}
 
 // Print the members of fowt and envir. Useful for debugging.
@@ -327,21 +348,23 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	}
 
 	m_sumFl << IO::METiS_Header();
-	m_sumFl << "\n";
+	m_sumFl << "\n\n";
 
 
-	m_sumFl << "FOWT:\n";
-	m_sumFl << "Linear Stiffness:\t" << fowt.printLinStiff() << '\n';
-	m_sumFl << "Floater:\n" << fowt.printFloater();
-
-	m_sumFl << "\n\n\nENVIR:\n";
+	m_sumFl << "ENVIR:\n";
 	m_sumFl << "Time Step:\t" << envir.printTimeStep() << '\n';
 	m_sumFl << "Total Time:\t" << envir.printTimeTotal() << '\n';
 	m_sumFl << "Time Ramp:\t" << envir.printTimeRamp() << '\n';
 	m_sumFl << "Gravity:\t" << envir.printGrav() << '\n';
 	m_sumFl << "Water Density:\t" << envir.printWatDens() << '\n';
 	m_sumFl << "Water Depth:\t" << envir.printWatDepth() << '\n';
+	m_sumFl << "Nodes: \n" << envir.printNodes() << '\n';
 	m_sumFl << "\n" << envir.printWave() << '\n';
+
+	m_sumFl << "\n\n";
+	m_sumFl << "FOWT:\n";
+	m_sumFl << "Linear Stiffness:\t" << fowt.printLinStiff() << '\n';
+	m_sumFl << "Floater:\n" << fowt.printFloater();	
 }
 
 

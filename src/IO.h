@@ -23,22 +23,43 @@ const char filesep =
 
 class IO
 {
+public:
+	// COLOCAR COMENTARIO
+	enum class OutFlag
+	{
+		SURGE,
+		SWAY,
+		HEAVE,
+		ROLL,
+		PITCH,
+		YAW,
+		WAVE_ELEV,
+		OUTPUT_SIZE
+	};
+
 private:
 	// Members related to input
 	static std::string m_inFilePath;
 	static std::ifstream m_inFl;
 	static unsigned int m_inLineNumber; // Stores the current line number while reading the input file
 
-	// Members related to output of log file
+	// Members related to log file
 	static std::string m_logFilePath;
 	static std::ofstream m_logFl;
 	
-	// Members related to output of summary file
+	// Members related to summary file
 	static std::string m_sumFilePath;
 	static std::ofstream m_sumFl;
 
-	static std::string m_outputTimeStep; // String with the data that is output at each time step (FOWT position, hydro force components, anything that is a function of time)
-	static bool m_shouldWriteOutputTimeStep;
+	// Members related to formatted output file
+	static std::string m_outFilePath;
+	static std::ofstream m_outFl;
+
+	// static std::string m_outputTimeStep; // String with the data that is output at each time step (FOWT position, hydro force components, anything that is a function of time)
+	// static bool m_shouldWriteOutputTimeStep;
+
+	// Para saber quais outputs usar, fazer um enum com todos os possíveis outputs e usá-lo como
+	// indice de um std::array
 
 public:
 	// Set input file and output files based on the input file path
@@ -49,15 +70,19 @@ public:
 	static unsigned int getInLineNumber();
 	static void readInputFile(FOWT &fowt, ENVIR &envir);	
 
-	// Functions related to output
+	/*
+	Functions related to output
+	*/
 	static std::string METiS_Header();
 	static void writeErrorMessage(const std::string &str);
 	static void writeWarningMessage(const std::string &str);
-	static void printSumFile(const FOWT &fowt, const ENVIR &envir);
 
-	//static bool checkData(); // Depende do tipo de analise a ser feita
+	// Summary file
+	static void printSumFile(const FOWT &fowt, const ENVIR &envir);
 	
-	static void print2outFile(const std::string &outFlNm);
+	// Formatted output file
+	static void print2outFile(const std::string &str); // Mudar isso aqui pra um template, pra imprimir diretamente a variável sem passar pra string
+	static void newLineOutFile();
 };
 
 

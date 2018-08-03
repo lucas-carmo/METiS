@@ -1,12 +1,10 @@
 /* To do: 
-Trocar aquele header do METiS por uma função, dai uso pra printar pro console e pro summary file
+   No IO.cpp, adicionar um warning pra caso a keyword seja desconhecida. Provavelmente fica melhor trocar aqueles ifs por cases
 
-Depois que criar todas as funcoes de leitura separadamente, ver oq da pra transformar em uma funcao comum a elas.
+   Depois que criar todas as funcoes de leitura separadamente, ver oq da pra transformar em uma funcao comum a elas.
    Ex: Uma funcao checkInput pra verificar se tem o numero certo de elementos pra leitura, se as conversoes pros tipos numericos
    do input deram certo, coisa do tipo. Assim facilita a manutencao, pq se quiser mudar mensagem de erro ou coisa do tipo, mudo
-   em um so lugar
-
-   TODO: No IO.cpp, adicionar um warning pra caso a keyword seja desconhecida. Provavelmente fica melhor trocar aqueles ifs por cases
+   em um so lugar   
 */
 
 #include <iostream>
@@ -66,6 +64,10 @@ int main(int argc, char *argv[])
 	{
 		IO::writeErrorMessage( std::string(exception.what()) );
 	}
+	catch(...)
+    {
+        IO::writeErrorMessage( "Unknown exception thrown." );
+    }
 
 
 	std::cin.sync();

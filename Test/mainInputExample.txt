@@ -36,7 +36,7 @@ Wave
 % TRWAVE \t Height \t Period            \t Direction (in degrees)
 TRWAVE	2	10	45
 WRWAVE	4	1	60
-FRWAVE	4	0	60
+FRWAVE	4	10	60
 END
 
 

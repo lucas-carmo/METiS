@@ -48,48 +48,10 @@ void Floater::readCoG(const std::string &data)
 
 
 
-void Floater::addNode(const std::string &data)
-{
-	// Nodes are specified by a vec with four components: ID, X coord, Y coord, and Z coord. 
-	// They are separated by commas in the input string.
-	std::vector<std::string> input = stringTokenize(data, ",");
-
-	if (input.size() != 4)
-	{
-		throw std::runtime_error("Unable to read the node in line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-		return;
-	}
-
-	// Read node ID
-	unsigned int nodeID{0};
-	readDataFromString( input.at(0), nodeID );
-
-	if (m_nodesID.size() != 0) // If this is not the first node that will be added to m_nodesID
-	{
-		if (nodeID <= m_nodesID.back()) // Then verify if its ID is larger than the previous one, thus garanteeing that m_nodesID is in ascending order (this is needed to use binary search to find nodes IDs)
-		{
-			throw std::runtime_error( "Nodes must be organized in ascending order. Error in line " + std::to_string(IO::getInLineNumber()) + ".");
-		}
-	}
-
-	m_nodesID.push_back( nodeID );
-
-
-	// Read node coord
-	vec::fixed<3> nodeCoord(fill::zeros);
-	for (int ii = 0; ii < nodeCoord.n_elem; ++ii)
-	{
-		readDataFromString( input.at(ii+1), nodeCoord(ii) );
-	}
-
-	m_nodesCoord.push_back( nodeCoord );
-}
-
-
 /*
 	Add circular cylinder Morison Element to m_MorisonElements
 */
-void Floater::addMorisonCirc(const std::string &data)
+void Floater::addMorisonCirc(const std::string &data, const ENVIR &envir)
 {
 	// Variables to handle the data read from the input file in a more user friendly way
 	unsigned int node1_ID = 0;
@@ -115,7 +77,7 @@ void Floater::addMorisonCirc(const std::string &data)
 	}
 
 	// Check whether nodes were specified
-	if (m_nodesID.empty())
+	if (envir.isNodeEmpty())
 	{
 		throw std::runtime_error( "Nodes should be specified before Morison Elements. Error in line " + std::to_string(IO::getInLineNumber()) );
 		return;
@@ -134,31 +96,9 @@ void Floater::addMorisonCirc(const std::string &data)
 	readDataFromString(input.at(9), axialCa);
 	readDataFromString(input.at(10), botPressFlag);
 	
-	// Get coordinates of the FIRST node based on its ID
-	std::vector<unsigned int>::iterator iter1 = std::find(m_nodesID.begin(), m_nodesID.end(), node1_ID); // Find node by its ID.
-	vec::fixed<3> node1_coord(fill::zeros);
-	if (iter1 != m_nodesID.end())
-	{
-		auto index = std::distance(m_nodesID.begin(), iter1); // Get index by the distance between the iterator found above and m_nodes.begin()
-		node1_coord = m_nodesCoord.at(index);		
-	}
-	else
-	{
-		throw std::runtime_error( "Unable to find the first node of the Morison Element specified in line " + std::to_string(IO::getInLineNumber()) );
-	}
-
-	// Get coordinates of the SECOND node based on its ID
-	std::vector<unsigned int>::iterator iter2 = std::find(m_nodesID.begin(), m_nodesID.end(), node2_ID); // Find node by its ID.
-	vec::fixed<3> node2_coord(fill::zeros);
-	if (iter2 != m_nodesID.end())
-	{
-		auto index = std::distance(m_nodesID.begin(), iter2); // Get index by the distance between the iterator found above and m_nodes.begin()
-		node2_coord = m_nodesCoord.at(index);
-	}
-	else
-	{
-		throw std::runtime_error( "Unable to find the second node of the Morison Element specified in line " + std::to_string(IO::getInLineNumber()) );
-	}
+	// Get coordinates of nodes based on their ID
+	vec::fixed<3> node1_coord = envir.getNode(node1_ID);
+	vec::fixed<3> node2_coord = envir.getNode(node2_ID);
 
 
 	// However, Morison Elements are not actually specified by the nodes coordinates, 
@@ -183,7 +123,7 @@ void Floater::addMorisonCirc(const std::string &data)
 /*
 	Add rectangular cylinder Morison Element to m_MorisonElements
 */
-void Floater::addMorisonRect(const std::string &data)
+void Floater::addMorisonRect(const std::string &data, const ENVIR &envir)
 {
 	// Variables to handle the data read from the input file in a more user friendly way
 	unsigned int node1_ID = 0;
@@ -213,7 +153,7 @@ void Floater::addMorisonRect(const std::string &data)
 	}
 
 	// Check whether nodes were specified
-	if (m_nodesID.empty())
+	if (envir.isNodeEmpty())
 	{
 		throw std::runtime_error( "Nodes should be specified before Morison Elements. Error in line " + std::to_string(IO::getInLineNumber()) );
 		return;
@@ -236,44 +176,10 @@ void Floater::addMorisonRect(const std::string &data)
 	readDataFromString(input.at(13), axialCa);
 	readDataFromString(input.at(14), botPressFlag);
 	
-	// Get coordinates of the FIRST node based on its ID
-	std::vector<unsigned int>::iterator iter1 = std::find(m_nodesID.begin(), m_nodesID.end(), node1_ID); // Find node by its ID.
-	vec::fixed<3> node1_coord(fill::zeros);
-	if (iter1 != m_nodesID.end())
-	{
-		auto index = std::distance(m_nodesID.begin(), iter1); // Get index by the distance between the iterator found above and m_nodes.begin()
-		node1_coord = m_nodesCoord.at(index);		
-	}
-	else
-	{
-		throw std::runtime_error( "Unable to find the first node of the Morison Element specified in line " + std::to_string(IO::getInLineNumber()) );
-	}
-
-	// Get coordinates of the SECOND node based on its ID
-	std::vector<unsigned int>::iterator iter2 = std::find(m_nodesID.begin(), m_nodesID.end(), node2_ID); // Find node by its ID.
-	vec::fixed<3> node2_coord(fill::zeros);
-	if (iter2 != m_nodesID.end())
-	{
-		auto index = std::distance(m_nodesID.begin(), iter2); // Get index by the distance between the iterator found above and m_nodes.begin()
-		node2_coord = m_nodesCoord.at(index);
-	}
-	else
-	{
-		throw std::runtime_error( "Unable to find the second node of the Morison Element specified in line " + std::to_string(IO::getInLineNumber()) );
-	}
-
-	// Get coordinates of the THIRD node based on its ID
-	std::vector<unsigned int>::iterator iter3 = std::find(m_nodesID.begin(), m_nodesID.end(), node3_ID); // Find node by its ID.
-	vec::fixed<3> node3_coord(fill::zeros);
-	if (iter3 != m_nodesID.end())
-	{
-		auto index = std::distance(m_nodesID.begin(), iter3); // Get index by the distance between the iterator found above and m_nodes.begin()
-		node3_coord = m_nodesCoord.at(index);
-	}
-	else
-	{
-		throw std::runtime_error( "Unable to find the third node of the Morison Element specified in line " + std::to_string(IO::getInLineNumber()) );
-	}
+	// Get coordinates of nodes based on their ID
+	vec::fixed<3> node1_coord = envir.getNode(node1_ID);
+	vec::fixed<3> node2_coord = envir.getNode(node2_ID);
+	vec::fixed<3> node3_coord = envir.getNode(node3_ID);
 
 
 	// However, Morison Elements are not actually specified by the nodes coordinates, 
@@ -283,7 +189,7 @@ void Floater::addMorisonRect(const std::string &data)
 		throw std::runtime_error( "Floater CoG must be specified before Morison Elements. Error in line " + std::to_string(IO::getInLineNumber()) );
 		return;
 	}
-	
+		
 	node1_coord = node1_coord - m_CoG;
 	node2_coord = node2_coord - m_CoG;
 	node3_coord = node3_coord - m_CoG;
@@ -304,8 +210,6 @@ std::string Floater::printMass() const
 	return std::to_string(m_mass);
 }
 
-
-
 std::string Floater::printCoG() const
 {
 	std::string output = "(" + std::to_string( m_CoG(0) );
@@ -316,22 +220,6 @@ std::string Floater::printCoG() const
 	
 	return output + ")";
 }
-
-
-
-std::string Floater::printNodes() const
-{
-	std::string output = "";
-	for (int ii = 0; ii < m_nodesID.size(); ++ii)
-	{
-		output = output + "( " + std::to_string( m_nodesID.at(ii) ) + 
-						  ", " + std::to_string( m_nodesCoord.at(ii)(0) ) +
-			              ", " + std::to_string( m_nodesCoord.at(ii)(1) ) +
-			              ", " + std::to_string( m_nodesCoord.at(ii)(2) ) + " )\n";
-	}
-	return output;
-}
-
 
 
 std::string Floater::printMorisonElements() const
@@ -362,8 +250,6 @@ Floater& Floater::operator= (Floater &floater)
 	m_CoG = floater.m_CoG;
 	m_inertia = floater.m_inertia;
 	m_mass = floater.m_mass;
-	m_nodesCoord = floater.m_nodesCoord;
-	m_nodesID = floater.m_nodesID;
 
 	// The member variables that need deep copying are:
 	// - m_MorisonElements;
