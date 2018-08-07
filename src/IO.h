@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <array>
 #include <sstream>
 #include <algorithm> // Defines a collection of functions especially designed to be used on ranges of elements.
 #include <cctype> // This header declares a set of functions to classify and transform individual characters, like toupper
@@ -25,16 +26,16 @@ class IO
 {
 public:
 	// COLOCAR COMENTARIO
-	enum class OutFlag
+	enum OutFlag
 	{
-		SURGE,
-		SWAY,
-		HEAVE,
-		ROLL,
-		PITCH,
-		YAW,
-		WAVE_ELEV,
-		OUTPUT_SIZE
+		OUTFLAG_SURGE,
+		OUTFLAG_SWAY,
+		OUTFLAG_HEAVE,
+		OUTFLAG_ROLL,
+		OUTFLAG_PITCH,
+		OUTFLAG_YAW,
+		OUTFLAG_WAVE_ELEV,
+		OUTFLAG_SIZE
 	};
 
 private:
@@ -54,12 +55,10 @@ private:
 	// Members related to formatted output file
 	static std::string m_outFilePath;
 	static std::ofstream m_outFl;
+	static std::array<bool, IO::OUTFLAG_SIZE> m_whichResult2Output;
 
 	// static std::string m_outputTimeStep; // String with the data that is output at each time step (FOWT position, hydro force components, anything that is a function of time)
 	// static bool m_shouldWriteOutputTimeStep;
-
-	// Para saber quais outputs usar, fazer um enum com todos os possíveis outputs e usá-lo como
-	// indice de um std::array
 
 public:
 	// Set input file and output files based on the input file path
@@ -83,6 +82,9 @@ public:
 	// Formatted output file
 	static void print2outFile(const std::string &str); // Mudar isso aqui pra um template, pra imprimir diretamente a variável sem passar pra string
 	static void newLineOutFile();
+
+	// Some printing functions
+	static std::string printOutVar();
 };
 
 

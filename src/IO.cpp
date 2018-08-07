@@ -24,6 +24,7 @@ std::ofstream IO::m_sumFl;
 std::string IO::m_outFilePath = "";
 std::ofstream IO::m_outFl;
 
+std::array<bool, IO::OUTFLAG_SIZE> IO::m_whichResult2Output;
 
 
 
@@ -200,7 +201,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		if (caseInsCompare(getKeyword(strInput), "Wave")) // A list of Waves is supposed to follow the "Wave keyword"
 		{			
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the keyword Wave
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
 			while (!caseInsCompare(getKeyword(strInput), "END")) // The END keyword indicates the end of the list of waves
 			{							
@@ -219,7 +220,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		if (caseInsCompare(getKeyword(strInput), "Nodes")) // A list of Nodes is supposed to follow the "Wave keyword"
 		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the keyword Nodes
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
 			while (!caseInsCompare(getKeyword(strInput), "END"))
 			{
@@ -238,7 +239,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		if (caseInsCompare(getKeyword(strInput), "Morison_circ")) // A list of circular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
 		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the keyword "Morison_circ"
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
 			while (!caseInsCompare(getKeyword(strInput), "END"))
 			{
@@ -257,7 +258,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		if (caseInsCompare(getKeyword(strInput), "Morison_rect")) // A list of rectangular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
 		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the keyword "Morison_circ"
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
 			while (!caseInsCompare(getKeyword(strInput), "END"))
 			{
@@ -272,7 +273,28 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				IO::readLineInputFile(strInput);
 			}
 		}
+
+
+		if (caseInsCompare(getKeyword(strInput), "Output")) // List of parameters that will be output
+		{
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the keyword
+
+			while (!caseInsCompare(getKeyword(strInput), "END"))
+			{
+				if (!m_inFl) // Signal if the end of file is reached before the end keyword
+				{
+					throw std::runtime_error("End of file reached before END keyword in OUTPUT specification.");
+					return;
+				}
+
+				// IO::setResults2Output(strInput, envir, fowt); // Add this Morison Element to the floater
+
+				IO::readLineInputFile(strInput);
+			}
+		}
 	}
+
+
 
 	fowt.setFloater(floater);
 }
@@ -365,8 +387,54 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "FOWT:\n";
 	m_sumFl << "Linear Stiffness:\t" << fowt.printLinStiff() << '\n';
 	m_sumFl << "Floater:\n" << fowt.printFloater();	
+
+	m_sumFl << "\n\n";
+	m_sumFl << "Output Variables:\n" << IO::printOutVar();
 }
 
+// Some printing functions
+std::string IO::printOutVar()
+{
+	std::string output = "";	
+	for (int ii = 0; ii < IO::OUTFLAG_SIZE; ++ii)
+	{
+		switch (ii)
+		{
+			case IO::OUTFLAG_SURGE:
+				output += "Surge: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
+				break;
+
+			case IO::OUTFLAG_SWAY:
+				output += "Sway: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
+				break;
+
+			case IO::OUTFLAG_HEAVE:
+				output += "Heave: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
+				break;
+
+			case IO::OUTFLAG_ROLL:
+				output += "Roll: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
+				break;
+
+			case IO::OUTFLAG_PITCH:
+				output += "Pitch: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
+				break;
+
+			case IO::OUTFLAG_YAW:				
+				output += "Yaw: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
+				break;
+
+			case IO::OUTFLAG_WAVE_ELEV:
+				output += "Wave Elevation: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
+				break;
+
+			default:
+				output += "Unknown specifier \n";
+				break;
+		}	
+	}
+	return output;
+}
 
 
 /*****************************************************
