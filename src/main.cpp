@@ -24,7 +24,6 @@
 #elif defined _WIN32
 # include <windows.h>
 #define usleep(x) Sleep((x)/1000)
-// #define mkdir(x) CreateDirectory((x), NULL)
 #endif
 
 // METiS Version
@@ -33,17 +32,14 @@ extern const std::string g_METIS_VERSION{ "0.0.1" };
 int main(int argc, char *argv[])
 {
 	std::cout << IO::METiS_Header() << '\n';
-
-
-	if (argc != 2)
-	{	
-		// Acho melhor throw exception, escrever pro console, escrever pro log file,
-		// esperar input do usuario e daí terminar
-		std::cout << "Please provide one input file.\n";
-		return 0;
-	}
-    
+   
 	try{
+		if (argc != 2)
+		{
+			throw std::runtime_error("Please provide one input file");
+			return 0;
+		}
+
 		FOWT fowt;
 		ENVIR envir;
 
@@ -60,10 +56,12 @@ int main(int argc, char *argv[])
 			usleep(10000);
 		}		
 	}
+
 	catch(std::exception &exception)
 	{
 		IO::writeErrorMessage( std::string(exception.what()) );
 	}
+
 	catch(...)
     {
         IO::writeErrorMessage( "Unknown exception thrown." );
