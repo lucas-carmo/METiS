@@ -36,7 +36,7 @@ void IO::setFiles(const std::string &inFlPath)
 	// Check whether we are not trying to reset the input file
 	if ( !m_inFilePath.empty() )
 	{
-		throw std::runtime_error("You can not reset the input file. Press enter to exit.");
+		throw std::runtime_error("You can not reset the input file.");
 	}
 	m_inFilePath = inFlPath;
 
@@ -74,7 +74,7 @@ void IO::setFiles(const std::string &inFlPath)
 	m_logFl.open(m_logFilePath); 
 	if (!m_logFl)
 	{
-		throw std::runtime_error("Unable to open file " + m_logFilePath + " for writting. Press enter to exit.");
+		throw std::runtime_error("Unable to open file " + m_logFilePath + " for writting.");
 	}
 
 	// Set summary file
@@ -82,7 +82,7 @@ void IO::setFiles(const std::string &inFlPath)
 	m_sumFl.open(m_sumFilePath);
 	if (!m_sumFl)
 	{
-		throw std::runtime_error("Unable to open file " + m_sumFilePath + " for writting. Press enter to exit.");
+		throw std::runtime_error("Unable to open file " + m_sumFilePath + " for writting.");
 	}
 
 	// Set formatted output file
@@ -90,7 +90,7 @@ void IO::setFiles(const std::string &inFlPath)
 	m_outFl.open(m_outFilePath);
 	if (!m_outFl)
 	{
-		throw std::runtime_error("Unable to open file " + m_outFilePath + " for writting. Press enter to exit.");
+		throw std::runtime_error("Unable to open file " + m_outFilePath + " for writting.");
 	}	
 }
 
@@ -117,9 +117,64 @@ void IO::readLineInputFile(std::string &strInput)
 	}				
 }
 
+
 unsigned int IO::getInLineNumber()
 {
 	return m_inLineNumber;
+}
+
+
+// Set the flags specifying which variables must be output 
+// and other necessary information (like the IDs of the points where the wave elevation will be output)
+void IO::setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir)
+{
+	if (caseInsCompare(getKeyword(strInput), "surge"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_SURGE) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "sway"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_SWAY) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "heave"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HEAVE) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "roll"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_ROLL) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "pitch"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_PITCH) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "yaw"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_YAW) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "wave_elev"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ELEV) = true;
+		envir.addWaveLocation(getData(strInput)); // Add the wave locations to envir. Pass only the part of the string after the keyword
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "wave_vel")) // Similar to wave_elev
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_WAVE_VEL) = true;
+		envir.addWaveLocation(getData(strInput));
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "wave_acc")) // Similar to wave_elev
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ACC) = true;
+		envir.addWaveLocation(getData(strInput));
+	}
 }
 
 
@@ -287,7 +342,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				// IO::setResults2Output(strInput, envir, fowt); // Add this Morison Element to the floater
+				IO::setResults2Output(strInput, fowt, envir);
 
 				IO::readLineInputFile(strInput);
 			}
@@ -381,6 +436,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Water Density:\t" << envir.printWatDens() << '\n';
 	m_sumFl << "Water Depth:\t" << envir.printWatDepth() << '\n';
 	m_sumFl << "Nodes: \n" << envir.printNodes() << '\n';
+	m_sumFl << "Wave Locations: " << envir.printWaveLocation() << '\n';
 	m_sumFl << "\n" << envir.printWave() << '\n';
 
 	m_sumFl << "\n\n";

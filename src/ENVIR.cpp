@@ -56,6 +56,33 @@ void ENVIR::addWave(const Wave &wave)
 	m_wave.push_back( wave );
 }
 
+void ENVIR::addWaveLocation(const std::string &data)
+{
+	// The wave locations are specified by node IDs separated by tabs or white-spaces	
+	std::vector<std::string> input = stringTokenize(data, " \t");	
+	
+	// Check whether input is not empty
+	if (input.empty())
+	{
+		throw std::runtime_error("You should specify at least one node ID for defining a wave location. Error in line " + std::to_string(IO::getInLineNumber()));
+	}
+
+	// Check whether nodes were specified
+	if (this->isNodeEmpty())
+	{		
+		throw std::runtime_error("Nodes should be specified before adding wave locations. Error in line " + std::to_string(IO::getInLineNumber()));
+	}
+
+	// For each of the node IDs:
+	for (int ii = 0; ii < input.size(); ++ii)
+	{
+		unsigned int nodeID(0); // Initialize a variable to read the node ID
+		readDataFromString(input.at(ii), nodeID); // Read the node ID specified as a string to the nodeID variable
+		m_waveLocation.push_back( this->getNode(nodeID) ); // Get the node coordinate and add it to m_waveLocation
+		m_waveLocation.back().at(2) = 0; // Set z=0
+	}
+}
+
 void ENVIR::addNode(const std::string &data)
 {
 	// Nodes are specified by a vec with four components: ID, X coord, Y coord, and Z coord. 
@@ -97,6 +124,25 @@ void ENVIR::addNode(const std::string &data)
 /*****************************************************
 	Getters
 *****************************************************/
+// Return coordinates of a node based on its ID
+// Throws a std::runtime_error if the node could not be found
+arma::vec::fixed<3> ENVIR::getNode(unsigned int ID) const
+{
+	std::vector<unsigned int>::const_iterator iter = std::find(m_nodesID.begin(), m_nodesID.end(), ID); // Find node by its ID.
+	vec::fixed<3> node_coord(fill::zeros);
+	if (iter != m_nodesID.end())
+	{
+		auto index = std::distance(m_nodesID.begin(), iter); // Get index by the distance between the iterator found above and m_nodes.begin()
+		node_coord = m_nodesCoord.at(index);
+	}
+	else
+	{
+		throw std::runtime_error("Unable to find node with ID " + std::to_string(ID) + ". Error in line " + std::to_string(IO::getInLineNumber()) + ".");
+	}
+
+	return node_coord;
+}
+
 std::string ENVIR::printTimeStep() const
 {
 	return std::to_string(m_timeStep);
@@ -153,6 +199,16 @@ std::string ENVIR::printWave() const
 	return output;
 }
 
+std::string ENVIR::printWaveLocation() const
+{
+	std::string output = "";
+	for (int ii = 0; ii < m_waveLocation.size(); ++ii)
+	{
+		output = output + "Location #" + std::to_string(ii) + ": (" + std::to_string(m_waveLocation.at(ii).at(0)) 
+						+ "," + std::to_string(m_waveLocation.at(ii).at(1)) + "," + std::to_string(m_waveLocation.at(ii).at(2)) + ")\n";
+	}
+	return output;
+}
 
 /*****************************************************
 	Other functions
@@ -160,24 +216,4 @@ std::string ENVIR::printWave() const
 bool ENVIR::isNodeEmpty() const
 {
 	return m_nodesID.empty();
-}
-
-
-// Return coordinates of a node based on its ID
-// Throws a std::runtime_error if the node could not be found
-arma::vec::fixed<3> ENVIR::getNode(unsigned int ID) const
-{
-	std::vector<unsigned int>::const_iterator iter = std::find(m_nodesID.begin(), m_nodesID.end(), ID); // Find node by its ID.
-	vec::fixed<3> node_coord(fill::zeros);
-	if (iter != m_nodesID.end())
-	{
-		auto index = std::distance(m_nodesID.begin(), iter); // Get index by the distance between the iterator found above and m_nodes.begin()
-		node_coord = m_nodesCoord.at(index);		
-	}
-	else
-	{
-		throw std::runtime_error( "Unable to find node with ID " + std::to_string(ID) + " in line " + std::to_string(IO::getInLineNumber()) + "." );
-	}
-
-	return node_coord;
 }

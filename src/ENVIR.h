@@ -28,7 +28,7 @@ private:
     double m_watDens;
     double m_watDepth;
     std::vector<Wave> m_wave;
-    std::vector<vec::fixed<3>> m_waveLocation; // Coordinates
+    std::vector<vec::fixed<3>> m_waveLocation; // Coordinates of the points where the wave elevation is calculated for output
     double m_airDens;
     double m_windMod;
     double m_windExp;
@@ -67,6 +67,7 @@ public:
     void readWatDens(const std::string &data);
     void readWatDepth(const std::string &data);
 	void addWave(const Wave &wave);
+	void addWaveLocation(const std::string &data);
 
 	/*****************************************************
 		Printing
@@ -79,6 +80,7 @@ public:
 	std::string printWatDens() const;
 	std::string printWatDepth() const;
 	std::string printWave() const;
+	std::string printWaveLocation() const;
 
 	/*****************************************************
 		Other functions

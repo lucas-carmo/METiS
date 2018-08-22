@@ -73,14 +73,12 @@ void Floater::addMorisonCirc(const std::string &data, const ENVIR &envir)
 	if (input.size() != 11)
 	{
 		throw std::runtime_error("Unable to read the circular cylinder in line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-		return;
 	}
 
 	// Check whether nodes were specified
 	if (envir.isNodeEmpty())
 	{
 		throw std::runtime_error( "Nodes should be specified before Morison Elements. Error in line " + std::to_string(IO::getInLineNumber()) );
-		return;
 	}
 
 	// Read data
@@ -106,7 +104,6 @@ void Floater::addMorisonCirc(const std::string &data, const ENVIR &envir)
 	if ( m_CoG.has_nan() ) // If this is true, then the CoG of the floater wasn't read yet
 	{
 		throw std::runtime_error( "Floater CoG must be specified before Morison Elements. Error in line " + std::to_string(IO::getInLineNumber()) );
-		return;
 	}
 	
 	node1_coord = node1_coord - m_CoG;
@@ -149,14 +146,12 @@ void Floater::addMorisonRect(const std::string &data, const ENVIR &envir)
 	if (input.size() != 15)
 	{
 		throw std::runtime_error("Unable to read the rectangular cylinder in line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-		return;
 	}
 
 	// Check whether nodes were specified
 	if (envir.isNodeEmpty())
 	{
 		throw std::runtime_error( "Nodes should be specified before Morison Elements. Error in line " + std::to_string(IO::getInLineNumber()) );
-		return;
 	}
 
 	// Read data
@@ -187,7 +182,6 @@ void Floater::addMorisonRect(const std::string &data, const ENVIR &envir)
 	if ( m_CoG.has_nan() ) // If this is true, then the CoG of the floater wasn't read yet
 	{
 		throw std::runtime_error( "Floater CoG must be specified before Morison Elements. Error in line " + std::to_string(IO::getInLineNumber()) );
-		return;
 	}
 		
 	node1_coord = node1_coord - m_CoG;

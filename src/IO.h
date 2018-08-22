@@ -35,6 +35,8 @@ public:
 		OUTFLAG_PITCH,
 		OUTFLAG_YAW,
 		OUTFLAG_WAVE_ELEV,
+		OUTFLAG_WAVE_VEL,
+		OUTFLAG_WAVE_ACC,
 		OUTFLAG_SIZE
 	};
 
@@ -68,18 +70,19 @@ public:
 	static void readLineInputFile(std::string &strInput);
 	static unsigned int getInLineNumber();
 	static void readInputFile(FOWT &fowt, ENVIR &envir);	
+	static void setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir);
 
 	/*
 	Functions related to output
 	*/
 	static std::string METiS_Header();
 	static void writeErrorMessage(const std::string &str);
-	static void writeWarningMessage(const std::string &str);
+	static void writeWarningMessage(const std::string &str);	
 
-	// Summary file
+	// To summary file
 	static void printSumFile(const FOWT &fowt, const ENVIR &envir);
 	
-	// Formatted output file
+	// To formatted output file
 	static void print2outFile(const std::string &str); // Mudar isso aqui pra um template, pra imprimir diretamente a variável sem passar pra string
 	static void newLineOutFile();
 
