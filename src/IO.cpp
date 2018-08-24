@@ -539,7 +539,7 @@ std::string getData(const std::string &str)
 	// Check if input string is empty
 	if (str.empty())
 	{
-		throw std::runtime_error("Empty string passed to getData(). Error in line " + std::to_string(IO::getInLineNumber()) + ".");
+		throw std::runtime_error("Empty string passed to getData(). Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
 	
     std::vector<std::string> str_tokenized = stringTokenize(str, " \t");

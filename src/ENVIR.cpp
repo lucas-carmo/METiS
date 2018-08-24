@@ -64,13 +64,13 @@ void ENVIR::addWaveLocation(const std::string &data)
 	// Check whether input is not empty
 	if (input.empty())
 	{
-		throw std::runtime_error("You should specify at least one node ID for defining a wave location. Error in line " + std::to_string(IO::getInLineNumber()));
+		throw std::runtime_error("You should specify at least one node ID for defining a wave location. Error in input line " + std::to_string(IO::getInLineNumber()));
 	}
 
 	// Check whether nodes were specified
 	if (this->isNodeEmpty())
 	{		
-		throw std::runtime_error("Nodes should be specified before adding wave locations. Error in line " + std::to_string(IO::getInLineNumber()));
+		throw std::runtime_error("Nodes should be specified before adding wave locations. Error in input line " + std::to_string(IO::getInLineNumber()));
 	}
 
 	// For each of the node IDs:
@@ -91,7 +91,7 @@ void ENVIR::addNode(const std::string &data)
 
 	if (input.size() != 4)
 	{
-		throw std::runtime_error("Unable to read the node in line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+		throw std::runtime_error("Unable to read the node in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 		return;
 	}
 
@@ -103,7 +103,7 @@ void ENVIR::addNode(const std::string &data)
 	{
 		if (nodeID <= m_nodesID.back()) // Then verify if its ID is larger than the previous one, thus garanteeing that m_nodesID is in ascending order (this is needed to use binary search to find nodes IDs)
 		{
-			throw std::runtime_error( "Nodes must be organized in ascending order. Error in line " + std::to_string(IO::getInLineNumber()) + ".");
+			throw std::runtime_error( "Nodes must be organized in ascending order. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 		}
 	}
 
@@ -137,7 +137,7 @@ arma::vec::fixed<3> ENVIR::getNode(unsigned int ID) const
 	}
 	else
 	{
-		throw std::runtime_error("Unable to find node with ID " + std::to_string(ID) + ". Error in line " + std::to_string(IO::getInLineNumber()) + ".");
+		throw std::runtime_error("Unable to find node with ID " + std::to_string(ID) + ". Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
 
 	return node_coord;
