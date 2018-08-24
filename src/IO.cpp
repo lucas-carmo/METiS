@@ -533,17 +533,29 @@ std::string getKeyword(const std::string &str)
 }
 
 // Get the part of the string after the keyword, excluding the '\t' or white-space
+// (i.e. the part of the string after the first '\t' or white-space).
 std::string getData(const std::string &str)
 {
-    if ( str.find_first_of(" \t", 0) != std::string::npos )
-    {
-        std::string aux_str = str.substr(str.find_first_of(" \t", 0));
-        return aux_str.substr(aux_str.find_first_not_of(" \t"));
-    }
-    else
-    {
-        return str;
-    }    
+	// Check if input string is empty
+	if (str.empty())
+	{
+		throw std::runtime_error("Empty string passed to getData(). Error in line " + std::to_string(IO::getInLineNumber()) + ".");
+	}
+	
+    std::vector<std::string> str_tokenized = stringTokenize(str, " \t");
+
+	// If str_tokenized has only one element, i.e. only the keyword, then return an empty string
+	if (str_tokenized.size() == 1)
+	{
+		return "";
+	}
+
+	std::string str_out = "";
+	for (int ii = 1; ii < str_tokenized.size(); ++ii) // Start at one to skip keyword
+	{
+		str_out += str_tokenized.at(ii) + "\t";
+	}
+	return str_out;
 }
 
 // Tokenize a string using a given delimiter.
