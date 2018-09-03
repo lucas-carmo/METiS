@@ -202,31 +202,31 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			continue;
 		}
 
-		if (caseInsCompare(getKeyword(strInput), "TimeTotal"))
+		else if (caseInsCompare(getKeyword(strInput), "TimeTotal"))
 		{
 			envir.readTimeTotal(getData(strInput));
 			continue;
 		}
 
-		if (caseInsCompare(getKeyword(strInput), "TimeRamp"))
+		else if (caseInsCompare(getKeyword(strInput), "TimeRamp"))
 		{
 			envir.readTimeRamp(getData(strInput));
 			continue;
 		}
 
-		if (caseInsCompare(getKeyword(strInput), "Grav"))
+		else if (caseInsCompare(getKeyword(strInput), "Grav"))
 		{
 			envir.readGrav(getData(strInput));
 			continue;
 		}
 
-		if (caseInsCompare(getKeyword(strInput), "WatDens"))
+		else if (caseInsCompare(getKeyword(strInput), "WatDens"))
 		{
 			envir.readWatDens(getData(strInput));
 			continue;
 		}
 
-		if (caseInsCompare(getKeyword(strInput), "WatDepth"))
+		else if (caseInsCompare(getKeyword(strInput), "WatDepth"))
 		{
 			envir.readWatDepth(getData(strInput));
 			continue;
@@ -235,26 +235,26 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 
 		// Read data to fowt
-		if (caseInsCompare(getKeyword(strInput), "LinStiff"))
+		else if (caseInsCompare(getKeyword(strInput), "LinStiff"))
 		{
 			fowt.readLinStiff(getData(strInput));
 			continue;
 		}
 
-		if (caseInsCompare(getKeyword(strInput), "FloaterMass"))
+		else if (caseInsCompare(getKeyword(strInput), "FloaterMass"))
 		{
 			floater.readMass(getData(strInput));
 			continue;
 		}
 
-		if (caseInsCompare(getKeyword(strInput), "FloaterCoG"))
+		else if (caseInsCompare(getKeyword(strInput), "FloaterCoG"))
 		{
 			floater.readCoG(getData(strInput));
 			continue;
 		}
 
 
-		if (caseInsCompare(getKeyword(strInput), "Wave")) // A list of Waves is supposed to follow the "Wave keyword"
+		else if (caseInsCompare(getKeyword(strInput), "Wave")) // A list of Waves is supposed to follow the "Wave keyword"
 		{			
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
@@ -273,7 +273,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		}
 
 
-		if (caseInsCompare(getKeyword(strInput), "Nodes")) // A list of Nodes is supposed to follow the "Wave keyword"
+		else if (caseInsCompare(getKeyword(strInput), "Nodes")) // A list of Nodes is supposed to follow the "Wave keyword"
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
@@ -292,7 +292,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		}
 
 
-		if (caseInsCompare(getKeyword(strInput), "Morison_circ")) // A list of circular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
+		else if (caseInsCompare(getKeyword(strInput), "Morison_circ")) // A list of circular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
@@ -311,7 +311,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		}
 
 
-		if (caseInsCompare(getKeyword(strInput), "Morison_rect")) // A list of rectangular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
+		else if (caseInsCompare(getKeyword(strInput), "Morison_rect")) // A list of rectangular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
@@ -330,7 +330,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		}
 
 
-		if (caseInsCompare(getKeyword(strInput), "Output")) // List of parameters that will be output
+		else if (caseInsCompare(getKeyword(strInput), "Output")) // List of parameters that will be output
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the keyword
 
@@ -346,6 +346,11 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 				IO::readLineInputFile(strInput);
 			}
+		}
+
+		else 
+		{
+			writeWarningMessage("Unknown keyword " + getKeyword(strInput) + ".");
 		}
 	}
 
@@ -392,7 +397,7 @@ void IO::writeErrorMessage(const std::string &str)
 
 void IO::writeWarningMessage(const std::string &str)
 {	
-	std::string mess = "Warning: " + str;
+	std::string mess = "WARNING: " + str;
 	
 	if (m_logFl) // If we are able to write to the log file, do it
 	{
@@ -484,8 +489,16 @@ std::string IO::printOutVar()
 				output += "Wave Elevation: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
 				break;
 
+			case IO::OUTFLAG_WAVE_VEL:
+				output += "Wave Velocity: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
+				break;
+
+			case IO::OUTFLAG_WAVE_ACC:
+				output += "Wave Acceleration: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
+				break;				
+
 			default:
-				output += "Unknown specifier \n";
+				output += "Unknown specifier in output flags.\n";
 				break;
 		}	
 	}
