@@ -29,8 +29,192 @@ std::array<bool, IO::OUTFLAG_SIZE> IO::m_whichResult2Output;
 
 
 /*****************************************************
-    Class functions related to Input
+	Class functions related to Input
 *****************************************************/
+
+//	This is the main input function.
+//	It is responsible for reading the input file line by line and assigning what is read to the FOWT and ENVIR classes
+void IO::readInputFile(FOWT &fowt, ENVIR &envir)
+{
+	// Classes that are members of FOWT and ENVIR
+	Floater floater;
+
+	// Read file line by line
+	while (m_inFl)
+	{
+		std::string strInput;
+		IO::readLineInputFile(strInput);
+
+		/**************************
+		Read data based on keywords
+		**************************/
+
+		// Read data to envir
+		if (caseInsCompare(getKeyword(strInput), "TimeStep"))
+		{
+			envir.readTimeStep(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "TimeTotal"))
+		{
+			envir.readTimeTotal(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "TimeRamp"))
+		{
+			envir.readTimeRamp(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "Grav"))
+		{
+			envir.readGrav(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "WatDens"))
+		{
+			envir.readWatDens(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "WatDepth"))
+		{
+			envir.readWatDepth(getData(strInput));
+			continue;
+		}
+
+
+
+		// Read data to fowt
+		else if (caseInsCompare(getKeyword(strInput), "LinStiff"))
+		{
+			fowt.readLinStiff(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "FloaterMass"))
+		{
+			floater.readMass(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "FloaterCoG"))
+		{
+			floater.readCoG(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "Wave")) // A list of Waves is supposed to follow the "Wave keyword"
+		{
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+
+			while (!caseInsCompare(getKeyword(strInput), "END")) // The END keyword indicates the end of the list of waves
+			{
+				if (!m_inFl) // Signal if the end of file is reached before the end keyword
+				{
+					throw std::runtime_error("End of file reached before END keyword in WAVE specification.");
+					return;
+				}
+
+				envir.addWave(Wave(strInput)); // Add this wave to the environment
+
+				IO::readLineInputFile(strInput);
+			}
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "Nodes")) // A list of Nodes is supposed to follow the "Wave keyword"
+		{
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+
+			while (!caseInsCompare(getKeyword(strInput), "END"))
+			{
+				if (!m_inFl) // Signal if the end of file is reached before the end keyword
+				{
+					throw std::runtime_error("End of file reached before END keyword in NODES specification.");
+					return;
+				}
+
+				envir.addNode(strInput); // Add this node to the floater
+
+				IO::readLineInputFile(strInput);
+			}
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "Morison_circ")) // A list of circular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
+		{
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+
+			while (!caseInsCompare(getKeyword(strInput), "END"))
+			{
+				if (!m_inFl) // Signal if the end of file is reached before the end keyword
+				{
+					throw std::runtime_error("End of file reached before END keyword in MORISON_CIRC specification.");
+					return;
+				}
+
+				floater.addMorisonCirc(strInput, envir); // Add this Morison Element to the floater
+
+				IO::readLineInputFile(strInput);
+			}
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "Morison_rect")) // A list of rectangular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
+		{
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+
+			while (!caseInsCompare(getKeyword(strInput), "END"))
+			{
+				if (!m_inFl) // Signal if the end of file is reached before the end keyword
+				{
+					throw std::runtime_error("End of file reached before END keyword in MORISON_RECT specification.");
+					return;
+				}
+
+				floater.addMorisonRect(strInput, envir); // Add this Morison Element to the floater
+
+				IO::readLineInputFile(strInput);
+			}
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "Output")) // List of parameters that will be output
+		{
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the keyword
+
+			while (!caseInsCompare(getKeyword(strInput), "END"))
+			{
+				if (!m_inFl) // Signal if the end of file is reached before the end keyword
+				{
+					throw std::runtime_error("End of file reached before END keyword in OUTPUT specification.");
+					return;
+				}
+
+				IO::setResults2Output(strInput, fowt, envir);
+
+				IO::readLineInputFile(strInput);
+			}
+		}
+
+		else
+		{
+			//writeWarningMessage("Unknown keyword '" + getKeyword(strInput) + "' in line " + std::to_string( IO::getInLineNumber() ) + ".");
+		}
+	}
+
+
+
+	fowt.setFloater(floater);
+}
+
+
+
 void IO::setFiles(const std::string &inFlPath)
 {
 	// Check whether we are not trying to reset the input file
@@ -175,188 +359,6 @@ void IO::setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir)
 		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ACC) = true;
 		envir.addWaveLocation(getData(strInput));
 	}
-}
-
-
-//	This is the main input function.
-//	It is responsible for reading the input file line by line and assigning what is read to the FOWT and ENVIR classes
-void IO::readInputFile(FOWT &fowt, ENVIR &envir)
-{
-	// Classes that are members of FOWT and ENVIR
-	Floater floater;		
-
-	// Read file line by line
-	while (m_inFl)
-	{
-		std::string strInput;		
-		IO::readLineInputFile(strInput);
-
-		/**************************
-		Read data based on keywords
-		**************************/
-
-		// Read data to envir
-		if (caseInsCompare(getKeyword(strInput), "TimeStep"))
-		{
-			envir.readTimeStep(getData(strInput));
-			continue;
-		}
-
-		else if (caseInsCompare(getKeyword(strInput), "TimeTotal"))
-		{
-			envir.readTimeTotal(getData(strInput));
-			continue;
-		}
-
-		else if (caseInsCompare(getKeyword(strInput), "TimeRamp"))
-		{
-			envir.readTimeRamp(getData(strInput));
-			continue;
-		}
-
-		else if (caseInsCompare(getKeyword(strInput), "Grav"))
-		{
-			envir.readGrav(getData(strInput));
-			continue;
-		}
-
-		else if (caseInsCompare(getKeyword(strInput), "WatDens"))
-		{
-			envir.readWatDens(getData(strInput));
-			continue;
-		}
-
-		else if (caseInsCompare(getKeyword(strInput), "WatDepth"))
-		{
-			envir.readWatDepth(getData(strInput));
-			continue;
-		}
-
-
-
-		// Read data to fowt
-		else if (caseInsCompare(getKeyword(strInput), "LinStiff"))
-		{
-			fowt.readLinStiff(getData(strInput));
-			continue;
-		}
-
-		else if (caseInsCompare(getKeyword(strInput), "FloaterMass"))
-		{
-			floater.readMass(getData(strInput));
-			continue;
-		}
-
-		else if (caseInsCompare(getKeyword(strInput), "FloaterCoG"))
-		{
-			floater.readCoG(getData(strInput));
-			continue;
-		}
-
-
-		else if (caseInsCompare(getKeyword(strInput), "Wave")) // A list of Waves is supposed to follow the "Wave keyword"
-		{			
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
-
-			while (!caseInsCompare(getKeyword(strInput), "END")) // The END keyword indicates the end of the list of waves
-			{							
-				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{
-					throw std::runtime_error("End of file reached before END keyword in WAVE specification.");
-					return;
-				}
-
-				envir.addWave( Wave(strInput) ); // Add this wave to the environment
-				
-				IO::readLineInputFile(strInput);
-			}			
-		}
-
-
-		else if (caseInsCompare(getKeyword(strInput), "Nodes")) // A list of Nodes is supposed to follow the "Wave keyword"
-		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
-
-			while (!caseInsCompare(getKeyword(strInput), "END"))
-			{
-				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{
-					throw std::runtime_error("End of file reached before END keyword in NODES specification.");
-					return;
-				}
-
-				envir.addNode(strInput); // Add this node to the floater
-
-				IO::readLineInputFile(strInput);
-			}
-		}
-
-
-		else if (caseInsCompare(getKeyword(strInput), "Morison_circ")) // A list of circular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
-		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
-
-			while (!caseInsCompare(getKeyword(strInput), "END"))
-			{
-				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{					
-					throw std::runtime_error("End of file reached before END keyword in MORISON_CIRC specification.");
-					return;
-				}
-
-				floater.addMorisonCirc(strInput, envir); // Add this Morison Element to the floater
-
-				IO::readLineInputFile(strInput);
-			}
-		}
-
-
-		else if (caseInsCompare(getKeyword(strInput), "Morison_rect")) // A list of rectangular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
-		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
-
-			while (!caseInsCompare(getKeyword(strInput), "END"))
-			{
-				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{
-					throw std::runtime_error("End of file reached before END keyword in MORISON_RECT specification.");
-					return;
-				}
-
-				floater.addMorisonRect(strInput, envir); // Add this Morison Element to the floater
-
-				IO::readLineInputFile(strInput);
-			}
-		}
-
-
-		else if (caseInsCompare(getKeyword(strInput), "Output")) // List of parameters that will be output
-		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the keyword
-
-			while (!caseInsCompare(getKeyword(strInput), "END"))
-			{
-				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{
-					throw std::runtime_error("End of file reached before END keyword in OUTPUT specification.");
-					return;
-				}
-
-				IO::setResults2Output(strInput, fowt, envir);
-
-				IO::readLineInputFile(strInput);
-			}
-		}
-
-		else 
-		{
-			writeWarningMessage("Unknown keyword " + getKeyword(strInput) + ".");
-		}
-	}
-
-
-
-	fowt.setFloater(floater);
 }
 
 
