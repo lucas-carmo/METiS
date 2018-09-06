@@ -86,6 +86,7 @@ public:
 		Other functions
 	*****************************************************/
     bool isNodeEmpty() const;
+    bool isWaveLocationEmpty() const;
     arma::vec::fixed<3> getNode(unsigned int ID) const;
 };
 
