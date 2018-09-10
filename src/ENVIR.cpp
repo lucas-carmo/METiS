@@ -217,3 +217,8 @@ bool ENVIR::isNodeEmpty() const
 {
 	return m_nodesID.empty();
 }
+
+bool ENVIR::isWaveLocationEmpty() const
+{
+	return m_waveLocation.empty();
+}
