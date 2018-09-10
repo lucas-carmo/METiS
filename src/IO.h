@@ -57,6 +57,8 @@ private:
 	// Members related to formatted output file
 	static std::string m_outFilePath;
 	static std::ofstream m_outFl;
+	static const unsigned int m_outColumnWidth;
+	static const unsigned int m_outNumPrecision;
 	static std::array<bool, IO::OUTFLAG_SIZE> m_whichResult2Output;
 
 	// static std::string m_outputTimeStep; // String with the data that is output at each time step (FOWT position, hydro force components, anything that is a function of time)
@@ -83,7 +85,8 @@ public:
 	static void printSumFile(const FOWT &fowt, const ENVIR &envir);
 	
 	// To formatted output file
-	static void print2outFile(const std::string &str); // Mudar isso aqui pra um template, pra imprimir diretamente a variável sem passar pra string
+	static void print2outFile(const std::string &str);
+	static void print2outFile(const double num);
 	static void newLineOutFile();
 
 	// Some printing functions

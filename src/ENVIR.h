@@ -39,7 +39,7 @@ private:
     double m_timeStep;
     double m_timeTotal;
     double m_timeRamp;
-    double m_currentTime = 0;
+    double m_time = 0;
     char m_timeIntegrationMethod; // 1: 4th order Runge-Kutta
 
     bool m_useBEMT;
@@ -70,6 +70,13 @@ public:
 	void addWaveLocation(const std::string &data);
 
 	/*****************************************************
+		Getters
+	*****************************************************/    
+    double timeStep() const;
+    double timeTotal() const;
+    double time() const;
+
+	/*****************************************************
 		Printing
 	*****************************************************/
 	std::string printTimeStep() const;
@@ -88,5 +95,7 @@ public:
     bool isNodeEmpty() const;
     bool isWaveLocationEmpty() const;
     arma::vec::fixed<3> getNode(unsigned int ID) const;
+
+    void stepTime();
 };
 

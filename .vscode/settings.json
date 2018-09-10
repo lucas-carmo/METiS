@@ -48,6 +48,7 @@
         "type_traits": "cpp",
         "tuple": "cpp",
         "utility": "cpp",
-        "armadillo": "cpp"
+        "armadillo": "cpp",
+        "iomanip": "cpp"
     }
 }

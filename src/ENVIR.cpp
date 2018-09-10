@@ -143,6 +143,29 @@ arma::vec::fixed<3> ENVIR::getNode(unsigned int ID) const
 	return node_coord;
 }
 
+double ENVIR::timeStep() const
+{
+	return m_timeStep;
+}
+
+double ENVIR::timeTotal() const
+{
+	return m_timeTotal;
+}
+
+double ENVIR::time() const
+{
+	return m_time;
+}
+
+void ENVIR::stepTime()
+{
+	m_time += m_timeStep;
+}
+
+/*****************************************************
+	Printing
+*****************************************************/
 std::string ENVIR::printTimeStep() const
 {
 	return std::to_string(m_timeStep);

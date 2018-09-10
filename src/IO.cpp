@@ -3,7 +3,8 @@
 #include <fstream> // Include file input/output classes
 #include <iostream>
 #include <stdexcept> // For std::exception
-#include <sys/types.h> // Using this and the one below to check if directories and files exist
+#include <iomanip> // For input/output manipulators
+#include <sys/types.h> // Using this and stat.h to check if directories and files exist
 #include <sys/stat.h>
 #include <cstdlib> // for exit()
 
@@ -23,7 +24,8 @@ std::ofstream IO::m_sumFl;
 
 std::string IO::m_outFilePath = "";
 std::ofstream IO::m_outFl;
-
+const unsigned int IO::m_outColumnWidth = 12;
+const unsigned int IO::m_outNumPrecision = 4;
 std::array<bool, IO::OUTFLAG_SIZE> IO::m_whichResult2Output;
 
 
@@ -543,11 +545,25 @@ void IO::print2outFile(const std::string &str)
 	{
 		throw std::runtime_error("Unable to write to formatted output file.");
 	}
+
+	m_outFl << std::setw(IO::m_outColumnWidth) << str;
+}
+
+void IO::print2outFile(const double num)
+{
+	if (!m_outFl)
+	{
+		throw std::runtime_error("Unable to write to formatted output file.");
+	}
+
+	m_outFl << std::setw(IO::m_outColumnWidth) << std::scientific << std::setprecision(IO::m_outNumPrecision) << num;
 }
 
 
 void IO::newLineOutFile()
-{}
+{
+	m_outFl << '\n';
+}
 
 // Print the members of fowt and envir. Useful for debugging.
 void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
@@ -632,6 +648,8 @@ std::string IO::printOutVar()
 	}
 	return output;
 }
+
+
 
 
 /*****************************************************
