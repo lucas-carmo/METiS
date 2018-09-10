@@ -31,164 +31,6 @@ std::array<bool, IO::OUTFLAG_SIZE> IO::m_whichResult2Output;
 /*****************************************************
     Class functions related to Input
 *****************************************************/
-void IO::setFiles(const std::string &inFlPath)
-{
-	// Check whether we are not trying to reset the input file
-	if ( !m_inFilePath.empty() )
-	{
-		throw std::runtime_error("You can not reset the input file.");
-	}
-	m_inFilePath = inFlPath;
-
-	// Open input file
-	m_inFl.open(m_inFilePath);
-	if (!m_inFl)
-	{
-		throw std::runtime_error("Unable to open file " + m_inFilePath + " for reading.");
-	}	
-
-
-	// Get path of the folder where the input file is located, as that is where the output
-	// will be saved to.
-	std::string folderPath = getFileFolder(m_inFilePath);
-
-	// Path of the output folder
-	std::string outputFolder = folderPath + filesep + "output";
-
-	// Create output folder with name "output" in the same folder as the input file ("folderPath").
-	// If a folder (or file) named "output" already exists in folderPath, create a folder named output_1. If the latter exists as well, create output_2 instead.
-	// Keep this process until output_n does not exist and is then created.
-	struct stat info;		
-	std::string outputFolder_original = outputFolder; // Original name of folderPath
-	int ii = 1;	
-	while ( stat(outputFolder.c_str(), &info) == 0 )
-	{
-		outputFolder = outputFolder_original + "_" + std::to_string(ii);			
-		++ii;
-	}
-	system( ("mkdir " + outputFolder).c_str() );
-	std::cout << "Output folder: '" << outputFolder << "'\n";
-
-	// Set log file
-	m_logFilePath = outputFolder + filesep  + "log.txt";
-	m_logFl.open(m_logFilePath); 
-	if (!m_logFl)
-	{
-		throw std::runtime_error("Unable to open file " + m_logFilePath + " for writting.");
-	}
-
-	// Set summary file
-	m_sumFilePath = outputFolder + filesep + "summary.txt";
-	m_sumFl.open(m_sumFilePath);
-	if (!m_sumFl)
-	{
-		throw std::runtime_error("Unable to open file " + m_sumFilePath + " for writting.");
-	}
-
-	// Set formatted output file
-	m_outFilePath = outputFolder + filesep + "output.txt";
-	m_outFl.open(m_outFilePath);
-	if (!m_outFl)
-	{
-		throw std::runtime_error("Unable to open file " + m_outFilePath + " for writting.");
-	}	
-}
-
-
-// Read line from input file to string "strInput".
-// The function deals with empty lines and comments using functions "hasContent" and
-// "thereIsCommentInString". Besides, it updates the line number counter inLineNumber
-void IO::readLineInputFile(std::string &strInput)
-{
-	std::getline(m_inFl, strInput); // Read next file line to string strInput
-	++m_inLineNumber; // Update line number counter
-
-	// Repeat this process until the line has some content or end of file is achieved
-	while (!hasContent(strInput) && m_inFl)
-	{		
-		std::getline(m_inFl, strInput);
-		++m_inLineNumber;
-	}
-
-	// Remove comments from line
-	if (thereIsCommentInString(strInput))
-	{
-		removeComments(strInput);
-	}				
-}
-
-
-unsigned int IO::getInLineNumber()
-{
-	return m_inLineNumber;
-}
-
-
-// Set the flags specifying which variables must be output 
-// and other necessary information (like the IDs of the points where the wave elevation will be output)
-void IO::setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir)
-{
-	if (caseInsCompare(getKeyword(strInput), "surge"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_SURGE) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "sway"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_SWAY) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "heave"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_HEAVE) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "roll"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_ROLL) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "pitch"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_PITCH) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "yaw"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_YAW) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "wave_elev"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ELEV) = true;
-
-		if (!getData(strInput).empty())
-		{
-			envir.addWaveLocation(getData(strInput)); // Add the wave locations to envir. Pass only the part of the string after the keyword
-		}
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "wave_vel")) // Similar to wave_elev
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_WAVE_VEL) = true;
-
-		if (!getData(strInput).empty())
-		{		
-			envir.addWaveLocation(getData(strInput));
-		}
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "wave_acc")) // Similar to wave_elev
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ACC) = true;
-
-		if (!getData(strInput).empty())
-		{
-			envir.addWaveLocation(getData(strInput));
-		}
-	}
-}
-
 
 //	This is the main input function.
 //	It is responsible for reading the input file line by line and assigning what is read to the FOWT and ENVIR classes
@@ -479,6 +321,166 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 	fowt.setFloater(floater);
 }
+
+
+void IO::setFiles(const std::string &inFlPath)
+{
+	// Check whether we are not trying to reset the input file
+	if ( !m_inFilePath.empty() )
+	{
+		throw std::runtime_error("You can not reset the input file.");
+	}
+	m_inFilePath = inFlPath;
+
+	// Open input file
+	m_inFl.open(m_inFilePath);
+	if (!m_inFl)
+	{
+		throw std::runtime_error("Unable to open file " + m_inFilePath + " for reading.");
+	}	
+
+
+	// Get path of the folder where the input file is located, as that is where the output
+	// will be saved to.
+	std::string folderPath = getFileFolder(m_inFilePath);
+
+	// Path of the output folder
+	std::string outputFolder = folderPath + filesep + "output";
+
+	// Create output folder with name "output" in the same folder as the input file ("folderPath").
+	// If a folder (or file) named "output" already exists in folderPath, create a folder named output_1. If the latter exists as well, create output_2 instead.
+	// Keep this process until output_n does not exist and is then created.
+	struct stat info;		
+	std::string outputFolder_original = outputFolder; // Original name of folderPath
+	int ii = 1;	
+	while ( stat(outputFolder.c_str(), &info) == 0 )
+	{
+		outputFolder = outputFolder_original + "_" + std::to_string(ii);			
+		++ii;
+	}
+	system( ("mkdir " + outputFolder).c_str() );
+	std::cout << "Output folder: '" << outputFolder << "'\n";
+
+	// Set log file
+	m_logFilePath = outputFolder + filesep  + "log.txt";
+	m_logFl.open(m_logFilePath); 
+	if (!m_logFl)
+	{
+		throw std::runtime_error("Unable to open file " + m_logFilePath + " for writting.");
+	}
+
+	// Set summary file
+	m_sumFilePath = outputFolder + filesep + "summary.txt";
+	m_sumFl.open(m_sumFilePath);
+	if (!m_sumFl)
+	{
+		throw std::runtime_error("Unable to open file " + m_sumFilePath + " for writting.");
+	}
+
+	// Set formatted output file
+	m_outFilePath = outputFolder + filesep + "output.txt";
+	m_outFl.open(m_outFilePath);
+	if (!m_outFl)
+	{
+		throw std::runtime_error("Unable to open file " + m_outFilePath + " for writting.");
+	}	
+}
+
+
+// Read line from input file to string "strInput".
+// The function deals with empty lines and comments using functions "hasContent" and
+// "thereIsCommentInString". Besides, it updates the line number counter inLineNumber
+void IO::readLineInputFile(std::string &strInput)
+{
+	std::getline(m_inFl, strInput); // Read next file line to string strInput
+	++m_inLineNumber; // Update line number counter
+
+	// Repeat this process until the line has some content or end of file is achieved
+	while (!hasContent(strInput) && m_inFl)
+	{		
+		std::getline(m_inFl, strInput);
+		++m_inLineNumber;
+	}
+
+	// Remove comments from line
+	if (thereIsCommentInString(strInput))
+	{
+		removeComments(strInput);
+	}				
+}
+
+
+unsigned int IO::getInLineNumber()
+{
+	return m_inLineNumber;
+}
+
+
+// Set the flags specifying which variables must be output 
+// and other necessary information (like the IDs of the points where the wave elevation will be output)
+void IO::setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir)
+{
+	if (caseInsCompare(getKeyword(strInput), "surge"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_SURGE) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "sway"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_SWAY) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "heave"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HEAVE) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "roll"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_ROLL) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "pitch"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_PITCH) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "yaw"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_YAW) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "wave_elev"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ELEV) = true;
+
+		if (!getData(strInput).empty())
+		{
+			envir.addWaveLocation(getData(strInput)); // Add the wave locations to envir. Pass only the part of the string after the keyword
+		}
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "wave_vel")) // Similar to wave_elev
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_WAVE_VEL) = true;
+
+		if (!getData(strInput).empty())
+		{		
+			envir.addWaveLocation(getData(strInput));
+		}
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "wave_acc")) // Similar to wave_elev
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ACC) = true;
+
+		if (!getData(strInput).empty())
+		{
+			envir.addWaveLocation(getData(strInput));
+		}
+	}
+}
+
 
 
 /*****************************************************
