@@ -311,9 +311,9 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			}
 		}
 
-		else 
+		else if (!caseInsCompare(getKeyword(strInput), "END_OF_INPUT_FILE"))
 		{
-			writeWarningMessage("Unknown keyword " + getKeyword(strInput) + ".");
+			writeWarningMessage("Unknown keyword '" + getKeyword(strInput) + "' in line " + std::to_string(IO::getInLineNumber()) +".");
 		}
 	}
 
@@ -407,6 +407,11 @@ void IO::readLineInputFile(std::string &strInput)
 	{
 		removeComments(strInput);
 	}				
+
+	if (!m_inFl)
+	{
+		strInput = "END_OF_INPUT_FILE";
+	}
 }
 
 
@@ -694,6 +699,7 @@ std::string getData(const std::string &str)
 	return str_out;
 }
 
+
 // Tokenize a string using a given delimiter.
 // Return a std::vector with the resulting strings at the different elements
 std::vector<std::string> stringTokenize(const std::string &str, const std::string &delim)
@@ -751,7 +757,26 @@ bool caseInsCompare(const std::wstring& s1, const std::wstring& s2) {
 // Get folder path from a complete file path
 std::string getFileFolder(const std::string& path)
 {
-  size_t found;
-  found = path.find_last_of(filesep);
-  return path.substr(0,found);
+	// Check if input string is empty
+	if (path.empty())
+	{
+		throw std::runtime_error("Empty string passed to getFileFolder(). Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+	}
+
+  	std::vector<std::string> str_tokenized = stringTokenize(path, filesep);
+
+	// If there is only one element in str_tokenized, it means that only the file name
+	// was provided as an argument. Hence, the fileFolder is the current directory, "."
+	if (str_tokenized.size() == 1)
+	{
+		return ".";
+	}
+
+	// Otherwise, return the full path until the last delimiter
+	else 
+	{
+		size_t found;
+  		found = path.find_last_of(filesep);
+  		return path.substr(0,found);
+	}  	
 }

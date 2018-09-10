@@ -14,11 +14,11 @@
 extern const std::string g_METIS_VERSION;
 
 // Define file separator for current platform
-const char filesep =
+const std::string filesep =
 #ifdef _WIN32
-	'\\';
+	"\\";
 #else
-	'/';
+	"/";
 #endif
 
 
