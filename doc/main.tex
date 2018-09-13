@@ -2,8 +2,9 @@
 
 
 \usepackage[utf8]{inputenc}
+\usepackage[parfill]{parskip}
 \usepackage{geometry}
-
+\usepackage{lipsum}
 
 
 
@@ -32,8 +33,14 @@
 \tableofcontents
 
 \chapter{Introduction}
+\lipsum
 
-\chapter{Compiling and Running}
 
+
+\chapter{Compiling and running}
+
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{references}
 
 \end{document}
