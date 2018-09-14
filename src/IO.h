@@ -86,7 +86,8 @@ public:
 	
 	// To formatted output file
 	static void print2outFile(const std::string &str);
-	static void print2outFile(const double num);
+	static void print2outFile(const double &num);
+	static void print2outFile(const int &num);
 	static void newLineOutFile();
 
 	// Some printing functions

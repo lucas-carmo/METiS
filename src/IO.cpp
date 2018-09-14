@@ -24,7 +24,7 @@ std::ofstream IO::m_sumFl;
 
 std::string IO::m_outFilePath = "";
 std::ofstream IO::m_outFl;
-const unsigned int IO::m_outColumnWidth = 12;
+const unsigned int IO::m_outColumnWidth  = 12;
 const unsigned int IO::m_outNumPrecision = 4;
 std::array<bool, IO::OUTFLAG_SIZE> IO::m_whichResult2Output;
 
@@ -538,7 +538,9 @@ void IO::writeWarningMessage(const std::string &str)
 	std::cout << "\n\n" << mess << std::endl;
 }
 
-
+// Different functions to print to the formatted output file depending on the variable type.
+// The format parameters (column width and precision) are member variables of the IO class and
+// can be adjusted changing the values of m_outColumnWidth and m_outNumPrecision
 void IO::print2outFile(const std::string &str)
 {
 	if (!m_outFl)
@@ -559,7 +561,27 @@ void IO::print2outFile(const double num)
 	m_outFl << std::setw(IO::m_outColumnWidth) << std::scientific << std::setprecision(IO::m_outNumPrecision) << num;
 }
 
+void IO::print2outFile(const double &num)
+{
+	if (!m_outFl)
+	{
+		throw std::runtime_error("Unable to write to formatted output file.");
+	}
 
+	m_outFl << std::setw(IO::m_outColumnWidth) << std::scientific << std::setprecision(IO::m_outNumPrecision) << num;
+}
+
+void IO::print2outFile(const int &num)
+{
+	if (!m_outFl)
+	{
+		throw std::runtime_error("Unable to write to formatted output file.");
+	}
+
+	m_outFl << std::setw(IO::m_outColumnWidth) << num;
+}
+
+// Since the data is output in columns, it is necessary to add a new line at each new print step
 void IO::newLineOutFile()
 {
 	m_outFl << '\n';

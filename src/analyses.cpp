@@ -21,12 +21,15 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
         if (envir.time() == 0)
         {
             IO::print2outFile("TIME");
+            IO::print2outFile("TesteClm1");
             IO::print2outFile("TesteClm2");
         }
         
         IO::newLineOutFile();
         IO::print2outFile(envir.time());
         IO::print2outFile(teste(0));
+        IO::print2outFile(round(100 * envir.time() / envir.timeTotal()));
+
 
         std::cout << round(100 * envir.time() / envir.timeTotal()) << "%" << '\r';
         std::fflush(stdout);

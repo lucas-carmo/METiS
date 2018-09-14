@@ -34,7 +34,7 @@ mv METiS bin # move METiS executable to METiS/bin
 
 # Run METiS - REMOVE THIS PART AFTER TESTS ARE DONE
 echo '-- Running METiS'
-./bin/METiS ./Test/mainInputExample.txt
+./bin/METiS ./test/mainInputExample.txt
 
 
 #=== New Version
