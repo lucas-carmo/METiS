@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <armadillo>
 #include "Floater.h"
 
@@ -13,28 +14,33 @@ private:
 	//Tower m_tower;
 	//Rotor m_rotor;
 	//Nacelle m_nacelle;
-	vec m_linStiff;
+	vec::fixed<3> m_linStiff;
 	
-	vec m_pos;
-	vec m_vel;
-	vec m_acc;	
+	vec::fixed<3> m_pos;
+	vec::fixed<3> m_vel;
+	vec::fixed<3> m_acc;
 
 public:
-	FOWT() : m_linStiff(3)
-	{}
+	FOWT();
 
 
 	/*****************************************************
-		Setters used to set the data read from the input file.
+		Setters
 	*****************************************************/
 	void readLinStiff(const std::string &data);
 
-	/* 
-		Floater properties
-	*/
-	void readFloaterMass(const std::string &data);
-	void readFloaterCoG(const std::string &data);
+	// You should be aware that the floater that is passed to this function will have
+	// its vector of MorisonElements (member m_MorisonElements) pointing to nullptr
+	// after this function is terminated.
+	void setFloater(Floater &floater);
 
+	
+
+	/*****************************************************
+		Getters
+	*****************************************************/
+	std::string printLinStiff() const;
+	std::string printFloater() const;
 
 
 	/*****************************************************

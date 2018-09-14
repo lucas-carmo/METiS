@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <array>
 #include <sstream>
 #include <algorithm> // Defines a collection of functions especially designed to be used on ranges of elements.
 #include <cctype> // This header declares a set of functions to classify and transform individual characters, like toupper
@@ -9,25 +10,88 @@
 #include "FOWT.h"
 #include "ENVIR.h"
 
+// Forward declaration of METiS Version
+extern const std::string g_METIS_VERSION;
+
+// Define file separator for current platform
+const std::string filesep =
+#ifdef _WIN32
+	"\\";
+#else
+	"/";
+#endif
+
 
 class IO
 {
+public:
+	// COLOCAR COMENTARIO
+	enum OutFlag
+	{
+		OUTFLAG_SURGE,
+		OUTFLAG_SWAY,
+		OUTFLAG_HEAVE,
+		OUTFLAG_ROLL,
+		OUTFLAG_PITCH,
+		OUTFLAG_YAW,
+		OUTFLAG_WAVE_ELEV,
+		OUTFLAG_WAVE_VEL,
+		OUTFLAG_WAVE_ACC,
+		OUTFLAG_SIZE
+	};
+
 private:
+	// Members related to input
 	static std::string m_inFilePath;
+	static std::ifstream m_inFl;
+	static unsigned int m_inLineNumber; // Stores the current line number while reading the input file
 
-	static std::string m_header;
-	static bool m_shouldWriteHeader;
+	// Members related to log file
+	static std::string m_logFilePath;
+	static std::ofstream m_logFl;
+	
+	// Members related to summary file
+	static std::string m_sumFilePath;
+	static std::ofstream m_sumFl;
 
-	static std::string m_outputTimeStep; // String with the data that is output at each time step (FOWT position, hydro force components, anything that is a function of time)
-	static bool m_shouldWriteOutputTimeStep;
+	// Members related to formatted output file
+	static std::string m_outFilePath;
+	static std::ofstream m_outFl;
+	static const unsigned int m_outColumnWidth;
+	static const unsigned int m_outNumPrecision;
+	static std::array<bool, IO::OUTFLAG_SIZE> m_whichResult2Output;
+
+	// static std::string m_outputTimeStep; // String with the data that is output at each time step (FOWT position, hydro force components, anything that is a function of time)
+	// static bool m_shouldWriteOutputTimeStep;
 
 public:
-	static void setInputFilePath(const std::string &inFlPath);
+	// Set input file and output files based on the input file path
+	static void setFiles(const std::string &inFlPath);
 
-	static void readInputFile(FOWT &fowt, ENVIR &envir);
-	//static bool checkData(); // Depende do tipo de analise a ser feita
+	// Functions related to Input	
+	static void readLineInputFile(std::string &strInput);
+	static unsigned int getInLineNumber();
+	static void readInputFile(FOWT &fowt, ENVIR &envir);	
+	static void setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir);
+
+	/*
+	Functions related to output
+	*/
+	static std::string METiS_Header();
+	static void writeErrorMessage(const std::string &str);
+	static void writeWarningMessage(const std::string &str);	
+
+	// To summary file
+	static void printSumFile(const FOWT &fowt, const ENVIR &envir);
 	
-	static void print2outFile(const std::string &outFlNm);
+	// To formatted output file
+	static void print2outFile(const std::string &str);
+	static void print2outFile(const double &num);
+	static void print2outFile(const int &num);
+	static void newLineOutFile();
+
+	// Some printing functions
+	static std::string printOutVar();
 };
 
 
@@ -71,9 +135,8 @@ bool caseInsCompare(const std::string& s1, const std::string& s2);
 // Same thing for wstring
 bool caseInsCompare(const std::wstring& s1, const std::wstring& s2);
 
-
-
-
+// Get folder path from a complete file path
+std::string getFileFolder(const std::string& path);
 
 
 
@@ -95,23 +158,20 @@ inline bool string2num(const std::string& sString, T &tX)
 // readDataFromString: used to read data from the string 'inString' into the variable 'tX'
 // Returns True if the conversion is succesful and False if it is not
 template <typename T>
-inline bool readDataFromString(const std::string& inString, T &tX)
+inline void readDataFromString(const std::string& inString, T &tX)
 {
 	std::vector<std::string> input = stringTokenize(inString, " \t");
 
 	// 1) Verify if input contains exactly 1 element
     if ( input.size() != 1 )
 	{
-        std::cout << "More than one entry in line COLOCAR. Considering only the first one. \n";		
+		throw std::runtime_error( "Unable to read data from string. More than one entry in line " + std::to_string(IO::getInLineNumber()) + ". [function readDataFromString(const std::string& inString, T &tX) in IO.h]");
 	}
 
     // 2) Convert input from string to its corresponding numeric format (double, float, ...)
 	if ( !string2num(input.at(0), tX) )
 	{
         // Throw an exception if the conversion fails
-		std::cout << "Deu ruim \n";
-		return false;
+		throw std::runtime_error( "Conversion from string failed. Bad data type in line " + std::to_string(IO::getInLineNumber()) + ". [function readDataFromString(const std::string& inString, T &tX) in IO.h]");
 	}		
-
-	return true;
 }

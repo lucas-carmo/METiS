@@ -3,7 +3,14 @@
 
 
 /*****************************************************
-	Setters used to set the data read from the input file.
+	Constructors
+*****************************************************/
+FOWT::FOWT() : m_linStiff(fill::zeros)
+{}
+
+
+/*****************************************************
+	Setters
 *****************************************************/
 
 void FOWT::readLinStiff(const std::string &data)
@@ -13,27 +20,45 @@ void FOWT::readLinStiff(const std::string &data)
     
     if ( input.size() != 3 )
     {
-        std::cout << "Deu ruim \n";		
+		throw std::runtime_error("Unable to read linear stiffness in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 	}
     
-    for ( int ii = 0; ii < 3; ++ii)
+    for ( int ii = 0; ii < input.size(); ++ii )
     {
         readDataFromString( input.at(ii), m_linStiff(ii) );
     }    
-    
-    std::cout << "Linear Stiffness: \n" << m_linStiff << "\n";
 }
 
 
-/*
-	Floater properties
-*/
-void FOWT::readFloaterMass(const std::string &data)
+void FOWT::setFloater(Floater &floater)
 {
-	m_floater.readMass(data);
+	m_floater = floater;
 }
 
-void FOWT::readFloaterCoG(const std::string &data)
+
+
+
+/*****************************************************
+	Getters
+*****************************************************/
+std::string FOWT::printLinStiff() const
+{	
+	std::string output = "(" + std::to_string( m_linStiff(0) );
+	for ( int ii = 1; ii < m_linStiff.n_elem; ++ii )
+	{
+		output = output + "," + std::to_string( m_linStiff(ii) );
+	}
+	return output + ")";
+}
+
+
+std::string FOWT::printFloater() const
 {
-	m_floater.readCoG(data);
+	std::string output = "";
+
+	output = output + "\tMass:\t" + m_floater.printMass() + "\n";
+	output = output + "\tCoG:\t" + m_floater.printCoG() + "\n";
+	output = output + "\tMorison Elements:\n" + m_floater.printMorisonElements() + "\n";
+
+	return output;
 }

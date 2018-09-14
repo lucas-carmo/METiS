@@ -1,0 +1,8 @@
+\begin{thebibliography}{1}
+
+\bibitem{armadillo}
+Conrad Sanderson and Ryan Curtin.
+\newblock Armadillo: a template-based {C}++ library for linear algebra.
+\newblock {\em Journal of Open Source Software}, 2016.
+
+\end{thebibliography}

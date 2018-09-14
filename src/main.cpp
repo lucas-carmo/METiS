@@ -1,33 +1,57 @@
-/* To do: Depois que criar todas as funcoes de leitura separadamente, ver oq da pra transformar em uma funcao comum a elas.
-   Ex: Uma funcao checkInput pra verificar se tem o numero certo de elementos pra leitura, se as conversoes pros tipos numericos
-   do input deram certo, coisa do tipo. Assim facilita a manutencao, pq se quiser mudar mensagem de erro ou coisa do tipo, mudo
-   em um so lugar
-*/
-
 #include <iostream>
 #include <chrono> // For std::chrono functions. It is useful to time the code and verify whether one method or another will be more performant
-#include <armadillo> // Linear algebra library with usage similar to MATLAB
 #include <string>
+#include <stdexcept> // For std::exception
 
-#include "FOWT.h"
 #include "IO.h" // IO is a pure static class that manages input/output
+#include "FOWT.h"
 #include "ENVIR.h"
+#include "analyses.h"
 
 
+// METiS Version
+extern const std::string g_METIS_VERSION{ "0.0.1" };
 
-int main()
+
+int main(int argc, char *argv[])
 {
-	FOWT fowt;
-	ENVIR envir;
-    
-    //std::string inFlNm = "Test/mainInputExample.txt";
-	std::string inFlNm = "Z:/METiS/Test/mainInputExample.txt";
+	std::cout << IO::METiS_Header() << '\n';
+   
+	try{
+		if (argc != 2)
+		{
+			throw std::runtime_error("Please provide one input file");
+			return 0;
+		}
 
-    IO::setInputFilePath(inFlNm);
-    IO::readInputFile(fowt, envir);
+		FOWT fowt;
+		ENVIR envir;
 
-	int ii;
-	std::cin >> ii;
+		std::cout << "Running METiS with file '" << argv[1] << "'\n";
+		IO::setFiles(argv[1]); // Set paths to input file and output files
+		IO::readInputFile(fowt, envir); // Read data from input file to fowt and envir
+		IO::printSumFile(fowt, envir);		
+
+		timeDomainAnalysis(fowt, envir);
+	}
+
+	catch(std::exception &exception)
+	{
+		IO::writeErrorMessage( std::string(exception.what()) );
+	}
+
+	catch(...)
+    {
+        IO::writeErrorMessage( "Unknown exception thrown." );
+    }
+
+
+	std::cin.sync();
+	std::cout << "\nPress enter to exit.\n";
+	std::cin.get();
 
 	return 0;
 }
+
+
+

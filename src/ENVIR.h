@@ -3,7 +3,9 @@
 #include <vector>
 #include <string>
 #include "Wave.h"
+#include <armadillo>
 
+using namespace arma;
 
 class ENVIR
 {
@@ -19,10 +21,14 @@ private:
     /*
     Data to specify the environment
     */
+	std::vector< unsigned int > m_nodesID; // Nodes provide a spatial description of the environment
+	std::vector< vec::fixed<3> > m_nodesCoord;   
+
     double m_gravity;
     double m_watDens;
     double m_watDepth;
     std::vector<Wave> m_wave;
+    std::vector<vec::fixed<3>> m_waveLocation; // Coordinates of the points where the wave elevation is calculated for output
     double m_airDens;
     double m_windMod;
     double m_windExp;
@@ -33,7 +39,7 @@ private:
     double m_timeStep;
     double m_timeTotal;
     double m_timeRamp;
-    double m_currentTime = 0;
+    double m_time = 0;
     char m_timeIntegrationMethod; // 1: 4th order Runge-Kutta
 
     bool m_useBEMT;
@@ -47,18 +53,49 @@ private:
     bool m_TwrLoads;
 
 public:
-    // Default constructor
-    // ENVIR();
+    // ENVIR()
+    // {}
 
-    /*
-    Setters used to set the data read from the input file.
-    */
+	/*****************************************************
+		Setters
+	*****************************************************/
     void readTimeStep(const std::string &data);
     void readTimeTotal(const std::string &data);
     void readTimeRamp(const std::string &data);
+	void addNode(const std::string &data);
     void readGrav(const std::string &data);
     void readWatDens(const std::string &data);
     void readWatDepth(const std::string &data);
-	void readWave(const std::string &data);
+	void addWave(const Wave &wave);
+	void addWaveLocation(const std::string &data);
+
+	/*****************************************************
+		Getters
+	*****************************************************/    
+    double timeStep() const;
+    double timeTotal() const;
+    double time() const;
+
+	/*****************************************************
+		Printing
+	*****************************************************/
+	std::string printTimeStep() const;
+	std::string printTimeTotal() const;
+	std::string printTimeRamp() const;
+    std::string printNodes() const;    
+	std::string printGrav() const;
+	std::string printWatDens() const;
+	std::string printWatDepth() const;
+	std::string printWave() const;
+	std::string printWaveLocation() const;
+
+	/*****************************************************
+		Other functions
+	*****************************************************/
+    bool isNodeEmpty() const;
+    bool isWaveLocationEmpty() const;
+    arma::vec::fixed<3> getNode(unsigned int ID) const;
+
+    void stepTime();
 };
 
