@@ -28,7 +28,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
         IO::newLineOutFile();
         IO::print2outFile(envir.time());
         IO::print2outFile(teste(0));
-        IO::print2outFile(round(100 * envir.time() / envir.timeTotal()));
+        IO::print2outFile(static_cast<int>(round(100 * envir.time() / envir.timeTotal())));
 
 
         std::cout << round(100 * envir.time() / envir.timeTotal()) << "%" << '\r';

@@ -551,16 +551,6 @@ void IO::print2outFile(const std::string &str)
 	m_outFl << std::setw(IO::m_outColumnWidth) << str;
 }
 
-void IO::print2outFile(const double num)
-{
-	if (!m_outFl)
-	{
-		throw std::runtime_error("Unable to write to formatted output file.");
-	}
-
-	m_outFl << std::setw(IO::m_outColumnWidth) << std::scientific << std::setprecision(IO::m_outNumPrecision) << num;
-}
-
 void IO::print2outFile(const double &num)
 {
 	if (!m_outFl)
