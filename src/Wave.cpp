@@ -3,6 +3,8 @@
 #include <vector>
 
 
+using namespace arma;
+
 /*****************************************************
 	Constructors
 *****************************************************/
@@ -100,5 +102,63 @@ double Wave::direction() const
 	return m_direction;
 }
 
+double Wave::freq() const
+{
+	if (m_period != 0)
+	{
+		return 1/m_period;
+	}
+	else
+	{
+		return arma::datum::inf;
+	}
+}
+
+double Wave::angFreq() const
+{
+	if (m_period != 0)
+	{
+		return 2*arma::datum::pi/m_period;
+	}
+	else
+	{
+		return arma::datum::inf;
+	}
+}
+
+double Wave::waveNumber(ENVIR &envir) const
+{
+	double k(0);
+
+	
+	return k;
+}
+
+double Wave::waveLength(ENVIR &envir) const
+{
+
+}
+
+/*****************************************************
+	Other functions
+*****************************************************/
+vec::fixed<3> Wave::fluidVel(ENVIR &envir, vec &point) const
+{
+	vec::fixed<3> fluidVel = zeros<vec>(0);
+	
+	// Use a more friendly notation
+	double x(point(0));
+	double y(point(1));
+	double z(point(2));
+
+	// If the point is above the free surface, 
+	if (z>0)
+	{
+		return fluidVel;
+	}
+
+	return fluidVel;
+}
 
 
+// vec::fixed<3> fluidAcc(vec &point) const;

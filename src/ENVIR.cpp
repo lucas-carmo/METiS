@@ -158,9 +158,14 @@ double ENVIR::time() const
 	return m_time;
 }
 
-void ENVIR::stepTime()
+double ENVIR::gravity() const
 {
-	m_time += m_timeStep;
+	return m_gravity;
+}
+
+double ENVIR::watDepth() const
+{
+	return m_watDepth;
 }
 
 /*****************************************************
@@ -244,4 +249,9 @@ bool ENVIR::isNodeEmpty() const
 bool ENVIR::isWaveLocationEmpty() const
 {
 	return m_waveLocation.empty();
+}
+
+void ENVIR::stepTime()
+{
+	m_time += m_timeStep;
 }

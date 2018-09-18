@@ -1,7 +1,9 @@
 #pragma once
 
 #include <string>
+#include <armadillo>
 
+using namespace arma; // For armadillo classes
 
 class Wave{
 private:
@@ -24,16 +26,14 @@ public:
 	double height() const;
 	double period() const;
 	double direction() const;
+	double freq() const;
+	double angFreq() const;
+	double waveNumber(ENVIR &envir) const;
+	double waveLength(ENVIR &envir) const;
 
 	/*****************************************************
-		Wave properties derived from the others
-	*****************************************************/		
-	// Essas nao precisam da profundidade
-	// double freq();
-	// double angFreq();
-
-	// Essas precisam. Pensar em um jeito de retornar p/ prof. infinita quando nao 
-	// especificar a profundidade (mas cuidado com isso, pra nao usar a versao errada)
-	// double waveNumber();
-	// double waveLength();
+		Other functions
+	*****************************************************/
+	vec::fixed<3> Wave::fluidVel(ENVIR &envir, vec &point) const;
+	vec::fixed<3> fluidAcc(ENVIR &envir, vec &point) const;	
 };

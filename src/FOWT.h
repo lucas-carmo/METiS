@@ -46,7 +46,8 @@ public:
 	/*****************************************************
 		NEED TO NAME THIS SECTION
 	*****************************************************/
-	//vec hydroForce(const ENVIR &envir);
+	//vec hydrodynamicForce(const ENVIR &envir);
+	//vec hydrostaticForce();
 	////vec aeroForce(const ENVIR &envir);
 	////vec mooringForce(const ENVIR &envir);
 	//// vec weightForce(const ENVIR &envir);

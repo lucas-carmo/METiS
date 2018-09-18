@@ -75,6 +75,8 @@ public:
     double timeStep() const;
     double timeTotal() const;
     double time() const;
+    double gravity() const;
+    double watDepth() const;
 
 	/*****************************************************
 		Printing

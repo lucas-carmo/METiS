@@ -46,5 +46,6 @@ public:
 
 	//mat rotatMat(const vec &FOWTpos);
 	//vec hydrodynamicForce(const ENVIR &envir, const vec &FOWTpos, const vec &FOWTvel, const vec &FOWTacc);
+	//vec hydrostaticForce(const ENVIR &envir, const vec &FOWTpos, const vec &FOWTvel, const vec &FOWTacc);
 };
 
