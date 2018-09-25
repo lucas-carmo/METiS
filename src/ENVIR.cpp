@@ -53,8 +53,9 @@ void ENVIR::readWatDepth(const std::string &data)
 
 void ENVIR::addWave(const Wave &wave)
 {
-	m_wave.push_back( wave );
+	m_wave.push_back( Wave(wave.height(), wave.period(), wave.direction(), m_watDepth, m_gravity) );
 }
+
 
 void ENVIR::addWaveLocation(const std::string &data)
 {

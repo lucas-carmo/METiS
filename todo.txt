@@ -1,0 +1,9 @@
+- Mudar a função do wavenumber e length p/ aceitar gravidade e profundidade
+- Modificar os dois constructors p/ incluir gravidade e profundidade. Check se não é NaN p/ ver se já foi especificado. Para isso, tenho que colocar valores default na classe Envir
+
+
+0) Copiar o arquivo do wave.cpp e resetar as mudanças p/ ultimo ponto estável do código
+1) Colocar valores default NaN na classe Envir
+2) Mudar os constructors da Wave p/ incluir gravidade e profundidade
+3) Deixar bem claro que não to respeitando o DRY p/ ganhar performance e que por isso não tem setter pra onda, só constructors. 
+4) Talvez fazer um overload da waveNumber e waveLength permitindo entrar profundidade e gravidade. Talvez usar essas funções nos constructors
