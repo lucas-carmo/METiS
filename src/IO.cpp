@@ -88,6 +88,42 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			continue;
 		}
 
+		else if (caseInsCompare(getKeyword(strInput), "Wave")) // A list of Waves is supposed to follow the "Wave keyword"
+		{
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+
+			while (!caseInsCompare(getKeyword(strInput), "END")) // The END keyword indicates the end of the list of waves
+			{
+				if (!m_inFl) // Signal if the end of file is reached before the end keyword
+				{
+					throw std::runtime_error("End of file reached before END keyword in WAVE specification.");
+					return;
+				}
+
+				envir.addWave(Wave(strInput)); // Add this wave to the environment
+
+				IO::readLineInputFile(strInput);
+			}
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "Nodes")) // A list of Nodes is supposed to follow the "Wave keyword"
+		{
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+
+			while (!caseInsCompare(getKeyword(strInput), "END"))
+			{
+				if (!m_inFl) // Signal if the end of file is reached before the end keyword
+				{
+					throw std::runtime_error("End of file reached before END keyword in NODES specification.");
+					return;
+				}
+
+				envir.addNode(strInput); // Add this node to the floater
+
+				IO::readLineInputFile(strInput);
+			}
+		}
+
 
 
 		// Read data to fowt
@@ -108,45 +144,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			floater.readCoG(getData(strInput));
 			continue;
 		}
-
-
-		else if (caseInsCompare(getKeyword(strInput), "Wave")) // A list of Waves is supposed to follow the "Wave keyword"
-		{			
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
-
-			while (!caseInsCompare(getKeyword(strInput), "END")) // The END keyword indicates the end of the list of waves
-			{							
-				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{
-					throw std::runtime_error("End of file reached before END keyword in WAVE specification.");
-					return;
-				}
-
-				envir.addWave( Wave(strInput) ); // Add this wave to the environment
-				
-				IO::readLineInputFile(strInput);
-			}			
-		}
-
-
-		else if (caseInsCompare(getKeyword(strInput), "Nodes")) // A list of Nodes is supposed to follow the "Wave keyword"
-		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
-
-			while (!caseInsCompare(getKeyword(strInput), "END"))
-			{
-				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{
-					throw std::runtime_error("End of file reached before END keyword in NODES specification.");
-					return;
-				}
-
-				envir.addNode(strInput); // Add this node to the floater
-
-				IO::readLineInputFile(strInput);
-			}
-		}
-
 
 		else if (caseInsCompare(getKeyword(strInput), "Morison_circ")) // A list of circular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
 		{
