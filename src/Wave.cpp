@@ -163,7 +163,7 @@ double Wave::waveNumber() const
 	}	
 	else
 	{
-		throw std::runtime_error("Tried to call Wave::waveNumber(), but wave number was not calculated yet since the wave does not know neither the water depth nor the acceleration of gravity.");	
+		throw std::runtime_error("Tried to call Wave::waveNumber(), but wave number was not calculated yet. Try calling Wave::waveNumber(const double watDepth, const double gravity).");	
 	}
 }
 
@@ -176,7 +176,7 @@ double Wave::length() const
 	}	
 	else
 	{
-		throw std::runtime_error("Tried to call Wave::length(), but length was not calculated yet since the wave does not know neither the water depth nor the acceleration of gravity.");	
+		throw std::runtime_error("Tried to call Wave::length(), but length was not calculated yet. Wave::length(const double watDepth, const double gravity).");	
 	}
 }
 
@@ -230,11 +230,19 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 	if ( (pow(w,2)/g - a*tanh(a*h)) * (pow(w,2)/g - x_i*tanh(x_i*h)) < 0 ) // Test with limit a
 	{
 		x_j = (a + x_i) / 2;
+
+		std::cout << "x_i = " << x_i << " x_j = " << x_j << "\n";
+		char espera;
+		std::cin >> espera;		
 	}
 
 	else if ( (pow(w,2)/g - b*tanh(b*h)) * (pow(w,2)/g - x_i*tanh(x_i*h)) < 0 ) // Test with limit b
 	{
 		x_j = (x_i + b) / 2;
+
+		std::cout << "x_i = " << x_i << " x_j = " << x_j << "\n";
+		char espera;
+		std::cin >> espera;		
 	}
 
 	else // It is very unlikely that x_i will be zero, but this possibility will be covered anyway
@@ -242,8 +250,10 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 		return x_i;
 	}				
 
+	std::cout << "abs(x_j-x_i) = " << abs(x_j-x_i) << "  m_epsWave * abs(x_i) = " << m_epsWave * abs(x_i) << '\n';
+
 	while ( abs(x_j-x_i) > m_epsWave * abs(x_i) )
-	{			
+	{					
 		x_i = x_j;
 					
 		if ( (pow(w,2)/g - a*tanh(a*h)) * (pow(w,2)/g - x_i*tanh(x_i*h)) < 0 ) // Test with limit a
