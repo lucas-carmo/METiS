@@ -2,8 +2,9 @@
 
 #include <vector>
 #include <string>
-#include "Wave.h"
 #include <armadillo>
+
+#include "Wave.h"
 
 using namespace arma;
 
@@ -53,8 +54,7 @@ private:
     bool m_TwrLoads;
 
 public:
-    // ENVIR()
-    // {}
+	ENVIR();
 
 	/*****************************************************
 		Setters

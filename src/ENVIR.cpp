@@ -8,6 +8,16 @@
 
 
 /*****************************************************
+	Constructors
+*****************************************************/
+ENVIR::ENVIR()
+{
+	// Initialize with NaN so we can check whether they were defined later
+	m_gravity = arma::datum::nan;
+	m_watDepth = arma::datum::nan;
+}
+
+/*****************************************************
 	Setters
 *****************************************************/
 void ENVIR::readTimeStep(const std::string &data)
@@ -53,7 +63,19 @@ void ENVIR::readWatDepth(const std::string &data)
 
 void ENVIR::addWave(const Wave &wave)
 {
-	m_wave.push_back( Wave(wave.height(), wave.period(), wave.direction(), m_watDepth, m_gravity) );
+	// Check whether the water depth was defined
+	if ( !is_finite(m_watDepth) )
+	{
+		throw std::runtime_error("You should specify the water depth before the waves. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+	}
+
+	// Check whether the acceleration of gravity was defined
+	if (!is_finite(m_gravity))
+	{
+		throw std::runtime_error("You should specify the gravity before the waves. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+	}
+
+	m_wave.push_back(Wave(wave.height(), wave.period(), wave.direction(), m_watDepth, m_gravity));
 }
 
 
@@ -65,13 +87,13 @@ void ENVIR::addWaveLocation(const std::string &data)
 	// Check whether input is not empty
 	if (input.empty())
 	{
-		throw std::runtime_error("You should specify at least one node ID for defining a wave location. Error in input line " + std::to_string(IO::getInLineNumber()));
+		throw std::runtime_error("You should specify at least one node ID for defining a wave location. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
 
 	// Check whether nodes were specified
 	if (this->isNodeEmpty())
 	{		
-		throw std::runtime_error("Nodes should be specified before adding wave locations. Error in input line " + std::to_string(IO::getInLineNumber()));
+		throw std::runtime_error("Nodes should be specified before adding wave locations. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
 
 	// For each of the node IDs:
