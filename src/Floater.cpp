@@ -28,7 +28,21 @@ void Floater::readMass(const std::string &data)
 	readDataFromString(data, m_mass);
 }
 
+void Floater::readInertia(const std::string &data)
+{
+	// The different components of the inertia matrix are separated by commas in the input string
+	std::vector<std::string> input = stringTokenize(data, ",");
 
+	if (input.size() != 6)
+	{
+		throw std::runtime_error("Unable to read the floater inertia matrix in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+	}
+
+	for (int ii = 0; ii < input.size(); ++ii)
+	{
+		readDataFromString(input.at(ii), m_inertia(ii));
+	}
+}
 
 void Floater::readCoG(const std::string &data)
 {
@@ -202,6 +216,12 @@ void Floater::addMorisonRect(const std::string &data, const ENVIR &envir)
 std::string Floater::printMass() const
 {
 	return std::to_string(m_mass);
+}
+
+std::string Floater::printInertia() const
+{
+	return "Ixx = " + std::to_string(m_inertia(0)) + " Iyy = " + std::to_string(m_inertia(1)) + " Izz = " + std::to_string(m_inertia(2)) +
+		  " Ixy = " + std::to_string(m_inertia(3)) + " Ixz = " + std::to_string(m_inertia(4)) + " Iyy = " + std::to_string(m_inertia(5));
 }
 
 std::string Floater::printCoG() const

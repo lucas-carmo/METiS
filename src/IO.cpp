@@ -139,6 +139,12 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			continue;
 		}
 
+		else if (caseInsCompare(getKeyword(strInput), "FloaterInertia"))
+		{
+			floater.readInertia(getData(strInput));
+			continue;
+		}
+
 		else if (caseInsCompare(getKeyword(strInput), "FloaterCoG"))
 		{
 			floater.readCoG(getData(strInput));
@@ -320,6 +326,8 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 	fowt.setFloater(floater);
 }
+
+
 
 
 void IO::setFiles(const std::string &inFlPath)

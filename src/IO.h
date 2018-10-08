@@ -25,6 +25,7 @@ const std::string filesep =
 class IO
 {
 public:
+
 	// COLOCAR COMENTARIO
 	enum OutFlag
 	{

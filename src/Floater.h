@@ -27,6 +27,7 @@ public:
 		Setters
 	*****************************************************/
 	void readMass(const std::string &data);
+	void readInertia(const std::string &data);
 	void readCoG(const std::string &data);
 	void addMorisonCirc(const std::string &data, const ENVIR &envir); // Need envir class for nodes location
 	void addMorisonRect(const std::string &data, const ENVIR &envir);
@@ -36,6 +37,7 @@ public:
 		Getters
 	*****************************************************/
 	std::string printMass() const;
+	std::string printInertia() const;
 	std::string printCoG() const;
 	std::string printMorisonElements() const;
 

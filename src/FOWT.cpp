@@ -58,6 +58,7 @@ std::string FOWT::printFloater() const
 
 	output = output + "\tMass:\t" + m_floater.printMass() + "\n";
 	output = output + "\tCoG:\t" + m_floater.printCoG() + "\n";
+	output = output + "\tInertia Matrix:\t" + m_floater.printInertia() + "\n";
 	output = output + "\tMorison Elements:\n" + m_floater.printMorisonElements() + "\n";
 
 	return output;
