@@ -23,9 +23,8 @@ private:
 	double m_waveNumber = arma::datum::nan;
 	double m_length = arma::datum::nan;
 
-	// Parameters for the numerical solution of the dispersion equation
-	static double constexpr m_epsWave = 1e-4;
-	static int constexpr m_maxIterWave = 100;
+	// Absolute tolerance for the numerical solution of the dispersion equation
+	static double constexpr m_epsWave = 1e-7;
 
 public:
 	/*****************************************************

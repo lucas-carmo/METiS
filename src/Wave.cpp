@@ -26,7 +26,7 @@ Wave::Wave(double height, double period, double direction, double watDepth, doub
 	m_direction = direction;
 
 	m_waveNumber = waveNumber(watDepth, gravity);
-	m_length = length(watDepth, gravity);
+	m_length = 2 * arma::datum::pi / m_waveNumber; // The function Wave::waveNumber never outputs 0, hence this division is safe
 }
 
 // The string "wholeWaveLine" must contain the keyword that specifies how to read the wave data:
@@ -119,15 +119,18 @@ double Wave::height() const
 	return m_height;
 }
 
+
 double Wave::period() const
 {
 	return m_period;
 }
 
+
 double Wave::direction() const
 {
 	return m_direction;
 }
+
 
 double Wave::freq() const
 {
@@ -141,6 +144,7 @@ double Wave::freq() const
 	}
 }
 
+
 double Wave::angFreq() const
 {
 	if (m_period != 0)
@@ -152,7 +156,6 @@ double Wave::angFreq() const
 		return arma::datum::inf;
 	}
 }
-
 
 
 double Wave::waveNumber() const
@@ -211,68 +214,37 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 
 	// If f(a) * f(b) < 0, it means they have different signals.
 	// Otherwise, we update a and b until the solution is bracketed
-	while ( (pow(w,2)/g - a*tanh(a*h)) * (pow(w,2)/g - b*tanh(b*h)) >= 0 )
+	while ( (pow(w,2)/g - a*tanh(a*h)) * (pow(w,2)/g - b*tanh(b*h)) > 0 )
 	{
 		a = b;
-		b = alpha*b;
-		std::cout << "a = " << a << " b = " << b << "\n";
-		std::cout << "f(a) = " << (pow(w,2)/g - a*tanh(a*h)) << " f(b) = " << (pow(w,2)/g - b*tanh(b*h)) << "\n";
-
-		char espera;
-		std::cin >> espera;
+		b = alpha*b;		
 	}
 
 	// x_i is the guess in the previous step and x_j in the current
 	double x_i = (a+b)/2;
 	double x_j(0);
 
-	// The first step is done before the loop
-	if ( (pow(w,2)/g - a*tanh(a*h)) * (pow(w,2)/g - x_i*tanh(x_i*h)) < 0 ) // Test with limit a
-	{
-		x_j = (a + x_i) / 2;
-
-		std::cout << "x_i = " << x_i << " x_j = " << x_j << "\n";
-		char espera;
-		std::cin >> espera;		
-	}
-
-	else if ( (pow(w,2)/g - b*tanh(b*h)) * (pow(w,2)/g - x_i*tanh(x_i*h)) < 0 ) // Test with limit b
-	{
-		x_j = (x_i + b) / 2;
-
-		std::cout << "x_i = " << x_i << " x_j = " << x_j << "\n";
-		char espera;
-		std::cin >> espera;		
-	}
-
-	else // It is very unlikely that x_i will be zero, but this possibility will be covered anyway
-	{
-		return x_i;
-	}				
-
-	std::cout << "abs(x_j-x_i) = " << abs(x_j-x_i) << "  m_epsWave * abs(x_i) = " << m_epsWave * abs(x_i) << '\n';
-
-	while ( abs(x_j-x_i) > m_epsWave * abs(x_i) )
-	{					
+	while ( abs(pow(w, 2) / g - x_j * tanh(x_j*h)) > m_epsWave)
+	{				
 		x_i = x_j;
 					
 		if ( (pow(w,2)/g - a*tanh(a*h)) * (pow(w,2)/g - x_i*tanh(x_i*h)) < 0 ) // Test with limit a
 		{
 			x_j = (a + x_i) / 2;
+			b = x_i;
 		}
 
 		else if ( (pow(w,2)/g - b*tanh(b*h)) * (pow(w,2)/g - x_i*tanh(x_i*h)) < 0 ) // Test with limit b
 		{
 			x_j = (x_i + b) / 2;
+			a = x_i;
 		}
 
 		else // It is very unlikely that x_i will be zero, but this possibility will be covered anyway
 		{
 			return x_i;
 		}	
-		std::cout << "x_i = " << x_i << "x_j = " << x_j << '\n';
 	}		
-
 
 	if (x_j == 0)
 	{
@@ -285,7 +257,7 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 
 double Wave::length(const double watDepth, const double gravity) const
 {
-	// length = 2 * pi / waveNumber
+	// The function Wave::waveNumber never outputs 0	
 	return 2*arma::datum::pi / this->waveNumber(watDepth, gravity);
 }
 

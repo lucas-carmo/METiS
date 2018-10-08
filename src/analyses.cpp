@@ -33,6 +33,6 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 
         std::cout << round(100 * envir.time() / envir.timeTotal()) << "%" << '\r';
         std::fflush(stdout);
-        usleep(1000);
+        usleep(200);
     }
 }
