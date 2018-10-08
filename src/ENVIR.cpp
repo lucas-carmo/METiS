@@ -33,14 +33,14 @@ void ENVIR::readTimeRamp(const std::string &data)
 
 void ENVIR::readGrav(const std::string &data)
 {
-	readDataFromString(data, m_watDens);
+	readDataFromString(data, m_gravity);
 }
 
 
 
 void ENVIR::readWatDens(const std::string &data)
 {
-	readDataFromString(data, m_gravity);
+	readDataFromString(data, m_watDens);
 }
 
 
@@ -223,7 +223,9 @@ std::string ENVIR::printWave() const
 		output = output + "Wave #" + std::to_string(ii) + "\n";
 		output = output + "Height: " + std::to_string( m_wave.at(ii).height() ) + "\n";
 		output = output + "Period: " + std::to_string( m_wave.at(ii).period() ) + "\n";
-		output = output + "Direction: " + std::to_string( m_wave.at(ii).direction() ) + "\n\n";
+		output = output + "Wave number: " + std::to_string( m_wave.at(ii).waveNumber() ) + "\n";
+		output = output + "Length: " + std::to_string(m_wave.at(ii).length()) + "\n";
+		output = output + "Direction: " + std::to_string(m_wave.at(ii).direction()) + "\n\n";
 	}
 	return output;
 }
