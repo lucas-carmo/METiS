@@ -15,20 +15,22 @@
 void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 {
     for ( ; envir.time() <= envir.timeTotal(); envir.stepTime() )    
-    {
-        arma::mat teste(1, 1, arma::fill::randu);        
-
+    {  
         if (envir.time() == 0)
         {
             IO::print2outFile("TIME");
-            IO::print2outFile("TesteClm1");
+            IO::print2outFile("Fluid Vel. X (m/s)");
+			IO::print2outFile("Fluid Vel. Y (m/s)");
+			IO::print2outFile("Fluid Vel. Z (m/s)");
             IO::print2outFile("TesteClm2");
         }
         
         IO::newLineOutFile();
-        IO::print2outFile(envir.time());
-        IO::print2outFile(teste(0));
-        IO::print2outFile(static_cast<int>(round(100 * envir.time() / envir.timeTotal())));
+        IO::print2outFile( envir.time() );
+        IO::print2outFile( envir.fluidVel(0,0,0).at(0) );
+		IO::print2outFile(envir.fluidVel(0, 0, 0).at(1));
+		IO::print2outFile(envir.fluidVel(0, 0, 0).at(2));
+        IO::print2outFile( static_cast<int>(round(100 * envir.time() / envir.timeTotal())) );
 
 
         std::cout << round(100 * envir.time() / envir.timeTotal()) << "%" << '\r';

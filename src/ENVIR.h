@@ -97,7 +97,8 @@ public:
     bool isNodeEmpty() const;
     bool isWaveLocationEmpty() const;
     arma::vec::fixed<3> getNode(unsigned int ID) const;
-
     void stepTime();
+
+	arma::vec::fixed<3> fluidVel(double x, double y, double z) const;	
 };
 

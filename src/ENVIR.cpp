@@ -280,3 +280,16 @@ void ENVIR::stepTime()
 {
 	m_time += m_timeStep;
 }
+
+arma::vec::fixed<3> ENVIR::fluidVel(double x, double y, double z) const
+{
+	double u(0), v(0), w(0); // Initialize the three wave components
+
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+
+	}
+
+	arma::vec::fixed<3> vel{ u, v, w };
+	return vel;
+}
