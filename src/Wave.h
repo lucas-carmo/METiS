@@ -39,6 +39,7 @@ public:
 		Getters
 	*****************************************************/
 	double height() const;
+	double amp() const;
 	double period() const;
 	double direction() const;
 	double freq() const;
@@ -52,6 +53,6 @@ public:
 	/*****************************************************
 		Other functions
 	*****************************************************/
-	// vec::fixed<3> Wave::fluidVel(ENVIR &envir, vec &point) const;
-	// vec::fixed<3> fluidAcc(ENVIR &envir, vec &point) const;	
+	vec::fixed<3> fluidVel(double x, double y, double z, double t, double h) const; // Calculate wave velocity at a given point (x,y,z), time t and water depth h
+	//vec::fixed<3> acc(double x, double y, double z, double t) const;
 };

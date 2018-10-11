@@ -119,6 +119,10 @@ double Wave::height() const
 	return m_height;
 }
 
+double Wave::amp() const
+{
+	return m_height/2;
+}
 
 double Wave::period() const
 {
@@ -265,6 +269,47 @@ double Wave::length(const double watDepth, const double gravity) const
 /*****************************************************
 	Other functions
 *****************************************************/
+vec::fixed<3> Wave::fluidVel(double x, double y, double z, double t, double h) const
+{
+	double u(0), v(0), w(0); // Initialize the three wave components
+
+	// We consider linear Airy waves, with velocity potential:
+	// phi = g*A/omega * cosh(k(z+h))/cosh(k*h) * sin(k*x - omega*t)
+	// This formulation is valid only below the mean water level, i.e. z <= 0
+	if (z <= 0)
+	{
+		double omega = angFreq();
+		double A = amp();
+		double k = waveNumber();
+		double beta = direction();
+
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		double khz_xy(0), khz_z(0);
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
+		}
+
+		u = omega * A * khz_xy * cos(omega*t) * cos(beta * arma::datum::pi / 180);
+		v = omega * A * khz_xy * cos(omega*t) * sin(beta * arma::datum::pi / 180);
+		w = -omega * A * khz_z * sin(omega*t);
+	}
+
+	arma::vec::fixed<3> vel = { u, v, w };
+	return vel;
+}
+
+
+
+
+
 // vec::fixed<3> Wave::fluidVel(ENVIR &envir, vec &point) const
 // {
 // 	vec::fixed<3> fluidVel = zeros<vec>(0);
