@@ -1,5 +1,4 @@
 #include <iostream>
-#include <chrono> // For std::chrono functions. It is useful to time the code and verify whether one method or another will be more performant
 #include <string>
 #include <stdexcept> // For std::exception
 
@@ -15,6 +14,11 @@ extern const std::string g_METIS_VERSION{ "0.0.1" };
 
 int main(int argc, char *argv[])
 {
+
+	// Timer for measuring the elapsed time
+	arma::wall_clock timer;
+	timer.tic();
+
 	std::cout << IO::METiS_Header() << '\n';
    
 	try{
@@ -45,9 +49,9 @@ int main(int argc, char *argv[])
         IO::writeErrorMessage( "Unknown exception thrown." );
     }
 
-
+	
 	std::cin.sync();
-	std::cout << "\nPress enter to exit.\n";
+	std::cout << "\nElapsed time: " << timer.toc() << " seconds. Press enter to exit.\n";
 	std::cin.get();
 
 	return 0;
