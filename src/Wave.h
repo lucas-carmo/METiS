@@ -54,5 +54,5 @@ public:
 		Other functions
 	*****************************************************/
 	vec::fixed<3> fluidVel(double x, double y, double z, double t, double h) const; // Calculate wave velocity at a given point (x,y,z), time t and water depth h
-	//vec::fixed<3> acc(double x, double y, double z, double t) const;
+	vec::fixed<3> fluidAcc(double x, double y, double z, double t, double h) const; // Calculate wave acceleration at a given point (x,y,z), time t and water depth h
 };

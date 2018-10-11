@@ -19,25 +19,37 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
         if (envir.time() == 0)
         {
             IO::print2outFile("TIME");
-            IO::print2outFile("FLUVEL_X");
-			IO::print2outFile("FLUVEL_Y");
-			IO::print2outFile("FLUVEL_Z");
-            IO::print2outFile("TesteClm2");
+
+            IO::print2outFile("FLU_VEL_X");
+			IO::print2outFile("FLU_VEL_Y");
+			IO::print2outFile("FLU_VEL_Z");
+
+			IO::print2outFile("FLU_ACC_X");
+			IO::print2outFile("FLU_ACC_Y");
+			IO::print2outFile("FLU_ACC_Z");
 
 			IO::newLineOutFile();
+			IO::print2outFile("(s)");
+
 			IO::print2outFile("(m/s)");
 			IO::print2outFile("(m/s)");
 			IO::print2outFile("(m/s)");
-			IO::print2outFile("(m/s)");
-			IO::print2outFile("-");
+
+			IO::print2outFile("(m/s^2)");
+			IO::print2outFile("(m/s^2)");
+			IO::print2outFile("(m/s^2)");
         }
         
         IO::newLineOutFile();
         IO::print2outFile(envir.time());
+
         IO::print2outFile(envir.fluidVel(0,0,0).at(0));
 		IO::print2outFile(envir.fluidVel(0,0,0).at(1));
 		IO::print2outFile(envir.fluidVel(0,0,0).at(2));
-        IO::print2outFile( static_cast<int>(round(100 * envir.time() / envir.timeTotal())) );
+
+		IO::print2outFile(envir.fluidAcc(0, 0, 0).at(0));
+		IO::print2outFile(envir.fluidAcc(0, 0, 0).at(1));
+		IO::print2outFile(envir.fluidAcc(0, 0, 0).at(2));
 
 
         std::cout << round(100 * envir.time() / envir.timeTotal()) << "%" << '\r';

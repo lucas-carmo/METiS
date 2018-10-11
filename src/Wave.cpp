@@ -271,17 +271,17 @@ double Wave::length(const double watDepth, const double gravity) const
 *****************************************************/
 vec::fixed<3> Wave::fluidVel(double x, double y, double z, double t, double h) const
 {
-	double u(0), v(0), w(0); // Initialize the three wave components
+	double u1(0), u2(0), u3(0); // Initialize the three wave velocity components
 
 	// We consider linear Airy waves, with velocity potential:
-	// phi = g*A/omega * cosh(k(z+h))/cosh(k*h) * sin(k*x - omega*t)
+	// phi = g*A/w * cosh(k(z+h))/cosh(k*h) * cos(w*t - k*x)
 	// This formulation is valid only below the mean water level, i.e. z <= 0
 	if (z <= 0)
 	{
-		double omega = angFreq();
+		double w = angFreq();
 		double A = amp();
 		double k = waveNumber();
-		double beta = direction();
+		double beta = direction() * arma::datum::pi / 180;
 
 		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
 		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
@@ -297,36 +297,44 @@ vec::fixed<3> Wave::fluidVel(double x, double y, double z, double t, double h) c
 			khz_z = sinh(k * (z + h)) / sinh(k*h);
 		}
 
-		u = omega * A * khz_xy * cos(omega*t) * cos(beta * arma::datum::pi / 180);
-		v = omega * A * khz_xy * cos(omega*t) * sin(beta * arma::datum::pi / 180);
-		w = -omega * A * khz_z * sin(omega*t);
+		u1 = w * A * khz_xy * cos(beta) * cos(w*t - k*cos(beta)*x - k*sin(beta)*y);
+		u2 = w * A * khz_xy * sin(beta) * cos(w*t - k * cos(beta)*x - k * sin(beta)*y);
+		u3 = -w * A * khz_z * sin(w*t - k * cos(beta)*x - k * sin(beta)*y);
 	}
 
-	arma::vec::fixed<3> vel = { u, v, w };
+	arma::vec::fixed<3> vel = { u1, u2, u3 };
 	return vel;
 }
 
 
+vec::fixed<3> Wave::fluidAcc(double x, double y, double z, double t, double h) const
+{
+	// Procedure is quite the same as the one employed in Wave::fluidVel for calculating the fluid velocity
+	double a1(0), a2(0), a3(0); 
 
+	if (z <= 0)
+	{
+		double w = angFreq();
+		double A = amp();
+		double k = waveNumber();
+		double beta = direction() * arma::datum::pi / 180;
 
+		double khz_xy(0), khz_z(0);
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
+		}
 
-// vec::fixed<3> Wave::fluidVel(ENVIR &envir, vec &point) const
-// {
-// 	vec::fixed<3> fluidVel = zeros<vec>(0);
-	
-// 	// Use a more friendly notation
-// 	double x(point(0));
-// 	double y(point(1));
-// 	double z(point(2));
-
-// 	// If the point is above the free surface, 
-// 	if (z>0)
-// 	{
-// 		return fluidVel;
-// 	}
-
-// 	return fluidVel;
-// }
-
-
-// vec::fixed<3> fluidAcc(vec &point) const;
+		a1 = -pow(w,2) * A * khz_xy * cos(beta) * sin(w*t - k * cos(beta)*x - k * sin(beta)*y);
+		a2 = -pow(w,2) * A * khz_xy * sin(beta) * sin(w*t - k * cos(beta)*x - k * sin(beta)*y);
+		a3 = -pow(w,2) * A * khz_z * cos(w*t - k * cos(beta)*x - k * sin(beta)*y);
+	}
+	arma::vec::fixed<3> acc = { a1, a2, a3 };
+	return acc;
+}

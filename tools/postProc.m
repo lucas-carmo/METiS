@@ -19,7 +19,7 @@ else
     flSep = '/';
 end
 
-flNm = ['..' flSep 'test' flSep 'output' flSep 'output.txt'];
+flNm = ['..' flSep 'test' flSep 'output_1' flSep 'output.txt'];
 
 data = importdata(flNm);
 

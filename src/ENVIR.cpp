@@ -291,3 +291,14 @@ arma::vec::fixed<3> ENVIR::fluidVel(double x, double y, double z) const
 
 	return vel;
 }
+
+arma::vec::fixed<3> ENVIR::fluidAcc(double x, double y, double z) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		acc += m_wave.at(ii).fluidAcc(x, y, z, m_time, m_watDepth);
+	}
+
+	return acc;
+}

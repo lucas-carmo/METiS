@@ -100,5 +100,6 @@ public:
     void stepTime();
 
 	arma::vec::fixed<3> fluidVel(double x, double y, double z) const;	
+	arma::vec::fixed<3> fluidAcc(double x, double y, double z) const;
 };
 
