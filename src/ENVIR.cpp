@@ -191,6 +191,11 @@ double ENVIR::watDepth() const
 	return m_watDepth;
 }
 
+double ENVIR::watDensity() const
+{
+	return m_watDens;
+}
+
 /*****************************************************
 	Printing
 *****************************************************/

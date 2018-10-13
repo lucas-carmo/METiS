@@ -77,6 +77,7 @@ public:
     double time() const;
     double gravity() const;
     double watDepth() const;
+    double watDensity() const;
 
 	/*****************************************************
 		Printing
