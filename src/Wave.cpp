@@ -2,7 +2,6 @@
 #include "IO.h"
 #include <vector>
 
-
 using namespace arma;
 
 
@@ -197,7 +196,7 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 	}
 
 	// Use a more friendly notation
-	double w = this->angFreq();
+	double w = angFreq();
 	double h = watDepth;
 	double g = gravity;
 
@@ -228,10 +227,10 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 	double x_i = (a+b)/2;
 	double x_j(0);
 
-	while ( abs(pow(w, 2) / g - x_j * tanh(x_j*h)) > m_epsWave)
-	{				
+	while ( std::abs(pow(w, 2) / g - x_j * tanh(x_j*h)) > m_epsWave)
+	{								
 		x_i = x_j;
-					
+
 		if ( (pow(w,2)/g - a*tanh(a*h)) * (pow(w,2)/g - x_i*tanh(x_i*h)) < 0 ) // Test with limit a
 		{
 			x_j = (a + x_i) / 2;
@@ -252,7 +251,7 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 
 	if (x_j == 0)
 	{
-		throw std::runtime_error("Wave with wave number k = 0.");
+		throw std::runtime_error("Wave with wave number k = 0. Wave period = " + std::to_string(m_period));
 	}
 
 	return x_j;
@@ -302,7 +301,7 @@ vec::fixed<3> Wave::fluidVel(double x, double y, double z, double t, double h) c
 		u3 = -w * A * khz_z * sin(w*t - k * cos(beta)*x - k * sin(beta)*y);
 	}
 
-	arma::vec::fixed<3> vel = { u1, u2, u3 };
+	vec::fixed<3> vel = { u1, u2, u3 };
 	return vel;
 }
 
@@ -335,6 +334,6 @@ vec::fixed<3> Wave::fluidAcc(double x, double y, double z, double t, double h) c
 		a2 = -pow(w,2) * A * khz_xy * sin(beta) * sin(w*t - k * cos(beta)*x - k * sin(beta)*y);
 		a3 = -pow(w,2) * A * khz_z * cos(w*t - k * cos(beta)*x - k * sin(beta)*y);
 	}
-	arma::vec::fixed<3> acc = { a1, a2, a3 };
+    vec::fixed<3> acc = { a1, a2, a3 };
 	return acc;
 }
