@@ -33,8 +33,11 @@ public:
 	/*****************************************************
 		Forces acting on the Morison Element
 	*****************************************************/
-	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) override;
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir) override;
+	virtual vec::fixed<3> node1Pos(const vec::fixed<6> &FOWTpos) const override;
+	virtual vec::fixed<3> node2Pos(const vec::fixed<6> &FOWTpos) const override;
+	
+	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir, const vec::fixed<6> &floaterPos) const override;	
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const override;
 
 	/*****************************************************
 		Printing

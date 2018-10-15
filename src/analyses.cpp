@@ -50,7 +50,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		IO::print2outFile(envir.fluidAcc(0, 0, 0).at(0));
 		IO::print2outFile(envir.fluidAcc(0, 0, 0).at(1));
 		IO::print2outFile(envir.fluidAcc(0, 0, 0).at(2));
-
+		
 
         std::cout << round(100 * envir.time() / envir.timeTotal()) << "%" << '\r';
         std::fflush(stdout);

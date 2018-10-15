@@ -19,18 +19,41 @@ MorisonRect::MorisonRect(vec cog2node1, vec cog2node2, vec cog2node3, int numInt
 /*****************************************************
 	Forces acting on the Morison Element
 *****************************************************/
-vec::fixed<6> MorisonRect::hydrostaticForce(const ENVIR &envir)
+vec::fixed<3> MorisonRect::node1Pos(const vec::fixed<6> &floaterPos) const
+{	
+	// Fazer uma funcao que calcula a matriz de rotacao
+	// mat::fixed<3,3> rotatMatrix(const vec::fixed<6> &FOWTpos) const
+	double x = floaterPos.at(0) + m_cog2node1.at(0);
+	double y = floaterPos.at(1) + m_cog2node1.at(1);
+	double z = floaterPos.at(2) + m_cog2node1.at(2);
+
+	vec::fixed<3> pos = { x, y, z };
+	return pos;
+}
+
+vec::fixed<3> MorisonRect::node2Pos(const vec::fixed<6> &floaterPos) const
+{	
+	// Fazer uma funcao que calcula a matriz de rotacao
+	// mat::fixed<3,3> rotatMatrix(const vec::fixed<6> &FOWTpos) const
+	double x = floaterPos.at(0) + m_cog2node2.at(0);
+	double y = floaterPos.at(1) + m_cog2node2.at(1);
+	double z = floaterPos.at(2) + m_cog2node2.at(2);
+
+	vec::fixed<3> pos = { x, y, z };
+	return pos;
+}
+
+vec::fixed<6> MorisonRect::hydrostaticForce(const ENVIR &envir, const vec::fixed<6> &floaterPos) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;
 }
 
-vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir)
+vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir, const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;
 }
-
 
 
 /*****************************************************

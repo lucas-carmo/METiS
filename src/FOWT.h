@@ -16,6 +16,9 @@ private:
 	//Nacelle m_nacelle;
 	vec::fixed<3> m_linStiff;
 	
+
+	// Acho que essas coisas aqui nao devem ser membros, e sim funcoes.
+	// Ademais, acho que eh melhor da=las com relacao ao centro de gravidade do flutuador, e nao do sistema todo.	
 	vec::fixed<3> m_pos;
 	vec::fixed<3> m_vel;
 	vec::fixed<3> m_acc;
@@ -44,9 +47,9 @@ public:
 
 
 	/*****************************************************
-		NEED TO NAME THIS SECTION
+		Forces, acceleration, position, etc
 	*****************************************************/
-	//vec hydrodynamicForce(const ENVIR &envir);
+	// arma::vec::fixed<6> hydrodynamicForce(const ENVIR &envir);
 	//vec hydrostaticForce();
 	////vec aeroForce(const ENVIR &envir);
 	////vec mooringForce(const ENVIR &envir);

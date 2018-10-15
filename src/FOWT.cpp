@@ -63,3 +63,13 @@ std::string FOWT::printFloater() const
 
 	return output;
 }
+
+
+
+/*****************************************************
+	Forces, acceleration, position, etc
+*****************************************************/
+// arma::vec::fixed<6> FOWT::hydrodynamicForce(const ENVIR &envir)
+// {
+// 	return m_floater.hydrodynamicForce(envir);
+// }

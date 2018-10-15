@@ -19,7 +19,7 @@ else
     flSep = '/';
 end
 
-flNm = ['..' flSep 'test' flSep 'output_1' flSep 'output.txt'];
+flNm = ['..' flSep 'test' flSep 'output_13' flSep 'output.txt'];
 
 data = importdata(flNm);
 
@@ -53,9 +53,18 @@ for ii = 1:length(omega)
     
 end
 
-u = sum(omega .* H/2 .* khz_xy .* cos( omega.*t' ) .* cosd(beta), 1);
-v = sum(omega .* H/2 .* khz_xy .* cos( omega*t' ) .* sind(beta));
-w = sum(-omega .* H/2 .* khz_z .* sin( omega*t' ));
+% Essa porra de baixo nao ta funcionando na versao R2014a por causa do cos( omega.*t' )
+% u = sum(omega .* H/2 .* khz_xy .* cos( omega.*t' ) .* cosd(beta), 1);
+% v = sum(omega .* H/2 .* khz_xy .* cos( omega*t' ) .* sind(beta));
+% w = sum(-omega .* H/2 .* khz_z .* sin( omega*t' ));
+u = 0;
+v = 0;
+w = 0;
+for ii = 1:length(omega)
+    u = u + omega(ii) * H(ii)/2 .* khz_xy(ii) * cos( omega(ii)*t ) .* cosd(beta(ii));
+    v = v + omega(ii) * H(ii)/2 .* khz_xy(ii) * cos( omega(ii)*t ) .* sind(beta(ii));
+    w = w - omega(ii) * H(ii)/2 .* khz_z(ii) * sin( omega(ii)*t );
+end
 
 figure
 

@@ -14,36 +14,23 @@ protected:
 
 	bool m_botPressFlag;
 	double m_axialCD;
-	double m_axialCa;
-	
-
-	//Acho que essas coisas tem que ser calculadas dentro de uma funcao for�a, e nao como membros da classe
-	//vec m_node1pos;
-	//vec m_node2pos;
-
-	//vec m_node1vel;
-	//vec m_node2vel;
-
-	//vec m_node1acc;
-	//vec m_node2acc;
-
-	//vec m_fluidVelPerp;
-	//vec m_fluidAccPerp;
-	//vec m_fluidVelTang;
-	//vec m_fluidAccTang;
+	double m_axialCa;		
 
 public:
 	MorisonElement(vec cog2node1, vec cog2node2, int numIntPoints, 
 				   bool botPressFlag, double axialCD, double axialCa);
 
-	//virtual void updateNodePos(const mat &rotatMatrix, const vec &FOWTpos) = 0;
+	virtual vec::fixed<3> node1Pos(const vec::fixed<6> &floaterPos) const = 0;
+	virtual vec::fixed<3> node2Pos(const vec::fixed<6> &floaterPos) const = 0;
+	virtual vec::fixed<3> node1Vel(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const = 0;
+	virtual vec::fixed<3> node2Vel(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const = 0;
+	virtual vec::fixed<3> node1Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const = 0;
+	virtual vec::fixed<3> node2Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const = 0;		
 	//virtual void updateNodeVel(const mat &rotatMatrix, const vec &FOWTpos, const vec &FOWTvel) = 0;
 	//virtual void updateNodeAcc(const mat &rotatMatrix, const vec &FOWTpos, const vec &FOWTvel, const vec &FOWTacc) = 0;
 
-	//void decomposeFluidVelAcc(const ENVIR &envir);
-
-	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) = 0;
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir) = 0;
+	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir, const vec::fixed<6> &floaterPos) const = 0;
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const = 0;
 
 	virtual std::string print() const = 0;
 };

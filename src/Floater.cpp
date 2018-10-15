@@ -291,11 +291,17 @@ Floater& Floater::operator= (Floater &floater)
 
 
 
+/*****************************************************
+	Forces, acceleration, position, etc
+*****************************************************/
+// arma::vec::fixed<6> hydrodynamicForce(const ENVIR &envir)
+// {
+
+// }
+
 //mat Floater::rotatMat(const vec &FOWTpos)
 //{}
 //
 //
-//vec Floater::hydrodynamicForce(const ENVIR &envir, const vec &FOWTpos, const vec &FOWTvel, const vec &FOWTacc)
-//{}
 
 
