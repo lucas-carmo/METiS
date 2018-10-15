@@ -273,7 +273,7 @@ vec::fixed<3> Wave::fluidVel(double x, double y, double z, double t, double h) c
 	double u1(0), u2(0), u3(0); // Initialize the three wave velocity components
 
 	// We consider linear Airy waves, with velocity potential:
-	// phi = g*A/w * cosh(k(z+h))/cosh(k*h) * cos(w*t - k*x)
+	// phi = g*A/w * cosh(k(z+h))/cosh(k*h) * sin(k*x - w*t)
 	// This formulation is valid only below the mean water level, i.e. z <= 0
 	if (z <= 0)
 	{
@@ -296,9 +296,9 @@ vec::fixed<3> Wave::fluidVel(double x, double y, double z, double t, double h) c
 			khz_z = sinh(k * (z + h)) / sinh(k*h);
 		}
 
-		u1 = w * A * khz_xy * cos(beta) * cos(w*t - k*cos(beta)*x - k*sin(beta)*y);
-		u2 = w * A * khz_xy * sin(beta) * cos(w*t - k * cos(beta)*x - k * sin(beta)*y);
-		u3 = -w * A * khz_z * sin(w*t - k * cos(beta)*x - k * sin(beta)*y);
+		u1 = w * A * khz_xy * cos(beta) * cos( k*cos(beta)*x + k*sin(beta)*y - w*t );
+		u2 = w * A * khz_xy * sin(beta) * cos( k*cos(beta)*x + k*sin(beta)*y - w*t );
+		u3 = w * A * khz_z * sin( k*cos(beta)*x + k*sin(beta)*y - w*t );
 	}
 
 	vec::fixed<3> vel = { u1, u2, u3 };
@@ -330,9 +330,10 @@ vec::fixed<3> Wave::fluidAcc(double x, double y, double z, double t, double h) c
 			khz_z = sinh(k * (z + h)) / sinh(k*h);
 		}
 
-		a1 = -pow(w,2) * A * khz_xy * cos(beta) * sin(w*t - k * cos(beta)*x - k * sin(beta)*y);
-		a2 = -pow(w,2) * A * khz_xy * sin(beta) * sin(w*t - k * cos(beta)*x - k * sin(beta)*y);
-		a3 = -pow(w,2) * A * khz_z * cos(w*t - k * cos(beta)*x - k * sin(beta)*y);
+		a1 = pow(w, 2) * A * khz_xy * cos(beta) * sin( k*cos(beta)*x + k*sin(beta)*y - w*t );
+		a2 = pow(w, 2) * A * khz_xy * sin(beta) * sin( k*cos(beta)*x + k*sin(beta)*y - w*t );
+		a3 = -pow(w, 2) * A * khz_z * cos( k*cos(beta)*x + k*sin(beta)*y - w*t );
+
 	}
     vec::fixed<3> acc = { a1, a2, a3 };
 	return acc;

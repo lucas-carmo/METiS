@@ -49,7 +49,7 @@ public:
 	/*****************************************************
 		Forces, acceleration, position, etc
 	*****************************************************/
-	// arma::vec::fixed<6> hydrodynamicForce(const ENVIR &envir);
+	vec::fixed<6> hydrodynamicForce(const ENVIR &envir) const;
 	//vec hydrostaticForce();
 	////vec aeroForce(const ENVIR &envir);
 	////vec mooringForce(const ENVIR &envir);

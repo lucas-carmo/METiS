@@ -30,7 +30,7 @@ public:
 	//virtual void updateNodeAcc(const mat &rotatMatrix, const vec &FOWTpos, const vec &FOWTvel, const vec &FOWTacc) = 0;
 
 	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir, const vec::fixed<6> &floaterPos) const = 0;
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const = 0;
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const = 0;
 
 	virtual std::string print() const = 0;
 };

@@ -61,26 +61,55 @@ vec::fixed<3> MorisonCirc::node2Vel(const vec::fixed<6> &floaterPos, const vec::
 	return vel;
 }
 
+vec::fixed<3> MorisonCirc::node1Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const
+{
+	double x = 0;
+	double y = 0;
+	double z = 0;
+
+	vec::fixed<3> acc = { x, y, z };
+	return acc;
+}
+
+vec::fixed<3> MorisonCirc::node2Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const
+{
+	double x = 0;
+	double y = 0;
+	double z = 0;
+
+	vec::fixed<3> acc = { x, y, z };
+	return acc;
+}
+
+
+
 vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir, const vec::fixed<6> &floaterPos) const
 {
 	vec::fixed<6> force(fill::zeros); 	
 	return force;
 }
 
-vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const
+vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const
 {
+	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
 
     // Use a more friendly notation    
-	vec::fixed<3> n1 = node1Pos(floaterPos);
-	vec::fixed<3> n2 = node2Pos(floaterPos);
 	double D = m_diam;
 	double Cd = m_CD;
 	double Cm = m_CM;
 	double ncyl = m_numIntPoints;	
-	double rho = envir.watDensity();
+	double rho = envir.watDensity();	
 
-	// vec::fixed<3> n1_vel = 
+	// Nodes position, velocity and acceleration
+	vec::fixed<3> n1 = node1Pos(floaterPos);
+	vec::fixed<3> n2 = node2Pos(floaterPos);
+	vec::fixed<3> v1 = node1Vel(floaterPos, floaterVel);
+	vec::fixed<3> v2 = node2Vel(floaterPos, floaterVel);
+	vec::fixed<3> a1 = node1Acc(floaterPos, floaterVel, floaterAcc);
+	vec::fixed<3> a2 = node2Acc(floaterPos, floaterVel, floaterAcc);
+	
+	double dL = norm(n2 - n1, 2) / (ncyl - 1); // length of each interval between points
 
 	// Vectors of the local coordinate system vectors
 	vec::fixed<3> xvec(fill::zeros);
@@ -106,32 +135,86 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const vec::fixe
 	// Matrix for transforming the coordinates from the local coordinate system
     // to the global coordinate system
     mat::fixed<3,3> M_local2global = join_rows(join_rows(xvec, yvec), zvec);
+	
 
 	//  Loop to calculate the force/moment at each integration point
-	vec::fixed<3> nii(fill::zeros);
+	vec::fixed<3> n_ii(fill::zeros); // Coordinates of the integration point
+	vec::fixed<3> vel_ii(fill::zeros); // Velocity of the integration point
+	vec::fixed<3> acc_ii(fill::zeros); // Acceleration of the integration point
+	vec::fixed<3> force_ii(fill::zeros); // Force acting at the integration point
+	vec::fixed<3> moment_ii(fill::zeros); // Moment (with relation to node 1) due to the force acting at the integration point
+
+	vec::fixed<3> velFluid(fill::zeros); // Fluid velocity at the integration point
+	vec::fixed<3> accFluid(fill::zeros); // Fluid acceleration at the integration point
     for (int ii = 1; ii <= m_numIntPoints; ++ii) 
 	{
-        nii = (n2 - n1) * (ii-1)/(ncyl-1) + n1; // Coordinates of the integration point
-        if (nii.at(3) > 0)        
+        n_ii = (n2 - n1) * (ii-1)/(ncyl-1) + n1; // Coordinates of the integration point
+        if (n_ii.at(3) > 0)        
 		{
             continue;
 		}
 
-		// Absolute (Rii) and relative (lambda) distance between the integration point and the first node                               
-        double Rii = norm(nii - n1, 2);
-        double lambda = Rii/norm(n2-n1, 2);
+		/*******
+			Fluid velocity/acceleration
+		******/
+		// Fluid velocity and acceleration at the integration point
+		velFluid = envir.fluidVel(n_ii.at(0), n_ii.at(1), n_ii.at(2));
+		accFluid = envir.fluidAcc(n_ii.at(0), n_ii.at(1), n_ii.at(2));
+
+		// Fluid velocity/acceleration - written in the LOCAL reference frame
+		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder - written in the LOCAL reference frame
+		velFluid = { dot(velFluid, xvec), dot(velFluid, yvec), 0 };
+		accFluid = { dot(accFluid, xvec), dot(accFluid, yvec), 0 };
+
+		// Fluid velocity/acceleration - written in the GLOBALreference frame
+		// Component of the velocity and acceleration of the integration point that is perpendicular to the axis of the cylinder - written in the GLOBAL reference frame
+		velFluid = M_local2global * velFluid;
+		accFluid = M_local2global * accFluid;
+
+
+		/******
+			Body velocity/acceleration
+		******/
+		// Absolute (R_ii) and relative (lambda) distance between the integration point and the first node                               
+        double R_ii = norm(n_ii - n1, 2);
+        double lambda = R_ii/norm(n2-n1, 2);
 
         // Velocity and acceleration of the integration point
-        // velii = elem_t.vel1 + lambda * ( elem_t.vel2 - elem_t.vel1 );
-        // accii = elem_t.acc1 + lambda * ( elem_t.acc2 - elem_t.acc1 );		
+        vel_ii = v1 + lambda * ( v2 - v1 );
+        acc_ii = a1 + lambda * ( a2 - a1 );		
+
+		// Component of the velocity and acceleration of the integration point that is perpendicular to the axis of the cylinder
+		vel_ii = { dot(vel_ii, xvec), dot(vel_ii, yvec), 0 };
+		acc_ii = { dot(acc_ii, xvec), dot(acc_ii, yvec), 0 };
+
+		// Component of the velocity and acceleration of the integration point that is perpendicular to the axis of the cylinder
+		vel_ii = M_local2global * vel_ii;
+		acc_ii = M_local2global * acc_ii;
+
+		// Calculation of the forces in the integration node using Morison's equation
+		force_ii =  0.5 * rho * Cd * D * norm(velFluid - vel_ii, 2) * (velFluid - vel_ii)
+				   + (datum::pi * pow(D,2)/4) * rho * Cm * accFluid
+			       - (datum::pi * pow(D,2)/4) * rho * (Cm-1) * acc_ii;
+	
+		// Calculation of the moment (with respect to node 1) at the integration node using the force calculated above
+		moment_ii = cross(R_ii * zvec, force_ii);
 
 
+		if (ii == 1 || ii == ncyl)
+		{
+			force += (dL/3) * join_cols(force_ii, moment_ii);
+		}		
+		else if (ii % 2 == 0)
+		{
+			force += (4*dL/3) * join_cols(force_ii, moment_ii);
+		}
+		else
+		{
+			force += (2 * dL / 3) * join_cols(force_ii, moment_ii);
+		}
 	}
-
-
 	return force;
 }
-
 
 
 /*****************************************************

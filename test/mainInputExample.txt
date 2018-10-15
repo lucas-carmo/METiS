@@ -1,8 +1,7 @@
 %>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
 %>-<> OC4 Platform
 %>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
-% Considerar colocar um número na frente dos elementos de lista (os vermelhos) pra ganhar tempo na alocação de memória. Não sei se isso vale a pena, já que aumenta o trabalho pra criar os arquivos de entrada
-% sem (provavelmente) produzir um impacto significativo no tempo total (a leitura é mto mais rápida que o resto do programa)
+
 
 %%-----------------------------------------------------------------------------%%
 %%----------------------------- ACTIVE ANALYSES -------------------------------%%
@@ -35,8 +34,8 @@ Wave
 % FRWAVE \t Height \t Frequency         \t Direction (in degrees)
 % TRWAVE \t Height \t Period            \t Direction (in degrees)
 TRWAVE	2	10	45
-WRWAVE	4	1	60
-FRWAVE	4	10	60
+WRWAVE	1	1	60
+FRWAVE	1	10	60
 END
 
 
@@ -47,7 +46,7 @@ END
 FloaterMass		1.4267e7
 FloaterCoG		1,2,-13.46
 FloaterInertia	6.827e9,6.827e9,1.226e10,0,0,0
-LinStiff		6.1e5,6.1e5,5.4e8        % Linear mooring stiffness in surge, sway, yaw. MUDAR PRA SER UMA MATRIZ
+LinStiff		6.1e5,6.1e5,5.4e8        % Linear mooring stiffness in surge, sway, yaw
 
 
 % Nodes ID must be unique and in ascending order
@@ -125,7 +124,7 @@ Nodes                     % Node ID, X coord, Y coord, Z coord
 END
 
 
-Morison_circ % Emitir erro se os nós usados não forem encontrados
+Morison_circ
 % First node ID \t Second node ID \t Diameter \t Drag coefficient \t Inertia coefficient \t Number of integration points ...
 % ... \t Bottom diameter \t Top diameter \t Axial drag coefficient \t Axial added mass coefficient \t 1 or 0 for calculating dynamic pressure or not
 % The second part of the data above (the ones in the second line) is only required for heave plates. Input 0 for everything if only forces perpendicular to the % axis of the cylinder will be considered

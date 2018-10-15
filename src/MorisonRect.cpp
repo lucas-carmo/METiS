@@ -43,13 +43,57 @@ vec::fixed<3> MorisonRect::node2Pos(const vec::fixed<6> &floaterPos) const
 	return pos;
 }
 
+vec::fixed<3> MorisonRect::node1Vel(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const
+{
+	double x = 0;
+	double y = 0;
+	double z = 0;
+
+	vec::fixed<3> vel = { x, y, z };
+	return vel;
+}
+
+vec::fixed<3> MorisonRect::node2Vel(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const
+{
+	double x = 0;
+	double y = 0;
+	double z = 0;
+
+	vec::fixed<3> vel = { x, y, z };
+	return vel;
+}
+
+vec::fixed<3> MorisonRect::node1Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const
+{
+	double x = 0;
+	double y = 0;
+	double z = 0;
+
+	vec::fixed<3> acc = { x, y, z };
+	return acc;
+}
+
+vec::fixed<3> MorisonRect::node2Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const
+{
+	double x = 0;
+	double y = 0;
+	double z = 0;
+
+	vec::fixed<3> acc = { x, y, z };
+	return acc;
+}
+
+
+
+
+
 vec::fixed<6> MorisonRect::hydrostaticForce(const ENVIR &envir, const vec::fixed<6> &floaterPos) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;
 }
 
-vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir, const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const
+vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir, const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;

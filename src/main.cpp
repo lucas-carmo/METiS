@@ -7,10 +7,8 @@
 #include "ENVIR.h"
 #include "analyses.h"
 
-
 // METiS Version
 extern const std::string g_METIS_VERSION{ "0.0.1" };
-
 
 int main(int argc, char *argv[])
 {

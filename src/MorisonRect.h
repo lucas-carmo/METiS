@@ -31,13 +31,17 @@ public:
 				double botArea, double topArea);
 
 	/*****************************************************
-		Forces acting on the Morison Element
+	Forces acting on the Morison Element and functions for node position/velocity/acceleration)
 	*****************************************************/
 	virtual vec::fixed<3> node1Pos(const vec::fixed<6> &FOWTpos) const override;
 	virtual vec::fixed<3> node2Pos(const vec::fixed<6> &FOWTpos) const override;
+	virtual vec::fixed<3> node1Vel(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const override;
+	virtual vec::fixed<3> node2Vel(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const override;
+	virtual vec::fixed<3> node1Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const override;
+	virtual vec::fixed<3> node2Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const override;
 	
 	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir, const vec::fixed<6> &floaterPos) const override;	
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const override;
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const override;
 
 	/*****************************************************
 		Printing

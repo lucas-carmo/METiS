@@ -1,4 +1,6 @@
 % Post processing routine for METiS output 
+% POR ENQUANTO TA UMA ZONA. Vou arrumar direitinho depois que validar as
+% coisas mais basicas
 
 clear all
 close all
@@ -17,7 +19,7 @@ else
     flSep = '/';
 end
 
-flNm = ['..' flSep 'test' flSep 'output_4' flSep 'output.txt'];
+flNm = ['..' flSep 'test' flSep 'output' flSep 'output.txt'];
 
 data = importdata(flNm);
 
@@ -29,48 +31,61 @@ g = 9.81;
 h = 200;
 z = 0;
 
-A = [2];
-omega = [2*pi/10];
-beta = [45];
-k = zeros(1, length(omega));
-khz_xy = zeros(1, length(omega));
-khz_z = zeros(1, length(omega));
+H = [2 4 4]';
+omega = [2*pi/10 1 2*pi*10]';
+beta = [45 60 60]';
+
+k = zeros(length(omega),1);
+khz_xy = zeros(length(omega),1);
+khz_z = zeros(length(omega),1);
 
 for ii = 1:length(omega)
-    fk = @(k) omega(ii)^2/g - k*tanh(k*h);
+    fk = @(x) omega(ii)^2/g - x*tanh(x*h);
     k(ii) = fsolve(fk, 0.1);        
     
-    if (k*h >= 10)
-        khz_xy(ii) = exp(k*z);
-        khz_z(ii) = khz_xy;
+    if (k(ii)*h >= 10)
+        khz_xy(ii) = exp(k(ii)*z);
+        khz_z(ii) = khz_xy(ii);
     else
-        khz_xy(ii) = cosh(k * (z + h)) / sinh(k*h);
-        khz_z(ii) = sinh(k * (z + h)) / sinh(k*h);
+        khz_xy(ii) = cosh(k(ii) * (z + h)) / sinh(k(ii)*h);
+        khz_z(ii) = sinh(k(ii) * (z + h)) / sinh(k(ii)*h);
     end    
     
 end
 
-
-u = omega .* A .* khz_xy .* cos( omega*t ) .* cosd(beta);
-v = omega .* A .* khz_xy .* cos( omega*t ) .* sind(beta) );
-w = -omega .* A .* khz_z .* sin( omega*t ) );
+% Essa porra de baixo nao ta funcionando na versao R2014a por causa do cos( omega.*t' )
+% u = sum(omega .* H/2 .* khz_xy .* cos( omega.*t' ) .* cosd(beta), 1);
+% v = sum(omega .* H/2 .* khz_xy .* cos( omega*t' ) .* sind(beta));
+% w = sum(-omega .* H/2 .* khz_z .* sin( omega*t' ));
+u = 0;
+v = 0;
+w = 0;
+for ii = 1:length(omega)
+    u = u + omega(ii) * H(ii)/2 .* khz_xy(ii) * sin( omega(ii)*t - k(ii)*cosd(beta(ii))*x - k(ii)*sind(beta(ii))*y ) .* cosd(beta(ii));
+    v = v + omega(ii) * H(ii)/2 .* khz_xy(ii) * sin( omega(ii)*t - k(ii)*cosd(beta(ii))*x - k(ii)*sind(beta(ii))*y ) .* sind(beta(ii));
+    w = w - omega(ii) * H(ii)/2 .* khz_z(ii) * cos( omega(ii)*t - k(ii)*cosd(beta(ii))*x - k(ii)*sind(beta(ii))*y );
+     
+    a1 = a1 + omega(ii)^2 * H(ii)/2 * khz_xy(ii) * cos( omega(ii)*t - k(ii)*cosd(beta(ii))*x - k(ii)*sind(beta(ii))*y )*cosd(beta(ii(
+    a2 =
+    a3 =
+end
 
 figure
 
 subplot(3,1,1)
 plot(t, u, 'Color', 'r', 'linewidth', 2)
 hold on
-plot(data.data(:,1),  data.data(:,2), 'o', 'Color', 'b')
+plot(data.data(1:5:end,1),  data.data(1:5:end,2), 'o', 'Color', 'b')
 
 subplot(3,1,2)
 plot(t, v, 'Color', 'r', 'linewidth', 2)
 hold on
-plot(data.data(:,1),  data.data(:,3), 'o', 'Color', 'b')
+plot(data.data(1:5:end,1),  data.data(1:5:end,3), 'o', 'Color', 'b')
 
 subplot(3,1,3)
 plot(t, w, 'Color', 'r', 'linewidth', 2)
 hold on
-plot(data.data(:,1),  data.data(:,4), 'o', 'Color', 'b')
+plot(data.data(1:5:end,1),  data.data(1:5:end,4), 'o', 'Color', 'b')
 
 
 

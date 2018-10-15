@@ -9,6 +9,8 @@
 #include <utility> // For std::move
 #include <stdexcept> // For std::exception
 
+using namespace arma;
+
 /*****************************************************
 	Constructors
 *****************************************************/
@@ -294,10 +296,15 @@ Floater& Floater::operator= (Floater &floater)
 /*****************************************************
 	Forces, acceleration, position, etc
 *****************************************************/
-// arma::vec::fixed<6> hydrodynamicForce(const ENVIR &envir)
-// {
-
-// }
+vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const vec &FOWTpos, const vec &FOWTvel, const vec &FOWTacc) const
+{
+	vec::fixed<6> force(fill::zeros);
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		force += m_MorisonElements.at(ii)->hydrodynamicForce(envir, FOWTpos, FOWTvel, FOWTacc);
+	}
+	return force;
+}
 
 //mat Floater::rotatMat(const vec &FOWTpos)
 //{}
