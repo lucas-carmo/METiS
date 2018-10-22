@@ -15,7 +15,6 @@ MorisonCirc::MorisonCirc(vec cog2node1, vec cog2node2, int numIntPoints,
 
 
 
-
 /*****************************************************
 	Forces acting on the Morison Element and functions for node position/velocity/acceleration)
 *****************************************************/

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory> // For std::unique_ptr
 #include <armadillo> // Linear algebra library with usage similar to MATLAB
 #include "ENVIR.h"
 
@@ -19,6 +20,8 @@ protected:
 public:
 	MorisonElement(vec cog2node1, vec cog2node2, int numIntPoints, 
 				   bool botPressFlag, double axialCD, double axialCa);
+
+	MorisonElement(std::unique_ptr<MorisonElement> sourceElement);
 
 	virtual vec::fixed<3> node1Pos(const vec::fixed<6> &floaterPos) const = 0;
 	virtual vec::fixed<3> node2Pos(const vec::fixed<6> &floaterPos) const = 0;

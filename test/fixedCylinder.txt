@@ -1,14 +1,14 @@
 %>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
-%>-<> OC4 Platform
+%>-<> Fixed cylinder
 %>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
 
 
 %%-----------------------------------------------------------------------------%%
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
 %%-----------------------------------------------------------------------------%%
-TimeStep    0.1	                    % Time step
+TimeStep    0.1	                % Time step
 TimeTotal  	200					% Total simulation time
-TimeRamp	6                       % Numerical ramp to be imposed to the waves. It is given as number of periods of the specified wave with the largest period.
+TimeRamp	6                   % Numerical ramp to be imposed to the waves. It is given as number of periods of the specified wave with the largest period.
 
 
 
@@ -25,7 +25,7 @@ Wave
 % WRWAVE \t Height \t Angular frequency \t Direction (in degrees)
 % FRWAVE \t Height \t Frequency         \t Direction (in degrees)
 % TRWAVE \t Height \t Period            \t Direction (in degrees)
-TRWAVE	2	10	45
+TRWAVE	2	10	30
 END
 
 
@@ -34,8 +34,8 @@ END
 %%-------------------------- FLOATER DESCRIPTION ------------------------------%%
 %%-----------------------------------------------------------------------------%%
 Nodes                     % Node ID, X coord, Y coord, Z coord
-1,0,0,-20                 % Nodes for main column
-2,0,0,0
+1,-5,0,-8.66025           
+2,5,0,8.66025
 END
 
 

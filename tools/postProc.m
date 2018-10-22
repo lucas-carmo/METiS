@@ -19,7 +19,7 @@ else
     flSep = '/';
 end
 
-flNm = ['..' flSep 'test' flSep 'output_6' flSep 'output.txt'];
+flNm = ['..' flSep 'test' flSep 'output_9' flSep 'output.txt'];
 
 data = importdata(flNm);
 
@@ -32,8 +32,8 @@ data = importdata(flNm);
 time = data.data(:,1)';
 
 % Cylinder
-n1 = [0,0,-20];
-n2 = [0,0,0];
+n1 = [-5,0,-8.66025 ];
+n2 = [5,0,8.66025];
 Cm = 1.6;
 Cd = 0.5;
 D  = 3;
@@ -48,7 +48,7 @@ rho = 1025;
 %  Wave
 A = 1;
 omega = 2*pi/10;
-direc = 45;
+direc = 30;
 
 fk = @(x) omega^2/g - x*tanh(x*h);
 k = fsolve(fk, 0.1);        
@@ -88,18 +88,31 @@ F_analitica = Fi_analitica + Fd_analitica;
 figure
 subplot(3,1,1)
 plot(time, F_analitica(:,1), 'Color', 'r', 'linewidth', 2)
+title(['\beta = ' num2str(direc) 'deg - \alpha = ' num2str(rad2deg(alpha)) 'deg'])
 hold on
-plot(data.data(:,1),  data.data(:,2), '--', 'Color', 'b')
+plot(data.data(:,1),  data.data(:,2), '--', 'Color', 'b', 'linewidth', 2)
+hl = legend('Analitico', 'C++');
+set(hl, 'FontSize', 20)
+set(gca, 'FontSize', 20)
+ylabel('Fx (N)');
 
 subplot(3,1,2)
 plot(time, F_analitica(:,2), 'Color', 'r', 'linewidth', 2)
 hold on
-plot(data.data(:,1),  data.data(:,3), '--', 'Color', 'b')
+plot(data.data(:,1),  data.data(:,3), '--', 'Color', 'b', 'linewidth', 2)
+set(gca, 'FontSize', 20)
+ylabel('Fy (N)');
 
 subplot(3,1,3)
 plot(time, F_analitica(:,3), 'Color', 'r', 'linewidth', 2)
 hold on
-plot(data.data(:,1),  data.data(:,4), '--', 'Color', 'b')
+plot(data.data(:,1),  data.data(:,4), '--', 'Color', 'b', 'linewidth', 2)
+set(gca, 'FontSize', 20)
+ylabel('Fz (N)');
+xlabel('t (s)')
+
+
+set(gcf, 'color', 'w');
 
 
 

@@ -19,6 +19,5 @@ MorisonElement::MorisonElement(vec cog2node1, vec cog2node2, int numIntPoints,
 	{
 		m_numIntPoints = numIntPoints;
 	}
-
 }
 

@@ -286,6 +286,8 @@ Floater& Floater::operator= (Floater &floater)
 	for (int ii = 0; ii < floater.m_MorisonElements.size(); ++ii)
 	{		
 		m_MorisonElements.at(ii) = std::move(floater.m_MorisonElements.at(ii));
+		//vec::fixd<3> node1_coord = floater.m_MorisonElements.at(ii)->node1Pos();
+		//m_MorisonElements.at(ii) = std::make_unique<MorisonRect>(node1_coord, node2_coord, node3_coord, numIntPoints, botPressFlag, axialCD, axialCa, diam_X, CD_X, CM_X, diam_Y, CD_Y, CM_Y, botArea, topArea);
 	}		
 		
     return *this;	
