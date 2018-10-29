@@ -182,7 +182,7 @@ double Wave::length() const
 	}	
 	else
 	{
-		throw std::runtime_error("Tried to call Wave::length(), but length was not calculated yet. Wave::length(const double watDepth, const double gravity).");	
+		throw std::runtime_error("Tried to call Wave::length(), but length was not calculated yet. Try calling Wave::length(const double watDepth, const double gravity).");	
 	}
 }
 
