@@ -127,7 +127,7 @@ void Floater::addMorisonCirc(const std::string &data, const ENVIR &envir)
 
 
 	 // Create a circular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
-	 m_MorisonElements.push_back( std::make_unique<MorisonCirc>(node1_coord, node2_coord, numIntPoints, 
+	 m_MorisonElements.push_back( std::make_shared<MorisonCirc>(node1_coord, node2_coord, numIntPoints, 
 	 							  botPressFlag, axialCD, axialCa, diam, CD, CM, botDiam, topDiam) );
 }
 
@@ -206,7 +206,7 @@ void Floater::addMorisonRect(const std::string &data, const ENVIR &envir)
 
 	
 	 // Create a rectangular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
-	m_MorisonElements.push_back( std::make_unique<MorisonRect>(node1_coord, node2_coord, node3_coord, numIntPoints,
+	m_MorisonElements.push_back( std::make_shared<MorisonRect>(node1_coord, node2_coord, node3_coord, numIntPoints,
 	  							  botPressFlag, axialCD, axialCa, diam_X, CD_X, CM_X, diam_Y, CD_Y, CM_Y, botArea, topArea) );
 }
 
@@ -280,14 +280,9 @@ Floater& Floater::operator= (Floater &floater)
 	// Resize m_MorisonElemen to match the size of the one in the input floater
 	m_MorisonElements.resize( floater.m_MorisonElements.size() );
 
-	// Attention:
-	// When we move the unique_ptr's that are stored in floater.m_MorisonElements
-	// to *this.m_MorisonElements, the pointers in floater.m_MorisonElements become null.
 	for (int ii = 0; ii < floater.m_MorisonElements.size(); ++ii)
 	{		
-		m_MorisonElements.at(ii) = std::move(floater.m_MorisonElements.at(ii));
-		//vec::fixd<3> node1_coord = floater.m_MorisonElements.at(ii)->node1Pos();
-		//m_MorisonElements.at(ii) = std::make_unique<MorisonRect>(node1_coord, node2_coord, node3_coord, numIntPoints, botPressFlag, axialCD, axialCa, diam_X, CD_X, CM_X, diam_Y, CD_Y, CM_Y, botArea, topArea);
+		m_MorisonElements.at(ii) = floater.m_MorisonElements.at(ii);
 	}		
 		
     return *this;	

@@ -321,9 +321,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			writeWarningMessage("Unknown keyword '" + getKeyword(strInput) + "' in line " + std::to_string(IO::getInLineNumber()) +".");
 		}
 	}
-
-
-
+	
 	fowt.setFloater(floater);
 }
 
