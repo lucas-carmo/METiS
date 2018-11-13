@@ -80,11 +80,118 @@ vec::fixed<3> MorisonCirc::node2Acc(const vec::fixed<6> &floaterPos, const vec::
 	return acc;
 }
 
+void MorisonCirc::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const
+{
+	// if Zlocal == Zglobal, REFlocal = REFglobal
+	vec::fixed<3> z_global = { 0,0,1 };
+	if (approx_equal(zvec, z_global, "absdiff", datum::eps))
+	{
+		xvec = { 1, 0, 0 };
+		yvec = { 0, 1, 0 };
+	}
+	else
+	{
+		yvec = arma::cross(z_global, zvec);
+		yvec = yvec / norm(yvec, 2);
 
+		xvec = cross(yvec, zvec);
+		xvec = xvec / norm(xvec, 2);
+	}
+
+}
 
 vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir, const vec::fixed<6> &floaterPos) const
 {
-	vec::fixed<6> force(fill::zeros); 	
+	// Forces and moments acting at the Morison Element
+	vec::fixed<6> force(fill::zeros);
+
+	// Use a more friendly notation    
+	double D = m_diam;
+	double rho = envir.watDensity();
+	double g = envir.gravity();
+
+	// Nodes position, velocity and acceleration
+	vec::fixed<3> n1 = node1Pos(floaterPos);
+	vec::fixed<3> n2 = node2Pos(floaterPos);
+
+	// If both nodes are above the water line, then the hydrostatic force is zero
+	if (n1(3) >= 0 && n2(3) >= 0)
+	{
+		return force;
+	}
+
+
+	// Vectors of the local coordinate system vectors
+	vec::fixed<3> xvec(fill::zeros);
+	vec::fixed<3> yvec(fill::zeros);
+	vec::fixed<3> zvec = (n2 - n1) / arma::norm(n2 - n1, 2);
+	MorisonCirc::make_local_base(xvec, yvec, zvec);
+
+	// Calculation of the inclination of the cylinder (with respect to the
+	// vertical), which is used in the calculation of the center of buoyoancy
+	double alpha = acos(dot(zvec, arma::vec::fixed<3> {0,0,1})); // zvec and {0, 0, 1} are both unit vectors
+	double tanAlpha{ 0 };
+
+	// Check if the angle is 90 degrees
+	if (std::abs(alpha - arma::datum::pi/2) > datum::eps)
+	{
+		tanAlpha = tan(alpha);
+	}
+	else
+	{
+		tanAlpha = arma::datum::inf;
+	}
+
+
+	// If only one of the nodes is above the water line, its coordinates are changed
+	// by those of the intersection between the cylinder axis and the static
+	// water line(defined by z_global = 0)
+	if (n1(3) >= 0)
+	{
+		n1 = n2 + std::abs(0 - n2(3)) / (n1(3) - n2(3)) * norm(n2 - n1) * zvec;
+	}
+
+	if (n2(3) >= 0)
+	{
+		n2 = n1 + std::abs(0 - n1(3)) / (n2(3) - n1(3)) * norm(n2 - n1) * zvec;
+	}
+
+	// Length of the cylinder
+	double L = norm(n2 - n1);
+
+	// Volume of fluid displaced by the cylinder
+	double Vol = arma::datum::pi * pow(D/2, 2) * L;
+
+	// If the cylinder is below the water line, the center of volume is at the
+	// center of the cylinder
+	double xb{ 0 };
+	double yb{ 0 };
+	double zb{ 0 };
+	if (n1(3) < 0 && n2(3) < 0)
+	{
+		xb = 0;
+		yb = 0;
+		zb = L / 2;
+	}
+	else // otherwise, the formulas for an inclined cylinder are used
+	{
+		xb = tanAlpha * pow(D/2, 2) / (4 * L);
+		yb = 0;
+		zb = ( pow(tanAlpha*D/2, 2) + 4 * pow(L, 2) ) / (8 * L);
+	}
+
+	// Matrix for transforming the coordinates from the local coordinate system
+	// to the global coordinate system
+	mat::fixed<3, 3> M_local2global = join_rows(join_rows(xvec, yvec), zvec);
+
+	// Vector Xb - Xnode1(i.e., vector between the center of buoyancy and the
+	// first node of the cylinder) written in the global coordinate frame
+	arma::vec::fixed<3> Xb_global = M_local2global * arma::vec::fixed<3> { xb, yb, zb };
+
+	// Calculation of hydrostatic force and moment
+	force.at(3) = rho * g * Vol; // Fx = Fy = 0 and Fz = Buoyancy force
+	force.rows(4, 6) = cross( Xb_global, force.rows(1,3) );
+
 	return force;
 }
 
@@ -114,22 +221,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const vec::fixe
 	vec::fixed<3> xvec(fill::zeros);
 	vec::fixed<3> yvec(fill::zeros);	
     vec::fixed<3> zvec  = (n2 - n1) / arma::norm(n2 - n1, 2);
-
-	// if Zlocal == Zglobal, REFlocal = REFglobal
-	vec::fixed<3> z_global = {0,0,1};
-	if ( approx_equal(zvec, z_global, "absdiff", datum::eps) )
-	{		
-		xvec = {1, 0, 0};
-		yvec = {0, 1, 0};
-	}
-	else
-	{
-		yvec = arma::cross(z_global, zvec);
-		yvec = yvec / norm(yvec, 2);
-
-		xvec = cross(yvec, zvec);
-		xvec = xvec / norm(xvec, 2);
-	}
+	MorisonCirc::make_local_base(xvec, yvec, zvec);
 
 	// Matrix for transforming the coordinates from the local coordinate system
     // to the global coordinate system

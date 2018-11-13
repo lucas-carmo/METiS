@@ -35,6 +35,7 @@ public:
 	virtual vec::fixed<3> node1Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const override;
 	virtual vec::fixed<3> node2Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const override;		
 
+	void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const;
 	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir, const vec::fixed<6> &floaterPos) const override;	
 	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const override;
 
