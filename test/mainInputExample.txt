@@ -1169,11 +1169,7 @@ END
 
 
 OUTPUT
-surge
-sway
-heave
-roll
-pitch
+fowt_motion
 wave_elev 1 11 13 15
 wave_vel 13
 wave_acc

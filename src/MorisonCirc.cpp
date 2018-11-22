@@ -173,12 +173,19 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir, const vec::fixed
 		yb = 0;
 		zb = L / 2;
 	}
-	else // otherwise, the formulas for an inclined cylinder are used
+
+	else if (is_finite(tanAlpha)) // otherwise, if the cylinder is not horizontal, use the formulas for an inclined cylinder are used
 	{
 		xb = tanAlpha * pow(D/2, 2) / (4 * L);
 		yb = 0;
 		zb = ( pow(tanAlpha*D/2, 2) + 4 * pow(L, 2) ) / (8 * L);
 	}
+
+	else // if the cylinder is horizontal and not completely submerged, forces and moments are equal to zero
+	{
+		return force;
+	}
+
 
 	// Matrix for transforming the coordinates from the local coordinate system
 	// to the global coordinate system

@@ -5,32 +5,25 @@
 #include <iomanip> // For input/output manipulators
 
 void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
-{
+{    
+    IO::print2outLineHeader_turnOn(); // The header of the formatted output file is written during the first time step
+
     for ( ; envir.time() <= envir.timeTotal(); envir.stepTime() )    
-    {  
+    {          
+        IO::print2outLine_turnOn();
+
+		arma::vec::fixed<6> hydroForce = fowt.hydrodynamicForce(envir);        
+        IO::print2outLine(IO::OUTFLAG_HD_FORCE, hydroForce);        
+
+        // After the first time step, we do not need to print anything else to the header of the formatted output file
         if (envir.time() == 0)
         {
-            IO::print2outFile("TIME");
-
-            IO::print2outFile("FORCE_X");
-			IO::print2outFile("FORCE_Y");
-			IO::print2outFile("FORCE_Z");
-			IO::print2outFile("MOMENT_X");
-			IO::print2outFile("MOMENT_Y");
-			IO::print2outFile("MOMENT_Z");
-
+            IO::print2outLineHeader_turnOff();            
         }
-        
-        IO::newLineOutFile();
-		IO::print2outFile(envir.time());
-		arma::vec::fixed<6> hydroForce = fowt.hydrodynamicForce(envir);
 
-		for (int jj = 0; jj < hydroForce.size(); ++jj)
-		{
-			IO::print2outFile(hydroForce.at(jj));
-		}      
+        
 
         std::cout << round(100 * envir.time() / envir.timeTotal()) << "%" << '\r';
-        std::fflush(stdout);
+        std::fflush(stdout);        
     }
 }

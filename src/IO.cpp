@@ -430,34 +430,9 @@ unsigned int IO::getInLineNumber()
 // and other necessary information (like the IDs of the points where the wave elevation will be output)
 void IO::setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir)
 {
-	if (caseInsCompare(getKeyword(strInput), "surge"))
+	if (caseInsCompare(getKeyword(strInput), "fowt_motion"))
 	{
-		m_whichResult2Output.at(IO::OUTFLAG_SURGE) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "sway"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_SWAY) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "heave"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_HEAVE) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "roll"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_ROLL) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "pitch"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_PITCH) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "yaw"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_YAW) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_MOTION) = true;
 	}
 
 	if (caseInsCompare(getKeyword(strInput), "wave_elev"))
@@ -489,6 +464,11 @@ void IO::setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir)
 			envir.addWaveLocation(getData(strInput));
 		}
 	}
+
+	if (caseInsCompare(getKeyword(strInput), "hd_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE) = true;
+	}	
 }
 
 
@@ -541,37 +521,94 @@ void IO::writeWarningMessage(const std::string &str)
 	std::cout << "\n\n" << mess << std::endl;
 }
 
-// Different functions to print to the formatted output file depending on the variable type.
+// Set m_shouldWriteOutLine to true or false. This is the variable
+// that tells when the program should write to the formatted output file.
+// Same thing applies to m_shouldWriteOutLineHeader
+void IO::print2outLine_turnOn()
+{
+	m_shouldWriteOutLine = true;
+}
+
+void IO::print2outLine_turnOff()
+{
+	m_shouldWriteOutLine = false;
+}
+
+void IO::print2outLineHeader_turnOn()
+{
+	m_shouldWriteOutLineHeader = true;
+}
+
+void IO::print2outLineHeader_turnOff()
+{
+	m_shouldWriteOutLineHeader = false;
+}
+
+// Different functions to print to the formatted output file string streams depending on the output flag
+void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
+{	
+	// Check whether the specified flag is indeed one that requires a vector with six components
+	if ( (flag != OUTFLAG_HD_FORCE) && (flag != OUTFLAG_FOWT_MOTION) )
+	{
+		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &force).");
+	}
+	
+	// If the print header flag is true and if this is one of the requested output variables,
+	// then print the header based on the output flag	
+	if (m_shouldWriteOutLineHeader && m_whichResult2Output.at(flag))
+	{			
+		if (flag == OUTFLAG_HD_FORCE)
+		{
+			for (int ii = 0; ii < vector_6.size(); ++ii)
+			{
+				print2outLineHeader("HD Force" + std::to_string(ii));
+			}
+		}			
+
+		if (flag == OUTFLAG_FOWT_MOTION)
+		{
+			print2outLineHeader("Surge");
+			print2outLineHeader("Sway");
+			print2outLineHeader("Heave");
+			print2outLineHeader("Roll");
+			print2outLineHeader("Pitch");
+			print2outLineHeader("Yaw");
+		}						
+	}
+
+
+	// If the printing flag is true and if this is one of the requested output variables,
+	// then print it to the output line
+	if ( m_shouldWriteOutLine && m_whichResult2Output.at(flag) )
+	{					
+		for (int ii = 0; ii < vector_6.size(); ++ii)
+		{			
+			print2outLine(vector_6.at(ii));
+		}      
+	}	
+}
+
+// Different basic functions to print to the formatted output file string streams depending on the variable type.
 // The format parameters (column width and precision) are member variables of the IO class and
 // can be adjusted changing the values of m_outColumnWidth and m_outNumPrecision
-void IO::print2outFile(const std::string &str)
-{
-	if (!m_outFl)
-	{
-		throw std::runtime_error("Unable to write to formatted output file.");
-	}
-
-	m_outFl << std::setw(IO::m_outColumnWidth) << str;
+void IO::print2outLine(const std::string &str)
+{	
+	m_outLine << std::setw(IO::m_outColumnWidth) << str;
 }
 
-void IO::print2outFile(const double &num)
+void IO::print2outLine(const double &num)
 {
-	if (!m_outFl)
-	{
-		throw std::runtime_error("Unable to write to formatted output file.");
-	}
-
-	m_outFl << std::setw(IO::m_outColumnWidth) << std::scientific << std::setprecision(IO::m_outNumPrecision) << num;
+	m_outLine << std::setw(IO::m_outColumnWidth) << std::scientific << std::setprecision(IO::m_outNumPrecision) << num;
 }
 
-void IO::print2outFile(const int &num)
+void IO::print2outLine(const int &num)
 {
-	if (!m_outFl)
-	{
-		throw std::runtime_error("Unable to write to formatted output file.");
-	}
+	m_outLine << std::setw(IO::m_outColumnWidth) << num;
+}
 
-	m_outFl << std::setw(IO::m_outColumnWidth) << num;
+void IO::print2outLineHeader(const std::string &str)
+{	
+	m_outLineHeader << std::setw(IO::m_outColumnWidth) << str;
 }
 
 // Since the data is output in columns, it is necessary to add a new line at each new print step
@@ -620,28 +657,8 @@ std::string IO::printOutVar()
 	{
 		switch (ii)
 		{
-			case IO::OUTFLAG_SURGE:
-				output += "Surge: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
-				break;
-
-			case IO::OUTFLAG_SWAY:
-				output += "Sway: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
-				break;
-
-			case IO::OUTFLAG_HEAVE:
-				output += "Heave: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
-				break;
-
-			case IO::OUTFLAG_ROLL:
-				output += "Roll: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
-				break;
-
-			case IO::OUTFLAG_PITCH:
-				output += "Pitch: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
-				break;
-
-			case IO::OUTFLAG_YAW:				
-				output += "Yaw: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
+			case IO::OUTFLAG_FOWT_MOTION:
+				output += "FOWT rigid motion: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
 				break;
 
 			case IO::OUTFLAG_WAVE_ELEV:

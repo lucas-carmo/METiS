@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <array>
@@ -26,18 +27,20 @@ class IO
 {
 public:
 
-	// COLOCAR COMENTARIO
+	// Enum for the indices of the variables that can be output
+	// They are used in the functions:
+	//		setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir);
+	//		in the different print2outLine(const OutFlag &flag, 'some output variable');
+	//		printOutVar()
 	enum OutFlag
 	{
-		OUTFLAG_SURGE,
-		OUTFLAG_SWAY,
-		OUTFLAG_HEAVE,
-		OUTFLAG_ROLL,
-		OUTFLAG_PITCH,
-		OUTFLAG_YAW,
+		OUTFLAG_FOWT_MOTION,
+//		
 		OUTFLAG_WAVE_ELEV,
 		OUTFLAG_WAVE_VEL,
 		OUTFLAG_WAVE_ACC,
+//		
+		OUTFLAG_HD_FORCE,
 		OUTFLAG_SIZE
 	};
 
@@ -62,8 +65,11 @@ private:
 	static const unsigned int m_outNumPrecision;
 	static std::array<bool, IO::OUTFLAG_SIZE> m_whichResult2Output;
 
-	// static std::string m_outputTimeStep; // String with the data that is output at each time step (FOWT position, hydro force components, anything that is a function of time)
-	// static bool m_shouldWriteOutputTimeStep;
+	static std::stringstream m_outLineHeader; // String stream with the header identifying each column of the formatted output file
+	static std::stringstream m_outLine; // String stream with the data that is output at each time step (FOWT position, hydro force components, anything that is a function of time)
+	static bool m_shouldWriteOutLineHeader;
+	static bool m_shouldWriteOutLine;	
+
 
 public:
 	// Set input file and output files based on the input file path
@@ -86,9 +92,18 @@ public:
 	static void printSumFile(const FOWT &fowt, const ENVIR &envir);
 	
 	// To formatted output file
-	static void print2outFile(const std::string &str);
-	static void print2outFile(const double &num);
-	static void print2outFile(const int &num);
+	static void print2outLineHeader_turnOn(); 
+	static void print2outLineHeader_turnOff();		
+	static void print2outLine_turnOn(); 
+	static void print2outLine_turnOff();	
+
+	static void print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6);
+	static void print2outLine(const std::string &str);
+	static void print2outLine(const double &num);
+	static void print2outLine(const int &num);
+	static void print2outLineHeader(const std::string &str);
+
+	// static void print2outFile(const )
 	static void newLineOutFile();
 
 	// Some printing functions
