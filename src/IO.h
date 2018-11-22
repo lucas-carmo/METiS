@@ -41,6 +41,8 @@ public:
 		OUTFLAG_WAVE_ACC,
 //		
 		OUTFLAG_HD_FORCE,
+		OUTFLAG_HS_FORCE,
+//
 		OUTFLAG_SIZE
 	};
 
@@ -97,19 +99,21 @@ public:
 	static void print2outLine_turnOn(); 
 	static void print2outLine_turnOff();	
 
+		// Functions that write to the stringstreams m_outLineHeader and m_outLine
 	static void print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6);
 	static void print2outLine(const std::string &str);
-	static void print2outLine(const double &num);
-	static void print2outLine(const int &num);
+	static void print2outLine(const double num);
+	static void print2outLine(const int num);
 	static void print2outLineHeader(const std::string &str);
 
-	// static void print2outFile(const )
+		// Functions that actually write to the output file
+	static void printOutLineHeader2outFile();
+	static void printOutLine2outFile();
 	static void newLineOutFile();
 
 	// Some printing functions
 	static std::string printOutVar();
 };
-
 
 
 

@@ -48,6 +48,7 @@ END
 
 OUTPUT
 hd_force
+hs_force
 END
 
 

@@ -277,13 +277,14 @@ Floater& Floater::operator= (Floater &floater)
 	// In case there is data in m_MorisonElements
 	m_MorisonElements.clear();
 
-	// Resize m_MorisonElemen to match the size of the one in the input floater
+	// Resize m_MorisonElement to match the size of the one in the input floater
 	m_MorisonElements.resize( floater.m_MorisonElements.size() );
 
+	// m_MorisonElements.at(ii) is a std::shared_ptr<MorisonElements>, that is why a direct assignment works
 	for (int ii = 0; ii < floater.m_MorisonElements.size(); ++ii)
-	{		
+	{
 		m_MorisonElements.at(ii) = floater.m_MorisonElements.at(ii);
-	}		
+	}
 		
     return *this;	
 }

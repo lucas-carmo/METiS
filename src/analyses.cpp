@@ -11,18 +11,28 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
     for ( ; envir.time() <= envir.timeTotal(); envir.stepTime() )    
     {          
         IO::print2outLine_turnOn();
+		IO::print2outLine(envir.time());		
 
-		arma::vec::fixed<6> hydroForce = fowt.hydrodynamicForce(envir);        
-        IO::print2outLine(IO::OUTFLAG_HD_FORCE, hydroForce);        
+		arma::vec::fixed<6> hdForce = fowt.hydrodynamicForce(envir);        
+		arma::vec::fixed<6> hsForce = fowt.hydrodynamicForce(envir);
+        IO::print2outLine(IO::OUTFLAG_HD_FORCE, hdForce);     
+		IO::print2outLine(IO::OUTFLAG_HS_FORCE, hsForce);
+
+				
 
         // After the first time step, we do not need to print anything else to the header of the formatted output file
         if (envir.time() == 0)
         {
-            IO::print2outLineHeader_turnOff();            
+			IO::print2outLineHeader_turnOff();
+			IO::printOutLineHeader2outFile();
         }
 
+		IO::print2outLine_turnOff();
+		IO::printOutLine2outFile();
         
 
+
+		// Print progress to the screen
         std::cout << round(100 * envir.time() / envir.timeTotal()) << "%" << '\r';
         std::fflush(stdout);        
     }
