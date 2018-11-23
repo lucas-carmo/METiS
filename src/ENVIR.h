@@ -93,7 +93,7 @@ public:
 	std::string printWaveLocation() const;
 
 	/*****************************************************
-		Other functions
+		Other functions (some of them are very important)
 	*****************************************************/
     bool isNodeEmpty() const;
     bool isWaveLocationEmpty() const;
@@ -102,5 +102,7 @@ public:
 
 	arma::vec::fixed<3> fluidVel(double x, double y, double z) const;	
 	arma::vec::fixed<3> fluidAcc(double x, double y, double z) const;
+
+	double wavePressure(double x, double y, double z) const;
 };
 

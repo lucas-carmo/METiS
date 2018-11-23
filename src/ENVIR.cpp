@@ -307,3 +307,14 @@ arma::vec::fixed<3> ENVIR::fluidAcc(double x, double y, double z) const
 
 	return acc;
 }
+
+double ENVIR::wavePressure(double x, double y, double z) const
+{
+	double p{ 0 };
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		p += m_wave.at(ii).pressure(x, y, z, m_time, m_watDens, m_gravity, m_watDepth);
+	}
+
+	return p;
+}

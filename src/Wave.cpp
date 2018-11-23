@@ -338,3 +338,32 @@ vec::fixed<3> Wave::fluidAcc(double x, double y, double z, double t, double h) c
     vec::fixed<3> acc = { a1, a2, a3 };
 	return acc;
 }
+
+
+double Wave::pressure(double x, double y, double z, double t, double rho, double g, double h) const
+{
+	// Procedure is similar to the one employed in Wave::fluidVel for calculating the fluid velocity
+	double p{ 0 };
+
+	if (z <= 0)
+	{
+		double w = angFreq();
+		double A = amp();
+		double k = waveNumber();
+		double beta = direction() * arma::datum::pi / 180;
+
+		double khz(0);
+		if (k*h >= 10)
+		{
+			khz = exp(k*z);
+		}
+		else
+		{
+			khz = cosh(k * (z + h)) / cosh(k*h);
+		}
+
+		p = rho * g * A * khz * cos(k*cos(beta)*x + k * sin(beta)*y - w * t);
+	}
+
+	return p;
+}
