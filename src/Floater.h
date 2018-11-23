@@ -53,6 +53,6 @@ public:
 	// arma::vec::fixed<6> hydrodynamicForce(const ENVIR &envir);
 	//mat rotatMat(const vec &FOWTpos);
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const vec &FOWTpos, const vec &FOWTvel, const vec &FOWTacc) const;
-	//vec hydrostaticForce(const ENVIR &envir, const vec &FOWTpos, const vec &FOWTvel, const vec &FOWTacc);
+	vec::fixed<6> hydrostaticForce(const ENVIR &envir, const vec &FOWTpos) const;
 };
 

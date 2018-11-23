@@ -77,3 +77,9 @@ vec::fixed<6> FOWT::hydrodynamicForce(const ENVIR &envir) const
 
 	return m_floater.hydrodynamicForce(envir, fowt_pos, fowt_vel, fowt_acc);
 }
+
+vec::fixed<6> FOWT::hydrostaticForce(const ENVIR &envir) const
+{
+	vec::fixed<6> fowt_pos(fill::zeros);
+	return m_floater.hydrostaticForce(envir, fowt_pos);
+}

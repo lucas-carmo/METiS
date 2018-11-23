@@ -22,9 +22,9 @@ vec::fixed<3> MorisonCirc::node1Pos(const vec::fixed<6> &floaterPos) const
 {	
 	// Fazer uma funcao que calcula a matriz de rotacao
 	// mat::fixed<3,3> rotatMatrix(const vec::fixed<6> &FOWTpos) const
-	double x = floaterPos.at(0) + m_cog2node1.at(0);
-	double y = floaterPos.at(1) + m_cog2node1.at(1);
-	double z = floaterPos.at(2) + m_cog2node1.at(2);
+	double x = floaterPos[0] + m_cog2node1[0];
+	double y = floaterPos[1] + m_cog2node1[1];
+	double z = floaterPos[2] + m_cog2node1[2];
 
 	vec::fixed<3> pos = { x, y, z };
 	return pos;
@@ -32,9 +32,9 @@ vec::fixed<3> MorisonCirc::node1Pos(const vec::fixed<6> &floaterPos) const
 
 vec::fixed<3> MorisonCirc::node2Pos(const vec::fixed<6> &floaterPos) const
 {	
-	double x = floaterPos.at(0) + m_cog2node2.at(0);
-	double y = floaterPos.at(1) + m_cog2node2.at(1);
-	double z = floaterPos.at(2) + m_cog2node2.at(2);
+	double x = floaterPos[0] + m_cog2node2[0];
+	double y = floaterPos[1] + m_cog2node2[1];
+	double z = floaterPos[2] + m_cog2node2[2];
 
 	vec::fixed<3> pos = { x, y, z };
 	return pos;
@@ -110,12 +110,23 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir, const vec::fixed
 	double rho = envir.watDensity();
 	double g = envir.gravity();
 
-	// Nodes position, velocity and acceleration
-	vec::fixed<3> n1 = node1Pos(floaterPos);
-	vec::fixed<3> n2 = node2Pos(floaterPos);
+	// Nodes position
+	vec::fixed<3> n1(fill::zeros);
+	vec::fixed<3> n2(fill::zeros);
+	if (node1Pos(floaterPos)[2] <= node2Pos(floaterPos)[2]) // Make sure that node1 is below node2 (or at the same height, at least)
+	{
+		n1 = node1Pos(floaterPos);
+		n2 = node2Pos(floaterPos);
+	}
+	else
+	{
+		n1 = node2Pos(floaterPos);
+		n2 = node1Pos(floaterPos);
+	}
 
-	// If both nodes are above the water line, then the hydrostatic force is zero
-	if (n1(2) >= 0 && n2(2) >= 0)
+
+	// If the cylinder is above the waterline, then the hydrostatic force is zero
+	if (n1(2) >= 0)
 	{
 		return force;
 	}
@@ -146,14 +157,9 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir, const vec::fixed
 	// If only one of the nodes is above the water line, its coordinates are changed
 	// by those of the intersection between the cylinder axis and the static
 	// water line(defined by z_global = 0)
-	if (n1(3) >= 0)
+	if (n2[2] >= 0)
 	{
-		n1 = n2 + std::abs(0 - n2(3)) / (n1(3) - n2(3)) * norm(n2 - n1) * zvec;
-	}
-
-	if (n2(3) >= 0)
-	{
-		n2 = n1 + std::abs(0 - n1(3)) / (n2(3) - n1(3)) * norm(n2 - n1) * zvec;
+		n2 = n1 + std::abs(0 - n1[2]) / (n2[2] - n1[2]) * norm(n2 - n1) * zvec;
 	}
 
 	// Length of the cylinder
@@ -162,12 +168,13 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir, const vec::fixed
 	// Volume of fluid displaced by the cylinder
 	double Vol = arma::datum::pi * pow(D/2, 2) * L;
 
-	// If the cylinder is below the water line, the center of volume is at the
-	// center of the cylinder
+
 	double xb{ 0 };
 	double yb{ 0 };
 	double zb{ 0 };
-	if (n1(3) < 0 && n2(3) < 0)
+
+	// If the cylinder is completely submerged, then the center of volume is at the center of the cylinder
+	if ( n2[2] <= 0)
 	{
 		xb = 0;
 		yb = 0;
@@ -187,40 +194,66 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir, const vec::fixed
 	}
 
 
-	// Matrix for transforming the coordinates from the local coordinate system
-	// to the global coordinate system
-	mat::fixed<3, 3> M_local2global = join_rows(join_rows(xvec, yvec), zvec);
-
 	// Vector Xb - Xnode1(i.e., vector between the center of buoyancy and the
 	// first node of the cylinder) written in the global coordinate frame
-	arma::vec::fixed<3> Xb_global = M_local2global * arma::vec::fixed<3> { xb, yb, zb };
+	vec::fixed<3> Xb_global =  xb * xvec + yb * yvec + zb * zvec;
 
 	// Calculation of hydrostatic force and moment
-	force.at(3) = rho * g * Vol; // Fx = Fy = 0 and Fz = Buoyancy force
-	force.rows(4, 6) = cross( Xb_global, force.rows(1,3) );
+	force[2] = rho * g * Vol; // Fx = Fy = 0 and Fz = Buoyancy force
+	force.rows(3, 5) = cross( Xb_global, force.rows(0,2) );
 
 	return force;
 }
+
+
+
 
 vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
 
-    // Use a more friendly notation    
+	// Use a more friendly notation    
 	double D = m_diam;
 	double Cd = m_CD;
 	double Cm = m_CM;
-	double ncyl = m_numIntPoints;	
-	double rho = envir.watDensity();	
+	double Cd_V = m_axialCD;
+	double Ca_V = m_axialCa;
+	double ncyl = m_numIntPoints;
+	double rho = envir.watDensity();
+ 
 
 	// Nodes position, velocity and acceleration
-	vec::fixed<3> n1 = node1Pos(floaterPos);
-	vec::fixed<3> n2 = node2Pos(floaterPos);
-	vec::fixed<3> v1 = node1Vel(floaterPos, floaterVel);
-	vec::fixed<3> v2 = node2Vel(floaterPos, floaterVel);
-	vec::fixed<3> a1 = node1Acc(floaterPos, floaterVel, floaterAcc);
-	vec::fixed<3> a2 = node2Acc(floaterPos, floaterVel, floaterAcc);
+	vec::fixed<3> n1(fill::zeros);
+	vec::fixed<3> n2(fill::zeros);
+	vec::fixed<3> v1(fill::zeros);
+	vec::fixed<3> v2(fill::zeros);
+	vec::fixed<3> a1(fill::zeros);
+	vec::fixed<3> a2(fill::zeros);
+
+	if (node1Pos(floaterPos)[2] <= node2Pos(floaterPos)[2]) // Make sure that node1 is below node2 (or at the same height, at least)
+	{
+		n1 = node1Pos(floaterPos);
+		n2 = node2Pos(floaterPos);
+
+		v1 = node1Vel(floaterPos, floaterVel);
+		v2 = node2Vel(floaterPos, floaterVel);
+
+		a1 = node1Acc(floaterPos, floaterVel, floaterAcc);
+		a2 = node2Acc(floaterPos, floaterVel, floaterAcc);
+	}
+	else
+	{
+		n1 = node2Pos(floaterPos);
+		n2 = node1Pos(floaterPos);
+
+		v1 = node2Vel(floaterPos, floaterVel);
+		v2 = node1Vel(floaterPos, floaterVel);
+
+		a1 = node2Acc(floaterPos, floaterVel, floaterAcc);
+		a2 = node1Acc(floaterPos, floaterVel, floaterAcc);
+	}
+	
 	
 	double dL = norm(n2 - n1, 2) / (ncyl - 1); // length of each interval between points
 
@@ -230,24 +263,23 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const vec::fixe
     vec::fixed<3> zvec  = (n2 - n1) / arma::norm(n2 - n1, 2);
 	MorisonCirc::make_local_base(xvec, yvec, zvec);
 
-	// Matrix for transforming the coordinates from the local coordinate system
-    // to the global coordinate system
-    mat::fixed<3,3> M_local2global = join_rows(join_rows(xvec, yvec), zvec);
-	
 
+/*
+	First part: forces on the length of the cylinder
+*/
 	//  Loop to calculate the force/moment at each integration point
 	vec::fixed<3> n_ii(fill::zeros); // Coordinates of the integration point
 	vec::fixed<3> vel_ii(fill::zeros); // Velocity of the integration point
 	vec::fixed<3> acc_ii(fill::zeros); // Acceleration of the integration point
 	vec::fixed<3> force_ii(fill::zeros); // Force acting at the integration point
 	vec::fixed<3> moment_ii(fill::zeros); // Moment (with relation to node 1) due to the force acting at the integration point
-
 	vec::fixed<3> velFluid(fill::zeros); // Fluid velocity at the integration point
 	vec::fixed<3> accFluid(fill::zeros); // Fluid acceleration at the integration point
+
     for (int ii = 1; ii <= m_numIntPoints; ++ii) 
 	{
         n_ii = (n2 - n1) * (ii-1)/(ncyl-1) + n1; // Coordinates of the integration point
-        if (n_ii.at(3) > 0)        
+        if (n_ii[2] > 0)        
 		{
             continue;
 		}
@@ -256,18 +288,13 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const vec::fixe
 			Fluid velocity/acceleration
 		******/
 		// Fluid velocity and acceleration at the integration point
-		velFluid = envir.fluidVel(n_ii.at(0), n_ii.at(1), n_ii.at(2));
-		accFluid = envir.fluidAcc(n_ii.at(0), n_ii.at(1), n_ii.at(2));
+		velFluid = envir.fluidVel(n_ii[0], n_ii[1], n_ii[2]);
+		accFluid = envir.fluidAcc(n_ii[0], n_ii[1], n_ii[2]);
 
-		// Fluid velocity/acceleration - written in the LOCAL reference frame
-		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder - written in the LOCAL reference frame
-		velFluid = { dot(velFluid, xvec), dot(velFluid, yvec), 0 };
-		accFluid = { dot(accFluid, xvec), dot(accFluid, yvec), 0 };
+		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder - written in the GLOBAL reference frame
+		velFluid = dot(velFluid, xvec) * xvec + dot(velFluid, yvec) * yvec;
+		accFluid = dot(accFluid, xvec) * xvec + dot(accFluid, yvec) * yvec;
 
-		// Fluid velocity/acceleration - written in the GLOBALreference frame
-		// Component of the velocity and acceleration of the integration point that is perpendicular to the axis of the cylinder - written in the GLOBAL reference frame
-		velFluid = M_local2global * velFluid;
-		accFluid = M_local2global * accFluid;
 
 
 		/******
@@ -282,12 +309,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const vec::fixe
         acc_ii = a1 + lambda * ( a2 - a1 );		
 
 		// Component of the velocity and acceleration of the integration point that is perpendicular to the axis of the cylinder
-		vel_ii = { dot(vel_ii, xvec), dot(vel_ii, yvec), 0 };
-		acc_ii = { dot(acc_ii, xvec), dot(acc_ii, yvec), 0 };
-
-		// Component of the velocity and acceleration of the integration point that is perpendicular to the axis of the cylinder
-		vel_ii = M_local2global * vel_ii;
-		acc_ii = M_local2global * acc_ii;
+		vel_ii = dot(vel_ii, xvec) * xvec + dot(vel_ii, yvec) * yvec;
+		acc_ii = dot(acc_ii, xvec) * xvec + dot(acc_ii, yvec) * yvec;
 
 		// Calculation of the forces in the integration node using Morison's equation
 		force_ii =  0.5 * rho * Cd * D * norm(velFluid - vel_ii, 2) * (velFluid - vel_ii)
@@ -311,8 +334,33 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const vec::fixe
 			force += (2 * dL / 3) * join_cols(force_ii, moment_ii);
 		}
 	}
+
+
+/*
+	Second part: forces on the bottom of the cylinder
+*/
+	// Get fluid velocity/acceleration at the bottom node
+	velFluid = envir.fluidVel(n1[0], n1[1], n1[2]);
+	accFluid = envir.fluidAcc(n1[0], n1[1], n1[2]);	
+
+	// Get only the component that is parallel to the cylinder axis
+	velFluid = dot(velFluid, zvec) * zvec;
+	accFluid = dot(accFluid, zvec) * zvec;
+
+	// Calculate the force acting on the bottom of the cylinder
+	force.rows(0,2) += 0.5 * rho * Cd_V * datum::pi * pow(D/2, 2) * arma::norm(velFluid - v1) * (velFluid - v1)
+					 + rho * Ca_V * (4/3) * datum::pi * pow(D/2, 2) * (accFluid - a1);
+
+	if (m_botPressFlag)
+	{
+		force.rows(0, 2) += datum::pi * pow(m_botDiam / 2, 2) * envir.wavePressure(n1[0], n1[1], n1[2])
+						  - datum::pi * (pow(m_botDiam / 2, 2) - pow(m_topDiam / 2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2]);
+	}
+
 	return force;
 }
+
+
 
 
 /*****************************************************

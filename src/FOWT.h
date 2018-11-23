@@ -47,7 +47,8 @@ public:
 		Forces, acceleration, position, etc
 	*****************************************************/
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir) const;
-	//vec hydrostaticForce();
+	vec::fixed<6> hydrostaticForce(const ENVIR &envir) const;
+
 	////vec aeroForce(const ENVIR &envir);
 	////vec mooringForce(const ENVIR &envir);
 	//// vec weightForce(const ENVIR &envir);

@@ -297,10 +297,28 @@ Floater& Floater::operator= (Floater &floater)
 vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const vec &FOWTpos, const vec &FOWTvel, const vec &FOWTacc) const
 {
 	vec::fixed<6> force(fill::zeros);
+
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
 		force += m_MorisonElements.at(ii)->hydrodynamicForce(envir, FOWTpos, FOWTvel, FOWTacc);
 	}
+
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE, force);
+	
+	return force;
+}
+
+vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir, const vec &FOWTpos) const
+{
+	vec::fixed<6> force(fill::zeros);
+
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		force += m_MorisonElements.at(ii)->hydrostaticForce(envir, FOWTpos);
+	}
+
+	IO::print2outLine(IO::OUTFLAG_HS_FORCE, force);
+
 	return force;
 }
 

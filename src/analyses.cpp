@@ -14,9 +14,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		IO::print2outLine(envir.time());		
 
 		arma::vec::fixed<6> hdForce = fowt.hydrodynamicForce(envir);        
-		arma::vec::fixed<6> hsForce = fowt.hydrodynamicForce(envir);
-        IO::print2outLine(IO::OUTFLAG_HD_FORCE, hdForce);     
-		IO::print2outLine(IO::OUTFLAG_HS_FORCE, hsForce);
+		arma::vec::fixed<6> hsForce = fowt.hydrostaticForce(envir);
 
 				
 

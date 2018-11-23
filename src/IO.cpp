@@ -570,7 +570,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 	{
 		if (flag == OUTFLAG_HD_FORCE)
 		{
-			for (int ii = 1; ii <= vector_6.size(); ++ii)
+			for (int ii = 1; ii <= 6; ++ii)
 			{
 				print2outLineHeader("HD_Force_" + std::to_string(ii));
 			}
@@ -578,7 +578,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 
 		if (flag == OUTFLAG_HS_FORCE)
 		{
-			for (int ii = 1; ii <= vector_6.size(); ++ii)
+			for (int ii = 1; ii <= 6; ++ii)
 			{
 				print2outLineHeader("HS_Force_" + std::to_string(ii));
 			}
@@ -600,7 +600,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 	// then print it to the output line
 	if (m_shouldWriteOutLine && m_whichResult2Output.at(flag))
 	{
-		for (int ii = 0; ii < vector_6.size(); ++ii)
+		for (int ii = 0; ii < 6; ++ii)
 		{
 			print2outLine(vector_6.at(ii));
 		}
