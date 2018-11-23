@@ -115,7 +115,7 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir, const vec::fixed
 	vec::fixed<3> n2 = node2Pos(floaterPos);
 
 	// If both nodes are above the water line, then the hydrostatic force is zero
-	if (n1(3) >= 0 && n2(3) >= 0)
+	if (n1(2) >= 0 && n2(2) >= 0)
 	{
 		return force;
 	}
