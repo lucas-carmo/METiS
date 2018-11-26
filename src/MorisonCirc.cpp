@@ -16,70 +16,8 @@ MorisonCirc::MorisonCirc(vec cog2node1, vec cog2node2, int numIntPoints,
 
 
 /*****************************************************
-	Forces acting on the Morison Element and functions for node position/velocity/acceleration)
+	Forces acting on the Morison Element
 *****************************************************/
-vec::fixed<3> MorisonCirc::node1Pos(const vec::fixed<6> &floaterPos) const
-{	
-	// Fazer uma funcao que calcula a matriz de rotacao
-	// mat::fixed<3,3> rotatMatrix(const vec::fixed<6> &FOWTpos) const
-	double x = floaterPos[0] + m_cog2node1[0];
-	double y = floaterPos[1] + m_cog2node1[1];
-	double z = floaterPos[2] + m_cog2node1[2];
-
-	vec::fixed<3> pos = { x, y, z };
-	return pos;
-}
-
-vec::fixed<3> MorisonCirc::node2Pos(const vec::fixed<6> &floaterPos) const
-{	
-	double x = floaterPos[0] + m_cog2node2[0];
-	double y = floaterPos[1] + m_cog2node2[1];
-	double z = floaterPos[2] + m_cog2node2[2];
-
-	vec::fixed<3> pos = { x, y, z };
-	return pos;
-}
-
-vec::fixed<3> MorisonCirc::node1Vel(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const
-{	
-	double x = 0;
-	double y = 0;
-	double z = 0;
-
-	vec::fixed<3> vel = { x, y, z };
-	return vel;
-}
-
-vec::fixed<3> MorisonCirc::node2Vel(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const
-{	
-	double x = 0;
-	double y = 0;
-	double z = 0;
-
-	vec::fixed<3> vel = { x, y, z };
-	return vel;
-}
-
-vec::fixed<3> MorisonCirc::node1Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const
-{
-	double x = 0;
-	double y = 0;
-	double z = 0;
-
-	vec::fixed<3> acc = { x, y, z };
-	return acc;
-}
-
-vec::fixed<3> MorisonCirc::node2Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const
-{
-	double x = 0;
-	double y = 0;
-	double z = 0;
-
-	vec::fixed<3> acc = { x, y, z };
-	return acc;
-}
-
 void MorisonCirc::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const
 {
 	// if Zlocal == Zglobal, REFlocal = REFglobal

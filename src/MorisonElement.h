@@ -21,12 +21,12 @@ public:
 	MorisonElement(vec cog2node1, vec cog2node2, int numIntPoints, 
 				   bool botPressFlag, double axialCD, double axialCa);
 
-	virtual vec::fixed<3> node1Pos(const vec::fixed<6> &floaterPos) const = 0;
-	virtual vec::fixed<3> node2Pos(const vec::fixed<6> &floaterPos) const = 0;
-	virtual vec::fixed<3> node1Vel(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const = 0;
-	virtual vec::fixed<3> node2Vel(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const = 0;
-	virtual vec::fixed<3> node1Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const = 0;
-	virtual vec::fixed<3> node2Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const = 0;		
+	virtual vec::fixed<3> node1Pos(const vec::fixed<6> &floaterPos) const;
+	virtual vec::fixed<3> node2Pos(const vec::fixed<6> &floaterPos) const;
+	virtual vec::fixed<3> node1Vel(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const;
+	virtual vec::fixed<3> node2Vel(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel) const;
+	virtual vec::fixed<3> node1Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const;
+	virtual vec::fixed<3> node2Acc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const;		
 
 
 	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir, const vec::fixed<6> &floaterPos) const = 0;
