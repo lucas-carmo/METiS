@@ -38,7 +38,7 @@ void MorisonCirc::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3>
 
 }
 
-vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir, const vec::fixed<6> &floaterPos) const
+vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
@@ -51,15 +51,15 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir, const vec::fixed
 	// Nodes position
 	vec::fixed<3> n1(fill::zeros);
 	vec::fixed<3> n2(fill::zeros);
-	if (node1Pos(floaterPos)[2] <= node2Pos(floaterPos)[2]) // Make sure that node1 is below node2 (or at the same height, at least)
+	if (node1Pos()[2] <= node2Pos()[2]) // Make sure that node1 is below node2 (or at the same height, at least)
 	{
-		n1 = node1Pos(floaterPos);
-		n2 = node2Pos(floaterPos);
+		n1 = node1Pos();
+		n2 = node2Pos();
 	}
 	else
 	{
-		n1 = node2Pos(floaterPos);
-		n2 = node1Pos(floaterPos);
+		n1 = node2Pos();
+		n2 = node1Pos();
 	}
 
 
@@ -146,7 +146,7 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir, const vec::fixed
 
 
 
-vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc) const
+vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
@@ -169,27 +169,27 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const vec::fixe
 	vec::fixed<3> a1(fill::zeros);
 	vec::fixed<3> a2(fill::zeros);
 
-	if (node1Pos(floaterPos)[2] <= node2Pos(floaterPos)[2]) // Make sure that node1 is below node2 (or at the same height, at least)
+	if (node1Pos()[2] <= node2Pos()[2]) // Make sure that node1 is below node2 (or at the same height, at least)
 	{
-		n1 = node1Pos(floaterPos);
-		n2 = node2Pos(floaterPos);
+		n1 = node1Pos();
+		n2 = node2Pos();
 
-		v1 = node1Vel(floaterPos, floaterVel);
-		v2 = node2Vel(floaterPos, floaterVel);
+		v1 = node1Vel();
+		v2 = node2Vel();
 
-		a1 = node1Acc(floaterPos, floaterVel, floaterAcc);
-		a2 = node2Acc(floaterPos, floaterVel, floaterAcc);
+		a1 = node1Acc();
+		a2 = node2Acc();
 	}
 	else
 	{
-		n1 = node2Pos(floaterPos);
-		n2 = node1Pos(floaterPos);
+		n1 = node2Pos();
+		n2 = node1Pos();
 
-		v1 = node2Vel(floaterPos, floaterVel);
-		v2 = node1Vel(floaterPos, floaterVel);
+		v1 = node2Vel();
+		v2 = node1Vel();
 
-		a1 = node2Acc(floaterPos, floaterVel, floaterAcc);
-		a2 = node1Acc(floaterPos, floaterVel, floaterAcc);
+		a1 = node2Acc();
+		a2 = node1Acc();
 	}
 	
 	
@@ -321,4 +321,9 @@ std::string MorisonCirc::print() const
 	output = output + "Bot. Press. Flag.:\t" + std::to_string(m_botPressFlag) + '\n';
 
 	return output;
+}
+
+MorisonCirc* MorisonCirc::clone() const
+{
+	return (new MorisonCirc(*this));
 }
