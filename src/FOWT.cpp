@@ -69,17 +69,18 @@ std::string FOWT::printFloater() const
 /*****************************************************
 	Forces, acceleration, position, etc
 *****************************************************/
+void FOWT::updatePosVelAcc()
+{
+	m_floater.updatePosVelAcc(m_pos, m_vel, m_acc);
+}
+
 vec::fixed<6> FOWT::hydrodynamicForce(const ENVIR &envir) const
 {
-	vec::fixed<6> fowt_pos(fill::zeros);
-	vec::fixed<6> fowt_vel(fill::zeros);
-	vec::fixed<6> fowt_acc(fill::zeros);
-
-	return m_floater.hydrodynamicForce(envir, fowt_pos, fowt_vel, fowt_acc);
+	return m_floater.hydrodynamicForce(envir);
 }
 
 vec::fixed<6> FOWT::hydrostaticForce(const ENVIR &envir) const
 {
 	vec::fixed<6> fowt_pos(fill::zeros);
-	return m_floater.hydrostaticForce(envir, fowt_pos);
+	return m_floater.hydrostaticForce(envir);
 }

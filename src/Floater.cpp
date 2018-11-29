@@ -127,7 +127,7 @@ void Floater::addMorisonCirc(const std::string &data, const ENVIR &envir)
 
 
 	 // Create a circular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
-	 m_MorisonElements.push_back( std::make_shared<MorisonCirc>(node1_coord, node2_coord, numIntPoints, 
+	 m_MorisonElements.push_back( std::make_unique<MorisonCirc>(node1_coord, node2_coord, numIntPoints, 
 	 							  botPressFlag, axialCD, axialCa, diam, CD, CM, botDiam, topDiam) );
 }
 
@@ -206,7 +206,7 @@ void Floater::addMorisonRect(const std::string &data, const ENVIR &envir)
 
 	
 	 // Create a rectangular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
-	m_MorisonElements.push_back( std::make_shared<MorisonRect>(node1_coord, node2_coord, node3_coord, numIntPoints,
+	m_MorisonElements.push_back( std::make_unique<MorisonRect>(node1_coord, node2_coord, node3_coord, numIntPoints,
 	  							  botPressFlag, axialCD, axialCa, diam_X, CD_X, CM_X, diam_Y, CD_Y, CM_Y, botArea, topArea) );
 }
 
@@ -280,10 +280,12 @@ Floater& Floater::operator= (Floater &floater)
 	// Resize m_MorisonElement to match the size of the one in the input floater
 	m_MorisonElements.resize( floater.m_MorisonElements.size() );
 
-	// m_MorisonElements.at(ii) is a std::shared_ptr<MorisonElements>, that is why a direct assignment works
+	// m_MorisonElements.at(ii) is a std::unique_ptr<MorisonElements>
 	for (int ii = 0; ii < floater.m_MorisonElements.size(); ++ii)
 	{
-		m_MorisonElements.at(ii) = floater.m_MorisonElements.at(ii);
+		MorisonElement* rawPtr = floater.m_MorisonElements.at(ii)->clone();
+		std::unique_ptr<MorisonElement> smartPtr(rawPtr);
+		m_MorisonElements.at(ii) = std::move(smartPtr);
 	}
 		
     return *this;	
@@ -294,13 +296,21 @@ Floater& Floater::operator= (Floater &floater)
 /*****************************************************
 	Forces, acceleration, position, etc
 *****************************************************/
-vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const vec &FOWTpos, const vec &FOWTvel, const vec &FOWTacc) const
+void Floater::updatePosVelAcc(const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc)
+{
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		m_MorisonElements.at(ii)->updateNodesPosVelAcc(FOWTpos, FOWTvel, FOWTacc);
+	}
+}
+
+vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir) const
 {
 	vec::fixed<6> force(fill::zeros);
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		force += m_MorisonElements.at(ii)->hydrodynamicForce(envir, FOWTpos, FOWTvel, FOWTacc);
+		force += m_MorisonElements.at(ii)->hydrodynamicForce(envir);
 	}
 
 	IO::print2outLine(IO::OUTFLAG_HD_FORCE, force);
@@ -308,23 +318,18 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const vec &FOWTpos,
 	return force;
 }
 
-vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir, const vec &FOWTpos) const
+vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir) const
 {
 	vec::fixed<6> force(fill::zeros);
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		force += m_MorisonElements.at(ii)->hydrostaticForce(envir, FOWTpos);
+		force += m_MorisonElements.at(ii)->hydrostaticForce(envir);
 	}
 
 	IO::print2outLine(IO::OUTFLAG_HS_FORCE, force);
 
 	return force;
 }
-
-//mat Floater::rotatMat(const vec &FOWTpos)
-//{}
-//
-//
 
 

@@ -19,9 +19,9 @@ private:
 
 	// Acho que essas coisas aqui nao devem ser membros, e sim funcoes.
 	// Ademais, acho que eh melhor da=las com relacao ao centro de gravidade do flutuador, e nao do sistema todo.	
-	vec::fixed<3> m_pos;
-	vec::fixed<3> m_vel;
-	vec::fixed<3> m_acc;
+	vec::fixed<6> m_pos;
+	vec::fixed<6> m_vel;
+	vec::fixed<6> m_acc;
 
 public:
 	FOWT();
@@ -46,6 +46,8 @@ public:
 	/*****************************************************
 		Forces, acceleration, position, etc
 	*****************************************************/
+	void updatePosVelAcc();
+
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir) const;
 	vec::fixed<6> hydrostaticForce(const ENVIR &envir) const;
 
