@@ -27,7 +27,7 @@ MorisonElement::MorisonElement(vec cog2node1, vec cog2node2, int numIntPoints,
 *****************************************************/
 void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc)
 {
-	mat::fixed<3, 3> RotatMatrix(RotatMatrix(floaterPos)); // Calculate it here so we just need to calculate the matrix once
+	mat::fixed<3, 3> RotatMatrix(MorisonElement::RotatMatrix(floaterPos)); // Calculate it here so we just need to calculate the matrix once
 	vec::fixed<3> R1 = RotatMatrix * m_cog2node1; // R1 and R2 are the vectors that give the node1 and node2 positions with respect to the CoG of the structure
 	vec::fixed<3> R2 = RotatMatrix * m_cog2node2;
 

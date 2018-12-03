@@ -22,6 +22,42 @@ Floater::Floater()
 	m_inertia.fill(datum::nan);
 }
 
+
+/*****************************************************
+	Overloaded operators
+*****************************************************/
+Floater& Floater::operator= (const Floater &floater)
+{
+	// Shallow copy for simple member variables
+	m_CoG = floater.m_CoG;
+	m_inertia = floater.m_inertia;
+	m_mass = floater.m_mass;
+
+	// The member variables that need deep copying are:
+	// - m_MorisonElements;
+
+	// Check for self-assignment
+    if (this == &floater)
+		return *this;
+
+	// In case there is data in m_MorisonElements
+	m_MorisonElements.clear();
+
+	// Resize m_MorisonElement to match the size of the one in the input floater
+	m_MorisonElements.resize( floater.m_MorisonElements.size() );
+
+	// m_MorisonElements.at(ii) is a std::unique_ptr<MorisonElements>
+	for (int ii = 0; ii < floater.m_MorisonElements.size(); ++ii)
+	{
+		MorisonElement* rawPtr = floater.m_MorisonElements.at(ii)->clone();
+		std::unique_ptr<MorisonElement> smartPtr(rawPtr);
+		m_MorisonElements.at(ii) = std::move(smartPtr);
+	}
+		
+    return *this;	
+}
+
+
 /*****************************************************
 	Setters
 *****************************************************/
@@ -214,6 +250,21 @@ void Floater::addMorisonRect(const std::string &data, const ENVIR &envir)
 /*****************************************************
 	Getters
 *****************************************************/
+vec::fixed<3> Floater::CoG() const
+{
+	return m_CoG;
+}
+
+double Floater::mass() const
+{
+	return m_mass;
+}
+
+vec::fixed<6> Floater::inertia() const
+{
+	return m_inertia;
+}
+
 
 std::string Floater::printMass() const
 {
@@ -252,47 +303,6 @@ std::string Floater::printMorisonElements() const
 
 
 
-
-
-
-
-
-/*****************************************************
-	Overloaded operators
-*****************************************************/
-Floater& Floater::operator= (Floater &floater)
-{
-	// Shallow copy for simple member variables
-	m_CoG = floater.m_CoG;
-	m_inertia = floater.m_inertia;
-	m_mass = floater.m_mass;
-
-	// The member variables that need deep copying are:
-	// - m_MorisonElements;
-
-	// Check for self-assignment
-    if (this == &floater)
-		return *this;
-
-	// In case there is data in m_MorisonElements
-	m_MorisonElements.clear();
-
-	// Resize m_MorisonElement to match the size of the one in the input floater
-	m_MorisonElements.resize( floater.m_MorisonElements.size() );
-
-	// m_MorisonElements.at(ii) is a std::unique_ptr<MorisonElements>
-	for (int ii = 0; ii < floater.m_MorisonElements.size(); ++ii)
-	{
-		MorisonElement* rawPtr = floater.m_MorisonElements.at(ii)->clone();
-		std::unique_ptr<MorisonElement> smartPtr(rawPtr);
-		m_MorisonElements.at(ii) = std::move(smartPtr);
-	}
-		
-    return *this;	
-}
-
-
-
 /*****************************************************
 	Forces, acceleration, position, etc
 *****************************************************/
@@ -311,6 +321,10 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir) const
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
 		force += m_MorisonElements.at(ii)->hydrodynamicForce(envir);
+		
+		// The moments acting on the cylinders were calculated with respect to the first node
+		// We need to change the fulcrum to the CoG
+		force.rows(3,5) = force.rows(3,5) + cross( m_MorisonElements.at(ii)->node1Pos() - CoG(), force.rows(0,2) );		
 	}
 
 	IO::print2outLine(IO::OUTFLAG_HD_FORCE, force);
@@ -325,6 +339,10 @@ vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir) const
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
 		force += m_MorisonElements.at(ii)->hydrostaticForce(envir);
+
+		// The moments acting on the cylinders were calculated with respect to the first node
+		// We need to change the fulcrum to the CoG
+		force.rows(3,5) = force.rows(3,5) + cross( m_MorisonElements.at(ii)->node1Pos() - CoG(), force.rows(0,2) );
 	}
 
 	IO::print2outLine(IO::OUTFLAG_HS_FORCE, force);

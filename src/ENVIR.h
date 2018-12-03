@@ -99,10 +99,11 @@ public:
     bool isWaveLocationEmpty() const;
     arma::vec::fixed<3> getNode(unsigned int ID) const;
     void stepTime();
+    void stepTime(double const step);
 
+    double ramp() const;
 	arma::vec::fixed<3> fluidVel(double x, double y, double z) const;	
 	arma::vec::fixed<3> fluidAcc(double x, double y, double z) const;
-
 	double wavePressure(double x, double y, double z) const;
 };
 

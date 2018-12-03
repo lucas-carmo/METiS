@@ -1,5 +1,7 @@
 %>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
 %>-<> OC4 Platform
+%>-<> Teste p/ com paracao c/ o codigo em MATLAB
+%>-<> Profundidade 1000m, ao invés do valor correto de 200m
 %>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
 
 
@@ -15,9 +17,9 @@
 %%-----------------------------------------------------------------------------%%
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
 %%-----------------------------------------------------------------------------%%
-TimeStep    0.1	                    % Time step
-TimeTotal  	280						% Total simulation time
-TimeRamp	6                       % Numerical ramp to be imposed to the waves. It is given as number of periods of the specified wave with the largest period.
+TimeStep    0.1	                    % Time step, in seconds
+TimeTotal  	280						% Total simulation time, in secods
+TimeRamp	0                      % Numerical ramp, in seconds
 
 
 
@@ -33,9 +35,7 @@ Wave
 % WRWAVE \t Height \t Angular frequency \t Direction (in degrees)
 % FRWAVE \t Height \t Frequency         \t Direction (in degrees)
 % TRWAVE \t Height \t Period            \t Direction (in degrees)
-TRWAVE	2	10	45
-WRWAVE	1	1	60
-FRWAVE	1	10	60
+TRWAVE	1	10	45
 END
 
 
@@ -1174,9 +1174,3 @@ hs_force
 hd_force
 total_force
 END
-
-
-
-
-
-

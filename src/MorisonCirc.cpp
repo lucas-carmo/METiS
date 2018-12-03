@@ -64,7 +64,7 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir) const
 
 
 	// If the cylinder is above the waterline, then the hydrostatic force is zero
-	if (n1(2) >= 0)
+	if (n1[2] >= 0)
 	{
 		return force;
 	}
@@ -140,6 +140,10 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir) const
 	force[2] = rho * g * Vol; // Fx = Fy = 0 and Fz = Buoyancy force
 	force.rows(3, 5) = cross( Xb_global, force.rows(0,2) );
 
+	// The moment was calculated with relation to n1, which may be different from node1.
+	// We need to change the fulcrum to node1
+	force.rows(3,5) = force.rows(3,5) + cross( n1 - node1Pos(), force.rows(0,2) );
+
 	return force;
 }
 
@@ -159,6 +163,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 	double Ca_V = m_axialCa;
 	double ncyl = m_numIntPoints;
 	double rho = envir.watDensity();
+	double botDiam = m_botDiam;
+	double topDiam = m_topDiam;
  
 
 	// Nodes position, velocity and acceleration
@@ -172,7 +178,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 	if (node1Pos()[2] <= node2Pos()[2]) // Make sure that node1 is below node2 (or at the same height, at least)
 	{
 		n1 = node1Pos();
-		n2 = node2Pos();
+		n2 = node2Pos();		
 
 		v1 = node1Vel();
 		v2 = node2Vel();
@@ -190,6 +196,9 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 
 		a1 = node2Acc();
 		a2 = node1Acc();
+
+		botDiam = m_topDiam;
+		topDiam = m_botDiam;		
 	}
 	
 	
@@ -202,15 +211,15 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 	MorisonCirc::make_local_base(xvec, yvec, zvec);
 
 
-/*
-	First part: forces on the length of the cylinder
-*/
+	/*
+		First part: forces on the length of the cylinder
+	*/
 	//  Loop to calculate the force/moment at each integration point
 	vec::fixed<3> n_ii(fill::zeros); // Coordinates of the integration point
 	vec::fixed<3> vel_ii(fill::zeros); // Velocity of the integration point
 	vec::fixed<3> acc_ii(fill::zeros); // Acceleration of the integration point
 	vec::fixed<3> force_ii(fill::zeros); // Force acting at the integration point
-	vec::fixed<3> moment_ii(fill::zeros); // Moment (with relation to node 1) due to the force acting at the integration point
+	vec::fixed<3> moment_ii(fill::zeros); // Moment (with relation to n1) due to the force acting at the integration point
 	vec::fixed<3> velFluid(fill::zeros); // Fluid velocity at the integration point
 	vec::fixed<3> accFluid(fill::zeros); // Fluid acceleration at the integration point
 
@@ -219,7 +228,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
         n_ii = (n2 - n1) * (ii-1)/(ncyl-1) + n1; // Coordinates of the integration point
         if (n_ii[2] > 0)        
 		{
-            continue;
+            break; // Since n2 is above n1, if we reach n_ii[2] > 0, all the next n_ii are also above the waterline
 		}
 
 		/*******
@@ -274,9 +283,9 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 	}
 
 
-/*
-	Second part: forces on the bottom of the cylinder
-*/
+	/*
+		Second part: forces on the bottom of the cylinder
+	*/
 	// Get fluid velocity/acceleration at the bottom node
 	velFluid = envir.fluidVel(n1[0], n1[1], n1[2]);
 	accFluid = envir.fluidAcc(n1[0], n1[1], n1[2]);	
@@ -286,14 +295,18 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 	accFluid = dot(accFluid, zvec) * zvec;
 
 	// Calculate the force acting on the bottom of the cylinder
-	force.rows(0,2) += 0.5 * rho * Cd_V * datum::pi * pow(D/2, 2) * arma::norm(velFluid - v1) * (velFluid - v1)
+	force.rows(0,2) += 0.5 * rho * Cd_V * datum::pi * pow(D/2, 2) * arma::norm(velFluid - v1, 2) * (velFluid - v1)
 					 + rho * Ca_V * (4/3) * datum::pi * pow(D/2, 2) * (accFluid - a1);
 
 	if (m_botPressFlag)
 	{
-		force.rows(0, 2) += datum::pi * pow(m_botDiam / 2, 2) * envir.wavePressure(n1[0], n1[1], n1[2])
-						  - datum::pi * (pow(m_botDiam / 2, 2) - pow(m_topDiam / 2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2]);
+		force.rows(0, 2) += datum::pi * pow(botDiam / 2, 2) * envir.wavePressure(n1[0], n1[1], n1[2]) * zvec
+						  - datum::pi * (pow(botDiam / 2, 2) - pow(topDiam / 2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2]) * zvec;
 	}
+
+	// The moment was calculated with relation to n1, which may be different from node1.
+	// We need to change the fulcrum to node1
+	force.rows(3,5) = force.rows(3,5) + cross( n1 - node1Pos(), force.rows(0,2) );
 
 	return force;
 }

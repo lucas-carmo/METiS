@@ -25,7 +25,7 @@ std::ofstream IO::m_sumFl;
 
 std::string IO::m_outFilePath = "";
 std::ofstream IO::m_outFl;
-const unsigned int IO::m_outColumnWidth = 15;
+const unsigned int IO::m_outColumnWidth = 16;
 const unsigned int IO::m_outNumPrecision = 4;
 std::array<bool, IO::OUTFLAG_SIZE> IO::m_whichResult2Output;
 
@@ -436,9 +436,9 @@ unsigned int IO::getInLineNumber()
 // and other necessary information (like the IDs of the points where the wave elevation will be output)
 void IO::setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir)
 {
-	if (caseInsCompare(getKeyword(strInput), "fowt_motion"))
+	if (caseInsCompare(getKeyword(strInput), "fowt_pos"))
 	{
-		m_whichResult2Output.at(IO::OUTFLAG_FOWT_MOTION) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_POS) = true;
 	}
 
 	if (caseInsCompare(getKeyword(strInput), "wave_elev"))
@@ -480,6 +480,11 @@ void IO::setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir)
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HS_FORCE) = true;
 	}
+
+	if (caseInsCompare(getKeyword(strInput), "total_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_TOTAL_FORCE) = true;
+	}	
 }
 
 
@@ -559,7 +564,7 @@ void IO::print2outLineHeader_turnOff()
 void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 {
 	// Check whether the specified flag is indeed one that requires a vector with six components
-	if ((flag != OUTFLAG_FOWT_MOTION) && (flag != OUTFLAG_HD_FORCE) && (flag != OUTFLAG_HS_FORCE))
+	if ((flag != OUTFLAG_FOWT_POS) && (flag != OUTFLAG_HD_FORCE) && (flag != OUTFLAG_HS_FORCE) && (flag != OUTFLAG_TOTAL_FORCE))
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &force).");
 	}
@@ -584,7 +589,15 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			}
 		}
 
-		if (flag == OUTFLAG_FOWT_MOTION)
+		if (flag == OUTFLAG_TOTAL_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("TOTAL_Force_" + std::to_string(ii));
+			}
+		}		
+
+		if (flag == OUTFLAG_FOWT_POS)
 		{
 			print2outLineHeader("Surge");
 			print2outLineHeader("Sway");
@@ -707,26 +720,39 @@ std::string IO::printOutVar()
 	{
 		switch (ii)
 		{
-		case IO::OUTFLAG_FOWT_MOTION:
-			output += "FOWT rigid motion: " + std::to_string(m_whichResult2Output.at(ii)) + "\n";
+		case IO::OUTFLAG_FOWT_POS:
+			output += "FOWT rigid motion: ";
 			break;
 
 		case IO::OUTFLAG_WAVE_ELEV:
-			output += "Wave Elevation: " + std::to_string(m_whichResult2Output.at(ii)) + "\n";
+			output += "Wave Elevation: ";
 			break;
 
 		case IO::OUTFLAG_WAVE_VEL:
-			output += "Wave Velocity: " + std::to_string(m_whichResult2Output.at(ii)) + "\n";
+			output += "Wave Velocity: ";
 			break;
 
 		case IO::OUTFLAG_WAVE_ACC:
-			output += "Wave Acceleration: " + std::to_string(m_whichResult2Output.at(ii)) + "\n";
+			output += "Wave Acceleration: ";
 			break;
 
+		case IO::OUTFLAG_HD_FORCE:
+		    output += "Hydrodynamic force: ";
+			break;
+
+		case IO::OUTFLAG_HS_FORCE:
+		    output += "Hydrodynamic force: ";
+			break;	
+
+		case IO::OUTFLAG_TOTAL_FORCE:
+		    output += "Total force: ";
+			break;				
+
 		default:
-			output += "Unknown specifier in output flags.\n";
+			output += "Unknown specifier in output flags.";
 			break;
 		}
+        output += std::to_string(m_whichResult2Output.at(ii)) + "\n";
 	}
 	return output;
 }

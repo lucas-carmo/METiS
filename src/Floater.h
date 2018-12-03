@@ -23,6 +23,13 @@ private:
 public:
 	Floater();
 
+
+	/*****************************************************
+		Overloaded operators
+	*****************************************************/
+	Floater& operator=(const Floater &floater);
+
+
 	/*****************************************************
 		Setters
 	*****************************************************/
@@ -36,15 +43,14 @@ public:
 	/*****************************************************
 		Getters
 	*****************************************************/
+	vec::fixed<3> CoG() const;
+	double mass() const;
+	vec::fixed<6> inertia() const;
+
 	std::string printMass() const;
 	std::string printInertia() const;
 	std::string printCoG() const;
 	std::string printMorisonElements() const;
-
-	/*****************************************************
-		Overloaded operators
-	*****************************************************/
-	Floater& operator=(Floater &floater);
 
 
 	/*****************************************************

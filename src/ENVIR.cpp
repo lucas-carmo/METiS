@@ -6,6 +6,7 @@
 #include <algorithm>    // std::binary_search
 #include <utility> // For std::move
 
+using namespace arma;
 
 /*****************************************************
 	Constructors
@@ -286,6 +287,33 @@ void ENVIR::stepTime()
 	m_time += m_timeStep;
 }
 
+void ENVIR::stepTime(double const step)
+{
+	m_time += step;
+}
+
+
+// Tr = nump.timeRamp * max(period); %#ok<UDIM>
+// if time < Tr
+//     ramp = 0.5 * ( 1 - cos(pi*time/Tr) );
+// %     ramp = sin( pi*time/(2*Tr) )^2;
+// else
+//     ramp = 1;
+// end
+
+double ENVIR::ramp() const
+{
+	double ramp{1};
+
+	if (m_time < m_timeRamp)
+	{
+		ramp = 0.5 * ( 1 - cos(datum::pi * m_time / m_timeRamp) );
+	}
+
+	return ramp;
+}
+
+
 arma::vec::fixed<3> ENVIR::fluidVel(double x, double y, double z) const
 {
 	arma::vec::fixed<3> vel = {0,0,0};
@@ -294,6 +322,7 @@ arma::vec::fixed<3> ENVIR::fluidVel(double x, double y, double z) const
 		vel += m_wave.at(ii).fluidVel(x, y, z, m_time, m_watDepth);
 	}
 
+	vel = vel*ramp();
 	return vel;
 }
 
@@ -305,6 +334,7 @@ arma::vec::fixed<3> ENVIR::fluidAcc(double x, double y, double z) const
 		acc += m_wave.at(ii).fluidAcc(x, y, z, m_time, m_watDepth);
 	}
 
+	acc = acc*ramp();
 	return acc;
 }
 
@@ -316,5 +346,6 @@ double ENVIR::wavePressure(double x, double y, double z) const
 		p += m_wave.at(ii).pressure(x, y, z, m_time, m_watDens, m_gravity, m_watDepth);
 	}
 
+	p = p*ramp();
 	return p;
 }

@@ -29,19 +29,20 @@ public:
 
 	// Enum for the indices of the variables that can be output
 	// They are used in the functions:
-	//		setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir);
-	//		in the different print2outLine(const OutFlag &flag, 'some output variable');
-	//		printOutVar()
+	//		- setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir);
+	//		- in the different print2outLine(const OutFlag &flag, 'some output variable');
+	//		- printOutVar()
 	enum OutFlag
 	{
-		OUTFLAG_FOWT_MOTION,
+		OUTFLAG_FOWT_POS,
 //		
 		OUTFLAG_WAVE_ELEV,
 		OUTFLAG_WAVE_VEL,
 		OUTFLAG_WAVE_ACC,
 //		
 		OUTFLAG_HD_FORCE,
-		OUTFLAG_HS_FORCE,
+		OUTFLAG_HS_FORCE,		
+		OUTFLAG_TOTAL_FORCE,		
 //
 		OUTFLAG_SIZE
 	};
@@ -99,7 +100,7 @@ public:
 	static void print2outLine_turnOn(); 
 	static void print2outLine_turnOff();	
 
-		// Functions that write to the stringstreams m_outLineHeader and m_outLine
+	// Functions that write to the stringstreams m_outLineHeader and m_outLine
 	static void print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6);
 	static void print2outLine(const std::string &str);
 	static void print2outLine(const double num);

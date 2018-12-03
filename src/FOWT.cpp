@@ -5,14 +5,28 @@
 /*****************************************************
 	Constructors
 *****************************************************/
-FOWT::FOWT() : m_linStiff(fill::zeros)
-{}
+FOWT::FOWT() : m_linStiff(fill::zeros), m_mass(datum::nan), 
+			   m_pos(fill::zeros), m_vel(fill::zeros), m_acc(fill::zeros)
+{
+	m_CoG.fill(datum::nan);	
+}
 
+/*****************************************************
+	Overloaded operators
+*****************************************************/
+FOWT& FOWT::operator= (const FOWT &fowt)
+{
+	m_floater = fowt.m_floater;
+	m_linStiff = fowt.m_linStiff;
+	m_pos = fowt.m_pos;
+	m_vel = fowt.m_vel;
+	m_acc = fowt.m_acc;
+    return *this;	
+}
 
 /*****************************************************
 	Setters
 *****************************************************/
-
 void FOWT::readLinStiff(const std::string &data)
 {
     // The mooring line stiffness in surge, sway and yaw are separated by commas in the input string
@@ -41,6 +55,44 @@ void FOWT::setFloater(Floater &floater)
 /*****************************************************
 	Getters
 *****************************************************/
+vec::fixed<3> FOWT::CoG()
+{
+	// If CoG was not calculated yet, calculate it
+	if (!is_finite(m_CoG))
+	{
+		m_CoG = m_floater.CoG();
+	}
+	
+	return m_CoG;
+}
+
+double FOWT::mass()
+{
+	// If m_mass was not calculated yet, calculate it
+	if (!is_finite(m_mass))
+	{
+		m_mass = m_floater.mass(); 
+	}
+	
+	return m_mass;
+}
+
+vec::fixed<6> FOWT::pos() const
+{
+	return m_pos;
+}
+
+vec::fixed<6> FOWT::vel() const
+{
+	return m_vel;
+}
+
+vec::fixed<6> FOWT::acc() const
+{
+	return m_acc;
+}
+
+
 std::string FOWT::printLinStiff() const
 {	
 	std::string output = "(" + std::to_string( m_linStiff(0) );
@@ -69,18 +121,58 @@ std::string FOWT::printFloater() const
 /*****************************************************
 	Forces, acceleration, position, etc
 *****************************************************/
-void FOWT::updatePosVelAcc()
+// Update FOWT position, velocity, acceleration and any other necessary state
+void FOWT::update(const vec::fixed<6> &pos, const vec::fixed<6> &vel, const vec::fixed<6> &acc)
 {
+	m_pos = pos;
+	m_vel = vel;
+	m_acc = acc;
 	m_floater.updatePosVelAcc(m_pos, m_vel, m_acc);
 }
 
-vec::fixed<6> FOWT::hydrodynamicForce(const ENVIR &envir) const
+vec::fixed<6> FOWT::acceleration(const ENVIR &envir)
+{
+	IO::print2outLine(IO::OUTFLAG_FOWT_POS, m_pos);
+
+	vec::fixed<6> acc;
+	vec::fixed<6> inertiaMatrix = m_floater.inertia();
+
+	vec::fixed<6> force = totalForce(envir);
+	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE, force);
+
+	acc[0] = force[0] / mass();
+	acc[1] = force[1] / mass();
+	acc[2] = force[2] / mass();
+	acc[3] = force[3] / inertiaMatrix[0];
+	acc[4] = force[4] / inertiaMatrix[1];
+	acc[5] = force[5] / inertiaMatrix[2];
+
+	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE,acc);
+
+	return acc;
+}
+
+vec::fixed<6> FOWT::hydrodynamicForce(const ENVIR &envir)
 {
 	return m_floater.hydrodynamicForce(envir);
 }
 
-vec::fixed<6> FOWT::hydrostaticForce(const ENVIR &envir) const
+vec::fixed<6> FOWT::hydrostaticForce(const ENVIR &envir)
 {
-	vec::fixed<6> fowt_pos(fill::zeros);
 	return m_floater.hydrostaticForce(envir);
+}
+
+vec::fixed<6> FOWT::mooringForce()
+{	
+	return vec::fixed<6> {-m_linStiff[0]*m_pos[0], -m_linStiff[1]*m_pos[1], 0, 0, 0, -m_linStiff[2]*m_pos[5]};
+}
+
+vec::fixed<6> FOWT::weightForce(const ENVIR &envir)
+{
+	return vec::fixed<6> {0,0, -envir.gravity() * mass(), 0, 0, 0};
+}
+
+vec::fixed<6> FOWT::totalForce(const ENVIR &envir)
+{
+	return (hydrodynamicForce(envir) + hydrostaticForce(envir) + mooringForce() + weightForce(envir));
 }
