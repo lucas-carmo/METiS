@@ -1,5 +1,7 @@
 #include "MorisonElement.h"
 
+using namespace arma;
+
 /*****************************************************
 	Constructors
 *****************************************************/
@@ -34,11 +36,11 @@ void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterPos, const
 	m_node1Pos = floaterPos.rows(0, 2) + R1;
 	m_node2Pos = floaterPos.rows(0, 2) + R2;
 
-	m_node1Vel = floaterVel.rows(0, 2) + cross(floaterVel.rows(3, 5), R1);
-	m_node2Vel = floaterVel.rows(0, 2) + cross(floaterVel.rows(3, 5), R2);
+	m_node1Vel = floaterVel.rows(0, 2) + arma::cross(floaterVel.rows(3, 5), R1);
+	m_node2Vel = floaterVel.rows(0, 2) + arma::cross(floaterVel.rows(3, 5), R2);
 
-	m_node1Acc = floaterAcc.rows(0, 2) + cross(floaterAcc.rows(3, 5), R1) + cross(floaterVel.rows(3, 5), cross(floaterVel.rows(3, 5), R1));
-	m_node2Acc = floaterAcc.rows(0, 2) + cross(floaterAcc.rows(3, 5), R2) + cross(floaterVel.rows(3, 5), cross(floaterVel.rows(3, 5), R2));
+	m_node1Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R1) + arma::cross(floaterVel.rows(3, 5), cross(floaterVel.rows(3, 5), R1));
+	m_node2Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R2) + arma::cross(floaterVel.rows(3, 5), cross(floaterVel.rows(3, 5), R2));
 }
 
 mat::fixed<3, 3> MorisonElement::RotatMatrix(const vec::fixed<6> &FOWTpos) const

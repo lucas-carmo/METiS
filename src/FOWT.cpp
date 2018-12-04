@@ -127,7 +127,7 @@ void FOWT::update(const vec::fixed<6> &pos, const vec::fixed<6> &vel, const vec:
 	m_pos = pos;
 	m_vel = vel;
 	m_acc = acc;
-	m_floater.updatePosVelAcc(m_pos, m_vel, m_acc);
+	m_floater.updatePosVelAcc(m_pos + join_cols(CoG(), zeros(3,1)) , m_vel, m_acc);
 }
 
 vec::fixed<6> FOWT::acceleration(const ENVIR &envir)
@@ -164,7 +164,7 @@ vec::fixed<6> FOWT::hydrostaticForce(const ENVIR &envir)
 
 vec::fixed<6> FOWT::mooringForce()
 {	
-	return vec::fixed<6> {-m_linStiff[0]*m_pos[0], -m_linStiff[1]*m_pos[1], 0, 0, 0, -m_linStiff[2]*m_pos[5]};
+	return vec::fixed<6> {-m_linStiff(0)*m_pos(0), -m_linStiff(1)*m_pos(1), 0, 0, 0, -m_linStiff(2)*m_pos(5)};
 }
 
 vec::fixed<6> FOWT::weightForce(const ENVIR &envir)
