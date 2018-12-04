@@ -296,7 +296,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 	if (m_botPressFlag)
 	{
 		force.rows(0, 2) += ( datum::pi * pow(botDiam / 2, 2) * envir.wavePressure(n1[0], n1[1], n1[2])
-						  - datum::pi * (pow(botDiam / 2, 2) - pow(topDiam / 2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2]) ) * zvec;
+						    - datum::pi * (pow(botDiam / 2, 2) - pow(topDiam / 2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2]) ) * zvec;
 	}
 
 	// The moment was calculated with relation to n1, which may be different from node1.

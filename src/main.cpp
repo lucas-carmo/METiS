@@ -19,7 +19,8 @@ int main(int argc, char *argv[])
 
 	std::cout << IO::METiS_Header() << '\n';
    
-	try{
+	// All the errors in the code are dealt by exceptions thrown in the different components
+	try{ 
 		if (argc != 2)
 		{
 			throw std::runtime_error("Please provide one input file");

@@ -43,6 +43,9 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
     vec::fixed<6> vel_total(arma::fill::zeros);
     vec::fixed<6> acc_total(arma::fill::zeros);
 
+	// make sure that the members of FOWT are updated
+	fowt.update(pos0, vel0, acc0);
+
     while ( envir.time() <= envir.timeTotal() )    
     {          
         IO::print2outLine_turnOn();	
