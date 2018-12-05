@@ -32,8 +32,8 @@ public:
 				   bool botPressFlag, double axialCD, double axialCa);
 	
 	// Functions related to position, velocity and acceleration
-	void updateNodesPosVelAcc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc);
-	mat::fixed<3, 3> RotatMatrix(const vec::fixed<6> &FOWTpos) const;	
+	void updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc);
+	mat::fixed<3, 3> RotatMatrix(const vec::fixed<3> &rotation) const;	
 	vec::fixed<3> node1Pos() const;
 	vec::fixed<3> node2Pos() const;
 	vec::fixed<3> node1Vel() const;
