@@ -308,9 +308,13 @@ std::string Floater::printMorisonElements() const
 *****************************************************/
 void Floater::updatePosVelAcc(const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc)
 {
+	m_pos = FOWTpos;
+	m_vel = FOWTvel;
+	m_acc = FOWTacc;
+
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		m_MorisonElements.at(ii)->updateNodesPosVelAcc(FOWTpos, FOWTvel, FOWTacc);
+		m_MorisonElements.at(ii)->updateNodesPosVelAcc(FOWTpos + join_cols(CoG(), zeros(3, 1)), FOWTvel, FOWTacc);
 	}
 }
 
@@ -325,7 +329,7 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir) const
 		
 		// The moments acting on the cylinders were calculated with respect to the first node
 		// We need to change the fulcrum to the CoG
-		df.rows(3,5) = df.rows(3,5) + cross( m_MorisonElements.at(ii)->node1Pos() - CoG(), df.rows(0,2) );		
+		df.rows(3,5) = df.rows(3,5) + cross( m_MorisonElements.at(ii)->node1Pos() - (m_pos.rows(0,2) + CoG()), df.rows(0,2) );		
 
 		force += df;		
 	}
@@ -346,7 +350,7 @@ vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir) const
 
 		// The moments acting on the cylinders were calculated with respect to the first node
 		// We need to change the fulcrum to the CoG
-		df.rows(3,5) = df.rows(3,5) + cross( m_MorisonElements.at(ii)->node1Pos() - CoG(), df.rows(0,2) );
+		df.rows(3,5) = df.rows(3,5) + cross( m_MorisonElements.at(ii)->node1Pos() - (m_pos.rows(0, 2) + CoG()), df.rows(0,2) );
 
 		force += df;
 	}

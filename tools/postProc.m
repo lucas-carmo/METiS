@@ -19,10 +19,10 @@ else
     flSep = '/';
 end
 
-flNm = ['..' flSep 'test' flSep 'output_12' flSep 'output.txt'];
+flNm = ['..' flSep 'test' flSep 'output' flSep 'output.txt'];
 
-flNm_old = '/home/lucas/Google Drive/Doutorado/Software Morison/MATLAB version/OC4_waveOnly_H1000/45deg/firstPlatform_45deg_T10p00_out.mat';
-% flNm_old = 'C:\Users\lucas.henrique\Google Drive\Doutorado\Software Morison\MATLAB version\OC4_waveOnly_H1000\45deg\firstPlatform_45deg_T10p00_out.mat';
+% flNm_old = '/home/lucas/Google Drive/Doutorado/Software Morison/MATLAB version/OC4_waveOnly_H1000/45deg/firstPlatform_45deg_T20p00_out.mat';
+flNm_old = 'C:\Users\lucas.henrique\Google Drive\Doutorado\Software Morison\MATLAB version\OC4_waveOnly_H1000\45deg\firstPlatform_45deg_T10p00_out.mat';
 
 data = importdata(flNm);
 data = data.data;
@@ -31,6 +31,7 @@ data_old = load(flNm_old);
 time_old = 0:data_old.nump.timeStep:data_old.nump.timeTotal;
 
 figure
+suptitle('T = 10s')
 set(gcf,'color','w')
 sizeOfFont = 12;
 
@@ -75,3 +76,13 @@ hold on
 plot(time_old, data_old.strucp_t.pos(:,6))
 title('yaw')
 set(gca, 'fontsize', sizeOfFont)
+% 
+% 
+% figure
+% plot(data(:,1), data(:,10)-mean(data(:,10)))
+% hold on
+% plot(data(:,1), data(:,16))
+% hold on
+% plot(data(:,1), data(:,22))
+% title('forces')
+% legend('HS', 'HD', 'TOTAL')

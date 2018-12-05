@@ -35,7 +35,7 @@ Wave
 % WRWAVE \t Height \t Angular frequency \t Direction (in degrees)
 % FRWAVE \t Height \t Frequency         \t Direction (in degrees)
 % TRWAVE \t Height \t Period            \t Direction (in degrees)
-TRWAVE	1	10	45
+TRWAVE	2	10	45
 END
 
 

@@ -71,6 +71,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 			IO::printOutLineHeader2outFile();
         }
 
+
         // RK4: second estimation
         // Update fowt and environment 
         fowt.update( pos0 + pos_k1/2 , vel0 + vel_k1/2 , acc_k1); 
@@ -80,6 +81,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
         vel_k2 = acc_k2 * envir.timeStep();
         pos_k2 = (vel0 + vel_k1/2) * envir.timeStep();     
 
+
         // RK4: third estimation
         // Update only fowt. Environment is already at t+dt/2
         fowt.update( pos0 + pos_k2/2 , vel0 + vel_k2/2 , acc_k2); 
@@ -88,6 +90,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
         vel_k3 = acc_k3 * envir.timeStep();
         pos_k3 = (vel0 + vel_k2/2) * envir.timeStep(); 
         
+
         // RK4: fourth estimation
         // Update fowt and environment, which is now in t+dt (hence, just need to add dt/2)
         fowt.update( pos0 + pos_k3 , vel0 + vel_k3 , acc_k3);
@@ -96,6 +99,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
         acc_k4 = fowt.acceleration(envir);
         vel_k4 = acc_k4 * envir.timeStep();
         pos_k4 = (vel0 + vel_k3) * envir.timeStep(); 
+
 
         // Calculate new state of the FOWT
         acc_total = (acc_k1 + 2*acc_k2 + 2*acc_k3 + acc_k4) / 6;

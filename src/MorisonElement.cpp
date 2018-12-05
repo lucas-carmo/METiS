@@ -27,48 +27,55 @@ MorisonElement::MorisonElement(vec cog2node1, vec cog2node2, int numIntPoints,
 /*****************************************************
 	Functions for node position / velocity / acceleration
 *****************************************************/
-void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterPos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc)
+void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc)
 {
-	mat::fixed<3, 3> RotatMatrix(MorisonElement::RotatMatrix(floaterPos)); // Calculate it here so we just need to calculate the matrix once
+	mat::fixed<3, 3> RotatMatrix(MorisonElement::RotatMatrix(floaterCoGpos.rows(3,5))); // Calculate it here so we just need to calculate the matrix once
 	vec::fixed<3> R1 = RotatMatrix * m_cog2node1; // R1 and R2 are the vectors that give the node1 and node2 positions with respect to the CoG of the structure
 	vec::fixed<3> R2 = RotatMatrix * m_cog2node2;
 
-	m_node1Pos = floaterPos.rows(0, 2) + R1;
-	m_node2Pos = floaterPos.rows(0, 2) + R2;
+	m_node1Pos = floaterCoGpos.rows(0, 2) + R1;
+	m_node2Pos = floaterCoGpos.rows(0, 2) + R2;
 
 	m_node1Vel = floaterVel.rows(0, 2) + arma::cross(floaterVel.rows(3, 5), R1);
 	m_node2Vel = floaterVel.rows(0, 2) + arma::cross(floaterVel.rows(3, 5), R2);
 
-	m_node1Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R1) + arma::cross(floaterVel.rows(3, 5), cross(floaterVel.rows(3, 5), R1));
-	m_node2Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R2) + arma::cross(floaterVel.rows(3, 5), cross(floaterVel.rows(3, 5), R2));
+	vec::fixed<3> testeVel1 = arma::cross(floaterVel.rows(3, 5), R1);
+	vec::fixed<3> testeVel2 = arma::cross(floaterVel.rows(3, 5), R2);
+
+	m_node1Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R1) + arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R1));
+	m_node2Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R2) + arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R2));
+	vec::fixed<3> testeAcc1 = arma::cross(floaterAcc.rows(3, 5), R1);
+	vec::fixed<3> testeAcc2 = arma::cross(floaterAcc.rows(3, 5), R2);
+	vec::fixed<3> testeAcc3 = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R1));
+	vec::fixed<3> testeAcc4 = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R2));
 }
 
-mat::fixed<3, 3> MorisonElement::RotatMatrix(const vec::fixed<6> &FOWTpos) const
+mat::fixed<3, 3> MorisonElement::RotatMatrix(const vec::fixed<3> &rotation) const
 {
 	/* Rotation matrix is RotatMat = RotatX * RotatY * RotatZ, i.e. a rotation around the Z axis,
 	  followed by a rotation around the new y axis, and a rotation around the new x axis. Each rotation matrix is given by:
 	
 	  RotatX = { { 1 ,        0        ,         0        },
-			     { 0 , cos(FOWTpos(3)) , -sin(FOWTpos(3)) },
-			     { 0 , sin(FOWTpos(3)) ,  cos(FOWTpos(3)) }
+			     { 0 , cos(rotation(3)) , -sin(rotation(3)) },
+			     { 0 , sin(rotation(3)) ,  cos(rotation(3)) }
 			   };
 
-	  RotatY = { { cos(FOWTpos(4))  , 0 ,  sin(FOWTpos(4)) },
+	  RotatY = { { cos(rotation(4))  , 0 ,  sin(rotation(4)) },
 		         {        0         , 1 ,         0        },
-			     { -sin(FOWTpos(4)) , 0 , cos(FOWTpos(4)) }
+			     { -sin(rotation(4)) , 0 , cos(rotation(4)) }
 			   };
 
-	  RotatZ = { { cos(FOWTpos(5)) , -sin(FOWTpos(5)) , 0 },			     
-				 { sin(FOWTpos(5)) ,  cos(FOWTpos(5)) , 0 },
+	  RotatZ = { { cos(rotation(5)) , -sin(rotation(5)) , 0 },			     
+				 { sin(rotation(5)) ,  cos(rotation(5)) , 0 },
 			     {        0        ,         0        , 1 },
 			   };
 
 	  And the resulting matrix is the one below
 	*/
 	mat::fixed<3, 3> RotatMatrix = { 
-									{                          cos(FOWTpos(4)) * cos(FOWTpos(5))                               ,                          -cos(FOWTpos(4)) * sin(FOWTpos(5))                               ,            sin(FOWTpos(4))          },
-									{ cos(FOWTpos(3)) * sin(FOWTpos(5)) + sin(FOWTpos(3)) * sin(FOWTpos(4)) * cos(FOWTpos(5))  ,  cos(FOWTpos(3)) * cos(FOWTpos(4)) - sin(FOWTpos(3)) * sin(FOWTpos(4)) * sin(FOWTpos(5))  ,  -sin(FOWTpos(3)) * cos(FOWTpos(4)) },
-									{ sin(FOWTpos(3)) * sin(FOWTpos(5)) - cos(FOWTpos(3)) * sin(FOWTpos(4)) * cos(FOWTpos(5))  ,  sin(FOWTpos(3)) * cos(FOWTpos(5)) + cos(FOWTpos(3)) * sin(FOWTpos(4)) * sin(FOWTpos(5))  ,   cos(FOWTpos(3)) * cos(FOWTpos(4)) }
+									{                          cos(rotation(1)) * cos(rotation(2))                               ,                          -cos(rotation(1)) * sin(rotation(2))                               ,            sin(rotation(1))          },
+									{ cos(rotation(0)) * sin(rotation(2)) + sin(rotation(0)) * sin(rotation(1)) * cos(rotation(2))  ,  cos(rotation(0)) * cos(rotation(1)) - sin(rotation(1)) * sin(rotation(1)) * sin(rotation(2))  ,  -sin(rotation(0)) * cos(rotation(1)) },
+									{ sin(rotation(0)) * sin(rotation(2)) - cos(rotation(0)) * sin(rotation(1)) * cos(rotation(2))  ,  sin(rotation(0)) * cos(rotation(2)) + cos(rotation(1)) * sin(rotation(1)) * sin(rotation(2))  ,   cos(rotation(0)) * cos(rotation(1)) }
 								   };
 
 	return RotatMatrix;

@@ -220,7 +220,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 	vec::fixed<3> velFluid(fill::zeros); // Fluid velocity at the integration point
 	vec::fixed<3> accFluid(fill::zeros); // Fluid acceleration at the integration point
 
-    for (int ii = 1; ii <= m_numIntPoints; ++ii) 
+    for (int ii = 1; ii <= ncyl; ++ii) 
 	{
         n_ii = (n2 - n1) * (ii-1)/(ncyl-1) + n1; // Coordinates of the integration point
         if (n_ii[2] > 0)        
@@ -242,9 +242,9 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 		/******
 			Body velocity/acceleration
 		******/
-		// Absolute (R_ii) and relative (lambda) distance between the integration point and the first node                               
+		// Absolute (R_ii) and relative (lambda) distance between the integration point and the bottom node
         double R_ii = norm(n_ii - n1, 2);
-        double lambda = R_ii/norm(n2-n1, 2);
+        double lambda = R_ii/norm(n2 - n1, 2);
 
         // Velocity and acceleration of the integration point
         vel_ii = v1 + lambda * ( v2 - v1 );
@@ -258,7 +258,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 		force_ii =  0.5 * rho * Cd * D * norm(velFluid - vel_ii, 2) * (velFluid - vel_ii)
 				   + (datum::pi * pow(D,2)/4) * rho * Cm * accFluid
 			       - (datum::pi * pow(D,2)/4) * rho * (Cm-1) * acc_ii;
-	
+
 		// Calculation of the moment (with respect to node 1) at the integration node using the force calculated above
 		moment_ii = cross(R_ii * zvec, force_ii);
 
@@ -299,8 +299,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 
 	if (m_botPressFlag)
 	{
-		force.rows(0, 2) += datum::pi * ( pow(botDiam / 2, 2) * envir.wavePressure(n1[0], n1[1], n1[2])
-						      - (pow(botDiam / 2, 2) - pow(topDiam / 2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2]) ) * zvec;
+		force.rows(0, 2) = force.rows(0, 2) + datum::pi * ( pow(botDiam / 2, 2) * envir.wavePressure(n1[0], n1[1], n1[2])
+														    - (pow(botDiam / 2, 2) - pow(topDiam / 2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2]) ) * zvec;
 	}
 
 	// The moment was calculated with relation to n1, which may be different from node1.

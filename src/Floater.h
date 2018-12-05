@@ -19,6 +19,11 @@ private:
 	vec::fixed<6> m_inertia; // Moments and products of inertia. It is a 6x1 array. Actually, it is a symmetric 3x3 matrix, hence 3 elements are simply repeated.
 	std::vector<std::unique_ptr<MorisonElement>> m_MorisonElements;	
 
+	// Floater condition (position, velocity, acceleration, etc)
+	vec::fixed<6> m_pos;
+	vec::fixed<6> m_vel;
+	vec::fixed<6> m_acc;
+
 
 public:
 	Floater();

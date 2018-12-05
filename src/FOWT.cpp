@@ -127,7 +127,7 @@ void FOWT::update(const vec::fixed<6> &pos, const vec::fixed<6> &vel, const vec:
 	m_pos = pos;
 	m_vel = vel;
 	m_acc = acc;
-	m_floater.updatePosVelAcc(m_pos + join_cols(CoG(), zeros(3,1)) , m_vel, m_acc);
+	m_floater.updatePosVelAcc(m_pos, m_vel, m_acc);
 }
 
 vec::fixed<6> FOWT::acceleration(const ENVIR &envir)
