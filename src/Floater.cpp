@@ -325,7 +325,7 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir) const
 		
 		// The moments acting on the cylinders were calculated with respect to the first node
 		// We need to change the fulcrum to the CoG
-		df.rows(3,5) += cross( m_MorisonElements.at(ii)->node1Pos() - CoG(), df.rows(0,2) );		
+		df.rows(3,5) = df.rows(3,5) + cross( m_MorisonElements.at(ii)->node1Pos() - CoG(), df.rows(0,2) );		
 
 		force += df;		
 	}
@@ -346,7 +346,7 @@ vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir) const
 
 		// The moments acting on the cylinders were calculated with respect to the first node
 		// We need to change the fulcrum to the CoG
-		df.rows(3,5) += cross( m_MorisonElements.at(ii)->node1Pos() - CoG(), df.rows(0,2) );
+		df.rows(3,5) = df.rows(3,5) + cross( m_MorisonElements.at(ii)->node1Pos() - CoG(), df.rows(0,2) );
 
 		force += df;
 	}

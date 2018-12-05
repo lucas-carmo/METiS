@@ -3,7 +3,7 @@
 % coisas mais basicas
 
 clear all
-close all
+% close all
 clc
 
 % I do not know why, but MATLAB's function 'filesep' was not working
@@ -19,9 +19,10 @@ else
     flSep = '/';
 end
 
-flNm = ['..' flSep 'test' flSep 'output_9' flSep 'output.txt'];
+flNm = ['..' flSep 'test' flSep 'output_12' flSep 'output.txt'];
 
-flNm_old = 'C:\Users\lucas.henrique\Google Drive\Doutorado\Software Morison\MATLAB version\OC4_waveOnly_H1000\45deg\firstPlatform_45deg_T10p00_out.mat';
+flNm_old = '/home/lucas/Google Drive/Doutorado/Software Morison/MATLAB version/OC4_waveOnly_H1000/45deg/firstPlatform_45deg_T10p00_out.mat';
+% flNm_old = 'C:\Users\lucas.henrique\Google Drive\Doutorado\Software Morison\MATLAB version\OC4_waveOnly_H1000\45deg\firstPlatform_45deg_T10p00_out.mat';
 
 data = importdata(flNm);
 data = data.data;
@@ -31,7 +32,7 @@ time_old = 0:data_old.nump.timeStep:data_old.nump.timeTotal;
 
 figure
 set(gcf,'color','w')
-sizeOfFont = 28;
+sizeOfFont = 12;
 
 subplot(2,3,1)
 plot(data(:,1),data(:,2))
@@ -39,7 +40,6 @@ hold on
 plot(time_old, data_old.strucp_t.pos(:,1))
 title('surge')
 set(gca, 'fontsize', sizeOfFont)
-legend('C++', 'MATLAB')
 
 subplot(2,3,2)
 plot(data(:,1),data(:,3))

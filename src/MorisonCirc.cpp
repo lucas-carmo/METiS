@@ -273,7 +273,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 		}
 		else
 		{
-			force += (2 * dL / 3) * join_cols(force_ii, moment_ii);
+			force += (2*dL/3) * join_cols(force_ii, moment_ii);
 		}
 	}
 
@@ -289,14 +289,18 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 	velFluid = dot(velFluid, zvec) * zvec;
 	accFluid = dot(accFluid, zvec) * zvec;
 
+	// Component of the velocity and acceleration of the bottom that is perpendicular to the axis of the cylinder
+	vec::fixed<3> v1_axial = dot(v1, zvec) * zvec;
+	vec::fixed<3> a1_axial = dot(a1, zvec) * zvec;
+
 	// Calculate the force acting on the bottom of the cylinder
-	force.rows(0,2) += 0.5 * rho * Cd_V * datum::pi * pow(D/2, 2) * arma::norm(velFluid - v1, 2) * (velFluid - v1)
-					 + rho * Ca_V * (4/3) * datum::pi * pow(D/2, 2) * (accFluid - a1);
+	force.rows(0,2) += 0.5 * rho * Cd_V * datum::pi * pow(D/2, 2) * arma::norm(velFluid - v1_axial, 2) * (velFluid - v1_axial)
+					 + rho * Ca_V * (4/3) * datum::pi * pow(D/2, 3) * (accFluid - a1_axial);
 
 	if (m_botPressFlag)
 	{
-		force.rows(0, 2) += ( datum::pi * pow(botDiam / 2, 2) * envir.wavePressure(n1[0], n1[1], n1[2])
-						    - datum::pi * (pow(botDiam / 2, 2) - pow(topDiam / 2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2]) ) * zvec;
+		force.rows(0, 2) += datum::pi * ( pow(botDiam / 2, 2) * envir.wavePressure(n1[0], n1[1], n1[2])
+						      - (pow(botDiam / 2, 2) - pow(topDiam / 2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2]) ) * zvec;
 	}
 
 	// The moment was calculated with relation to n1, which may be different from node1.
