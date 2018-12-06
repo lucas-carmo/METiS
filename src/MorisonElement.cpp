@@ -39,15 +39,8 @@ void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, co
 	m_node1Vel = floaterVel.rows(0, 2) + arma::cross(floaterVel.rows(3, 5), R1);
 	m_node2Vel = floaterVel.rows(0, 2) + arma::cross(floaterVel.rows(3, 5), R2);
 
-	vec::fixed<3> testeVel1 = arma::cross(floaterVel.rows(3, 5), R1);
-	vec::fixed<3> testeVel2 = arma::cross(floaterVel.rows(3, 5), R2);
-
 	m_node1Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R1) + arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R1));
 	m_node2Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R2) + arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R2));
-	vec::fixed<3> testeAcc1 = arma::cross(floaterAcc.rows(3, 5), R1);
-	vec::fixed<3> testeAcc2 = arma::cross(floaterAcc.rows(3, 5), R2);
-	vec::fixed<3> testeAcc3 = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R1));
-	vec::fixed<3> testeAcc4 = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R2));
 }
 
 mat::fixed<3, 3> MorisonElement::RotatMatrix(const vec::fixed<3> &rotation) const
@@ -79,7 +72,27 @@ mat::fixed<3, 3> MorisonElement::RotatMatrix(const vec::fixed<3> &rotation) cons
 								   };
 
 	return RotatMatrix;
+
+	/* Alternative calculation for tests*/
+//	mat::fixed<3, 3> RotatX = { {1,0,0},
+//								{0 , cos(rotation(0)), -sin(rotation(0))},
+//								{0 , sin(rotation(0)), cos(rotation(0))}
+//								};
+//
+//	mat::fixed<3, 3> RotatY = { {cos(rotation(1)),0,sin(rotation(1))},
+//								{0,1,0},
+//								{-sin(rotation(1)),0,cos(rotation(1))},
+//								};
+//
+//	mat::fixed<3, 3> RotatZ = { {cos(rotation(2)), -sin(rotation(2)),0},
+//								{sin(rotation(2)), cos(rotation(2)),0},
+//								{0,0,1}
+//								};
+//
+//	return (RotatZ * RotatY * RotatX);
+//
 }
+
 
 vec::fixed<3> MorisonElement::node1Pos() const
 {

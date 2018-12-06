@@ -18,7 +18,7 @@
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
 %%-----------------------------------------------------------------------------%%
 TimeStep    0.1	                    % Time step, in seconds
-TimeTotal  	280						% Total simulation time, in secods
+TimeTotal  	300						% Total simulation time, in secods
 TimeRamp	60                      % Numerical ramp, in seconds
 
 

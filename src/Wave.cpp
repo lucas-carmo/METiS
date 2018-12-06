@@ -362,7 +362,7 @@ double Wave::pressure(double x, double y, double z, double t, double rho, double
 			khz = cosh(k * (z + h)) / cosh(k*h);
 		}
 
-		p = rho * g * A * khz * cos(k*cos(beta)*x + k * sin(beta)*y - w * t);
+		p = rho * g * A * khz * cos( k*cos(beta)*x + k*sin(beta)*y - w*t );
 	}
 
 	return p;
