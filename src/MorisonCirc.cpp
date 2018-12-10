@@ -291,7 +291,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 
 	// Calculate the force acting on the bottom of the cylinder
 	force.rows(0,2) += 0.5 * rho * Cd_V * datum::pi * pow(D/2, 2) * norm(velFluid - v1_axial, 2) * (velFluid - v1_axial)
-					 + rho * Ca_V * (4/3) * datum::pi * pow(D/2, 3) * (accFluid - a1_axial);
+					 + rho * Ca_V * (4/3.) * datum::pi * pow(D/2, 3) * (accFluid - a1_axial);
 
 	if (m_botPressFlag)
 	{
