@@ -76,7 +76,7 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir) const
 
 	// Calculation of the inclination of the cylinder (with respect to the
 	// vertical), which is used in the calculation of the center of buoyoancy
-	double alpha = acos(dot(zvec, arma::vec::fixed<3> {0,0,1})); // zvec and {0, 0, 1} are both unit vectors
+	double alpha = acos(dot(zvec, arma::vec::fixed<3> {0, 0, 1})); // zvec and {0, 0, 1} are both unit vectors
 	double tanAlpha{ 0 };
 
 	// Check if the angle is 90 degrees
@@ -89,28 +89,17 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir) const
 		tanAlpha = arma::datum::inf;
 	}
 
-
-	// If only one of the nodes is above the water line, its coordinates are changed
-	// by those of the intersection between the cylinder axis and the static
-	// water line(defined by z_global = 0)
-	if (n2[2] >= 0)
-	{
-		n2 = n1 + (std::abs(0 - n1[2]) / (n2[2] - n1[2])) * norm(n2 - n1) * zvec;
-	}
-
 	// Length of the cylinder
-	double L = norm(n2 - n1);
-
-	// Volume of fluid displaced by the cylinder
-	double Vol = arma::datum::pi * pow(D/2, 2) * L;
+	double L{ 0 };
 
 	double xb{ 0 };
 	double yb{ 0 };
 	double zb{ 0 };
 
 	// If the cylinder is completely submerged, then the center of volume is at the center of the cylinder
-	if ( n2[2] <= 0)
+	if (n2[2] < 0)
 	{
+		L = norm(n2 - n1);
 		xb = 0;
 		yb = 0;
 		zb = L / 2;
@@ -118,9 +107,15 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir) const
 
 	else if (is_finite(tanAlpha)) // otherwise, if the cylinder is not horizontal, the formulas for an inclined cylinder are used
 	{
+		// If only one of the nodes is above the water line, the coordinates of the other node
+		// are changed by those of the intersection between the cylinder axis and the static
+		// water line(defined by z_global = 0)
+		n2 = n1 + (std::abs(0 - n1[2]) / (n2[2] - n1[2])) * norm(n2 - n1) * zvec;
+		L = norm(n2 - n1);
+
 		xb = tanAlpha * pow(D/2, 2) / (4 * L);
 		yb = 0;
-		zb = ( pow(tanAlpha*D/2, 2) + 4 * pow(L, 2) ) / (8 * L);
+		zb = (pow(tanAlpha*D/2, 2) + 4 * pow(L, 2)) / (8 * L);
 	}
 
 	else // if the cylinder is horizontal and not completely submerged, forces and moments are equal to zero
@@ -128,18 +123,20 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir) const
 		return force;
 	}
 
-
 	// Vector Xb - n1(i.e., vector between the center of buoyancy and the
 	// bottom node of the cylinder) written in the global coordinate frame
-	vec::fixed<3> Xb_global =  xb * xvec + yb * yvec + zb * zvec;
+	vec::fixed<3> Xb_global = xb * xvec + yb * yvec + zb * zvec;
+
+	// Volume of fluid displaced by the cylinder
+	double Vol = arma::datum::pi * pow(D / 2, 2) * L;
 
 	// Calculation of hydrostatic force and moment
 	force[2] = rho * g * Vol; // Fx = Fy = 0 and Fz = Buoyancy force
-	force.rows(3, 5) = cross( Xb_global, force.rows(0,2) );
+	force.rows(3, 5) = cross(Xb_global, force.rows(0, 2));
 
 	// The moment was calculated with relation to n1, which may be different from node1.
 	// We need to change the fulcrum to node1
-	force.rows(3,5) = force.rows(3,5) + cross( n1 - node1Pos(), force.rows(0,2) );
+	force.rows(3, 5) = force.rows(3, 5) + cross(n1 - node1Pos(), force.rows(0, 2));
 
 	return force;
 }
