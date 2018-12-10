@@ -14,7 +14,7 @@ MorisonElement::MorisonElement(vec cog2node1, vec cog2node2, int numIntPoints,
 {
 	// Since Simpson's rule is employed for the integration of the forces along the 
 	// Morison's element, we need to make sure that the number of integration points is odd
-	if (numIntPoints % 2)
+	if (numIntPoints % 2 == 0)
 	{
 		m_numIntPoints = numIntPoints + 1;
 	}
