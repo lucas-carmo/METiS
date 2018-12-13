@@ -2,6 +2,7 @@
 
 #include <fstream> // Include file input/output classes
 #include <iostream>
+#include <sstream>
 #include <stdexcept> // For std::exception
 #include <iomanip> // For input/output manipulators
 #include <sys/types.h> // Using this and stat.h to check if directories and files exist
@@ -10,7 +11,7 @@
 
 
 /*****************************************************
-	Defining and initializing static member variables
+Defining and initializing static member variables
 *****************************************************/
 std::string IO::m_inFilePath = "";
 std::ifstream IO::m_inFl;
@@ -24,14 +25,19 @@ std::ofstream IO::m_sumFl;
 
 std::string IO::m_outFilePath = "";
 std::ofstream IO::m_outFl;
-const unsigned int IO::m_outColumnWidth  = 12;
+const unsigned int IO::m_outColumnWidth = 16;
 const unsigned int IO::m_outNumPrecision = 4;
 std::array<bool, IO::OUTFLAG_SIZE> IO::m_whichResult2Output;
+
+std::stringstream IO::m_outLineHeader; 
+std::stringstream IO::m_outLine;
+bool IO::m_shouldWriteOutLineHeader = true;
+bool IO::m_shouldWriteOutLine = true;
 
 
 
 /*****************************************************
-    Class functions related to Input
+Class functions related to Input
 *****************************************************/
 
 //	This is the main input function.
@@ -39,12 +45,12 @@ std::array<bool, IO::OUTFLAG_SIZE> IO::m_whichResult2Output;
 void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 {
 	// Classes that are members of FOWT and ENVIR
-	Floater floater;		
+	Floater floater;
 
 	// Read file line by line
 	while (m_inFl)
 	{
-		std::string strInput;		
+		std::string strInput;
 		IO::readLineInputFile(strInput);
 
 		/**************************
@@ -88,46 +94,23 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			continue;
 		}
 
-
-
-		// Read data to fowt
-		else if (caseInsCompare(getKeyword(strInput), "LinStiff"))
-		{
-			fowt.readLinStiff(getData(strInput));
-			continue;
-		}
-
-		else if (caseInsCompare(getKeyword(strInput), "FloaterMass"))
-		{
-			floater.readMass(getData(strInput));
-			continue;
-		}
-
-		else if (caseInsCompare(getKeyword(strInput), "FloaterCoG"))
-		{
-			floater.readCoG(getData(strInput));
-			continue;
-		}
-
-
 		else if (caseInsCompare(getKeyword(strInput), "Wave")) // A list of Waves is supposed to follow the "Wave keyword"
-		{			
+		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
 			while (!caseInsCompare(getKeyword(strInput), "END")) // The END keyword indicates the end of the list of waves
-			{							
+			{
 				if (!m_inFl) // Signal if the end of file is reached before the end keyword
 				{
 					throw std::runtime_error("End of file reached before END keyword in WAVE specification.");
 					return;
 				}
 
-				envir.addWave( Wave(strInput) ); // Add this wave to the environment
-				
-				IO::readLineInputFile(strInput);
-			}			
-		}
+				envir.addWave(Wave(strInput)); // Add this wave to the environment
 
+				IO::readLineInputFile(strInput);
+			}
+		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Nodes")) // A list of Nodes is supposed to follow the "Wave keyword"
 		{
@@ -148,6 +131,32 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		}
 
 
+
+		// Read data to fowt
+		else if (caseInsCompare(getKeyword(strInput), "LinStiff"))
+		{
+			fowt.readLinStiff(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "FloaterMass"))
+		{
+			floater.readMass(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "FloaterInertia"))
+		{
+			floater.readInertia(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "FloaterCoG"))
+		{
+			floater.readCoG(getData(strInput));
+			continue;
+		}
+
 		else if (caseInsCompare(getKeyword(strInput), "Morison_circ")) // A list of circular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
@@ -155,7 +164,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			while (!caseInsCompare(getKeyword(strInput), "END"))
 			{
 				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{					
+				{
 					throw std::runtime_error("End of file reached before END keyword in MORISON_CIRC specification.");
 					return;
 				}
@@ -197,7 +206,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		{
 			// implementar no futuro
 			continue;
-		}		
+		}
 
 
 		else if (caseInsCompare(getKeyword(strInput), "Blades_aero"))
@@ -211,14 +220,14 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					throw std::runtime_error("End of file reached before END keyword in BLADES_AERO specification.");
 					return;
 				}
-			
+
 				// Implementar no futuro
 
 				IO::readLineInputFile(strInput);
 			}
 		}
 
-		
+
 		else if (caseInsCompare(getKeyword(strInput), "Blades_elasto"))
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
@@ -230,14 +239,14 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					throw std::runtime_error("End of file reached before END keyword in BLADES_ELASTO specification.");
 					return;
 				}
-			
+
 				// Implementar no futuro
 
 				IO::readLineInputFile(strInput);
 			}
 		}
 
-		
+
 		else if (caseInsCompare(getKeyword(strInput), "Airfoil_data"))
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
@@ -249,14 +258,14 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					throw std::runtime_error("End of file reached before END keyword in AIRFOIL_DATA specification.");
 					return;
 				}
-			
+
 				// Implementar no futuro
 
 				IO::readLineInputFile(strInput);
 			}
 		}
 
-		
+
 		else if (caseInsCompare(getKeyword(strInput), "Tower_Aero"))
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
@@ -268,14 +277,14 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					throw std::runtime_error("End of file reached before END keyword in TOWER_AERO specification.");
 					return;
 				}
-			
+
 				// Implementar no futuro
 
 				IO::readLineInputFile(strInput);
 			}
-		}		
+		}
 
-		
+
 		else if (caseInsCompare(getKeyword(strInput), "Tower_Elasto"))
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
@@ -287,12 +296,12 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					throw std::runtime_error("End of file reached before END keyword in TOWER_ELASTO specification.");
 					return;
 				}
-			
+
 				// Implementar no futuro
 
 				IO::readLineInputFile(strInput);
 			}
-		}				
+		}
 
 
 		else if (caseInsCompare(getKeyword(strInput), "Output")) // List of parameters that will be output
@@ -315,20 +324,20 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		else if (!caseInsCompare(getKeyword(strInput), "END_OF_INPUT_FILE"))
 		{
-			writeWarningMessage("Unknown keyword '" + getKeyword(strInput) + "' in line " + std::to_string(IO::getInLineNumber()) +".");
+			writeWarningMessage("Unknown keyword '" + getKeyword(strInput) + "' in line " + std::to_string(IO::getInLineNumber()) + ".");
 		}
 	}
-
-
 
 	fowt.setFloater(floater);
 }
 
 
+
+
 void IO::setFiles(const std::string &inFlPath)
 {
 	// Check whether we are not trying to reset the input file
-	if ( !m_inFilePath.empty() )
+	if (!m_inFilePath.empty())
 	{
 		throw std::runtime_error("You can not reset the input file.");
 	}
@@ -339,7 +348,7 @@ void IO::setFiles(const std::string &inFlPath)
 	if (!m_inFl)
 	{
 		throw std::runtime_error("Unable to open file " + m_inFilePath + " for reading.");
-	}	
+	}
 
 
 	// Get path of the folder where the input file is located, as that is where the output
@@ -352,20 +361,20 @@ void IO::setFiles(const std::string &inFlPath)
 	// Create output folder with name "output" in the same folder as the input file ("folderPath").
 	// If a folder (or file) named "output" already exists in folderPath, create a folder named output_1. If the latter exists as well, create output_2 instead.
 	// Keep this process until output_n does not exist and is then created.
-	struct stat info;		
+	struct stat info;
 	std::string outputFolder_original = outputFolder; // Original name of folderPath
-	int ii = 1;	
-	while ( stat(outputFolder.c_str(), &info) == 0 )
+	int ii = 1;
+	while (stat(outputFolder.c_str(), &info) == 0)
 	{
-		outputFolder = outputFolder_original + "_" + std::to_string(ii);			
+		outputFolder = outputFolder_original + "_" + std::to_string(ii);
 		++ii;
 	}
-	system( ("mkdir " + outputFolder).c_str() );
+	system(("mkdir " + outputFolder).c_str());
 	std::cout << "Output folder: '" << outputFolder << "'\n";
 
 	// Set log file
-	m_logFilePath = outputFolder + filesep  + "log.txt";
-	m_logFl.open(m_logFilePath); 
+	m_logFilePath = outputFolder + filesep + "log.txt";
+	m_logFl.open(m_logFilePath);
 	if (!m_logFl)
 	{
 		throw std::runtime_error("Unable to open file " + m_logFilePath + " for writting.");
@@ -385,7 +394,7 @@ void IO::setFiles(const std::string &inFlPath)
 	if (!m_outFl)
 	{
 		throw std::runtime_error("Unable to open file " + m_outFilePath + " for writting.");
-	}	
+	}
 }
 
 
@@ -397,9 +406,9 @@ void IO::readLineInputFile(std::string &strInput)
 	std::getline(m_inFl, strInput); // Read next file line to string strInput
 	++m_inLineNumber; // Update line number counter
 
-	// Repeat this process until the line has some content or end of file is achieved
+					  // Repeat this process until the line has some content or end of file is achieved
 	while (!hasContent(strInput) && m_inFl)
-	{		
+	{
 		std::getline(m_inFl, strInput);
 		++m_inLineNumber;
 	}
@@ -408,7 +417,7 @@ void IO::readLineInputFile(std::string &strInput)
 	if (thereIsCommentInString(strInput))
 	{
 		removeComments(strInput);
-	}				
+	}
 
 	if (!m_inFl)
 	{
@@ -427,34 +436,9 @@ unsigned int IO::getInLineNumber()
 // and other necessary information (like the IDs of the points where the wave elevation will be output)
 void IO::setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir)
 {
-	if (caseInsCompare(getKeyword(strInput), "surge"))
+	if (caseInsCompare(getKeyword(strInput), "fowt_pos"))
 	{
-		m_whichResult2Output.at(IO::OUTFLAG_SURGE) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "sway"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_SWAY) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "heave"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_HEAVE) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "roll"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_ROLL) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "pitch"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_PITCH) = true;
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "yaw"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_YAW) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_POS) = true;
 	}
 
 	if (caseInsCompare(getKeyword(strInput), "wave_elev"))
@@ -472,7 +456,7 @@ void IO::setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir)
 		m_whichResult2Output.at(IO::OUTFLAG_WAVE_VEL) = true;
 
 		if (!getData(strInput).empty())
-		{		
+		{
 			envir.addWaveLocation(getData(strInput));
 		}
 	}
@@ -486,12 +470,27 @@ void IO::setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir)
 			envir.addWaveLocation(getData(strInput));
 		}
 	}
+
+	if (caseInsCompare(getKeyword(strInput), "hd_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "hs_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HS_FORCE) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "total_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_TOTAL_FORCE) = true;
+	}	
 }
 
 
 
 /*****************************************************
-    Class functions related to output
+Class functions related to output
 *****************************************************/
 
 // Returns the header that is later printed to the console and to the summary file (perhaps to other files in the future).
@@ -507,13 +506,13 @@ std::string IO::METiS_Header()
 	header += ">              University of Sao Paulo - Brazil             <\n";
 	header += ">                                                           <\n";
 	header += ">                                                   v. " + g_METIS_VERSION + "<\n";
-	header += ">--------<>--------<>--------<+>--------<>--------<>--------<\n";	
+	header += ">--------<>--------<>--------<+>--------<>--------<>--------<\n";
 
 	return header;
 }
 
 void IO::writeErrorMessage(const std::string &str)
-{	
+{
 	std::string mess = "ERROR: " + str;
 
 	if (m_logFl) // If we are able to write to the log file, do it
@@ -526,9 +525,9 @@ void IO::writeErrorMessage(const std::string &str)
 }
 
 void IO::writeWarningMessage(const std::string &str)
-{	
+{
 	std::string mess = "WARNING: " + str;
-	
+
 	if (m_logFl) // If we are able to write to the log file, do it
 	{
 		m_logFl << mess << std::endl;
@@ -538,48 +537,152 @@ void IO::writeWarningMessage(const std::string &str)
 	std::cout << "\n\n" << mess << std::endl;
 }
 
-// Different functions to print to the formatted output file depending on the variable type.
+// Set m_shouldWriteOutLine to true or false. This is the variable
+// that tells when the program should write to the formatted output file.
+// Same thing applies to m_shouldWriteOutLineHeader
+void IO::print2outLine_turnOn()
+{
+	m_shouldWriteOutLine = true;
+}
+
+void IO::print2outLine_turnOff()
+{
+	m_shouldWriteOutLine = false;
+}
+
+void IO::print2outLineHeader_turnOn()
+{
+	m_shouldWriteOutLineHeader = true;
+}
+
+void IO::print2outLineHeader_turnOff()
+{
+	m_shouldWriteOutLineHeader = false;
+}
+
+// Different functions to print to the formatted output file string streams depending on the output flag
+void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
+{
+	// Check whether the specified flag is indeed one that requires a vector with six components
+	if ((flag != OUTFLAG_FOWT_POS) && (flag != OUTFLAG_HD_FORCE) && (flag != OUTFLAG_HS_FORCE) && (flag != OUTFLAG_TOTAL_FORCE))
+	{
+		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &force).");
+	}
+
+	// If the print header flag is true and if this is one of the requested output variables,
+	// then print the header based on the output flag	
+	if (m_shouldWriteOutLineHeader && m_whichResult2Output.at(flag))
+	{
+		if (flag == OUTFLAG_HD_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("HD_Force_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HS_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("HS_Force_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_TOTAL_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("TOTAL_Force_" + std::to_string(ii));
+			}
+		}		
+
+		if (flag == OUTFLAG_FOWT_POS)
+		{
+			print2outLineHeader("Surge");
+			print2outLineHeader("Sway");
+			print2outLineHeader("Heave");
+			print2outLineHeader("Roll");
+			print2outLineHeader("Pitch");
+			print2outLineHeader("Yaw");
+		}
+	}
+
+
+	// If the printing flag is true and if this is one of the requested output variables,
+	// then print it to the output line
+	if (m_shouldWriteOutLine && m_whichResult2Output.at(flag))
+	{
+		for (int ii = 0; ii < 6; ++ii)
+		{
+			print2outLine(vector_6.at(ii));
+		}
+	}
+}
+
+
+// Different basic functions to print to the formatted output file string streams depending on the variable type.
 // The format parameters (column width and precision) are member variables of the IO class and
 // can be adjusted changing the values of m_outColumnWidth and m_outNumPrecision
-void IO::print2outFile(const std::string &str)
+void IO::print2outLine(const std::string &str)
 {
-	if (!m_outFl)
-	{
-		throw std::runtime_error("Unable to write to formatted output file.");
-	}
-
-	m_outFl << std::setw(IO::m_outColumnWidth) << str;
+	m_outLine << std::setw(IO::m_outColumnWidth) << str;
 }
 
-void IO::print2outFile(const double &num)
+void IO::print2outLine(const double num)
 {
-	if (!m_outFl)
-	{
-		throw std::runtime_error("Unable to write to formatted output file.");
-	}
-
-	m_outFl << std::setw(IO::m_outColumnWidth) << std::scientific << std::setprecision(IO::m_outNumPrecision) << num;
+	m_outLine << std::setw(IO::m_outColumnWidth) << std::scientific << std::setprecision(IO::m_outNumPrecision) << num;
 }
 
-void IO::print2outFile(const int &num)
+void IO::print2outLine(const int num)
 {
-	if (!m_outFl)
-	{
-		throw std::runtime_error("Unable to write to formatted output file.");
-	}
-
-	m_outFl << std::setw(IO::m_outColumnWidth) << num;
+	m_outLine << std::setw(IO::m_outColumnWidth) << num;
 }
+
+void IO::print2outLineHeader(const std::string &str)
+{
+	m_outLineHeader << std::setw(IO::m_outColumnWidth) << str;
+}
+
 
 // Since the data is output in columns, it is necessary to add a new line at each new print step
 void IO::newLineOutFile()
 {
+	if (!m_outFl)
+	{
+		throw std::runtime_error("Unable to write to formatted output file.");
+	}
+
 	m_outFl << '\n';
 }
 
+void IO::printOutLineHeader2outFile()
+{
+	if (!m_outFl)
+	{
+		throw std::runtime_error("Unable to write to formatted output file.");
+	}
+
+	m_outFl << std::setw(IO::m_outColumnWidth) << "Time"; // First column must always be the current time
+	m_outFl << m_outLineHeader.str() << '\n'; // Then comes the results that are stored in the header stringstream
+	m_outLineHeader.str(""); // Need to clear the stream for the next time step
+}
+
+void IO::printOutLine2outFile()
+{
+	if (!m_outFl)
+	{
+		throw std::runtime_error("Unable to write to formatted output file.");
+	}
+
+	m_outFl << m_outLine.str() << '\n';
+	m_outLine.str(""); // Need to clear the stream for the next time step
+}
+
+
 // Print the members of fowt and envir. Useful for debugging.
 void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
-{	
+{
 	if (!m_sumFl)
 	{
 		throw std::runtime_error("Unable to open file " + m_sumFilePath + " for writting.");
@@ -603,7 +706,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "\n\n";
 	m_sumFl << "FOWT:\n";
 	m_sumFl << "Linear Stiffness:\t" << fowt.printLinStiff() << '\n';
-	m_sumFl << "Floater:\n" << fowt.printFloater();	
+	m_sumFl << "Floater:\n" << fowt.printFloater();
 
 	m_sumFl << "\n\n";
 	m_sumFl << "Output Variables:\n" << IO::printOutVar();
@@ -612,51 +715,44 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 // Some printing functions
 std::string IO::printOutVar()
 {
-	std::string output = "";	
+	std::string output = "";
 	for (int ii = 0; ii < IO::OUTFLAG_SIZE; ++ii)
 	{
 		switch (ii)
 		{
-			case IO::OUTFLAG_SURGE:
-				output += "Surge: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
-				break;
+		case IO::OUTFLAG_FOWT_POS:
+			output += "FOWT rigid motion: ";
+			break;
 
-			case IO::OUTFLAG_SWAY:
-				output += "Sway: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
-				break;
+		case IO::OUTFLAG_WAVE_ELEV:
+			output += "Wave Elevation: ";
+			break;
 
-			case IO::OUTFLAG_HEAVE:
-				output += "Heave: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
-				break;
+		case IO::OUTFLAG_WAVE_VEL:
+			output += "Wave Velocity: ";
+			break;
 
-			case IO::OUTFLAG_ROLL:
-				output += "Roll: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
-				break;
+		case IO::OUTFLAG_WAVE_ACC:
+			output += "Wave Acceleration: ";
+			break;
 
-			case IO::OUTFLAG_PITCH:
-				output += "Pitch: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
-				break;
+		case IO::OUTFLAG_HD_FORCE:
+		    output += "Hydrodynamic force: ";
+			break;
 
-			case IO::OUTFLAG_YAW:				
-				output += "Yaw: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
-				break;
+		case IO::OUTFLAG_HS_FORCE:
+		    output += "Hydrodynamic force: ";
+			break;	
 
-			case IO::OUTFLAG_WAVE_ELEV:
-				output += "Wave Elevation: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
-				break;
+		case IO::OUTFLAG_TOTAL_FORCE:
+		    output += "Total force: ";
+			break;				
 
-			case IO::OUTFLAG_WAVE_VEL:
-				output += "Wave Velocity: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
-				break;
-
-			case IO::OUTFLAG_WAVE_ACC:
-				output += "Wave Acceleration: " + std::to_string( m_whichResult2Output.at(ii) ) + "\n";
-				break;				
-
-			default:
-				output += "Unknown specifier in output flags.\n";
-				break;
-		}	
+		default:
+			output += "Unknown specifier in output flags.";
+			break;
+		}
+        output += std::to_string(m_whichResult2Output.at(ii)) + "\n";
 	}
 	return output;
 }
@@ -665,13 +761,13 @@ std::string IO::printOutVar()
 
 
 /*****************************************************
-    Additional functions related to input/output 
+Additional functions related to input/output
 *****************************************************/
 
 // Verify whether a string contains a comment, marked by a '%'
 bool thereIsCommentInString(const std::string& str)
 {
-    return (str.find("%") != std::string::npos);
+	return (str.find("%") != std::string::npos);
 }
 
 
@@ -681,26 +777,26 @@ bool thereIsCommentInString(const std::string& str)
 // 3) it does not start with a comment mark ('%')
 bool hasContent(const std::string &str)
 {
-    // Empty strings have no content
-    if (str.empty())
-        return false;
+	// Empty strings have no content
+	if (str.empty())
+		return false;
 
-    // The string has content only if it has at least one character that is neither a white-space nor a tab (\t)
-    return ( (str.find_first_not_of(" \t") != std::string::npos) && (str.at(0) != '%') );
+	// The string has content only if it has at least one character that is neither a white-space nor a tab (\t)
+	return ((str.find_first_not_of(" \t") != std::string::npos) && (str.at(0) != '%'));
 }
 
 
 
 void removeComments(std::string &str)
 {
-    str = str.substr(0, str.find("%", 0));
+	str = str.substr(0, str.find("%", 0));
 }
 
 
 std::string getKeyword(const std::string &str)
 {
-    // Get the first part of the string, the one before the first '\t' or white-space
-    return str.substr(0, str.find_first_of(" \t"));
+	// Get the first part of the string, the one before the first '\t' or white-space
+	return str.substr(0, str.find_first_of(" \t"));
 }
 
 // Get the part of the string after the keyword, excluding the '\t' or white-space
@@ -712,8 +808,8 @@ std::string getData(const std::string &str)
 	{
 		throw std::runtime_error("Empty string passed to getData(). Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
-	
-    std::vector<std::string> str_tokenized = stringTokenize(str, " \t");
+
+	std::vector<std::string> str_tokenized = stringTokenize(str, " \t");
 
 	// If str_tokenized has only one element, i.e. only the keyword, then return an empty string
 	if (str_tokenized.size() == 1)
@@ -734,30 +830,30 @@ std::string getData(const std::string &str)
 // Return a std::vector with the resulting strings at the different elements
 std::vector<std::string> stringTokenize(const std::string &str, const std::string &delim)
 {
-    std::vector<std::string> tokens;
-    std::string aux = str;
+	std::vector<std::string> tokens;
+	std::string aux = str;
 
-    while( hasContent(aux) ) 
-    {
-        if ( aux.find_first_not_of(delim) == std::string::npos ) // Check if there is something besides delimiters in the line
-        {
-            break; // Then we break the while loop and return tokens as an empty std::vector
-        }
+	while (hasContent(aux))
+	{
+		if (aux.find_first_not_of(delim) == std::string::npos) // Check if there is something besides delimiters in the line
+		{
+			break; // Then we break the while loop and return tokens as an empty std::vector
+		}
 
-        aux = aux.substr(aux.find_first_not_of(delim)); // Get the part of aux starting at the first character that is not a delimiter
-        tokens.push_back( aux.substr(0, aux.find_first_of(delim)) ); // Take content before next delimiter and add to tokens
+		aux = aux.substr(aux.find_first_not_of(delim)); // Get the part of aux starting at the first character that is not a delimiter
+		tokens.push_back(aux.substr(0, aux.find_first_of(delim))); // Take content before next delimiter and add to tokens
 
-        if ( aux.find_first_of(delim, 0) != std::string::npos ) // If there is another delimiter in the string...
-        {
-            aux = aux.substr(aux.find_first_of(delim, 0)); // ... keep in aux everything after the second delimiter, including the delimiter
-        }
-        else // Otherwise, we have already included the last element in tokens, so we can end this loop.
-        {
-            break;
-        }    
-    }
+		if (aux.find_first_of(delim, 0) != std::string::npos) // If there is another delimiter in the string...
+		{
+			aux = aux.substr(aux.find_first_of(delim, 0)); // ... keep in aux everything after the second delimiter, including the delimiter
+		}
+		else // Otherwise, we have already included the last element in tokens, so we can end this loop.
+		{
+			break;
+		}
+	}
 
-    return tokens;
+	return tokens;
 }
 
 
@@ -793,7 +889,7 @@ std::string getFileFolder(const std::string& path)
 		throw std::runtime_error("Empty string passed to getFileFolder(). Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
 
-  	std::vector<std::string> str_tokenized = stringTokenize(path, filesep);
+	std::vector<std::string> str_tokenized = stringTokenize(path, filesep);
 
 	// If there is only one element in str_tokenized, it means that only the file name
 	// was provided as an argument. Hence, the fileFolder is the current directory, "."
@@ -803,10 +899,10 @@ std::string getFileFolder(const std::string& path)
 	}
 
 	// Otherwise, return the full path until the last delimiter
-	else 
+	else
 	{
 		size_t found;
-  		found = path.find_last_of(filesep);
-  		return path.substr(0,found);
-	}  	
+		found = path.find_last_of(filesep);
+		return path.substr(0, found);
+	}
 }

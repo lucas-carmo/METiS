@@ -19,18 +19,17 @@ MorisonRect::MorisonRect(vec cog2node1, vec cog2node2, vec cog2node3, int numInt
 /*****************************************************
 	Forces acting on the Morison Element
 *****************************************************/
-vec::fixed<6> MorisonRect::hydrostaticForce(const ENVIR &envir)
+vec::fixed<6> MorisonRect::hydrostaticForce(const ENVIR &envir) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;
 }
 
-vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir)
+vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;
 }
-
 
 
 /*****************************************************
@@ -59,4 +58,8 @@ std::string MorisonRect::print() const
 	return output;
 }
 
+MorisonRect* MorisonRect::clone() const
+{
+	return (new MorisonRect(*this));
+}
 

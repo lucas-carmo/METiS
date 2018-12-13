@@ -9,6 +9,8 @@
 #include <utility> // For std::move
 #include <stdexcept> // For std::exception
 
+using namespace arma;
+
 /*****************************************************
 	Constructors
 *****************************************************/
@@ -20,6 +22,42 @@ Floater::Floater()
 	m_inertia.fill(datum::nan);
 }
 
+
+/*****************************************************
+	Overloaded operators
+*****************************************************/
+Floater& Floater::operator= (const Floater &floater)
+{
+	// Shallow copy for simple member variables
+	m_CoG = floater.m_CoG;
+	m_inertia = floater.m_inertia;
+	m_mass = floater.m_mass;
+
+	// The member variables that need deep copying are:
+	// - m_MorisonElements;
+
+	// Check for self-assignment
+    if (this == &floater)
+		return *this;
+
+	// In case there is data in m_MorisonElements
+	m_MorisonElements.clear();
+
+	// Resize m_MorisonElement to match the size of the one in the input floater
+	m_MorisonElements.resize( floater.m_MorisonElements.size() );
+
+	// m_MorisonElements.at(ii) is a std::unique_ptr<MorisonElements>
+	for (int ii = 0; ii < floater.m_MorisonElements.size(); ++ii)
+	{
+		MorisonElement* rawPtr = floater.m_MorisonElements.at(ii)->clone();
+		std::unique_ptr<MorisonElement> smartPtr(rawPtr);
+		m_MorisonElements.at(ii) = std::move(smartPtr);
+	}
+		
+    return *this;	
+}
+
+
 /*****************************************************
 	Setters
 *****************************************************/
@@ -28,7 +66,21 @@ void Floater::readMass(const std::string &data)
 	readDataFromString(data, m_mass);
 }
 
+void Floater::readInertia(const std::string &data)
+{
+	// The different components of the inertia matrix are separated by commas in the input string
+	std::vector<std::string> input = stringTokenize(data, ",");
 
+	if (input.size() != 6)
+	{
+		throw std::runtime_error("Unable to read the floater inertia matrix in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+	}
+
+	for (int ii = 0; ii < input.size(); ++ii)
+	{
+		readDataFromString(input.at(ii), m_inertia(ii));
+	}
+}
 
 void Floater::readCoG(const std::string &data)
 {
@@ -198,10 +250,31 @@ void Floater::addMorisonRect(const std::string &data, const ENVIR &envir)
 /*****************************************************
 	Getters
 *****************************************************/
+vec::fixed<3> Floater::CoG() const
+{
+	return m_CoG;
+}
+
+double Floater::mass() const
+{
+	return m_mass;
+}
+
+vec::fixed<6> Floater::inertia() const
+{
+	return m_inertia;
+}
+
 
 std::string Floater::printMass() const
 {
 	return std::to_string(m_mass);
+}
+
+std::string Floater::printInertia() const
+{
+	return "Ixx = " + std::to_string(m_inertia(0)) + " Iyy = " + std::to_string(m_inertia(1)) + " Izz = " + std::to_string(m_inertia(2)) +
+		  " Ixy = " + std::to_string(m_inertia(3)) + " Ixz = " + std::to_string(m_inertia(4)) + " Iyy = " + std::to_string(m_inertia(5));
 }
 
 std::string Floater::printCoG() const
@@ -230,52 +303,61 @@ std::string Floater::printMorisonElements() const
 
 
 
-
-
-
-
-
 /*****************************************************
-	Overloaded operators
+	Forces, acceleration, position, etc
 *****************************************************/
-Floater& Floater::operator= (Floater &floater)
+void Floater::updatePosVelAcc(const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc)
 {
-	// Shallow copy for simple member variables
-	m_CoG = floater.m_CoG;
-	m_inertia = floater.m_inertia;
-	m_mass = floater.m_mass;
+	m_pos = FOWTpos;
+	m_vel = FOWTvel;
+	m_acc = FOWTacc;
 
-	// The member variables that need deep copying are:
-	// - m_MorisonElements;
-
-	// Check for self-assignment
-    if (this == &floater)
-		return *this;
-
-	// In case there is data in m_MorisonElements
-	m_MorisonElements.clear();
-
-	// Resize m_MorisonElemen to match the size of the one in the input floater
-	m_MorisonElements.resize( floater.m_MorisonElements.size() );
-
-	// Attention:
-	// When we move the unique_ptr's that are stored in floater.m_MorisonElements
-	// to *this.m_MorisonElements, the pointers in floater.m_MorisonElements become null.
-	for (int ii = 0; ii < floater.m_MorisonElements.size(); ++ii)
-	{		
-		m_MorisonElements.at(ii) = std::move(floater.m_MorisonElements.at(ii));
-	}		
-		
-    return *this;	
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		m_MorisonElements.at(ii)->updateNodesPosVelAcc(FOWTpos + join_cols(CoG(), zeros(3, 1)), FOWTvel, FOWTacc);
+	}
 }
 
+vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir) const
+{
+	vec::fixed<6> force(fill::zeros);
+	vec::fixed<6> df(fill::zeros);
 
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		df = m_MorisonElements.at(ii)->hydrodynamicForce(envir);
+		
+		// The moments acting on the cylinders were calculated with respect to the first node
+		// We need to change the fulcrum to the CoG
+		df.rows(3,5) = df.rows(3,5) + cross( m_MorisonElements.at(ii)->node1Pos() - (m_pos.rows(0,2) + CoG()), df.rows(0,2) );		
 
-//mat Floater::rotatMat(const vec &FOWTpos)
-//{}
-//
-//
-//vec Floater::hydrodynamicForce(const ENVIR &envir, const vec &FOWTpos, const vec &FOWTvel, const vec &FOWTacc)
-//{}
+		force += df;		
+	}
+
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE, force);
+	
+	return force;
+}
+
+vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir) const
+{
+	vec::fixed<6> force(fill::zeros);		
+	vec::fixed<6> df(fill::zeros);
+
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		df = m_MorisonElements.at(ii)->hydrostaticForce(envir);
+
+		// The moments acting on the cylinders were calculated with respect to the first node
+		// We need to change the fulcrum to the CoG
+		df.rows(3,5) = df.rows(3,5) + cross( m_MorisonElements.at(ii)->node1Pos() - (m_pos.rows(0, 2) + CoG()), df.rows(0,2) );
+
+		force += df;
+	}
+
+	IO::print2outLine(IO::OUTFLAG_HS_FORCE, force);
+
+	return force;
+}
 
 

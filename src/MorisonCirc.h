@@ -28,12 +28,13 @@ public:
 	/*****************************************************
 		Forces acting on the Morison Element
 	*****************************************************/
-	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) override;
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir) override;
+	void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const;
+	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) const override;	
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envi) const override;
 
 	/*****************************************************
 		Printing
 	*****************************************************/
 	virtual std::string print() const override;
+	virtual MorisonCirc* clone() const override;
 };
-

@@ -2,8 +2,9 @@
 
 #include <vector>
 #include <string>
-#include "Wave.h"
 #include <armadillo>
+
+#include "Wave.h"
 
 using namespace arma;
 
@@ -53,8 +54,7 @@ private:
     bool m_TwrLoads;
 
 public:
-    // ENVIR()
-    // {}
+	ENVIR();
 
 	/*****************************************************
 		Setters
@@ -75,6 +75,9 @@ public:
     double timeStep() const;
     double timeTotal() const;
     double time() const;
+    double gravity() const;
+    double watDepth() const;
+    double watDensity() const;
 
 	/*****************************************************
 		Printing
@@ -90,12 +93,17 @@ public:
 	std::string printWaveLocation() const;
 
 	/*****************************************************
-		Other functions
+		Other functions (some of them are very important)
 	*****************************************************/
     bool isNodeEmpty() const;
     bool isWaveLocationEmpty() const;
     arma::vec::fixed<3> getNode(unsigned int ID) const;
-
     void stepTime();
+    void stepTime(double const step);
+
+    double ramp() const;
+	arma::vec::fixed<3> fluidVel(double x, double y, double z) const;	
+	arma::vec::fixed<3> fluidAcc(double x, double y, double z) const;
+	double wavePressure(double x, double y, double z) const;
 };
 

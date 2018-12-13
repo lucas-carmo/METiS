@@ -1,5 +1,7 @@
 %>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
 %>-<> OC4 Platform
+%>-<> Teste p/ comparacao c/ o codigo em MATLAB
+%>-<> Profundidade 1000m, ao invés do valor correto de 200m
 %>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
 
 
@@ -15,9 +17,9 @@
 %%-----------------------------------------------------------------------------%%
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
 %%-----------------------------------------------------------------------------%%
-TimeStep    0.1	                    % Time step
-TimeTotal  	280						% Total simulation time
-TimeRamp	6                       % Numerical ramp to be imposed to the waves. It is given as number of periods of the specified wave with the largest period.
+TimeStep    0.1	                    % Time step, in seconds
+TimeTotal  	1000					% Total simulation time, in secods
+TimeRamp	180                     % Numerical ramp, in seconds
 
 
 
@@ -26,16 +28,14 @@ TimeRamp	6                       % Numerical ramp to be imposed to the waves. It
 %%-----------------------------------------------------------------------------%%
 Grav		9.81
 WatDens		1025
-WatDepth	200
+WatDepth	1000
 
 
 Wave
 % WRWAVE \t Height \t Angular frequency \t Direction (in degrees)
 % FRWAVE \t Height \t Frequency         \t Direction (in degrees)
 % TRWAVE \t Height \t Period            \t Direction (in degrees)
-TRWAVE	2	10	45
-WRWAVE	1	1	60
-FRWAVE	1	10	60
+TRWAVE	2	30	45
 END
 
 
@@ -44,9 +44,9 @@ END
 %%-------------------------- FLOATER DESCRIPTION ------------------------------%%
 %%-----------------------------------------------------------------------------%%
 FloaterMass		1.4267e7
-FloaterCoG		1,2,-13.46
+FloaterCoG		0,0,-13.46
 FloaterInertia	6.827e9,6.827e9,1.226e10,0,0,0
-LinStiff		6.1e5,6.1e5,5.4e8        % Linear mooring stiffness in surge, sway, yaw
+LinStiff		1.5e5,1.5e5,1.3e8        % Linear mooring stiffness in surge, sway, yaw
 
 
 % Nodes ID must be unique and in ascending order
@@ -128,7 +128,7 @@ Morison_circ
 % First node ID \t Second node ID \t Diameter \t Drag coefficient \t Inertia coefficient \t Number of integration points ...
 % ... \t Bottom diameter \t Top diameter \t Axial drag coefficient \t Axial added mass coefficient \t 1 or 0 for calculating dynamic pressure or not
 % The second part of the data above (the ones in the second line) is only required for heave plates. Input 0 for everything if only forces perpendicular to the % axis of the cylinder will be considered
-1	2	6.5	0.56	1.63	25	6.5	6.5	0	0	0	
+1	2	6.5	0.56	1.63	25	6.5	6.5	0	0	1	
 11	12	12	0.61	1.63	25	0	0	0	0	0
 13	14	12	0.61	1.63	25	0	0	0	0	0
 15	16	12	0.61	1.63	25	0	0	0	0	0
@@ -151,19 +151,6 @@ Morison_circ
 73	74	1.6	0.63	1.63	15	0	0	0	0	0
 75	76	1.6	0.63	1.63	15	0	0	0	0	0
 END
-
-
-%Morison_rect
-% Rectangular cylinders: RETP 
-% Requires properties (diameter, drag coeff, added mass coeff, etc) in two different directions, x and y
-% Directions are determined as follows: 	Zlocal is the longitudinal direction, given by (n2 - n1) / |n2-n1| (n1 = node 1, n2 = node 2)
-%										 	Xlocal is given by (n3-n1) / |n3-n1|
-%										 	Ylocal is calculated as cross( Zlocal , Xlocal )
-% First node ID \t Second node ID \t Third node ID \t Diameter in local x \t  Drag coefficient in x\t Inertia coefficient in x \t Diameter in local y \t  Drag coefficient in y\t Inertia coefficient in y \t Number of integration points ...
-% ... \t Bottom surface \t Top surface \t Axial drag coefficient \t Axial added mass coefficient \t 1 or 0 for calculating dynamic pressure or not
-% The second part of the data above (the ones in the second line) is only required for heave plates. Input 0 for everything if only forces perpendicular to the axis of the cylinder will be considered
-%111	112	113	7.10	4.0	1.65	5.45	5.0	2.20	17	1	2	3	4	1
-%END
 
 
 %%-----------------------------------------------------------------------------%%
@@ -1174,9 +1161,3 @@ hs_force
 hd_force
 total_force
 END
-
-
-
-
-
-

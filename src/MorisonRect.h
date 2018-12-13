@@ -30,14 +30,16 @@ public:
 				double diam_Y, double CD_Y, double CM_Y,
 				double botArea, double topArea);
 
+
 	/*****************************************************
-		Forces acting on the Morison Element
+	Forces acting on the Morison Element and functions for node position/velocity/acceleration)
 	*****************************************************/
-	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) override;
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir) override;
+	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) const override;	
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir) const override;
 
 	/*****************************************************
 		Printing
 	*****************************************************/
 	virtual std::string print() const override;
+	virtual MorisonRect* clone() const override;
 };

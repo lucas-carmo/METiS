@@ -6,6 +6,17 @@
 #include <algorithm>    // std::binary_search
 #include <utility> // For std::move
 
+using namespace arma;
+
+/*****************************************************
+	Constructors
+*****************************************************/
+ENVIR::ENVIR()
+{
+	// Initialize with NaN so we can check whether they were defined later
+	m_gravity = arma::datum::nan;
+	m_watDepth = arma::datum::nan;
+}
 
 /*****************************************************
 	Setters
@@ -33,14 +44,14 @@ void ENVIR::readTimeRamp(const std::string &data)
 
 void ENVIR::readGrav(const std::string &data)
 {
-	readDataFromString(data, m_watDens);
+	readDataFromString(data, m_gravity);
 }
 
 
 
 void ENVIR::readWatDens(const std::string &data)
 {
-	readDataFromString(data, m_gravity);
+	readDataFromString(data, m_watDens);
 }
 
 
@@ -53,8 +64,21 @@ void ENVIR::readWatDepth(const std::string &data)
 
 void ENVIR::addWave(const Wave &wave)
 {
-	m_wave.push_back( wave );
+	// Check whether the water depth was defined
+	if ( !is_finite(m_watDepth) )
+	{
+		throw std::runtime_error("You should specify the water depth before the waves. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+	}
+
+	// Check whether the acceleration of gravity was defined
+	if (!is_finite(m_gravity))
+	{
+		throw std::runtime_error("You should specify the gravity before the waves. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+	}
+
+	m_wave.push_back(Wave(wave.height(), wave.period(), wave.direction(), m_watDepth, m_gravity));
 }
+
 
 void ENVIR::addWaveLocation(const std::string &data)
 {
@@ -64,13 +88,13 @@ void ENVIR::addWaveLocation(const std::string &data)
 	// Check whether input is not empty
 	if (input.empty())
 	{
-		throw std::runtime_error("You should specify at least one node ID for defining a wave location. Error in input line " + std::to_string(IO::getInLineNumber()));
+		throw std::runtime_error("You should specify at least one node ID for defining a wave location. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
 
 	// Check whether nodes were specified
 	if (this->isNodeEmpty())
 	{		
-		throw std::runtime_error("Nodes should be specified before adding wave locations. Error in input line " + std::to_string(IO::getInLineNumber()));
+		throw std::runtime_error("Nodes should be specified before adding wave locations. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
 
 	// For each of the node IDs:
@@ -158,9 +182,19 @@ double ENVIR::time() const
 	return m_time;
 }
 
-void ENVIR::stepTime()
+double ENVIR::gravity() const
 {
-	m_time += m_timeStep;
+	return m_gravity;
+}
+
+double ENVIR::watDepth() const
+{
+	return m_watDepth;
+}
+
+double ENVIR::watDensity() const
+{
+	return m_watDens;
 }
 
 /*****************************************************
@@ -217,7 +251,9 @@ std::string ENVIR::printWave() const
 		output = output + "Wave #" + std::to_string(ii) + "\n";
 		output = output + "Height: " + std::to_string( m_wave.at(ii).height() ) + "\n";
 		output = output + "Period: " + std::to_string( m_wave.at(ii).period() ) + "\n";
-		output = output + "Direction: " + std::to_string( m_wave.at(ii).direction() ) + "\n\n";
+		output = output + "Wave number: " + std::to_string( m_wave.at(ii).waveNumber() ) + "\n";
+		output = output + "Length: " + std::to_string(m_wave.at(ii).length()) + "\n";
+		output = output + "Direction: " + std::to_string(m_wave.at(ii).direction()) + "\n\n";
 	}
 	return output;
 }
@@ -244,4 +280,72 @@ bool ENVIR::isNodeEmpty() const
 bool ENVIR::isWaveLocationEmpty() const
 {
 	return m_waveLocation.empty();
+}
+
+void ENVIR::stepTime()
+{
+	m_time += m_timeStep;
+}
+
+void ENVIR::stepTime(double const step)
+{
+	m_time += step;
+}
+
+
+// Tr = nump.timeRamp * max(period); %#ok<UDIM>
+// if time < Tr
+//     ramp = 0.5 * ( 1 - cos(pi*time/Tr) );
+// %     ramp = sin( pi*time/(2*Tr) )^2;
+// else
+//     ramp = 1;
+// end
+
+double ENVIR::ramp() const
+{
+	double ramp{1};
+
+	if (m_time < m_timeRamp)
+	{
+		ramp = 0.5 * ( 1 - cos(datum::pi * m_time / m_timeRamp) );
+	}
+
+	return ramp;
+}
+
+
+arma::vec::fixed<3> ENVIR::fluidVel(double x, double y, double z) const
+{
+	arma::vec::fixed<3> vel = {0,0,0};
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		vel += m_wave.at(ii).fluidVel(x, y, z, m_time, m_watDepth);
+	}
+
+	vel = vel*ramp();
+	return vel;
+}
+
+arma::vec::fixed<3> ENVIR::fluidAcc(double x, double y, double z) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		acc += m_wave.at(ii).fluidAcc(x, y, z, m_time, m_watDepth);
+	}
+
+	acc = acc*ramp();
+	return acc;
+}
+
+double ENVIR::wavePressure(double x, double y, double z) const
+{
+	double p{ 0 };
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		p += m_wave.at(ii).pressure(x, y, z, m_time, m_watDens, m_gravity, m_watDepth);
+	}
+
+	p = p*ramp();
+	return p;
 }
