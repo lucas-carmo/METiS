@@ -10,6 +10,10 @@
 % AERO
 % MOOR
 % ELAST
+% Talvez mudar isso por um flag que especifica se e:
+% Onshore
+% Offshore fixa
+% Offshore flutuante
 
 
 %%-----------------------------------------------------------------------------%%
