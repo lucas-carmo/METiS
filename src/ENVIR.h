@@ -41,15 +41,13 @@ private:
     double m_timeTotal;
     double m_timeRamp;
     double m_time = 0;
-    char m_timeIntegrationMethod; // 1: 4th order Runge-Kutta
 
     bool m_useBEMT;
-    char m_aeroSolver;
     bool m_tipLossFactor;
     bool m_hubLossFactor;
-    bool m_IncTIFac;
-    bool m_IncDragAIFac;
-    bool m_IncDragTIFac;
+    // bool m_IncTIFac;
+    // bool m_IncDragAIFac;
+    // bool m_IncDragTIFac;
     bool m_IncSkewCorr;
     bool m_TwrLoads;
 
@@ -98,6 +96,7 @@ public:
     bool isNodeEmpty() const;
     bool isWaveLocationEmpty() const;
     arma::vec::fixed<3> getNode(unsigned int ID) const;
+
     void stepTime();
     void stepTime(double const step);
 
