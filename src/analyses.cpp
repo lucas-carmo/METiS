@@ -92,7 +92,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
         
 
         // RK4: fourth estimation
-        // Update fowt and environment, which is now in t+dt (hence, just need to add dt/2)
+        // Update fowt and environment, which needs to be in t+dt (hence, just need to add dt/2)
         fowt.update( pos0 + pos_k3 , vel0 + vel_k3 , acc_k3);
         envir.stepTime(envir.timeStep()/2);
 
