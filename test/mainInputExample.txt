@@ -23,15 +23,24 @@ TimeStep    0.1	                    % Time step
 TimeTotal  	280						% Total simulation time
 TimeRamp	6                       % Numerical ramp to be imposed to the waves. It is given as number of periods of the specified wave with the largest period.
 
+UseBEMT     1
+useTipLoss  1
+useHubLoss  1
+useSkewCorr 1
+
 
 
 %%-----------------------------------------------------------------------------%%
 %%------------------------------- ENVIRONMENT ---------------------------------%%
 %%-----------------------------------------------------------------------------%%
 Grav		9.81
+
 WatDens		1025
 WatDepth	200
 
+AirDens     1.225
+WindVel     10.0
+WindExp     0.2
 
 Wave
 % WRWAVE \t Height \t Angular frequency \t Direction (in degrees)
@@ -45,14 +54,8 @@ END
 
 
 %%-----------------------------------------------------------------------------%%
-%%-------------------------- FLOATER DESCRIPTION ------------------------------%%
+%%--------------------------------- NODES -------------------------------------%%
 %%-----------------------------------------------------------------------------%%
-FloaterMass		1.4267e7
-FloaterCoG		1,2,-13.46
-FloaterInertia	6.827e9,6.827e9,1.226e10,0,0,0
-LinStiff		6.1e5,6.1e5,5.4e8        % Linear mooring stiffness in surge, sway, yaw
-
-
 % Nodes ID must be unique and in ascending order
 Nodes                     % Node ID, X coord, Y coord, Z coord
 1,0,0,-20                 % Nodes for main column
@@ -128,6 +131,18 @@ Nodes                     % Node ID, X coord, Y coord, Z coord
 END
 
 
+
+
+%%-----------------------------------------------------------------------------%%
+%%-------------------------- FLOATER DESCRIPTION ------------------------------%%
+%%-----------------------------------------------------------------------------%%
+FloaterMass		1.4267e7
+FloaterCoG		1,2,-13.46
+FloaterInertia	6.827e9,6.827e9,1.226e10,0,0,0
+LinStiff		6.1e5,6.1e5,5.4e8        % Linear mooring stiffness in surge, sway, yaw
+
+
+
 Morison_circ
 % First node ID \t Second node ID \t Diameter \t Drag coefficient \t Inertia coefficient \t Number of integration points ...
 % ... \t Bottom diameter \t Top diameter \t Axial drag coefficient \t Axial added mass coefficient \t 1 or 0 for calculating dynamic pressure or not
@@ -171,13 +186,27 @@ END
 
 
 %%-----------------------------------------------------------------------------%%
+%%---------------------------- RNA DESCRIPTION --------------------------------%%
+%%-----------------------------------------------------------------------------%%
+RotSpeed    12  % Rotor speed in rpm (constant)
+RotTilt     0   % Rotor tilt angle (degrees)
+RotYaw      0   % Rotor yaw angle (degrees)
+BldPitch    3   % Blade pitch angle (degrees)
+BldPrecone  0   % Blade coning angle (degrees)
+NumBlades   3   % Number of blades
+
+HubRadius   1.5
+HubHeight   90
+Overhang    -5
+
+
+
+%%-----------------------------------------------------------------------------%%
 %%-------------------------- BLADES DESCRIPTION -------------------------------%%
 %%-----------------------------------------------------------------------------%%
 % Tem que dar uma uniformizada nisso (coisa que o FAST não faz). No aero, tá o comprimento da pá
 % em metros, enquanto que no estrutural tá em fração do comprimento total. Acho que o melhor é colocar 
 % o blade span como um parametro isolado, talvez próximo ao numBlades, e deixar tudo como fração do comprimento da pá
-numBlades		3 
-numAirfoils		8
  
 Blades_aero  % Aerodynamic properties of the blades
 %   BlSpn         BlCrvAC       BlSwpAC        BlCrvAng      BlTwist       BlChord          BlAFID - Airfoil data the local blade node is associated with (1 to numAirfoils)

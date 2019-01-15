@@ -202,13 +202,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		}
 
 
-		else if (caseInsCompare(getKeyword(strInput), "numAirfoils"))
-		{
-			// implementar no futuro
-			continue;
-		}
-
-
 		else if (caseInsCompare(getKeyword(strInput), "Blades_aero"))
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
@@ -228,23 +221,23 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		}
 
 
-		else if (caseInsCompare(getKeyword(strInput), "Blades_elasto"))
-		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+		// else if (caseInsCompare(getKeyword(strInput), "Blades_elasto"))
+		// {
+		// 	IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
-			while (!caseInsCompare(getKeyword(strInput), "END"))
-			{
-				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{
-					throw std::runtime_error("End of file reached before END keyword in BLADES_ELASTO specification.");
-					return;
-				}
+		// 	while (!caseInsCompare(getKeyword(strInput), "END"))
+		// 	{
+		// 		if (!m_inFl) // Signal if the end of file is reached before the end keyword
+		// 		{
+		// 			throw std::runtime_error("End of file reached before END keyword in BLADES_ELASTO specification.");
+		// 			return;
+		// 		}
 
-				// Implementar no futuro
+		// 		// Implementar no futuro
 
-				IO::readLineInputFile(strInput);
-			}
-		}
+		// 		IO::readLineInputFile(strInput);
+		// 	}
+		// }
 
 
 		else if (caseInsCompare(getKeyword(strInput), "Airfoil_data"))
@@ -266,42 +259,42 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		}
 
 
-		else if (caseInsCompare(getKeyword(strInput), "Tower_Aero"))
-		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+		// else if (caseInsCompare(getKeyword(strInput), "Tower_Aero"))
+		// {
+		// 	IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
-			while (!caseInsCompare(getKeyword(strInput), "END"))
-			{
-				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{
-					throw std::runtime_error("End of file reached before END keyword in TOWER_AERO specification.");
-					return;
-				}
+		// 	while (!caseInsCompare(getKeyword(strInput), "END"))
+		// 	{
+		// 		if (!m_inFl) // Signal if the end of file is reached before the end keyword
+		// 		{
+		// 			throw std::runtime_error("End of file reached before END keyword in TOWER_AERO specification.");
+		// 			return;
+		// 		}
 
-				// Implementar no futuro
+		// 		// Implementar no futuro
 
-				IO::readLineInputFile(strInput);
-			}
-		}
+		// 		IO::readLineInputFile(strInput);
+		// 	}
+		// }
 
 
-		else if (caseInsCompare(getKeyword(strInput), "Tower_Elasto"))
-		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+		// else if (caseInsCompare(getKeyword(strInput), "Tower_Elasto"))
+		// {
+		// 	IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
-			while (!caseInsCompare(getKeyword(strInput), "END"))
-			{
-				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{
-					throw std::runtime_error("End of file reached before END keyword in TOWER_ELASTO specification.");
-					return;
-				}
+		// 	while (!caseInsCompare(getKeyword(strInput), "END"))
+		// 	{
+		// 		if (!m_inFl) // Signal if the end of file is reached before the end keyword
+		// 		{
+		// 			throw std::runtime_error("End of file reached before END keyword in TOWER_ELASTO specification.");
+		// 			return;
+		// 		}
 
-				// Implementar no futuro
+		// 		// Implementar no futuro
 
-				IO::readLineInputFile(strInput);
-			}
-		}
+		// 		IO::readLineInputFile(strInput);
+		// 	}
+		// }
 
 
 		else if (caseInsCompare(getKeyword(strInput), "Output")) // List of parameters that will be output
