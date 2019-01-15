@@ -16,7 +16,6 @@ private:
     std::vector<double> chord; // Local chord length
     std::vector<int> airfoilID; // Airfoil data the local blade node is associated with
 
-
 public:
 };
 

@@ -42,6 +42,34 @@ void ENVIR::readTimeRamp(const std::string &data)
 
 
 
+void ENVIR::readUseBEMT(const std::string &data)
+{
+	readDataFromString(data, m_useBEMT);
+}
+
+
+
+void ENVIR::readUseTipLoss(const std::string &data)
+{
+	readDataFromString(data, m_useTipLoss);
+}
+
+
+
+void ENVIR::readUseHubLoss(const std::string &data)
+{
+	readDataFromString(data, m_useHubLoss);
+}
+
+
+
+void ENVIR::readUseSkewCorr(const std::string &data)
+{
+	readDataFromString(data, m_useSkewCorr);
+}
+
+
+
 void ENVIR::readGrav(const std::string &data)
 {
 	readDataFromString(data, m_gravity);
@@ -52,6 +80,27 @@ void ENVIR::readGrav(const std::string &data)
 void ENVIR::readWatDens(const std::string &data)
 {
 	readDataFromString(data, m_watDens);
+}
+
+
+
+void ENVIR::readAirDens(const std::string &data)
+{
+	readDataFromString(data, m_airDens);
+}
+
+
+
+void ENVIR::readWindVel(const std::string &data)
+{
+	readDataFromString(data, m_windVel);
+}
+
+
+
+void ENVIR::readWindExp(const std::string &data)
+{
+	readDataFromString(data, m_windExp);
 }
 
 

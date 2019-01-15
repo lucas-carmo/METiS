@@ -14,6 +14,9 @@
 % Onshore
 % Offshore fixa
 % Offshore flutuante
+% 
+% MELHOR AINDA. Acho que só poder desabilitar DoFs já é o suficiente pra fazer as análises.
+DOFS 1 1 1 1 1 1
 
 
 %%-----------------------------------------------------------------------------%%
@@ -24,9 +27,9 @@ TimeTotal  	280						% Total simulation time
 TimeRamp	6                       % Numerical ramp to be imposed to the waves. It is given as number of periods of the specified wave with the largest period.
 
 UseBEMT     1
-useTipLoss  1
-useHubLoss  1
-useSkewCorr 1
+UseTipLoss  1
+UseHubLoss  1
+UseSkewCorr 1
 
 
 

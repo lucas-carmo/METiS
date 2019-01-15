@@ -76,6 +76,30 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			continue;
 		}
 
+		else if (caseInsCompare(getKeyword(strInput), "UseBEMT"))
+		{
+			envir.readUseBEMT(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "UseTipLoss"))
+		{
+			envir.readUseTipLoss(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "UseHubLoss"))
+		{
+			envir.readUseHubLoss(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "UseSkewCorr"))
+		{
+			envir.readUseSkewCorr(getData(strInput));
+			continue;
+		}
+
 		else if (caseInsCompare(getKeyword(strInput), "Grav"))
 		{
 			envir.readGrav(getData(strInput));
@@ -91,6 +115,24 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		else if (caseInsCompare(getKeyword(strInput), "WatDepth"))
 		{
 			envir.readWatDepth(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "AirDens"))
+		{
+			envir.readAirDens(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "WindVel"))
+		{
+			envir.readWindVel(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "WindExp"))
+		{
+			envir.readWindExp(getData(strInput));
 			continue;
 		}
 

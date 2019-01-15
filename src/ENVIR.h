@@ -12,12 +12,9 @@ class ENVIR
 {
 private:
     /*
-    Flags to specify the type of analysis (hydrodynamic analysis, aerodynamics, etc)
+    Flags to specify the active degrees of freedom
     */
-    bool m_analysisFlagHydro;
-    bool m_analysisFlagAero;
-    bool m_analysisFlagMoor;
-    bool m_analysisFlagElast;
+
 
     /*
     Data to specify the environment
@@ -31,7 +28,7 @@ private:
     std::vector<Wave> m_wave;
     std::vector<vec::fixed<3>> m_waveLocation; // Coordinates of the points where the wave elevation is calculated for output
     double m_airDens;
-    double m_windMod;
+    double m_windVel;
     double m_windExp;
 
     /*
@@ -43,12 +40,12 @@ private:
     double m_time = 0;
 
     bool m_useBEMT;
-    bool m_tipLossFactor;
-    bool m_hubLossFactor;
+    bool m_useTipLoss;
+    bool m_useHubLoss;
     // bool m_IncTIFac;
     // bool m_IncDragAIFac;
     // bool m_IncDragTIFac;
-    bool m_IncSkewCorr;
+    bool m_useSkewCorr;
     bool m_TwrLoads;
 
 public:
@@ -60,10 +57,19 @@ public:
     void readTimeStep(const std::string &data);
     void readTimeTotal(const std::string &data);
     void readTimeRamp(const std::string &data);
+	void readUseBEMT(const std::string &data);
+	void readUseTipLoss(const std::string &data);
+	void readUseHubLoss(const std::string &data);
+	void readUseSkewCorr(const std::string &data);
 	void addNode(const std::string &data);
+
     void readGrav(const std::string &data);
     void readWatDens(const std::string &data);
     void readWatDepth(const std::string &data);
+	void readAirDens(const std::string &data);
+	void readWindVel(const std::string &data);
+	void readWindExp(const std::string &data);
+
 	void addWave(const Wave &wave);
 	void addWaveLocation(const std::string &data);
 
