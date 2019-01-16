@@ -231,9 +231,34 @@ double ENVIR::time() const
 	return m_time;
 }
 
+bool ENVIR::useBEMT() const
+{
+	return m_useBEMT;
+}
+
+bool ENVIR::useTipLoss() const
+{
+	return m_useTipLoss;
+}
+
+bool ENVIR::useHubLoss() const
+{
+	return m_useHubLoss;
+}
+
+bool ENVIR::useSkewCorr() const
+{
+	return m_useSkewCorr;
+}
+
 double ENVIR::gravity() const
 {
 	return m_gravity;
+}
+
+double ENVIR::watDensity() const
+{
+	return m_watDens;
 }
 
 double ENVIR::watDepth() const
@@ -241,9 +266,19 @@ double ENVIR::watDepth() const
 	return m_watDepth;
 }
 
-double ENVIR::watDensity() const
+double ENVIR::airDensity() const
 {
-	return m_watDens;
+	return m_airDens;
+}
+
+double ENVIR::windVel() const
+{
+	return m_windVel;
+}
+
+double ENVIR::windExp() const
+{
+	return m_windExp;
 }
 
 /*****************************************************

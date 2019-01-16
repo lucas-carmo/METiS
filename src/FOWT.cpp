@@ -49,6 +49,11 @@ void FOWT::setFloater(Floater &floater)
 	m_floater = floater;
 }
 
+void FOWT::setRNA(RNA &rna)
+{
+	m_rna = rna;
+}
+
 
 
 
@@ -116,6 +121,23 @@ std::string FOWT::printFloater() const
 	return output;
 }
 
+
+std::string FOWT::printRNA() const
+{
+	std::string output = "";
+
+	output = output + "\tRotor Speed:\t" + std::to_string(m_rna.rotorSpeed()) + "\n";
+	output = output + "\tRotor Tilt :\t" + std::to_string(m_rna.rotorTilt()) + "\n";
+	output = output + "\tRotor Yaw:\t" + std::to_string(m_rna.rotorYaw()) + "\n";
+	output = output + "\tNumBlades:\t" + std::to_string(m_rna.numBlades()) + "\n";
+	output = output + "\tBlade Precone:\t" + std::to_string(m_rna.bladePrecone()) + "\n";
+	output = output + "\tBlade Pitch:\t" + std::to_string(m_rna.bladePitch()) + "\n";
+	output = output + "\tHub Radius:\t" + std::to_string(m_rna.hubRadius()) + "\n";
+	output = output + "\tHub Height:\t" + std::to_string(m_rna.hubHeight()) + "\n";
+	output = output + "\tOverhang:\t" + std::to_string(m_rna.overhang()) + "\n";
+
+	return output;
+}
 
 
 /*****************************************************

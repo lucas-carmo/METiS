@@ -79,9 +79,18 @@ public:
     double timeStep() const;
     double timeTotal() const;
     double time() const;
+	bool useBEMT() const;
+	bool useTipLoss() const;
+	bool useHubLoss() const;
+	bool useSkewCorr() const;
+
     double gravity() const;
+	double watDensity() const;
     double watDepth() const;
-    double watDensity() const;
+	double airDensity() const;
+	double windVel() const;
+	double windExp() const;
+    
 
 	/*****************************************************
 		Printing

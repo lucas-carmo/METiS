@@ -245,9 +245,65 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		}
 
 
+		else if (caseInsCompare(getKeyword(strInput), "RotSpeed"))
+		{
+			rna.readRotorSpeed(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "RotTilt"))
+		{
+			rna.readRotorTilt(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "RotYaw"))
+		{
+			rna.readRotorYaw(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "BldPitch"))
+		{
+			rna.readBladePitch(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "BldPrecone"))
+		{
+			rna.readBladePrecone(getData(strInput));
+			continue;
+		}
+
+
 		else if (caseInsCompare(getKeyword(strInput), "NumBlades"))
 		{
 			rna.readNumBlades(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "HubRadius"))
+		{
+			rna.readHubRadius(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "HubHeight"))
+		{
+			rna.readHubHeight(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "Overhang"))
+		{
+			rna.readOverhang(getData(strInput));
 			continue;
 		}
 
@@ -378,8 +434,8 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 	}
 
 	fowt.setFloater(floater);
+	fowt.setRNA(rna);
 }
-
 
 
 
@@ -445,6 +501,9 @@ void IO::setFiles(const std::string &inFlPath)
 		throw std::runtime_error("Unable to open file " + m_outFilePath + " for writting.");
 	}
 }
+
+
+
 
 
 // Read line from input file to string "strInput".
@@ -740,23 +799,6 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << IO::METiS_Header();
 	m_sumFl << "\n\n";
 
-
-   /*double timeStep() const;
-    double timeTotal() const;
-    double time() const;
-	bool useBEMT() const;
-	bool useTipLoss() const;
-	bool useHubLoss() const;
-	bool useSkewCorr() const;
-
-    double gravity() const;
-	double watDensity() const;
-    double watDepth() const;
-	double airDensity() const;
-	double windVel() const;
-	double windExp() const;*/
-
-
 	m_sumFl << "ENVIR:\n";
 	m_sumFl << "Time Step:\t" << envir.timeStep() << '\n';
 	m_sumFl << "Total Time:\t" << envir.timeTotal() << '\n';
@@ -779,6 +821,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "FOWT:\n";
 	m_sumFl << "Linear Stiffness:\t" << fowt.printLinStiff() << '\n';
 	m_sumFl << "Floater:\n" << fowt.printFloater();
+	m_sumFl << "RNA:\n" << fowt.printRNA();
 
 	m_sumFl << "\n\n";
 	m_sumFl << "Output Variables:\n" << IO::printOutVar();

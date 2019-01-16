@@ -19,10 +19,10 @@ else
     flSep = '/';
 end
 
-flNm = ['..' flSep 'test' flSep 'output_4' flSep 'output.txt'];
+flNm = ['..' flSep 'test' flSep 'output' flSep 'output.txt'];
 
-flNm_old = '/home/lucas/Google Drive/Doutorado/Software Morison/MATLAB version/OC4_waveOnly_H1000/45deg/firstPlatform_45deg_T10p00_out.mat';
-% flNm_old = 'C:\Users\lucas.henrique\Google Drive\Doutorado\Software Morison\MATLAB version\OC4_waveOnly_H1000\45deg\firstPlatform_45deg_T10p00_out.mat';
+% flNm_old = '/home/lucas/Google Drive/Doutorado/Software Morison/MATLAB version/OC4_waveOnly_H1000/45deg/firstPlatform_45deg_T10p00_out.mat';
+flNm_old = 'C:\Users\lucas.henrique\Google Drive\Doutorado\Software Morison\MATLAB version\OC4_waveOnly_H1000\45deg\firstPlatform_45deg_T10p00_out.mat';
 
 data = importdata(flNm);
 data = data.data;
