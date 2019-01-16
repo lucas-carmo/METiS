@@ -46,6 +46,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 {
 	// Classes that are members of FOWT and ENVIR
 	Floater floater;
+	RNA rna;
 
 	// Read file line by line
 	while (m_inFl)
@@ -57,7 +58,9 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		Read data based on keywords
 		**************************/
 
-		// Read data to envir
+		/*
+			Read data to envir
+		*/
 		if (caseInsCompare(getKeyword(strInput), "TimeStep"))
 		{
 			envir.readTimeStep(getData(strInput));
@@ -152,6 +155,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 				IO::readLineInputFile(strInput);
 			}
+			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Nodes")) // A list of Nodes is supposed to follow the "Wave keyword"
@@ -170,11 +174,13 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 				IO::readLineInputFile(strInput);
 			}
+			continue;
 		}
 
 
-
-		// Read data to fowt
+		/*
+			Read data to fowt
+		*/
 		else if (caseInsCompare(getKeyword(strInput), "LinStiff"))
 		{
 			fowt.readLinStiff(getData(strInput));
@@ -215,6 +221,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 				IO::readLineInputFile(strInput);
 			}
+			continue;
 		}
 
 
@@ -234,12 +241,13 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 				IO::readLineInputFile(strInput);
 			}
+			continue;
 		}
 
 
-		else if (caseInsCompare(getKeyword(strInput), "numBlades"))
+		else if (caseInsCompare(getKeyword(strInput), "NumBlades"))
 		{
-			// implementar no futuro
+			rna.readNumBlades(getData(strInput));
 			continue;
 		}
 
@@ -260,26 +268,28 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 				IO::readLineInputFile(strInput);
 			}
+			continue;
 		}
 
 
-		// else if (caseInsCompare(getKeyword(strInput), "Blades_elasto"))
-		// {
-		// 	IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+		else if (caseInsCompare(getKeyword(strInput), "Blades_elasto"))
+		{
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
-		// 	while (!caseInsCompare(getKeyword(strInput), "END"))
-		// 	{
-		// 		if (!m_inFl) // Signal if the end of file is reached before the end keyword
-		// 		{
-		// 			throw std::runtime_error("End of file reached before END keyword in BLADES_ELASTO specification.");
-		// 			return;
-		// 		}
+			while (!caseInsCompare(getKeyword(strInput), "END"))
+			{
+		 		if (!m_inFl) // Signal if the end of file is reached before the end keyword
+		 		{
+		 			throw std::runtime_error("End of file reached before END keyword in BLADES_ELASTO specification.");
+		 			return;
+		 		}
 
-		// 		// Implementar no futuro
+		 		// Implementar no futuro
 
-		// 		IO::readLineInputFile(strInput);
-		// 	}
-		// }
+		 		IO::readLineInputFile(strInput);
+			}
+			continue;
+		}
 
 
 		else if (caseInsCompare(getKeyword(strInput), "Airfoil_data"))
@@ -298,45 +308,48 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 				IO::readLineInputFile(strInput);
 			}
+			continue;
 		}
 
 
-		// else if (caseInsCompare(getKeyword(strInput), "Tower_Aero"))
-		// {
-		// 	IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+		else if (caseInsCompare(getKeyword(strInput), "Tower_Aero"))
+		{
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
-		// 	while (!caseInsCompare(getKeyword(strInput), "END"))
-		// 	{
-		// 		if (!m_inFl) // Signal if the end of file is reached before the end keyword
-		// 		{
-		// 			throw std::runtime_error("End of file reached before END keyword in TOWER_AERO specification.");
-		// 			return;
-		// 		}
+			while (!caseInsCompare(getKeyword(strInput), "END"))
+			{
+		 		if (!m_inFl) // Signal if the end of file is reached before the end keyword
+		 		{
+		 			throw std::runtime_error("End of file reached before END keyword in TOWER_AERO specification.");
+		 			return;
+		 		}
 
-		// 		// Implementar no futuro
+		 		// Implementar no futuro
 
-		// 		IO::readLineInputFile(strInput);
-		// 	}
-		// }
+		 		IO::readLineInputFile(strInput);
+			}
+			continue;
+		}
 
 
-		// else if (caseInsCompare(getKeyword(strInput), "Tower_Elasto"))
-		// {
-		// 	IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+		else if (caseInsCompare(getKeyword(strInput), "Tower_Elasto"))
+		{
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
-		// 	while (!caseInsCompare(getKeyword(strInput), "END"))
-		// 	{
-		// 		if (!m_inFl) // Signal if the end of file is reached before the end keyword
-		// 		{
-		// 			throw std::runtime_error("End of file reached before END keyword in TOWER_ELASTO specification.");
-		// 			return;
-		// 		}
+			while (!caseInsCompare(getKeyword(strInput), "END"))
+			{
+		 		if (!m_inFl) // Signal if the end of file is reached before the end keyword
+		 		{
+		 			throw std::runtime_error("End of file reached before END keyword in TOWER_ELASTO specification.");
+		 			return;
+		 		}
 
-		// 		// Implementar no futuro
+		 		// Implementar no futuro
 
-		// 		IO::readLineInputFile(strInput);
-		// 	}
-		// }
+		 		IO::readLineInputFile(strInput);
+			}
+			continue;
+		}
 
 
 		else if (caseInsCompare(getKeyword(strInput), "Output")) // List of parameters that will be output
@@ -355,6 +368,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 				IO::readLineInputFile(strInput);
 			}
+			continue;
 		}
 
 		else if (!caseInsCompare(getKeyword(strInput), "END_OF_INPUT_FILE"))
@@ -727,13 +741,36 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "\n\n";
 
 
+   /*double timeStep() const;
+    double timeTotal() const;
+    double time() const;
+	bool useBEMT() const;
+	bool useTipLoss() const;
+	bool useHubLoss() const;
+	bool useSkewCorr() const;
+
+    double gravity() const;
+	double watDensity() const;
+    double watDepth() const;
+	double airDensity() const;
+	double windVel() const;
+	double windExp() const;*/
+
+
 	m_sumFl << "ENVIR:\n";
-	m_sumFl << "Time Step:\t" << envir.printTimeStep() << '\n';
-	m_sumFl << "Total Time:\t" << envir.printTimeTotal() << '\n';
+	m_sumFl << "Time Step:\t" << envir.timeStep() << '\n';
+	m_sumFl << "Total Time:\t" << envir.timeTotal() << '\n';
 	m_sumFl << "Time Ramp:\t" << envir.printTimeRamp() << '\n';
-	m_sumFl << "Gravity:\t" << envir.printGrav() << '\n';
-	m_sumFl << "Water Density:\t" << envir.printWatDens() << '\n';
-	m_sumFl << "Water Depth:\t" << envir.printWatDepth() << '\n';
+	m_sumFl << "Use BEMT:\t" << envir.useBEMT() << '\n';
+	m_sumFl << "Use Tip Loss:\t" << envir.useTipLoss() << '\n';
+	m_sumFl << "Use Hub Loss:\t" << envir.useHubLoss() << '\n';
+	m_sumFl << "Use Skew Correction:\t" << envir.useSkewCorr() << '\n';
+	m_sumFl << "Gravity:\t" << envir.gravity() << '\n';
+	m_sumFl << "Water Density:\t" << envir.watDensity() << '\n';
+	m_sumFl << "Water Depth:\t" << envir.watDepth() << '\n';
+	m_sumFl << "Air density:\t" << envir.airDensity() << '\n';
+	m_sumFl << "Wind X velocity:\t" << envir.windVel() << '\n';
+	m_sumFl << "Wind exp:\t" << envir.windExp() << '\n';
 	m_sumFl << "Nodes: \n" << envir.printNodes() << '\n';
 	m_sumFl << "Wave Locations: " << envir.printWaveLocation() << '\n';
 	m_sumFl << "\n" << envir.printWave() << '\n';
