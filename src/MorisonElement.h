@@ -47,6 +47,10 @@ public:
 
 	// Printers and getters
 	virtual std::string print() const = 0;
+
+	/*****************************************************
+		Clone for creating copies of the Morison Element
+	*****************************************************/
 	virtual MorisonElement* clone() const = 0;
 };
 
