@@ -6,7 +6,7 @@
 
 - Install CMake: `sudo apt-get install cmake`
 
-- OpenBLAS: `sudo apt-get install libopenblass-dev`    *(see the readme file provided with Armadillo for the other options, like MKL)*
+- OpenBLAS: `sudo apt-get install libopenblas-dev`    *(see the readme file provided with Armadillo for the other options, like MKL)*
 
 - Armadillo (details in the readme file provided with Armadillo): 
     1. Download at http://arma.sourceforge.net;
@@ -15,6 +15,9 @@
     4. To generate the run-time armadillo library, type `make`;
     5. Type `sudo make install`
 
+- I have run into a problem when Anaconda is installed. Armadillo could not found **libhdf5.so.101**, so I had to add the following line to **~/.bashrc**: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lucas/anaconda3/lib`. Then, I needed to reload the .bashrc by running `source ~\.bashrc`. After that, everything went fine.
+
+    
 
 ### **Compiling and running**
 After installing all the previous dependencies/third party tools listed above, METiS can be compiled, linked and run using the following commands:
