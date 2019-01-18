@@ -154,22 +154,45 @@ void FOWT::update(const vec::fixed<6> &pos, const vec::fixed<6> &vel, const vec:
 	m_floater.updatePosVelAcc(m_pos, m_vel, m_acc);
 }
 
-vec::fixed<6> FOWT::acceleration(const ENVIR &envir)
+vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 {
 	IO::print2outLine(IO::OUTFLAG_FOWT_POS, m_pos);
 
-	vec::fixed<6> acc;
+	vec::fixed<6> acc(fill::zeros);
 	vec::fixed<6> inertiaMatrix = m_floater.inertia();
 
 	vec::fixed<6> force = totalForce(envir);
 	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE, force);
 
-	acc[0] = force[0] / mass();
-	acc[1] = force[1] / mass();
-	acc[2] = force[2] / mass();
-	acc[3] = force[3] / inertiaMatrix[0];
-	acc[4] = force[4] / inertiaMatrix[1];
-	acc[5] = force[5] / inertiaMatrix[2];
+	if (envir.isSurgeActive())
+	{
+		acc[0] = force[0] / mass();
+	}
+
+	if (envir.isSwayActive())
+	{
+		acc[1] = force[1] / mass();
+	}
+
+	if (envir.isHeaveActive())
+	{
+		acc[2] = force[2] / mass();
+	}
+
+	if (envir.isRollActive())
+	{
+		acc[3] = force[3] / inertiaMatrix[0];
+	}
+
+	if (envir.isPitchActive())
+	{
+		acc[4] = force[4] / inertiaMatrix[1];
+	}
+
+	if (envir.isYawActive())
+	{
+		acc[5] = envir.isYawActive()   * force[5] / inertiaMatrix[2];
+	}
 
 	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE,acc);
 

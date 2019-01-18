@@ -4,4 +4,4 @@
 #include "FOWT.h"
 #include "IO.h"
 
-void timeDomainAnalysis(FOWT &fowt, ENVIR &envir);
+void timeDomainAnalysis_FOWT(FOWT &fowt, ENVIR &envir);

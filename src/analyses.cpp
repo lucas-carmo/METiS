@@ -6,7 +6,7 @@
 
 using namespace arma;
 
-void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
+void timeDomainAnalysis_FOWT(FOWT &fowt, ENVIR &envir)
 {    
     IO::print2outLineHeader_turnOn(); // The header of the formatted output file is written during the first time step
 
@@ -57,7 +57,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
         acc0 = fowt.acc();   
 
         // RK4: first estimation
-        acc_k1 = fowt.acceleration(envir);
+        acc_k1 = fowt.calcAcceleration(envir);
         vel_k1 = acc_k1 * envir.timeStep();
         pos_k1 = vel0 * envir.timeStep();        
 
@@ -77,7 +77,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
         fowt.update( pos0 + pos_k1/2 , vel0 + vel_k1/2 , acc_k1); 
         envir.stepTime(envir.timeStep()/2);
 
-        acc_k2 = fowt.acceleration(envir);
+        acc_k2 = fowt.calcAcceleration(envir);
         vel_k2 = acc_k2 * envir.timeStep();
         pos_k2 = (vel0 + vel_k1/2) * envir.timeStep();     
 
@@ -86,7 +86,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
         // Update only fowt. Environment is already at t+dt/2
         fowt.update( pos0 + pos_k2/2 , vel0 + vel_k2/2 , acc_k2); 
 
-        acc_k3 = fowt.acceleration(envir);
+        acc_k3 = fowt.calcAcceleration(envir);
         vel_k3 = acc_k3 * envir.timeStep();
         pos_k3 = (vel0 + vel_k2/2) * envir.timeStep(); 
         
@@ -96,7 +96,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
         fowt.update( pos0 + pos_k3 , vel0 + vel_k3 , acc_k3);
         envir.stepTime(envir.timeStep()/2);
 
-        acc_k4 = fowt.acceleration(envir);
+        acc_k4 = fowt.calcAcceleration(envir);
         vel_k4 = acc_k4 * envir.timeStep();
         pos_k4 = (vel0 + vel_k3) * envir.timeStep(); 
 

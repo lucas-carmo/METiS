@@ -6,16 +6,12 @@
 %%-----------------------------------------------------------------------------%%
 %%----------------------------- ACTIVE ANALYSES -------------------------------%%
 %%-----------------------------------------------------------------------------%%
-% HYDRO
-% AERO
-% MOOR
-% ELAST
-% Talvez mudar isso por um flag que especifica se e:
-% Onshore
-% Offshore fixa
-% Offshore flutuante
-% 
-% MELHOR AINDA. Acho que só poder desabilitar DoFs já é o suficiente pra fazer as análises.
+% The analysis can be of three different types, specified by the following strings:
+% *) FOWT -> For Floating Offshore Wind Turbines
+% *) FixedOffshore -> For offshore wind turbines that are fixed
+% *) Onshore -> For onshore wind turbines
+% Each of the analyses requires different inputs
+TYPE FOWT
 DOFS 1 1 1 1 1 1
 
 

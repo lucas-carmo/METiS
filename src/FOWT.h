@@ -60,7 +60,7 @@ public:
 	/*****************************************************
 		Forces, acceleration, position, etc
 	*****************************************************/
-	vec::fixed<6> acceleration(const ENVIR &envir);
+	vec::fixed<6> calcAcceleration(const ENVIR &envir);
 	void update(const vec::fixed<6> &pos, const vec::fixed<6> &vel, const vec::fixed<6> &acc);
 
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir);

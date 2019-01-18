@@ -21,8 +21,8 @@ end
 
 flNm = ['..' flSep 'test' flSep 'output' flSep 'output.txt'];
 
-% flNm_old = '/home/lucas/Google Drive/Doutorado/Software Morison/MATLAB version/OC4_waveOnly_H1000/45deg/firstPlatform_45deg_T10p00_out.mat';
-flNm_old = 'C:\Users\lucas.henrique\Google Drive\Doutorado\Software Morison\MATLAB version\OC4_waveOnly_H1000\45deg\firstPlatform_45deg_T10p00_out.mat';
+flNm_old = '/home/lucas/Google Drive_31-12-17/Doutorado/Software Morison/MATLAB version/OC4_waveOnly_H1000/45deg/firstPlatform_45deg_T10p00_out.mat';
+% flNm_old = 'C:\Users\lucas.henrique\Google Drive\Doutorado\Software Morison\MATLAB version\OC4_waveOnly_H1000\45deg\firstPlatform_45deg_T10p00_out.mat';
 
 data = importdata(flNm);
 data = data.data;
@@ -41,6 +41,7 @@ hold on
 plot(time_old, data_old.strucp_t.pos(:,1))
 title('surge')
 set(gca, 'fontsize', sizeOfFont)
+xlim([0 200])
 
 subplot(2,3,2)
 plot(data(:,1),data(:,3))

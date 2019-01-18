@@ -57,10 +57,21 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		/**************************
 		Read data based on keywords
 		**************************/
-
 		/*
 			Read data to envir
 		*/
+		if (caseInsCompare(getKeyword(strInput), "TYPE"))
+		{
+			envir.readTypeAnalysis(getData(strInput));
+			continue;
+		}
+
+		if (caseInsCompare(getKeyword(strInput), "DOFS"))
+		{
+			envir.readDOFs(getData(strInput));
+			continue;
+		}		
+
 		if (caseInsCompare(getKeyword(strInput), "TimeStep"))
 		{
 			envir.readTimeStep(getData(strInput));
@@ -820,7 +831,10 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << IO::METiS_Header();
 	m_sumFl << "\n\n";
 
-	m_sumFl << "ENVIR:\n";
+	m_sumFl << "Type:\t" << envir.printTypeAnalysis() << "\n\n";
+	m_sumFl << "ENVIR:\n";	
+	m_sumFl << "DOFs:\t" << envir.isSurgeActive() << ' ' << envir.isSwayActive() << ' ' << envir.isHeaveActive()
+						 << ' ' << envir.isRollActive() << ' ' << envir.isPitchActive() << ' ' << envir.isYawActive() << '\n';
 	m_sumFl << "Time Step:\t" << envir.timeStep() << '\n';
 	m_sumFl << "Total Time:\t" << envir.timeTotal() << '\n';
 	m_sumFl << "Time Ramp:\t" << envir.printTimeRamp() << '\n';
