@@ -46,6 +46,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 {
 	// Classes that are members of FOWT and ENVIR
 	Floater floater;
+	RNA rna;
 
 	// Read file line by line
 	while (m_inFl)
@@ -56,8 +57,21 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		/**************************
 		Read data based on keywords
 		**************************/
+		/*
+			Read data to envir
+		*/
+		if (caseInsCompare(getKeyword(strInput), "TYPE"))
+		{
+			envir.readTypeAnalysis(getData(strInput));
+			continue;
+		}
 
-		// Read data to envir
+		if (caseInsCompare(getKeyword(strInput), "DOFS"))
+		{
+			envir.readDOFs(getData(strInput));
+			continue;
+		}		
+
 		if (caseInsCompare(getKeyword(strInput), "TimeStep"))
 		{
 			envir.readTimeStep(getData(strInput));
@@ -73,6 +87,30 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		else if (caseInsCompare(getKeyword(strInput), "TimeRamp"))
 		{
 			envir.readTimeRamp(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "UseBEMT"))
+		{
+			envir.readUseBEMT(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "UseTipLoss"))
+		{
+			envir.readUseTipLoss(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "UseHubLoss"))
+		{
+			envir.readUseHubLoss(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "UseSkewCorr"))
+		{
+			envir.readUseSkewCorr(getData(strInput));
 			continue;
 		}
 
@@ -94,6 +132,24 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			continue;
 		}
 
+		else if (caseInsCompare(getKeyword(strInput), "AirDens"))
+		{
+			envir.readAirDens(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "WindVel"))
+		{
+			envir.readWindVel(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "WindExp"))
+		{
+			envir.readWindExp(getData(strInput));
+			continue;
+		}
+
 		else if (caseInsCompare(getKeyword(strInput), "Wave")) // A list of Waves is supposed to follow the "Wave keyword"
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
@@ -110,6 +166,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 				IO::readLineInputFile(strInput);
 			}
+			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Nodes")) // A list of Nodes is supposed to follow the "Wave keyword"
@@ -128,11 +185,13 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 				IO::readLineInputFile(strInput);
 			}
+			continue;
 		}
 
 
-
-		// Read data to fowt
+		/*
+			Read data to fowt
+		*/
 		else if (caseInsCompare(getKeyword(strInput), "LinStiff"))
 		{
 			fowt.readLinStiff(getData(strInput));
@@ -169,10 +228,11 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				floater.addMorisonCirc(strInput, envir); // Add this Morison Element to the floater
+				floater.addMorisonCirc(strInput, envir); // Add this Morison Element to the floater. Need envir for the nodes location.
 
 				IO::readLineInputFile(strInput);
 			}
+			continue;
 		}
 
 
@@ -188,23 +248,73 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				floater.addMorisonRect(strInput, envir); // Add this Morison Element to the floater
+				floater.addMorisonRect(strInput, envir); // Add this Morison Element to the floater. Need envir for the nodes location.
 
 				IO::readLineInputFile(strInput);
 			}
-		}
-
-
-		else if (caseInsCompare(getKeyword(strInput), "numBlades"))
-		{
-			// implementar no futuro
 			continue;
 		}
 
 
-		else if (caseInsCompare(getKeyword(strInput), "numAirfoils"))
+		else if (caseInsCompare(getKeyword(strInput), "RotSpeed"))
 		{
-			// implementar no futuro
+			rna.readRotorSpeed(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "RotTilt"))
+		{
+			rna.readRotorTilt(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "RotYaw"))
+		{
+			rna.readRotorYaw(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "BldPitch"))
+		{
+			rna.readBladePitch(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "BldPrecone"))
+		{
+			rna.readBladePrecone(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "NumBlades"))
+		{
+			rna.readNumBlades(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "HubRadius"))
+		{
+			rna.readHubRadius(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "HubHeight"))
+		{
+			rna.readHubHeight(getData(strInput));
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "Overhang"))
+		{
+			rna.readOverhang(getData(strInput));
 			continue;
 		}
 
@@ -221,10 +331,32 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				// Implementar no futuro
+				rna.readBladeAeroLine(strInput);
 
 				IO::readLineInputFile(strInput);
 			}
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "Airfoil_data"))
+		{
+			rna.addAirfoil(); // Add new airfoil to rna
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+
+			while (!caseInsCompare(getKeyword(strInput), "END"))
+			{
+				if (!m_inFl) // Signal if the end of file is reached before the end keyword
+				{
+					throw std::runtime_error("End of file reached before END keyword in AIRFOIL_DATA specification.");
+					return;
+				}
+
+				rna.readAirfoilLine(strInput);
+
+				IO::readLineInputFile(strInput);
+			}
+			continue;
 		}
 
 
@@ -234,16 +366,17 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 			while (!caseInsCompare(getKeyword(strInput), "END"))
 			{
-				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{
-					throw std::runtime_error("End of file reached before END keyword in BLADES_ELASTO specification.");
-					return;
-				}
+		 		if (!m_inFl) // Signal if the end of file is reached before the end keyword
+		 		{
+		 			throw std::runtime_error("End of file reached before END keyword in BLADES_ELASTO specification.");
+		 			return;
+		 		}
 
-				// Implementar no futuro
+		 		// Implement in the future
 
-				IO::readLineInputFile(strInput);
+		 		IO::readLineInputFile(strInput);
 			}
+			continue;
 		}
 
 
@@ -259,10 +392,11 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				// Implementar no futuro
+				// Implement in the future
 
 				IO::readLineInputFile(strInput);
 			}
+			continue;
 		}
 
 
@@ -272,16 +406,17 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 			while (!caseInsCompare(getKeyword(strInput), "END"))
 			{
-				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{
-					throw std::runtime_error("End of file reached before END keyword in TOWER_AERO specification.");
-					return;
-				}
+		 		if (!m_inFl) // Signal if the end of file is reached before the end keyword
+		 		{
+		 			throw std::runtime_error("End of file reached before END keyword in TOWER_AERO specification.");
+		 			return;
+		 		}
 
-				// Implementar no futuro
+				// Implement in the future
 
-				IO::readLineInputFile(strInput);
+		 		IO::readLineInputFile(strInput);
 			}
+			continue;
 		}
 
 
@@ -291,16 +426,17 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 			while (!caseInsCompare(getKeyword(strInput), "END"))
 			{
-				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{
-					throw std::runtime_error("End of file reached before END keyword in TOWER_ELASTO specification.");
-					return;
-				}
+		 		if (!m_inFl) // Signal if the end of file is reached before the end keyword
+		 		{
+		 			throw std::runtime_error("End of file reached before END keyword in TOWER_ELASTO specification.");
+		 			return;
+		 		}
 
-				// Implementar no futuro
+				// Implement in the future
 
-				IO::readLineInputFile(strInput);
+		 		IO::readLineInputFile(strInput);
 			}
+			continue;
 		}
 
 
@@ -316,10 +452,11 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				IO::setResults2Output(strInput, fowt, envir);
+				IO::setResults2Output(strInput, envir);
 
 				IO::readLineInputFile(strInput);
 			}
+			continue;
 		}
 
 		else if (!caseInsCompare(getKeyword(strInput), "END_OF_INPUT_FILE"))
@@ -329,8 +466,8 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 	}
 
 	fowt.setFloater(floater);
+	fowt.setRNA(rna);
 }
-
 
 
 
@@ -398,6 +535,9 @@ void IO::setFiles(const std::string &inFlPath)
 }
 
 
+
+
+
 // Read line from input file to string "strInput".
 // The function deals with empty lines and comments using functions "hasContent" and
 // "thereIsCommentInString". Besides, it updates the line number counter inLineNumber
@@ -434,7 +574,7 @@ unsigned int IO::getInLineNumber()
 
 // Set the flags specifying which variables must be output 
 // and other necessary information (like the IDs of the points where the wave elevation will be output)
-void IO::setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir)
+void IO::setResults2Output(std::string strInput, ENVIR &envir)
 {
 	if (caseInsCompare(getKeyword(strInput), "fowt_pos"))
 	{
@@ -691,14 +831,23 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << IO::METiS_Header();
 	m_sumFl << "\n\n";
 
-
-	m_sumFl << "ENVIR:\n";
-	m_sumFl << "Time Step:\t" << envir.printTimeStep() << '\n';
-	m_sumFl << "Total Time:\t" << envir.printTimeTotal() << '\n';
+	m_sumFl << "Type:\t" << envir.printTypeAnalysis() << "\n\n";
+	m_sumFl << "ENVIR:\n";	
+	m_sumFl << "DOFs:\t" << envir.isSurgeActive() << ' ' << envir.isSwayActive() << ' ' << envir.isHeaveActive()
+						 << ' ' << envir.isRollActive() << ' ' << envir.isPitchActive() << ' ' << envir.isYawActive() << '\n';
+	m_sumFl << "Time Step:\t" << envir.timeStep() << '\n';
+	m_sumFl << "Total Time:\t" << envir.timeTotal() << '\n';
 	m_sumFl << "Time Ramp:\t" << envir.printTimeRamp() << '\n';
-	m_sumFl << "Gravity:\t" << envir.printGrav() << '\n';
-	m_sumFl << "Water Density:\t" << envir.printWatDens() << '\n';
-	m_sumFl << "Water Depth:\t" << envir.printWatDepth() << '\n';
+	m_sumFl << "Use BEMT:\t" << envir.useBEMT() << '\n';
+	m_sumFl << "Use Tip Loss:\t" << envir.useTipLoss() << '\n';
+	m_sumFl << "Use Hub Loss:\t" << envir.useHubLoss() << '\n';
+	m_sumFl << "Use Skew Correction:\t" << envir.useSkewCorr() << '\n';
+	m_sumFl << "Gravity:\t" << envir.gravity() << '\n';
+	m_sumFl << "Water Density:\t" << envir.watDensity() << '\n';
+	m_sumFl << "Water Depth:\t" << envir.watDepth() << '\n';
+	m_sumFl << "Air density:\t" << envir.airDensity() << '\n';
+	m_sumFl << "Wind X velocity:\t" << envir.windVel() << '\n';
+	m_sumFl << "Wind exp:\t" << envir.windExp() << '\n';
 	m_sumFl << "Nodes: \n" << envir.printNodes() << '\n';
 	m_sumFl << "Wave Locations: " << envir.printWaveLocation() << '\n';
 	m_sumFl << "\n" << envir.printWave() << '\n';
@@ -707,6 +856,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "FOWT:\n";
 	m_sumFl << "Linear Stiffness:\t" << fowt.printLinStiff() << '\n';
 	m_sumFl << "Floater:\n" << fowt.printFloater();
+	m_sumFl << "RNA:\n" << fowt.printRNA();
 
 	m_sumFl << "\n\n";
 	m_sumFl << "Output Variables:\n" << IO::printOutVar();

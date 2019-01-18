@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 		IO::readInputFile(fowt, envir); // Read data from input file to fowt and envir
 		IO::printSumFile(fowt, envir);		
 
-		timeDomainAnalysis(fowt, envir);
+		timeDomainAnalysis_FOWT(fowt, envir);
 	}
 
 	catch(std::exception &exception)

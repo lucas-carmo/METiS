@@ -58,6 +58,10 @@ std::string MorisonRect::print() const
 	return output;
 }
 
+
+/*****************************************************
+	Clone for creating copies of the Morison Element
+*****************************************************/
 MorisonRect* MorisonRect::clone() const
 {
 	return (new MorisonRect(*this));

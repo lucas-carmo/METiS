@@ -32,7 +32,7 @@ public:
 
 
 	/*****************************************************
-	Forces acting on the Morison Element and functions for node position/velocity/acceleration)
+		Forces acting on the Morison Element and functions for node position/velocity/acceleration)
 	*****************************************************/
 	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) const override;	
 	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir) const override;
@@ -41,5 +41,9 @@ public:
 		Printing
 	*****************************************************/
 	virtual std::string print() const override;
+
+	/*****************************************************
+		Clone for creating copies of the Morison Element
+	*****************************************************/
 	virtual MorisonRect* clone() const override;
 };

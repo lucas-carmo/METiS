@@ -8,10 +8,13 @@
 %%-----------------------------------------------------------------------------%%
 %%----------------------------- ACTIVE ANALYSES -------------------------------%%
 %%-----------------------------------------------------------------------------%%
-% HYDRO
-% AERO
-% MOOR
-% ELAST
+% The analysis can be of three different types, specified by the following strings:
+% *) FOWT -> For Floating Offshore Wind Turbines
+% *) FixedOffshore -> For offshore wind turbines that are fixed
+% *) Onshore -> For onshore wind turbines
+% Each of the analyses requires different inputs
+TYPE FOWT
+DOFS 1 1 0 0 0 1
 
 
 %%-----------------------------------------------------------------------------%%
@@ -152,6 +155,21 @@ Morison_circ
 75	76	1.6	0.63	1.63	15	0	0	0	0	0
 END
 
+%%-----------------------------------------------------------------------------%%
+%%---------------------------- RNA DESCRIPTION --------------------------------%%
+%%-----------------------------------------------------------------------------%%
+RotSpeed    12  % Rotor speed in rpm (constant)
+RotTilt     0   % Rotor tilt angle (degrees)
+RotYaw      0   % Rotor yaw angle (degrees)
+NumBlades   3   % Number of blades
+BldPitch    5   % Blade pitch angle (degrees)
+BldPrecone  0   % Blade coning angle (degrees)
+
+HubRadius   1.5
+HubHeight   90
+Overhang    -5
+
+
 
 %%-----------------------------------------------------------------------------%%
 %%-------------------------- BLADES DESCRIPTION -------------------------------%%
@@ -159,8 +177,6 @@ END
 % Tem que dar uma uniformizada nisso (coisa que o FAST não faz). No aero, tá o comprimento da pá
 % em metros, enquanto que no estrutural tá em fração do comprimento total. Acho que o melhor é colocar 
 % o blade span como um parametro isolado, talvez próximo ao numBlades, e deixar tudo como fração do comprimento da pá
-numBlades		3 
-numAirfoils		8
  
 Blades_aero  % Aerodynamic properties of the blades
 %   BlSpn         BlCrvAC       BlSwpAC        BlCrvAng      BlTwist       BlChord          BlAFID - Airfoil data the local blade node is associated with (1 to numAirfoils)
@@ -1153,7 +1169,6 @@ Tower_elasto % Structural properties of the tower
 9.0000000E-001  2.1747700E+003  1.1363000E+011  1.1363000E+011  
 1.0000000E+000  1.9538700E+003  8.9488000E+010  8.9488000E+010  
 END
-
 
 OUTPUT
 fowt_pos

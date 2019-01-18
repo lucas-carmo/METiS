@@ -36,5 +36,9 @@ public:
 		Printing
 	*****************************************************/
 	virtual std::string print() const override;
+
+	/*****************************************************
+		Clone for creating copies of the Morison Element
+	*****************************************************/
 	virtual MorisonCirc* clone() const override;
 };

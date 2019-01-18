@@ -3,6 +3,7 @@
 #include <string>
 #include <armadillo>
 #include "Floater.h"
+#include "RNA.h"
 #include "ENVIR.h"
 
 
@@ -11,13 +12,13 @@ using namespace arma; // For armadillo classes
 class FOWT
 {
 private:
+	//Physical members of the FOWT (floater, rotor nacelle assembly (RNA), tower, mooring lines, ...)
 	Floater m_floater;
 	//Tower m_tower;
-	//Rotor m_rotor;
-	//Nacelle m_nacelle;
+	RNA m_rna;
 	vec::fixed<3> m_linStiff;
 
-	// Properties derived from the ones others
+	// Properties derived from the other ones
 	double m_mass;
 	vec::fixed<3> m_CoG;
 
@@ -40,6 +41,7 @@ public:
 	*****************************************************/
 	void readLinStiff(const std::string &data);
 	void setFloater(Floater &floater);
+	void setRNA(RNA &rna);
 
 	/*****************************************************
 		Getters
@@ -53,11 +55,12 @@ public:
  
 	std::string printLinStiff() const;
 	std::string printFloater() const;
+	std::string printRNA() const;
 
 	/*****************************************************
 		Forces, acceleration, position, etc
 	*****************************************************/
-	vec::fixed<6> acceleration(const ENVIR &envir);
+	vec::fixed<6> calcAcceleration(const ENVIR &envir);
 	void update(const vec::fixed<6> &pos, const vec::fixed<6> &vel, const vec::fixed<6> &acc);
 
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir);

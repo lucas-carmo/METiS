@@ -21,46 +21,96 @@ ENVIR::ENVIR()
 /*****************************************************
 	Setters
 *****************************************************/
+void ENVIR::readTypeAnalysis(const std::string &data)
+{
+	readDataFromString(data, m_typeAnalysis);
+}
+
+void ENVIR::readDOFs(const std::string &data)
+{
+	// The flags for each of the six degrees of freedom are separated by white spaces in the input string (whitespace or tab)
+	std::vector<std::string> input = stringTokenize(data, " \t");
+
+	// Check number of inputs
+	if (input.size() != 6)
+	{
+		throw std::runtime_error("Unable to read the DoFs in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+	}	
+
+	// Read data
+	readDataFromString(input.at(0), m_dofs[0]);
+	readDataFromString(input.at(1), m_dofs[1]);
+	readDataFromString(input.at(2), m_dofs[2]);
+	readDataFromString(input.at(3), m_dofs[3]);
+	readDataFromString(input.at(4), m_dofs[4]);
+	readDataFromString(input.at(5), m_dofs[5]);
+}
+
+
 void ENVIR::readTimeStep(const std::string &data)
 {
     readDataFromString(data, m_timeStep);
 }
-
-
 
 void ENVIR::readTimeTotal(const std::string &data)
 {
     readDataFromString(data, m_timeTotal);
 }
 
-
-
 void ENVIR::readTimeRamp(const std::string &data)
 {
     readDataFromString(data, m_timeRamp);
 }
 
+void ENVIR::readUseBEMT(const std::string &data)
+{
+	readDataFromString(data, m_useBEMT);
+}
 
+void ENVIR::readUseTipLoss(const std::string &data)
+{
+	readDataFromString(data, m_useTipLoss);
+}
+
+void ENVIR::readUseHubLoss(const std::string &data)
+{
+	readDataFromString(data, m_useHubLoss);
+}
+
+void ENVIR::readUseSkewCorr(const std::string &data)
+{
+	readDataFromString(data, m_useSkewCorr);
+}
 
 void ENVIR::readGrav(const std::string &data)
 {
 	readDataFromString(data, m_gravity);
 }
 
-
-
 void ENVIR::readWatDens(const std::string &data)
 {
 	readDataFromString(data, m_watDens);
 }
 
+void ENVIR::readAirDens(const std::string &data)
+{
+	readDataFromString(data, m_airDens);
+}
 
+void ENVIR::readWindVel(const std::string &data)
+{
+	readDataFromString(data, m_windVel);
+}
+
+void ENVIR::readWindExp(const std::string &data)
+{
+	readDataFromString(data, m_windExp);
+}
 
 void ENVIR::readWatDepth(const std::string &data)
 {
 	readDataFromString(data, m_watDepth);
 }
-
 
 void ENVIR::addWave(const Wave &wave)
 {
@@ -182,14 +232,29 @@ double ENVIR::time() const
 	return m_time;
 }
 
+bool ENVIR::useBEMT() const
+{
+	return m_useBEMT;
+}
+
+bool ENVIR::useTipLoss() const
+{
+	return m_useTipLoss;
+}
+
+bool ENVIR::useHubLoss() const
+{
+	return m_useHubLoss;
+}
+
+bool ENVIR::useSkewCorr() const
+{
+	return m_useSkewCorr;
+}
+
 double ENVIR::gravity() const
 {
 	return m_gravity;
-}
-
-double ENVIR::watDepth() const
-{
-	return m_watDepth;
 }
 
 double ENVIR::watDensity() const
@@ -197,9 +262,34 @@ double ENVIR::watDensity() const
 	return m_watDens;
 }
 
+double ENVIR::watDepth() const
+{
+	return m_watDepth;
+}
+
+double ENVIR::airDensity() const
+{
+	return m_airDens;
+}
+
+double ENVIR::windVel() const
+{
+	return m_windVel;
+}
+
+double ENVIR::windExp() const
+{
+	return m_windExp;
+}
+
 /*****************************************************
 	Printing
 *****************************************************/
+std::string ENVIR::printTypeAnalysis() const
+{
+	return m_typeAnalysis;
+}
+
 std::string ENVIR::printTimeStep() const
 {
 	return std::to_string(m_timeStep);
@@ -269,9 +359,55 @@ std::string ENVIR::printWaveLocation() const
 	return output;
 }
 
+
 /*****************************************************
 	Other functions
 *****************************************************/
+bool ENVIR::isSurgeActive() const
+{
+	return m_dofs[0];
+}
+
+bool ENVIR::isSwayActive() const
+{
+	return m_dofs[1];
+}
+
+bool ENVIR::isHeaveActive() const
+{
+	return m_dofs[2];
+}
+
+bool ENVIR::isRollActive() const
+{
+	return m_dofs[3];
+}
+
+bool ENVIR::isPitchActive() const
+{
+	return m_dofs[4];
+}
+
+bool ENVIR::isYawActive() const
+{
+	return m_dofs[5];
+}
+
+bool ENVIR::isTypeFOWT() const
+{
+	return (caseInsCompare(m_typeAnalysis, "FOWT"));
+}
+
+bool ENVIR::isTypeFixedOffshore() const
+{
+	return (caseInsCompare(m_typeAnalysis, "FixedOffshore"));
+}
+
+bool ENVIR::isTypeOnshore() const
+{
+	return (caseInsCompare(m_typeAnalysis, "Onshore"));
+}
+
 bool ENVIR::isNodeEmpty() const
 {
 	return m_nodesID.empty();
@@ -292,14 +428,6 @@ void ENVIR::stepTime(double const step)
 	m_time += step;
 }
 
-
-// Tr = nump.timeRamp * max(period); %#ok<UDIM>
-// if time < Tr
-//     ramp = 0.5 * ( 1 - cos(pi*time/Tr) );
-// %     ramp = sin( pi*time/(2*Tr) )^2;
-// else
-//     ramp = 1;
-// end
 
 double ENVIR::ramp() const
 {

@@ -331,6 +331,10 @@ std::string MorisonCirc::print() const
 	return output;
 }
 
+
+/*****************************************************
+	Clone for creating copies of the Morison Element
+*****************************************************/
 MorisonCirc* MorisonCirc::clone() const
 {
 	return (new MorisonCirc(*this));
