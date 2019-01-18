@@ -17,6 +17,21 @@ private:
     std::vector<int> m_airfoilID; // Airfoil data the local blade node is associated with
 
 public:
-	void addBladeLine(double span, double crvAC, double swpAC, double crvAng, double twist, double chord, int airfoilID);
+	/*****************************************************
+		Setters
+	*****************************************************/
+	void addBladeAeroLine(double span, double crvAC, double swpAC, double crvAng, double twist, double chord, int airfoilID);
+
+	/*****************************************************
+		Getters
+	*****************************************************/
+	unsigned int size() const;
+	double span(unsigned int index) const;
+	double crvAC(unsigned int index) const;
+	double swpAC(unsigned int index) const;
+	double crvAng(unsigned int index) const;
+	double twist(unsigned int index) const;
+	double chord(unsigned int index) const;
+	int airoilID(unsigned int index) const;
 };
 

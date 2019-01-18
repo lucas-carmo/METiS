@@ -135,6 +135,8 @@ std::string FOWT::printRNA() const
 	output = output + "\tHub Radius:\t" + std::to_string(m_rna.hubRadius()) + "\n";
 	output = output + "\tHub Height:\t" + std::to_string(m_rna.hubHeight()) + "\n";
 	output = output + "\tOverhang:\t" + std::to_string(m_rna.overhang()) + "\n";
+	output = output + "\tBlade aerodynamic properties:\n" + m_rna.printBladeAero();
+	output = output + "\tAirfoils properties:\n" + m_rna.printAirfoils();
 
 	return output;
 }

@@ -15,5 +15,19 @@ private:
 
 public:
 	Airfoil();
+
+	/*****************************************************
+		Setters
+	*****************************************************/
+	void addAirfoilLine(double angle, double CL, double CD, double CM);
+
+	/*****************************************************
+		Getters
+	*****************************************************/
+	unsigned int size() const;
+	double angle(unsigned int index) const;
+	double CL(unsigned int index) const;
+	double CD(unsigned int index) const;
+	double CM(unsigned int index) const;
 };
 

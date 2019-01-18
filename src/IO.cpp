@@ -217,7 +217,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				floater.addMorisonCirc(strInput, envir); // Add this Morison Element to the floater
+				floater.addMorisonCirc(strInput, envir); // Add this Morison Element to the floater. Need envir for the nodes location.
 
 				IO::readLineInputFile(strInput);
 			}
@@ -237,7 +237,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				floater.addMorisonRect(strInput, envir); // Add this Morison Element to the floater
+				floater.addMorisonRect(strInput, envir); // Add this Morison Element to the floater. Need envir for the nodes location.
 
 				IO::readLineInputFile(strInput);
 			}
@@ -320,7 +320,28 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				// Implementar no futuro
+				rna.readBladeAeroLine(strInput);
+
+				IO::readLineInputFile(strInput);
+			}
+			continue;
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "Airfoil_data"))
+		{
+			rna.addAirfoil(); // Add new airfoil to rna
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+
+			while (!caseInsCompare(getKeyword(strInput), "END"))
+			{
+				if (!m_inFl) // Signal if the end of file is reached before the end keyword
+				{
+					throw std::runtime_error("End of file reached before END keyword in AIRFOIL_DATA specification.");
+					return;
+				}
+
+				rna.readAirfoilLine(strInput);
 
 				IO::readLineInputFile(strInput);
 			}
@@ -340,7 +361,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		 			return;
 		 		}
 
-		 		// Implementar no futuro
+		 		// Implement in the future
 
 		 		IO::readLineInputFile(strInput);
 			}
@@ -360,7 +381,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				// Implementar no futuro
+				// Implement in the future
 
 				IO::readLineInputFile(strInput);
 			}
@@ -380,7 +401,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		 			return;
 		 		}
 
-		 		// Implementar no futuro
+				// Implement in the future
 
 		 		IO::readLineInputFile(strInput);
 			}
@@ -400,7 +421,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		 			return;
 		 		}
 
-		 		// Implementar no futuro
+				// Implement in the future
 
 		 		IO::readLineInputFile(strInput);
 			}
@@ -420,7 +441,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				IO::setResults2Output(strInput, fowt, envir);
+				IO::setResults2Output(strInput, envir);
 
 				IO::readLineInputFile(strInput);
 			}
@@ -542,7 +563,7 @@ unsigned int IO::getInLineNumber()
 
 // Set the flags specifying which variables must be output 
 // and other necessary information (like the IDs of the points where the wave elevation will be output)
-void IO::setResults2Output(std::string strInput, FOWT &fowt, ENVIR &envir)
+void IO::setResults2Output(std::string strInput, ENVIR &envir)
 {
 	if (caseInsCompare(getKeyword(strInput), "fowt_pos"))
 	{

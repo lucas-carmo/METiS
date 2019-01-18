@@ -33,7 +33,7 @@ public:
 	void readNumBlades(const std::string &data);
 	void readBladePrecone(const std::string &data);
 	void readBladePitch(const std::string &data);
-	void readBladeLine(const std::string &data);
+	void readBladeAeroLine(const std::string &data);
 	void addAirfoil();
 	void readAirfoilLine(const std::string &data);
 
@@ -52,8 +52,8 @@ public:
 	double bladePrecone() const;
 	double bladePitch() const;
 
-	/*std::string printBlade() const;
-	std::string printAirofoils() const;*/
+	std::string printBladeAero() const;
+	std::string printAirfoils() const;
 
 	double hubRadius() const;
 	double hubHeight() const;
