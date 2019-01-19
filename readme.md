@@ -15,20 +15,29 @@
     4. To generate the run-time armadillo library, type `make`;
     5. Type `sudo make install`
 
-- I have run into a problem when Anaconda is installed. Armadillo could not found **libhdf5.so.101**, so I had to add the following line to **~/.bashrc**: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/lucas/anaconda3/lib`. Then, I needed to reload the .bashrc by running `source ~\.bashrc`. After that, everything went fine.
+- I have run into a problem when Anaconda is installed. Armadillo could not found **libhdf5.so.101**, so I had to do one of the following:
+    1. Add this line to **~/.bashrc**: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/lib` (in my case, that was `/home/user/anaconda3/lib`). Then, I needed to reload the .bashrc by running `source ~\.bashrc`. After that, METiS compiled and linked just fine. However, this solution may affect other application, so I don't recommend it.
+    2. The other option was to include the following lines in the compiling script, in such a way that it does not affect other applications:
+```    
+    LD_LIBRARY_PATH=/path/to/lib
+    export LD_LIBRARY_PATH
+```    
+        
 
     
 
 ### **Compiling and running**
 After installing all the previous dependencies/third party tools listed above, METiS can be compiled, linked and run using the following commands:
-
+```
     g++ -c src/*.cpp                        # Compile the source files
     g++ -o METiS -O2 *.o -larmadillo        # Link the resulting object files and Armadillo
     ./METiS <filePath>                      # Run METiS
+```    
 
 To make this process easier, a bash script named **build_and_run.sh** is included. It can be run as
-
+```
     .\build_and_run             # Compile the source files and link with Armadillo + move METiS to bin folder + run METiS
+```    
 
 This process will be conducted with CMake in the future (I don't know when).
 
