@@ -38,7 +38,7 @@ Wave
 % WRWAVE \t Height \t Angular frequency \t Direction (in degrees)
 % FRWAVE \t Height \t Frequency         \t Direction (in degrees)
 % TRWAVE \t Height \t Period            \t Direction (in degrees)
-TRWAVE	2	10	45
+TRWAVE	2	30	45
 END
 
 
@@ -49,7 +49,7 @@ END
 FloaterMass		1.4267e7
 FloaterCoG		0,0,-13.46
 FloaterInertia	6.827e9,6.827e9,1.226e10,0,0,0
-LinStiff		1.5e5,1.5e5,1.3e8        % Linear mooring stiffness in surge, sway, yaw
+LinStiff        0,0,0        % Linear mooring stiffness in surge, sway, yaw
 
 
 % Nodes ID must be unique and in ascending order
