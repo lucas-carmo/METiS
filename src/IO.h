@@ -161,6 +161,9 @@ bool caseInsCompare(const std::wstring& s1, const std::wstring& s2);
 // Get folder path from a complete file path
 std::string getFileFolder(const std::string& path);
 
+// Get file name, without extension, from a complete file path
+std::string getFileName(const std::string& path);
+
 
 
 /*****************************************************
