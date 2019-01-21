@@ -90,8 +90,7 @@ public:
 	Functions related to output
 	*/
 	static std::string METiS_Header();
-	static void writeErrorMessage(const std::string &str);
-	static void writeWarningMessage(const std::string &str);	
+	static void print2log(const std::string &str);
 
 	// To summary file
 	static void printSumFile(const FOWT &fowt, const ENVIR &envir);
@@ -109,7 +108,7 @@ public:
 	static void print2outLine(const int num);
 	static void print2outLineHeader(const std::string &str);
 
-		// Functions that actually write to the output file
+	// Functions that actually write to the output file
 	static void printOutLineHeader2outFile();
 	static void printOutLine2outFile();
 	static void newLineOutFile();

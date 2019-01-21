@@ -461,7 +461,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		else if (!caseInsCompare(getKeyword(strInput), "END_OF_INPUT_FILE"))
 		{
-			writeWarningMessage("Unknown keyword '" + getKeyword(strInput) + "' in line " + std::to_string(IO::getInLineNumber()) + ".");
+			print2log("WARNING: Unknown keyword '" + getKeyword(strInput) + "' in line " + std::to_string(IO::getInLineNumber()) + ".");
 		}
 	}
 
@@ -670,31 +670,17 @@ std::string IO::METiS_Header()
 	return header;
 }
 
-void IO::writeErrorMessage(const std::string &str)
+void IO::print2log(const std::string &str)
 {
-	std::string mess = "ERROR: " + str;
-
 	if (m_logFl) // If we are able to write to the log file, do it
 	{
-		m_logFl << mess << std::endl;
+		m_logFl << str << std::endl;
 	}
 
-	// Write to the console, anyway
-	std::cout << "\n\n" << mess << std::endl;
+	// Write to the console as well
+	std::cout << "\n\n" << str << std::endl;
 }
 
-void IO::writeWarningMessage(const std::string &str)
-{
-	std::string mess = "WARNING: " + str;
-
-	if (m_logFl) // If we are able to write to the log file, do it
-	{
-		m_logFl << mess << std::endl;
-	}
-
-	// Write to the console, anyway
-	std::cout << "\n\n" << mess << std::endl;
-}
 
 // Set m_shouldWriteOutLine to true or false. This is the variable
 // that tells when the program should write to the formatted output file.
