@@ -19,7 +19,7 @@ else
     flSep = '/';
 end
 
-flNm = 'C:\Users\lucas.henrique\Nextcloud\Tese\Casos teste\OC4\metis_OC4_completo_h200\45deg\OC4_200m_45deg_T7_out.txt';
+flNm = '"C:\Users\lucas.henrique\Nextcloud\Tese\Casos teste\OC4\metis_OC4_completo_h200\45deg\OC4_200m_45deg_T7_log.txt"';
 
 % flNm_old = '/home/lucas/Google Drive_31-12-17/Doutorado/Software Morison/MATLAB version/OC4_waveOnly_H1000/45deg/firstPlatform_45deg_T6p00_out.mat';
 flNm_old = 'G:\Meu Drive\Doutorado\Software Morison\MATLAB version\OC4_waveOnly_H1000\45deg\firstPlatform_45deg_T7p00_out.mat';
