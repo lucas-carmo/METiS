@@ -581,6 +581,16 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_POS) = true;
 	}
 
+	if (caseInsCompare(getKeyword(strInput), "fowt_vel"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_VEL) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "fowt_acc"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_ACC) = true;
+	}
+
 	if (caseInsCompare(getKeyword(strInput), "wave_elev"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ELEV) = true;
@@ -704,7 +714,8 @@ void IO::print2outLineHeader_turnOff()
 void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 {
 	// Check whether the specified flag is indeed one that requires a vector with six components
-	if ((flag != OUTFLAG_FOWT_POS) && (flag != OUTFLAG_HD_FORCE) && (flag != OUTFLAG_HS_FORCE) && (flag != OUTFLAG_TOTAL_FORCE))
+	if ((flag != OUTFLAG_FOWT_POS) && (flag != OUTFLAG_FOWT_VEL) && (flag != OUTFLAG_FOWT_ACC) && 
+		(flag != OUTFLAG_HD_FORCE) && (flag != OUTFLAG_HS_FORCE) && (flag != OUTFLAG_TOTAL_FORCE))
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &force).");
 	}
@@ -745,6 +756,26 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			print2outLineHeader("Roll");
 			print2outLineHeader("Pitch");
 			print2outLineHeader("Yaw");
+		}
+
+		if (flag == OUTFLAG_FOWT_VEL)
+		{
+			print2outLineHeader("Surge_Vel");
+			print2outLineHeader("Sway_Vel");
+			print2outLineHeader("Heave_Vel");
+			print2outLineHeader("Roll_Vel");
+			print2outLineHeader("Pitch_Vel");
+			print2outLineHeader("Yaw_Vel");
+		}
+
+		if (flag == OUTFLAG_FOWT_ACC)
+		{
+			print2outLineHeader("Surge_Acc");
+			print2outLineHeader("Sway_Acc");
+			print2outLineHeader("Heave_Acc");
+			print2outLineHeader("Roll_Acc");
+			print2outLineHeader("Pitch_Acc");
+			print2outLineHeader("Yaw_Acc");
 		}
 	}
 
