@@ -19,16 +19,17 @@ else
     flSep = '/';
 end
 
-flNm = 'C:\Users\lucas.henrique\Nextcloud\Tese\Casos teste\OC4\metis_OC4_completo_h200\45deg\OC4_200m_45deg_T7_out.txt';
+flNm = '/home/lucas/Nextcloud/Tese/Casos teste/OC4/metis_OC4_completo_h200_45deg/OC4_200m_45deg_T30p00_out.txt';
+flNm2 = '/home/lucas/Nextcloud/Tese/Casos teste/OC4/metis_OC4_completo_h200_45deg_fixed/OC4_200m_45deg_fixed_T30p00_out.txt';
 
-% flNm_old = '/home/lucas/Google Drive_31-12-17/Doutorado/Software Morison/MATLAB version/OC4_waveOnly_H1000/45deg/firstPlatform_45deg_T6p00_out.mat';
-flNm_old = 'G:\Meu Drive\Doutorado\Software Morison\MATLAB version\OC4_waveOnly_H1000\45deg\firstPlatform_45deg_T7p00_out.mat';
+
+legStr = {'Livre', 'Fixo'};
 
 data = importdata(flNm);
 data = data.data;
 
-data_old = load(flNm_old);
-time_old = 0:data_old.nump.timeStep:data_old.nump.timeTotal;
+data_2 = importdata(flNm2);
+data_2 = data_2.data;
 
 
 set(gcf,'color','w')
@@ -37,42 +38,43 @@ sizeOfFont = 12;
 subplot(2,3,1)
 plot(data(:,1),data(:,2))
 hold on
-plot(time_old, data_old.strucp_t.pos(:,1))
+plot(data_2(:,1),data_2(:,2))
+legend(legStr)
 title('surge')
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,2)
 plot(data(:,1),data(:,3))
 hold on
-plot(time_old, data_old.strucp_t.pos(:,2))
+plot(data_2(:,1),data_2(:,3))
 title('sway')
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,3)
 plot(data(:,1),data(:,4))
 hold on
-plot(time_old, data_old.strucp_t.pos(:,3) - data_old.strucp_t.pos(1,3))
+plot(data_2(:,1),data_2(:,4))
 title('heave')
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,4)
 plot(data(:,1),data(:,5))
 hold on
-plot(time_old, data_old.strucp_t.pos(:,4))
+plot(data_2(:,1),data_2(:,5))
 title('roll')
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,5)
 plot(data(:,1),data(:,6))
 hold on
-plot(time_old, data_old.strucp_t.pos(:,5))
+plot(data_2(:,1),data_2(:,6))
 title('pitch')
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,6)
 plot(data(:,1),data(:,7))
 hold on
-plot(time_old, data_old.strucp_t.pos(:,6))
+plot(data_2(:,1),data_2(:,7))
 title('yaw')
 set(gca, 'fontsize', sizeOfFont)
 
