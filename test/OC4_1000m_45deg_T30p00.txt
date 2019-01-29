@@ -1172,10 +1172,12 @@ END
 
 OUTPUT
 fowt_pos
+fowt_vel
+fowt_acc
 hs_force
 hd_force
+hd_inertia_force
+hd_drag_force
+hd_fk_force
 total_force
-wave_elev 11
-wave_vel
-wave_acc
 END

@@ -20,13 +20,12 @@ else
 end
 
 
-% flNm = '/home/lucas/Nextcloud/Tese/Casos teste/OC4/metis_OC4_completo_h200_45deg/OC4_200m_45deg_T30p00_out.txt';
-% flNm2 = '/home/lucas/Nextcloud/Tese/Casos teste/OC4/metis_OC4_completo_h200_45deg_fixed/OC4_200m_45deg_fixed_T30p00_out.txt';
+flNm = 'C:\Users\lucas.henrique\Nextcloud\Tese\Casos teste\OC4\metis_OC4_completo_h200_45deg_fixed\OC4_200m_45deg_fixed_A4m_T30p00_soft_out.txt';
+flNm2 = 'C:\Users\lucas.henrique\Nextcloud\Tese\Casos teste\OC4\metis_OC4_completo_h200_45deg_fixed\OC4_200m_45deg_fixed_A4m_T30p00_soft_dt0p01_out.txt';
 
-flNm = 'C:\Users\lucas.henrique\Nextcloud\Tese\Casos teste\OC4\metis_OC4_completo_h200_45deg\OC4_200m_45deg_T30p00_out.txt';
-flNm2 = 'C:\Users\lucas.henrique\Nextcloud\Tese\Casos teste\OC4\metis_OC4_completo_h200_45deg_fixed\OC4_200m_45deg_fixed_T30p00_out.txt';
 
-legStr = {'Livre', 'Fixo'};
+
+legStr = {'dt = 0.25s', 'dt = 0.01s'};
 
 
 
@@ -37,7 +36,8 @@ data = data_root.data;
 data_2_root = importdata(flNm2);
 data_2 = data_2_root.data;
 
-
+figure
+suptitle('Fixo - A = 4m - 45deg')
 set(gcf,'color','w')
 sizeOfFont = 12;
 
@@ -86,52 +86,149 @@ set(gca, 'fontsize', sizeOfFont)
 
 
 
-
-
-% Forces
-figure
-set(gcf,'color','w')
-sizeOfFont = 12;
-
-subplot(2,3,1)
-plot(data(:,1),data(:,20))
-hold on
-plot(data_2(:,1),data_2(:,20))
-legend(legStr)
-title('force-hd-surge')
-set(gca, 'fontsize', sizeOfFont)
-
-subplot(2,3,2)
-plot(data(:,1),data(:,21))
-hold on
-plot(data_2(:,1),data_2(:,21))
-title('force-hd-sway')
-set(gca, 'fontsize', sizeOfFont)
-
-subplot(2,3,3)
-plot(data(:,1),data(:,22))
-hold on
-plot(data_2(:,1),data_2(:,22))
-title('force-hd-heave')
-set(gca, 'fontsize', sizeOfFont)
-
-subplot(2,3,4)
-plot(data(:,1),data(:,23))
-hold on
-plot(data_2(:,1),data_2(:,23))
-title('force-hd-roll')
-set(gca, 'fontsize', sizeOfFont)
-
-subplot(2,3,5)
-plot(data(:,1),data(:,24))
-hold on
-plot(data_2(:,1),data_2(:,24))
-title('force-hd-pitch')
-set(gca, 'fontsize', sizeOfFont)
-
-subplot(2,3,6)
-plot(data(:,1),data(:,25))
-hold on
-plot(data_2(:,1),data_2(:,25))
-title('force-hd-yaw')
-set(gca, 'fontsize', sizeOfFont)
+% % Hydrodynamic force - Total
+% figure
+% set(gcf,'color','w')
+% sizeOfFont = 12;
+% 
+% subplot(2,3,1)
+% plot(data(:,1),data(:,20))
+% hold on
+% plot(data_2(:,1),data_2(:,20))
+% legend(legStr)
+% title('force-hd-surge')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% subplot(2,3,2)
+% plot(data(:,1),data(:,21))
+% hold on
+% plot(data_2(:,1),data_2(:,21))
+% title('force-hd-sway')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% subplot(2,3,3)
+% plot(data(:,1),data(:,22))
+% hold on
+% plot(data_2(:,1),data_2(:,22))
+% title('force-hd-heave')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% subplot(2,3,4)
+% plot(data(:,1),data(:,23))
+% hold on
+% plot(data_2(:,1),data_2(:,23))
+% title('force-hd-roll')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% subplot(2,3,5)
+% plot(data(:,1),data(:,24))
+% hold on
+% plot(data_2(:,1),data_2(:,24))
+% title('force-hd-pitch')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% subplot(2,3,6)
+% plot(data(:,1),data(:,25))
+% hold on
+% plot(data_2(:,1),data_2(:,25))
+% title('force-hd-yaw')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% 
+% 
+% % Hydrodynamic force - Inertia
+% figure
+% set(gcf,'color','w')
+% sizeOfFont = 12;
+% 
+% subplot(2,3,1)
+% plot(data(:,1),data(:,26))
+% hold on
+% plot(data_2(:,1),data_2(:,26), '--')
+% legend(legStr)
+% title('force-hd-inertia-surge')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% subplot(2,3,2)
+% plot(data(:,1),data(:,27))
+% hold on
+% plot(data_2(:,1),data_2(:,27), '--')
+% title('force-hd-inertia-sway')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% subplot(2,3,3)
+% plot(data(:,1),data(:,28))
+% hold on
+% plot(data_2(:,1),data_2(:,28), '--')
+% title('force-hd-inertia-heave')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% subplot(2,3,4)
+% plot(data(:,1),data(:,29))
+% hold on
+% plot(data_2(:,1),data_2(:,29), '--')
+% title('force-hd-inertia-roll')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% subplot(2,3,5)
+% plot(data(:,1),data(:,30))
+% hold on
+% plot(data_2(:,1),data_2(:,30), '--')
+% title('force-hd-inertia-pitch')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% subplot(2,3,6)
+% plot(data(:,1),data(:,31))
+% hold on
+% plot(data_2(:,1),data_2(:,31), '--')
+% title('force-hd-inertia-yaw')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% 
+% % Hydrodynamic force - Drag
+% figure
+% set(gcf,'color','w')
+% sizeOfFont = 12;
+% 
+% subplot(2,3,1)
+% plot(data(:,1),data(:,32))
+% hold on
+% plot(data_2(:,1),data_2(:,32), '--')
+% legend(legStr)
+% title('force-hd-drag-surge')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% subplot(2,3,2)
+% plot(data(:,1),data(:,33))
+% hold on
+% plot(data_2(:,1),data_2(:,33), '--')
+% title('force-hd-drag-sway')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% subplot(2,3,3)
+% plot(data(:,1),data(:,34))
+% hold on
+% plot(data_2(:,1),data_2(:,34), '--')
+% title('force-hd-drag-heave')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% subplot(2,3,4)
+% plot(data(:,1),data(:,35))
+% hold on
+% plot(data_2(:,1),data_2(:,35), '--')
+% title('force-hd-drag-roll')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% subplot(2,3,5)
+% plot(data(:,1),data(:,36))
+% hold on
+% plot(data_2(:,1),data_2(:,36), '--')
+% title('force-hd-drag-pitch')
+% set(gca, 'fontsize', sizeOfFont)
+% 
+% subplot(2,3,6)
+% plot(data(:,1),data(:,37))
+% hold on
+% plot(data_2(:,1),data_2(:,37), '--')
+% title('force-hd-drag-yaw')
+% set(gca, 'fontsize', sizeOfFont)

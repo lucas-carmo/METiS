@@ -35,7 +35,7 @@ public:
 		Forces acting on the Morison Element and functions for node position/velocity/acceleration)
 	*****************************************************/
 	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) const override;	
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir) const override;
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &force_inertial, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const override;
 
 	/*****************************************************
 		Printing

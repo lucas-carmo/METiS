@@ -25,7 +25,7 @@ vec::fixed<6> MorisonRect::hydrostaticForce(const ENVIR &envir) const
 	return force;
 }
 
-vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir) const
+vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;

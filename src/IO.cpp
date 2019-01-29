@@ -25,7 +25,7 @@ std::ofstream IO::m_sumFl;
 
 std::string IO::m_outFilePath = "";
 std::ofstream IO::m_outFl;
-const unsigned int IO::m_outColumnWidth = 16;
+const unsigned int IO::m_outColumnWidth = 18;
 const unsigned int IO::m_outNumPrecision = 4;
 std::array<bool, IO::OUTFLAG_SIZE> IO::m_whichResult2Output;
 
@@ -644,6 +644,21 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_TOTAL_FORCE) = true;
 	}	
+
+	if (caseInsCompare(getKeyword(strInput), "hd_inertia_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_INERTIA_FORCE) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "hd_drag_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_DRAG_FORCE) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "hd_fk_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FK_FORCE) = true;
+	}
 }
 
 
@@ -710,7 +725,8 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 {
 	// Check whether the specified flag is indeed one that requires a vector with six components
 	if ((flag != OUTFLAG_FOWT_POS) && (flag != OUTFLAG_FOWT_VEL) && (flag != OUTFLAG_FOWT_ACC) && 
-		(flag != OUTFLAG_HD_FORCE) && (flag != OUTFLAG_HS_FORCE) && (flag != OUTFLAG_TOTAL_FORCE))
+		(flag != OUTFLAG_HD_FORCE) && (flag != OUTFLAG_HS_FORCE) && (flag != OUTFLAG_TOTAL_FORCE) &&
+		(flag != OUTFLAG_HD_INERTIA_FORCE) && (flag != OUTFLAG_HD_DRAG_FORCE) && (flag != OUTFLAG_HD_FK_FORCE))
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &force).");
 	}
@@ -742,6 +758,30 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 				print2outLineHeader("TOTAL_Force_" + std::to_string(ii));
 			}
 		}		
+
+		if (flag == OUTFLAG_HD_INERTIA_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("HD_INRT_Force_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_DRAG_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("HD_DRAG_Force_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_FK_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("HD_FK_Force_" + std::to_string(ii));
+			}
+		}
 
 		if (flag == OUTFLAG_FOWT_POS)
 		{
@@ -917,12 +957,24 @@ std::string IO::printOutVar()
 			break;
 
 		case IO::OUTFLAG_HS_FORCE:
-		    output += "Hydrodynamic force: ";
+		    output += "Hydrostatic force: ";
 			break;	
 
 		case IO::OUTFLAG_TOTAL_FORCE:
 		    output += "Total force: ";
 			break;				
+
+		case IO::OUTFLAG_HD_INERTIA_FORCE:
+			output += "Hydrodynamic inertial force: ";
+			break;
+
+		case IO::OUTFLAG_HD_DRAG_FORCE:
+			output += "Hydrodynamic drag force: ";
+			break;
+
+		case IO::OUTFLAG_HD_FK_FORCE:
+			output += " Hydrodynamic Froude-Krylov force: ";
+			break;
 
 		default:
 			output += "Unknown specifier in output flags.";

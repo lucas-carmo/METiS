@@ -142,7 +142,9 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir) const
 }
 
 
-vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
+// The three vectors passed as reference are used to return the different components of the hydrodynamic force acting on the cylinder,
+// without the need of calling three different methods for each component of the hydrodynamic force
+vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
@@ -210,10 +212,18 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 	vec::fixed<3> n_ii(fill::zeros); // Coordinates of the integration point
 	vec::fixed<3> vel_ii(fill::zeros); // Velocity of the integration point
 	vec::fixed<3> acc_ii(fill::zeros); // Acceleration of the integration point
-	vec::fixed<3> force_ii(fill::zeros); // Force acting at the integration point
-	vec::fixed<3> moment_ii(fill::zeros); // Moment (with relation to n1) due to the force acting at the integration point
 	vec::fixed<3> velFluid(fill::zeros); // Fluid velocity at the integration point
 	vec::fixed<3> accFluid(fill::zeros); // Fluid acceleration at the integration point
+
+	// Forces acting at the integration point and moment (with relation to n1) due to the force acting at the integration point
+	vec::fixed<3> force_inertia_ii(fill::zeros); // Inertial component
+	vec::fixed<3> moment_inertia_ii(fill::zeros);
+
+	vec::fixed<3> force_drag_ii(fill::zeros); // Drag component
+	vec::fixed<3> moment_drag_ii(fill::zeros);
+
+	vec::fixed<3> force_ii(fill::zeros); // Total force
+	vec::fixed<3> moment_ii(fill::zeros);
 
     for (int ii = 1; ii <= ncyl; ++ii) 
 	{
@@ -249,27 +259,35 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 		vel_ii = dot(vel_ii, xvec) * xvec + dot(vel_ii, yvec) * yvec;
 		acc_ii = dot(acc_ii, xvec) * xvec + dot(acc_ii, yvec) * yvec;
 
-		// Calculation of the forces in the integration node using Morison's equation
-		force_ii =  0.5 * rho * Cd * D * norm(velFluid - vel_ii, 2) * (velFluid - vel_ii)
-				   + (datum::pi * pow(D,2)/4) * rho * Cm * accFluid
-			       - (datum::pi * pow(D,2)/4) * rho * (Cm-1) * acc_ii;
+		// Calculation of the forces in the integration node using Morison's equation		
+		force_inertia_ii = (datum::pi * pow(D,2)/4) * rho * Cm * accFluid - (datum::pi * pow(D,2)/4) * rho * (Cm-1) * acc_ii;
+		force_drag_ii = 0.5 * rho * Cd * D * norm(velFluid - vel_ii, 2) * (velFluid - vel_ii);
+		force_ii = force_inertia_ii + force_drag_ii;
 
 		// Calculation of the moment (with respect to node 1) at the integration node using the force calculated above
-		moment_ii = cross(R_ii * zvec, force_ii);
+		moment_inertia_ii = cross(R_ii * zvec, force_inertia_ii);
+		moment_drag_ii = cross(R_ii * zvec, force_drag_ii);
+		moment_ii = moment_inertia_ii + moment_drag_ii;
 
 
 		// Integrate the forces along the cylinder using Simpson's Rule
 		if (ii == 1 || ii == ncyl)
 		{
 			force += (dL/3) * join_cols(force_ii, moment_ii);
+			force_inertia += (dL/3) * join_cols(force_inertia_ii, moment_inertia_ii);
+			force_drag += (dL/3) * join_cols(force_drag_ii, moment_drag_ii);
 		}		
 		else if (ii % 2 == 0)
 		{
 			force += (4*dL/3) * join_cols(force_ii, moment_ii);
+			force_inertia += (4*dL/3) * join_cols(force_inertia_ii, moment_inertia_ii);
+			force_drag += (4*dL/3) * join_cols(force_drag_ii, moment_drag_ii);
 		}
 		else
 		{
 			force += (2*dL/3) * join_cols(force_ii, moment_ii);
+			force_inertia += (2*dL/3) * join_cols(force_inertia_ii, moment_inertia_ii);
+			force_drag += (2*dL/3) * join_cols(force_drag_ii, moment_drag_ii);
 		}
 	}
 
@@ -293,15 +311,24 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir) const
 	force.rows(0,2) += 0.5 * rho * Cd_V * datum::pi * pow(D/2, 2) * norm(velFluid - v1_axial, 2) * (velFluid - v1_axial)
 					 + rho * Ca_V * (4/3.) * datum::pi * pow(D/2, 3) * (accFluid - a1_axial);
 
+	force_inertia.rows(0,2) += rho * Ca_V * (4 / 3.) * datum::pi * pow(D / 2, 3) * (accFluid - a1_axial);
+	force_drag.rows(0, 2) += 0.5 * rho * Cd_V * datum::pi * pow(D / 2, 2) * norm(velFluid - v1_axial, 2) * (velFluid - v1_axial);
+
 	if (m_botPressFlag)
 	{
-		force.rows(0, 2) = force.rows(0, 2) + datum::pi * ( pow(botDiam/2, 2) * envir.wavePressure(n1[0], n1[1], n1[2])
-														    - (pow(botDiam/2, 2) - pow(topDiam/2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2]) ) * zvec;
+		force.rows(0, 2) += datum::pi * ( pow(botDiam/2, 2) * envir.wavePressure(n1[0], n1[1], n1[2])
+							- (pow(botDiam/2, 2) - pow(topDiam/2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2]) ) * zvec;
+
+		force_froudeKrylov.rows(0, 2) += datum::pi * (pow(botDiam / 2, 2) * envir.wavePressure(n1[0], n1[1], n1[2])
+										- (pow(botDiam / 2, 2) - pow(topDiam / 2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2])) * zvec;
 	}
 
 	// The moment was calculated with relation to n1, which may be different from node1.
 	// We need to change the fulcrum to node1
 	force.rows(3,5) = force.rows(3,5) + cross( n1 - node1Pos(), force.rows(0,2) );
+
+	force_inertia.rows(3, 5) = force_inertia.rows(3, 5) + cross(n1 - node1Pos(), force_inertia.rows(0, 2));
+	force_drag.rows(3, 5) = force_drag.rows(3, 5) + cross(n1 - node1Pos(), force_drag.rows(0, 2));
 
 	return force;
 }

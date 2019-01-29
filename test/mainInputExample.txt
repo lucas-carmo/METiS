@@ -1205,6 +1205,9 @@ fowt_pos
 hs_force
 hd_force
 total_force
+wave_elev 11
+wave_vel
+wave_acc
 END
 
 

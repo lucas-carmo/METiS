@@ -43,7 +43,8 @@ public:
 
 	// Forces
 	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) const = 0;
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir) const = 0;
+	
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const = 0; 
 
 	// Printers and getters
 	virtual std::string print() const = 0;

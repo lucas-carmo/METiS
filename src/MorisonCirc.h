@@ -29,8 +29,8 @@ public:
 		Forces acting on the Morison Element
 	*****************************************************/
 	void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const;
-	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) const override;	
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envi) const override;
+	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) const override;
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const override;
 
 	/*****************************************************
 		Printing
