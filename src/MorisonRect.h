@@ -34,6 +34,8 @@ public:
 	/*****************************************************
 		Forces acting on the Morison Element and functions for node position/velocity/acceleration)
 	*****************************************************/
+	virtual mat::fixed<6, 6> addedMass_perp(const double density, const vec::fixed<3> &cog) const override;
+	virtual mat::fixed<6, 6> addedMass_paral(const double density, const vec::fixed<3> &cog) const override;
 	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) const override;	
 	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &force_inertial, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const override;
 

@@ -26,6 +26,8 @@ protected:
 	vec::fixed<3> m_node2Vel;
 	vec::fixed<3> m_node1Acc;
 	vec::fixed<3> m_node2Acc;
+	vec::fixed<3> m_node1AccCentrip;
+	vec::fixed<3> m_node2AccCentrip;
 
 public:
 	MorisonElement(vec cog2node1, vec cog2node2, int numIntPoints, 
@@ -40,10 +42,15 @@ public:
 	vec::fixed<3> node2Vel() const;
 	vec::fixed<3> node1Acc() const;
 	vec::fixed<3> node2Acc() const;
+	vec::fixed<3> node1AccCentrip() const;
+	vec::fixed<3> node2AccCentrip() const;
+
+	// Contribution to the added mass
+	virtual mat::fixed<6, 6> addedMass_perp(const double density, const vec::fixed<3> &cog) const = 0;
+	virtual mat::fixed<6, 6> addedMass_paral(const double density, const vec::fixed<3> &cog) const = 0;
 
 	// Forces
-	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) const = 0;
-	
+	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) const = 0;	
 	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const = 0; 
 
 	// Printers and getters

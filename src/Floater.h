@@ -62,6 +62,7 @@ public:
 		Forces, acceleration, position, etc
 	*****************************************************/
 	void updatePosVelAcc(const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc);
+	mat::fixed<6, 6> addedMass(const double density) const;
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir) const;
 	vec::fixed<6> hydrostaticForce(const ENVIR &envir) const;
 };
