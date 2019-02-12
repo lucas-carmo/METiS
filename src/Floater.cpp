@@ -318,6 +318,18 @@ void Floater::updatePosVelAcc(const vec::fixed<6> &FOWTpos, const vec::fixed<6> 
 	}
 }
 
+mat::fixed<6, 6> Floater::addedMass(const double density) const
+{
+	mat::fixed<6, 6> A(fill::zeros);
+
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		A += m_MorisonElements.at(ii)->addedMass_perp(density, CoG()) + m_MorisonElements.at(ii)->addedMass_paral(density, CoG());
+	}
+
+	return A;
+}
+
 vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir) const
 {	
 	vec::fixed<6> force(fill::zeros); // Total hydrodynamic force acting on the floater

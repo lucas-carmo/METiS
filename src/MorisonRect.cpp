@@ -19,6 +19,22 @@ MorisonRect::MorisonRect(vec cog2node1, vec cog2node2, vec cog2node3, int numInt
 /*****************************************************
 	Forces acting on the Morison Element
 *****************************************************/
+// TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
+mat::fixed<6, 6> MorisonRect::addedMass_perp(const double density, const vec::fixed<3> &cog) const
+{
+	mat::fixed<6, 6> A(fill::zeros);
+
+	return A;
+}
+
+mat::fixed<6, 6> MorisonRect::addedMass_paral(const double density, const vec::fixed<3> &cog) const
+{
+	mat::fixed<6, 6> A(fill::zeros);
+
+	return A;
+}
+
+
 vec::fixed<6> MorisonRect::hydrostaticForce(const ENVIR &envir) const
 {
 	vec::fixed<6> force(fill::zeros);

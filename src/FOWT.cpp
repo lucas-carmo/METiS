@@ -14,7 +14,7 @@ FOWT::FOWT() : m_linStiff(fill::zeros), m_mass(datum::nan),
 /*****************************************************
 	Overloaded operators
 *****************************************************/
-FOWT& FOWT::operator= (const FOWT &fowt)
+FOWT& FOWT::operator=(const FOWT &fowt)
 {
 	m_floater = fowt.m_floater;
 	m_linStiff = fowt.m_linStiff;
@@ -118,6 +118,21 @@ std::string FOWT::printFloater() const
 	output = output + "\tInertia Matrix:\t" + m_floater.printInertia() + "\n";
 	output = output + "\tMorison Elements:\n" + m_floater.printMorisonElements() + "\n";
 
+	mat::fixed<6, 6> A = m_floater.addedMass(1);
+	output = output + "\tAdded Mass for unitary density:\n";
+	for (int ii = 0; ii < 6; ++ii)
+	{
+		output = output + "\t\t";
+		for (int jj = 0; jj < 6; ++jj)
+		{
+			output = output + std::to_string(A(ii, jj));
+
+			(jj == 5) ? (output = output + '\n') : (output = output + " \t\t ");			
+		}
+	}	
+
+	output = output + '\n';
+
 	return output;
 }
 
@@ -159,8 +174,11 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 	IO::print2outLine(IO::OUTFLAG_FOWT_POS, m_pos);
 	IO::print2outLine(IO::OUTFLAG_FOWT_VEL, m_vel);
 
-	vec::fixed<6> acc(fill::zeros);
+	vec::fixed<6> acc(fill::zeros);	
 	vec::fixed<6> inertiaMatrix = m_floater.inertia();
+
+	// Inertia matrix including added matrix
+	//mat::fixed<3, 3> inertiaMatrix = m_floater.addedMass;
 
 	vec::fixed<6> force = totalForce(envir);
 	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE, force);
