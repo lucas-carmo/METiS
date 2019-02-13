@@ -30,8 +30,8 @@ protected:
 	vec::fixed<3> m_node2AccCentrip;
 
 public:
-	MorisonElement(vec cog2node1, vec cog2node2, int numIntPoints, 
-				   bool botPressFlag, double axialCD, double axialCa);
+	MorisonElement(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints, 
+				   const bool botPressFlag, const double axialCD, const double axialCa);
 	
 	// Functions related to position, velocity and acceleration
 	void updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc);

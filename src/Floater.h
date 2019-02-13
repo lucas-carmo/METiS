@@ -50,7 +50,7 @@ public:
 	*****************************************************/
 	vec::fixed<3> CoG() const;
 	double mass() const;
-	vec::fixed<6> inertia() const;
+	mat::fixed<6,6> inertiaMatrix() const;
 
 	std::string printMass() const;
 	std::string printInertia() const;

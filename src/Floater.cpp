@@ -151,19 +151,15 @@ void Floater::addMorisonCirc(const std::string &data, const ENVIR &envir)
 	vec::fixed<3> node2_coord = envir.getNode(node2_ID);
 
 
-	// However, Morison Elements are not actually specified by the nodes coordinates, 
-	// but rather by the distance between the nodes and the floater CoG		
-	if ( m_CoG.has_nan() ) // If this is true, then the CoG of the floater wasn't read yet
+	// Morison Elements need the position of the floater CoG
+	// to define their relative position in the rigid body
+	if (CoG().has_nan()) // If this is true, then the CoG of the floater wasn't read yet
 	{
-		throw std::runtime_error( "Floater CoG must be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()) );
+		throw std::runtime_error("Floater CoG must be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()));
 	}
-	
-	node1_coord = node1_coord - m_CoG;
-	node2_coord = node2_coord - m_CoG;
-
 
 	 // Create a circular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
-	 m_MorisonElements.push_back( std::make_unique<MorisonCirc>(node1_coord, node2_coord, numIntPoints, 
+	 m_MorisonElements.push_back( std::make_unique<MorisonCirc>(node1_coord, node2_coord, CoG(), numIntPoints, 
 	 							  botPressFlag, axialCD, axialCa, diam, CD, CM, botDiam, topDiam) );
 }
 
@@ -229,20 +225,15 @@ void Floater::addMorisonRect(const std::string &data, const ENVIR &envir)
 	vec::fixed<3> node3_coord = envir.getNode(node3_ID);
 
 
-	// However, Morison Elements are not actually specified by the nodes coordinates, 
-	// but rather by the distance between the nodes and the floater CoG		
-	if ( m_CoG.has_nan() ) // If this is true, then the CoG of the floater wasn't read yet
+	// Morison Elements need the position of the floater CoG
+	// to define their relative position in the rigid body
+	if ( CoG().has_nan() ) // If this is true, then the CoG of the floater wasn't read yet
 	{
 		throw std::runtime_error( "Floater CoG must be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()) );
 	}
-		
-	node1_coord = node1_coord - m_CoG;
-	node2_coord = node2_coord - m_CoG;
-	node3_coord = node3_coord - m_CoG;
-
-	
-	 // Create a rectangular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
-	m_MorisonElements.push_back( std::make_unique<MorisonRect>(node1_coord, node2_coord, node3_coord, numIntPoints,
+			
+	// Create a rectangular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
+	m_MorisonElements.push_back( std::make_unique<MorisonRect>(node1_coord, node2_coord, node3_coord, CoG(), numIntPoints,
 	  							  botPressFlag, axialCD, axialCa, diam_X, CD_X, CM_X, diam_Y, CD_Y, CM_Y, botArea, topArea) );
 }
 
@@ -260,9 +251,19 @@ double Floater::mass() const
 	return m_mass;
 }
 
-vec::fixed<6> Floater::inertia() const
+mat::fixed<6,6> Floater::inertiaMatrix() const
 {
-	return m_inertia;
+	mat::fixed<6, 6> A(fill::zeros);
+	A(0, 0) = A(1, 1) = A(2, 2) = m_mass;
+	A(3, 3) = m_inertia(0);
+	A(4, 4) = m_inertia(1);
+	A(5, 5) = m_inertia(2);
+
+	A(3, 4) = A(4, 3) = m_inertia(3);
+	A(3, 5) = A(5, 3) = m_inertia(4);
+	A(4, 5) = A(5, 4) = m_inertia(5);
+
+	return A;
 }
 
 

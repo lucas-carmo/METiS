@@ -21,9 +21,9 @@ public:
 	/*****************************************************
 		Constructors
 	*****************************************************/
-	MorisonCirc(vec cog2node1, vec cog2node2, int numIntPoints, bool botPressFlag,
-				double axialCD, double axialCa, double diam, double CD, double CM,
-				double botDiam, double topDiam);
+	MorisonCirc(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints,
+				const bool botPressFlag, const double axialCD, const double axialCa,
+				const double diam, const double CD, double CM, const double botDiam, const double topDiam);
 
 	/*****************************************************
 		Forces acting on the Morison Element and added mass

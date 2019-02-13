@@ -25,10 +25,10 @@ public:
 	/*****************************************************
 		Constructors
 	*****************************************************/
-	MorisonRect(vec cog2node1, vec cog2node2, vec cog2node3, int numIntPoints, bool botPressFlag,
-				double axialCD, double axialCa, double diam_X, double CD_X, double CM_X,
-				double diam_Y, double CD_Y, double CM_Y,
-				double botArea, double topArea);
+	MorisonRect(const vec &node1Pos, const vec &node2Pos, const vec &node3Pos, const vec &cog, const int numIntPoints, 
+				const bool botPressFlag, const double axialCD, const double axialCa, const double diam_X, const double CD_X, const double CM_X,
+				const double diam_Y, const double CD_Y, const double CM_Y,
+				const double botArea, const double topArea);
 
 
 	/*****************************************************

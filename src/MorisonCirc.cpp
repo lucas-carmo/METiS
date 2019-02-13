@@ -7,10 +7,10 @@ using namespace arma;
 /*****************************************************
 	Constructors
 *****************************************************/
-MorisonCirc::MorisonCirc(vec cog2node1, vec cog2node2, int numIntPoints, 
-						 bool botPressFlag, double axialCD, double axialCa,
-						 double diam, double CD, double CM, double botDiam, double topDiam)
-	: MorisonElement(cog2node1, cog2node2, numIntPoints, botPressFlag, axialCD, axialCa), 
+MorisonCirc::MorisonCirc(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints,
+						 const bool botPressFlag, const double axialCD, const double axialCa,
+						 const double diam, const double CD, double CM, const double botDiam, const double topDiam)
+	: MorisonElement(node1Pos, node2Pos, cog, numIntPoints, botPressFlag, axialCD, axialCa), 
 					 m_diam(diam), m_CD(CD), m_CM(CM), m_botDiam(botDiam), m_topDiam(topDiam)
 {}
 
