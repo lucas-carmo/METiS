@@ -185,35 +185,35 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 
 
 	//// Testar rodando sem essa parte aqui, pra ver se o caso fixo muda o resultado
-	//if (!envir.isSurgeActive())
-	//{
-	//	force[0] = 0;
-	//}
+	if (!envir.isSurgeActive())
+	{
+		force[0] = 0;
+	}
 
-	//if (!envir.isSwayActive())
-	//{
-	//	force[1] = 0;
-	//}
+	if (!envir.isSwayActive())
+	{
+		force[1] = 0;
+	}
 
-	//if (!envir.isHeaveActive())
-	//{
-	//	force[2] = 0;
-	//}
+	if (!envir.isHeaveActive())
+	{
+		force[2] = 0;
+	}
 
-	//if (!envir.isRollActive())
-	//{
-	//	force[3] = 0;
-	//}
+	if (!envir.isRollActive())
+	{
+		force[3] = 0;
+	}
 
-	//if (!envir.isPitchActive())
-	//{
-	//	force[4] = 0;
-	//}
+	if (!envir.isPitchActive())
+	{
+		force[4] = 0;
+	}
 
-	//if (!envir.isYawActive())
-	//{
-	//	force[5] = 0;
-	//}
+	if (!envir.isYawActive())
+	{
+		force[5] = 0;
+	}
 
 
 	// Solve inertiaMatrix * acc = force
