@@ -40,12 +40,14 @@ figure
 suptitle('Fixo - A = 4m - 45deg')
 set(gcf,'color','w')
 sizeOfFont = 12;
+suptitle('Fixo - A = 4m - 45deg')
 
 subplot(2,3,1)
 plot(data(:,1),data(:,2))
 hold on
 plot(data_2(:,1),data_2(:,2))
-legend(legStr)
+hl = legend(legStr);
+set(hl, 'location', 'northwest')
 title('surge')
 set(gca, 'fontsize', sizeOfFont)
 
@@ -53,7 +55,7 @@ subplot(2,3,2)
 plot(data(:,1),data(:,3))
 hold on
 plot(data_2(:,1),data_2(:,3))
-title('sway')
+title('sway')   
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,3)
