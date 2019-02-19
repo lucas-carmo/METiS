@@ -181,8 +181,6 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 
 	// Calculate the total force acting on the FOWT
 	vec::fixed<6> force = totalForce(envir);
-	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE, force);
-
 
 	if (!envir.isSurgeActive())
 	{
@@ -214,6 +212,7 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 		force[5] = 0;
 	}
 
+	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE, force);
 
 	// Solve inertiaMatrix * acc = force
 	acc = arma::solve(inertiaMatrix, force);
