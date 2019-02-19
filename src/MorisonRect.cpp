@@ -21,6 +21,11 @@ MorisonRect::MorisonRect(const vec &node1Pos, const vec &node2Pos, const vec &no
 /*****************************************************
 	Forces acting on the Morison Element
 *****************************************************/
+void MorisonRect::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const
+{
+}
+
+
 // TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
 mat::fixed<6, 6> MorisonRect::addedMass_perp(const double density, const vec::fixed<3> &cog) const
 {

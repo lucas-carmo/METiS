@@ -28,7 +28,7 @@ public:
 	/*****************************************************
 		Forces acting on the Morison Element and added mass
 	*****************************************************/
-	void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const;
+	virtual void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const override;
 	virtual mat::fixed<6, 6> addedMass_perp(const double density, const vec::fixed<3> &cog) const override;
 	virtual mat::fixed<6, 6> addedMass_paral(const double density, const vec::fixed<3> &cog) const override;
 	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) const override;

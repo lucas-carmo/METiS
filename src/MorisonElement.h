@@ -44,6 +44,7 @@ public:
 	vec::fixed<3> node2Acc() const;
 	vec::fixed<3> node1AccCentrip() const;
 	vec::fixed<3> node2AccCentrip() const;
+	virtual void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
 
 	// Contribution to the added mass
 	virtual mat::fixed<6, 6> addedMass_perp(const double density, const vec::fixed<3> &cog) const = 0;

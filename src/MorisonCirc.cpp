@@ -21,6 +21,10 @@ MorisonCirc::MorisonCirc(const vec &node1Pos, const vec &node2Pos, const vec &co
 *****************************************************/
 void MorisonCirc::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const
 {
+	xvec.zeros();
+	yvec.zeros();
+	zvec = (m_node2Pos - m_node1Pos) / arma::norm(m_node2Pos - m_node1Pos, 2);
+
 	// if Zlocal == Zglobal, REFlocal = REFglobal
 	vec::fixed<3> z_global = { 0,0,1 };
 	if (approx_equal(zvec, z_global, "absdiff", datum::eps))
