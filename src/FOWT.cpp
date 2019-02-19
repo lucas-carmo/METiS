@@ -184,7 +184,6 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE, force);
 
 
-	//// Testar rodando sem essa parte aqui, pra ver se o caso fixo muda o resultado
 	if (!envir.isSurgeActive())
 	{
 		force[0] = 0;
