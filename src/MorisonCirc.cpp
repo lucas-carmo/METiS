@@ -57,31 +57,34 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double density, const vec::fi
 	double zG = cog[2];
 
 	// Nodes position
-	vec::fixed<3> n1(fill::zeros);
-	vec::fixed<3> n2(fill::zeros);
-
-	if (node1Pos()[2] <= node2Pos()[2]) // Make sure that node1 is below node2 (or at the same height, at least)
-	{
-		n1 = node1Pos();
-		n2 = node2Pos();
-	}
-	else
-	{
-		n1 = node2Pos();
-		n2 = node1Pos();
-	}
-
-	if (n1[2] > 0)
-	{
-		return A; // Since n2 is above n1, if n1[2] > 0, the cylinder is above the waterline
-	}
-
+	vec::fixed<3> n1 = node1Pos();
+	vec::fixed<3> n2 = node2Pos();
 
 	// Vectors of the local coordinate system vectors
 	vec::fixed<3> xvec(fill::zeros);
 	vec::fixed<3> yvec(fill::zeros);
-	vec::fixed<3> zvec = (n2 - n1) / arma::norm(n2 - n1, 2);
+	vec::fixed<3> zvec(fill::zeros);
 	MorisonCirc::make_local_base(xvec, yvec, zvec);
+
+
+	// Make sure that node1 is below node2 (or at the same height, at least).
+	// Otherwise, need to swap them.
+	if (n1[2] > n2[2]) 
+	{
+		n1.swap(n2);
+
+		// If the nodes position is reversed, we need to reverse the local base as well
+		xvec = -xvec;
+		yvec = -yvec;
+		zvec = -zvec;
+	}
+
+
+	// Since n2 is above n1, if n1[2] > 0, the cylinder is above the waterline
+	if (n1[2] > 0)
+	{
+		return A; 
+	}
 
 	// If only one of the nodes is above the water line, the coordinates of the other node
 	// are changed by those of the intersection between the cylinder axis and the static
@@ -271,39 +274,40 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double density, const vec::f
 	double zG = cog[2];
 
 	// Nodes position
-	vec::fixed<3> n1(fill::zeros);
-	vec::fixed<3> n2(fill::zeros);
-
-	if (node1Pos()[2] <= node2Pos()[2]) // Make sure that node1 is below node2 (or at the same height, at least)
-	{
-		n1 = node1Pos();
-		n2 = node2Pos();
-	}
-	else
-	{
-		n1 = node2Pos();
-		n2 = node1Pos();
-	}
+	vec::fixed<3> n1 = node1Pos();
+	vec::fixed<3> n2 = node2Pos();
 
 	// Vectors of the local coordinate system vectors
 	vec::fixed<3> xvec(fill::zeros);
 	vec::fixed<3> yvec(fill::zeros);
-	vec::fixed<3> zvec = (n2 - n1) / arma::norm(n2 - n1, 2);
+	vec::fixed<3> zvec(fill::zeros);
 	MorisonCirc::make_local_base(xvec, yvec, zvec);
+
+	// Make sure that node1 is below node2 (or at the same height, at least).
+	// Otherwise, need to swap them.
+	if (n1[2] > n2[2])
+	{
+		n1.swap(n2);
+
+		// If the nodes position is reversed, we need to reverse the local base as well
+		xvec = -xvec;
+		yvec = -yvec;
+		zvec = -zvec;
+	}
 
 	// Vectors of the global coordinate system - arranjed, they result in an eye matrix
 	mat::fixed<3, 3> globalBase(fill::eye);
 
+	// Coordinates of the analysed point, i.e. the bottom node
 	double x_ii = n1[0];
 	double y_ii = n1[1];
 	double z_ii = n1[2];
 
 	if (z_ii > 0)
 	{
-		return A; // Since n2 is above n1, if we reach n_ii[2] > 0, all the next n_ii are also above the waterline
+		return A;
 	}
 
-	// The purely translational elements of the matrix (Aij for i,j = 1, 2, 3) are integrated analytically
 	for (int pp = 0; pp < 3; ++pp)
 	{
 		for (int qq = pp; qq < 3; ++qq)
@@ -438,18 +442,27 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir) const
 	double rho = envir.watDensity();
 	double g = envir.gravity();
 
+
 	// Nodes position
-	vec::fixed<3> n1(fill::zeros);
-	vec::fixed<3> n2(fill::zeros);
-	if (node1Pos()[2] <= node2Pos()[2]) // Make sure that node1 is below node2 (or at the same height, at least)
+	vec::fixed<3> n1 = node1Pos();
+	vec::fixed<3> n2 = node2Pos();
+
+	// Vectors of the local coordinate system vectors
+	vec::fixed<3> xvec(fill::zeros);
+	vec::fixed<3> yvec(fill::zeros);
+	vec::fixed<3> zvec(fill::zeros);
+	MorisonCirc::make_local_base(xvec, yvec, zvec);
+
+	// Make sure that node1 is below node2 (or at the same height, at least).
+	// Otherwise, need to swap them.
+	if (n1[2] > n2[2])
 	{
-		n1 = node1Pos();
-		n2 = node2Pos();
-	}
-	else
-	{
-		n1 = node2Pos();
-		n2 = node1Pos();
+		n1.swap(n2);
+
+		// If the nodes position is reversed, we need to reverse the local base as well
+		xvec = -xvec;
+		yvec = -yvec;
+		zvec = -zvec;
 	}
 
 	// If the cylinder is above the waterline, then the hydrostatic force is zero
@@ -457,12 +470,6 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir) const
 	{
 		return force;
 	}
-
-	// Vectors of the local coordinate system vectors
-	vec::fixed<3> xvec(fill::zeros);
-	vec::fixed<3> yvec(fill::zeros);
-	vec::fixed<3> zvec = (n2 - n1) / arma::norm(n2 - n1, 2);
-	MorisonCirc::make_local_base(xvec, yvec, zvec);
 
 	// Calculation of the inclination of the cylinder (with respect to the
 	// vertical), which is used in the calculation of the center of buoyoancy
@@ -552,47 +559,44 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &
  
 
 	// Nodes position, velocity and acceleration
-	vec::fixed<3> n1(fill::zeros);
-	vec::fixed<3> n2(fill::zeros);
-	vec::fixed<3> v1(fill::zeros);
-	vec::fixed<3> v2(fill::zeros);
-	vec::fixed<3> a1(fill::zeros);
-	vec::fixed<3> a2(fill::zeros);
-
-	if (node1Pos()[2] <= node2Pos()[2]) // Make sure that node1 is below node2 (or at the same height, at least)
-	{
-		n1 = node1Pos();
-		n2 = node2Pos();		
-
-		v1 = node1Vel();
-		v2 = node2Vel();
-
-		a1 = node1AccCentrip();
-		a2 = node2AccCentrip();
-	}
-	else
-	{
-		n1 = node2Pos();
-		n2 = node1Pos();
-
-		v1 = node2Vel();
-		v2 = node1Vel();
-
-		a1 = node2AccCentrip();
-		a2 = node1AccCentrip();
-
-		botDiam = m_topDiam;
-		topDiam = m_botDiam;		
-	}
-	
-	
-	double dL = norm(n2 - n1, 2) / (ncyl - 1); // length of each interval between points
+	vec::fixed<3> n1 = node1Pos();
+	vec::fixed<3> n2 = node2Pos();
+	vec::fixed<3> v1 = node1Vel();
+	vec::fixed<3> v2 = node2Vel();
+	vec::fixed<3> a1 = node1AccCentrip();
+	vec::fixed<3> a2 = node2AccCentrip();
 
 	// Vectors of the local coordinate system vectors
 	vec::fixed<3> xvec(fill::zeros);
-	vec::fixed<3> yvec(fill::zeros);	
-    vec::fixed<3> zvec = (n2 - n1) / arma::norm(n2 - n1, 2);
+	vec::fixed<3> yvec(fill::zeros);
+	vec::fixed<3> zvec(fill::zeros);
 	MorisonCirc::make_local_base(xvec, yvec, zvec);
+
+	// Bottom and top diameter
+	botDiam = m_botDiam;
+	topDiam = m_topDiam;
+
+	// Make sure that node1 is below node2 (or at the same height, at least).
+	// Otherwise, need to swap them.
+	if (n1[2] > n2[2])
+	{
+		n1.swap(n2);
+		v1.swap(v2);
+		a1.swap(a2);
+
+		// If the nodes position is reversed, we need to reverse the local base as well
+		xvec = -xvec;
+		yvec = -yvec;
+		zvec = -zvec;
+
+		// Bottom diameter and top diameter must be swapped as well
+		botDiam = m_topDiam;
+		topDiam = m_botDiam;
+	}
+
+
+	
+	double dL = norm(n2 - n1, 2) / (ncyl - 1); // length of each interval between points
 
 
 	/*

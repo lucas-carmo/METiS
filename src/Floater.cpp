@@ -150,6 +150,11 @@ void Floater::addMorisonCirc(const std::string &data, const ENVIR &envir)
 	vec::fixed<3> node1_coord = envir.getNode(node1_ID);
 	vec::fixed<3> node2_coord = envir.getNode(node2_ID);
 
+	// Since many times we need node1 to be below node2, it is better to swap them here in order to have less swaps in the future
+	if (node1_coord[2] > node2_coord[2])
+	{
+		node1_coord.swap(node2_coord);
+	}
 
 	// Morison Elements need the position of the floater CoG
 	// to define their relative position in the rigid body
