@@ -14,7 +14,7 @@ FOWT::FOWT() : m_linStiff(fill::zeros), m_mass(datum::nan),
 /*****************************************************
 	Overloaded operators
 *****************************************************/
-FOWT& FOWT::operator= (const FOWT &fowt)
+FOWT& FOWT::operator=(const FOWT &fowt)
 {
 	m_floater = fowt.m_floater;
 	m_linStiff = fowt.m_linStiff;
@@ -118,6 +118,21 @@ std::string FOWT::printFloater() const
 	output = output + "\tInertia Matrix:\t" + m_floater.printInertia() + "\n";
 	output = output + "\tMorison Elements:\n" + m_floater.printMorisonElements() + "\n";
 
+	mat::fixed<6, 6> A = m_floater.addedMass(1);
+	output = output + "\tAdded Mass for unitary density:\n";
+	for (int ii = 0; ii < 6; ++ii)
+	{
+		output = output + "\t\t";
+		for (int jj = 0; jj < 6; ++jj)
+		{
+			output = output + std::to_string(A(ii, jj));
+
+			(jj == 5) ? (output = output + '\n') : (output = output + " \t\t ; \t\t");			
+		}
+	}	
+
+	output = output + '\n';
+
 	return output;
 }
 
@@ -157,44 +172,84 @@ void FOWT::update(const vec::fixed<6> &pos, const vec::fixed<6> &vel, const vec:
 vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 {
 	IO::print2outLine(IO::OUTFLAG_FOWT_POS, m_pos);
+	IO::print2outLine(IO::OUTFLAG_FOWT_VEL, m_vel);
 
-	vec::fixed<6> acc(fill::zeros);
-	vec::fixed<6> inertiaMatrix = m_floater.inertia();
+	vec::fixed<6> acc(fill::zeros);	
 
+	// Inertia matrix including added matrix
+	mat::fixed<6, 6> inertiaMatrix = m_floater.addedMass(envir.watDensity()) + m_floater.inertiaMatrix();
+
+	// Calculate the total force acting on the FOWT
 	vec::fixed<6> force = totalForce(envir);
+
+	if (!envir.isSurgeActive())
+	{
+		force[0] = 0;
+	}
+
+	if (!envir.isSwayActive())
+	{
+		force[1] = 0;
+	}
+
+	if (!envir.isHeaveActive())
+	{
+		force[2] = 0;
+	}
+
+	if (!envir.isRollActive())
+	{
+		force[3] = 0;
+	}
+
+	if (!envir.isPitchActive())
+	{
+		force[4] = 0;
+	}
+
+	if (!envir.isYawActive())
+	{
+		force[5] = 0;
+	}
+
 	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE, force);
 
-	if (envir.isSurgeActive())
+	// Solve inertiaMatrix * acc = force
+	acc = arma::solve(inertiaMatrix, force);
+
+	// Due to the coupling effects, it is necessary to set the accelerations of the inactive DoFs to 0
+	if (!envir.isSurgeActive())
 	{
-		acc[0] = force[0] / mass();
+		acc[0] = 0;
 	}
 
-	if (envir.isSwayActive())
+	if (!envir.isSwayActive())
 	{
-		acc[1] = force[1] / mass();
+		acc[1] = 0;
 	}
 
-	if (envir.isHeaveActive())
+	if (!envir.isHeaveActive())
 	{
-		acc[2] = force[2] / mass();
+		acc[2] = 0;
 	}
 
-	if (envir.isRollActive())
+	if (!envir.isRollActive())
 	{
-		acc[3] = force[3] / inertiaMatrix[0];
+		acc[3] = 0;
 	}
 
-	if (envir.isPitchActive())
+	if (!envir.isPitchActive())
 	{
-		acc[4] = force[4] / inertiaMatrix[1];
+		acc[4] = 0;
 	}
 
-	if (envir.isYawActive())
+	if (!envir.isYawActive())
 	{
-		acc[5] = envir.isYawActive()   * force[5] / inertiaMatrix[2];
+		acc[5] = 0;
 	}
 
-	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE,acc);
+
+	IO::print2outLine(IO::OUTFLAG_FOWT_ACC, m_acc);
 
 	return acc;
 }

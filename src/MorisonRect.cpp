@@ -6,26 +6,49 @@ using namespace arma;
 /*****************************************************
     Constructors
 *****************************************************/
-MorisonRect::MorisonRect(vec cog2node1, vec cog2node2, vec cog2node3, int numIntPoints, bool botPressFlag,
-			        	double axialCD, double axialCa, double diam_X, double CD_X, double CM_X,
-				        double diam_Y, double CD_Y, double CM_Y,
-				        double botArea, double topArea)
-            : MorisonElement(cog2node1, cog2node2, numIntPoints, botPressFlag, axialCD, axialCa),
-              m_cog2node3(cog2node3), m_diam_X(diam_X), m_CD_X(CD_X), m_CM_X(CM_X),
+MorisonRect::MorisonRect(const vec &node1Pos, const vec &node2Pos, const vec &node3Pos, const vec &cog, const int numIntPoints,
+						 const bool botPressFlag, const double axialCD, const double axialCa, const double diam_X, const double CD_X, const double CM_X,
+						 const double diam_Y, const double CD_Y, const double CM_Y,
+						 const double botArea, const double topArea)
+            : MorisonElement(node1Pos, node2Pos, cog, numIntPoints, botPressFlag, axialCD, axialCa),
+              m_diam_X(diam_X), m_CD_X(CD_X), m_CM_X(CM_X),
               m_diam_Y(diam_Y), m_CD_Y(CD_Y), m_CM_Y(CM_Y), m_botArea(botArea), m_topArea(topArea)
-{}
+{
+	m_cog2node3 = node3Pos - cog;
+}
 
 
 /*****************************************************
 	Forces acting on the Morison Element
 *****************************************************/
+void MorisonRect::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const
+{
+}
+
+
+// TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
+mat::fixed<6, 6> MorisonRect::addedMass_perp(const double density, const vec::fixed<3> &cog) const
+{
+	mat::fixed<6, 6> A(fill::zeros);
+
+	return A;
+}
+
+mat::fixed<6, 6> MorisonRect::addedMass_paral(const double density, const vec::fixed<3> &cog) const
+{
+	mat::fixed<6, 6> A(fill::zeros);
+
+	return A;
+}
+
+
 vec::fixed<6> MorisonRect::hydrostaticForce(const ENVIR &envir) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;
 }
 
-vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir) const
+vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;

@@ -171,7 +171,7 @@ Morison_circ
 END
 
 
-%Morison_rect
+Morison_rect
 % Rectangular cylinders: RETP 
 % Requires properties (diameter, drag coeff, added mass coeff, etc) in two different directions, x and y
 % Directions are determined as follows: 	Zlocal is the longitudinal direction, given by (n2 - n1) / |n2-n1| (n1 = node 1, n2 = node 2)
@@ -180,8 +180,8 @@ END
 % First node ID \t Second node ID \t Third node ID \t Diameter in local x \t  Drag coefficient in x\t Inertia coefficient in x \t Diameter in local y \t  Drag coefficient in y\t Inertia coefficient in y \t Number of integration points ...
 % ... \t Bottom surface \t Top surface \t Axial drag coefficient \t Axial added mass coefficient \t 1 or 0 for calculating dynamic pressure or not
 % The second part of the data above (the ones in the second line) is only required for heave plates. Input 0 for everything if only forces perpendicular to the axis of the cylinder will be considered
-%111	112	113	7.10	4.0	1.65	5.45	5.0	2.20	17	1	2	3	4	1
-%END
+111	112	113	7.10	4.0	1.65	5.45	5.0	2.20	17	1	2	3	4	1
+END
 
 
 %%-----------------------------------------------------------------------------%%
@@ -1205,6 +1205,9 @@ fowt_pos
 hs_force
 hd_force
 total_force
+wave_elev 11
+wave_vel
+wave_acc
 END
 
 

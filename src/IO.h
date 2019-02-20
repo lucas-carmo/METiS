@@ -35,10 +35,16 @@ public:
 	enum OutFlag
 	{
 		OUTFLAG_FOWT_POS,
+		OUTFLAG_FOWT_VEL,
+		OUTFLAG_FOWT_ACC,
 //		
 		OUTFLAG_WAVE_ELEV,
 		OUTFLAG_WAVE_VEL,
 		OUTFLAG_WAVE_ACC,
+//		
+		OUTFLAG_HD_INERTIA_FORCE,
+		OUTFLAG_HD_DRAG_FORCE,
+		OUTFLAG_HD_FK_FORCE,
 //		
 		OUTFLAG_HD_FORCE,
 		OUTFLAG_HS_FORCE,		
@@ -88,8 +94,7 @@ public:
 	Functions related to output
 	*/
 	static std::string METiS_Header();
-	static void writeErrorMessage(const std::string &str);
-	static void writeWarningMessage(const std::string &str);	
+	static void print2log(const std::string &str);
 
 	// To summary file
 	static void printSumFile(const FOWT &fowt, const ENVIR &envir);
@@ -107,7 +112,7 @@ public:
 	static void print2outLine(const int num);
 	static void print2outLineHeader(const std::string &str);
 
-		// Functions that actually write to the output file
+	// Functions that actually write to the output file
 	static void printOutLineHeader2outFile();
 	static void printOutLine2outFile();
 	static void newLineOutFile();
@@ -158,6 +163,9 @@ bool caseInsCompare(const std::wstring& s1, const std::wstring& s2);
 
 // Get folder path from a complete file path
 std::string getFileFolder(const std::string& path);
+
+// Get file name, without extension, from a complete file path
+std::string getFileName(const std::string& path);
 
 
 
