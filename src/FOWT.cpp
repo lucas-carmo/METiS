@@ -259,9 +259,9 @@ vec::fixed<6> FOWT::hydrodynamicForce(const ENVIR &envir)
 	return m_floater.hydrodynamicForce(envir);
 }
 
-vec::fixed<6> FOWT::hydrostaticForce(const ENVIR &envir)
+vec::fixed<6> FOWT::hydrostaticForce(const double watDensity, const double gravity)
 {
-	return m_floater.hydrostaticForce(envir);
+	return m_floater.hydrostaticForce(watDensity, gravity);
 }
 
 vec::fixed<6> FOWT::mooringForce()
@@ -269,12 +269,12 @@ vec::fixed<6> FOWT::mooringForce()
 	return vec::fixed<6> {-m_linStiff(0)*m_pos(0), -m_linStiff(1)*m_pos(1), 0, 0, 0, -m_linStiff(2)*m_pos(5)};
 }
 
-vec::fixed<6> FOWT::weightForce(const ENVIR &envir)
+vec::fixed<6> FOWT::weightForce(const double gravity)
 {
-	return vec::fixed<6> {0,0, -envir.gravity() * mass(), 0, 0, 0};
+	return vec::fixed<6> {0,0, -gravity * mass(), 0, 0, 0};
 }
 
 vec::fixed<6> FOWT::totalForce(const ENVIR &envir)
 {
-	return (hydrodynamicForce(envir) + hydrostaticForce(envir) + mooringForce() + weightForce(envir));
+	return (hydrodynamicForce(envir) + hydrostaticForce(envir.watDensity(), envir.gravity()) + mooringForce() + weightForce(envir.gravity()));
 }

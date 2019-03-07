@@ -385,14 +385,14 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir) const
 	return force;
 }
 
-vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir) const
+vec::fixed<6> Floater::hydrostaticForce(const double watDensity, const double gravity) const
 {
 	vec::fixed<6> force(fill::zeros);		
 	vec::fixed<6> df(fill::zeros);
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		df = m_MorisonElements.at(ii)->hydrostaticForce(envir);
+		df = m_MorisonElements.at(ii)->hydrostaticForce(watDensity, gravity);
 
 		// The moments acting on the cylinders were calculated with respect to the first node
 		// We need to change the fulcrum to the CoG
