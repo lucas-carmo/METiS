@@ -26,10 +26,12 @@ protected:
 	vec::fixed<3> m_node2Vel;
 	vec::fixed<3> m_node1Acc;
 	vec::fixed<3> m_node2Acc;
+	vec::fixed<3> m_node1AccCentrip;
+	vec::fixed<3> m_node2AccCentrip;
 
 public:
-	MorisonElement(vec cog2node1, vec cog2node2, int numIntPoints, 
-				   bool botPressFlag, double axialCD, double axialCa);
+	MorisonElement(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints, 
+				   const bool botPressFlag, const double axialCD, const double axialCa);
 	
 	// Functions related to position, velocity and acceleration
 	void updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc);
@@ -40,10 +42,17 @@ public:
 	vec::fixed<3> node2Vel() const;
 	vec::fixed<3> node1Acc() const;
 	vec::fixed<3> node2Acc() const;
+	vec::fixed<3> node1AccCentrip() const;
+	vec::fixed<3> node2AccCentrip() const;
+	virtual void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
+
+	// Contribution to the added mass
+	virtual mat::fixed<6, 6> addedMass_perp(const double density, const vec::fixed<3> &cog) const = 0;
+	virtual mat::fixed<6, 6> addedMass_paral(const double density, const vec::fixed<3> &cog) const = 0;
 
 	// Forces
-	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) const = 0;
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir) const = 0;
+	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) const = 0;	
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const = 0; 
 
 	// Printers and getters
 	virtual std::string print() const = 0;

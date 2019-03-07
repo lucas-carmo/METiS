@@ -7,6 +7,8 @@
 #include "ENVIR.h"
 #include "analyses.h"
 
+
+
 // METiS Version
 extern const std::string g_METIS_VERSION{ "0.0.1" };
 
@@ -40,18 +42,16 @@ int main(int argc, char *argv[])
 
 	catch(std::exception &exception)
 	{
-		IO::writeErrorMessage( std::string(exception.what()) );
+		IO::print2log( "ERROR: " + std::string(exception.what()) );
 	}
 
 	catch(...)
     {
-        IO::writeErrorMessage( "Unknown exception thrown." );
+        IO::print2log( "ERROR: Unknown exception thrown." );
     }
-
 	
-	std::cin.sync();
-	std::cout << "\nElapsed time: " << timer.toc() << " seconds. Press enter to exit.\n";
-	std::cin.get();
+
+	IO::print2log("Elapsed time: " + std::to_string(timer.toc()) + " seconds.");
 
 	return 0;
 }

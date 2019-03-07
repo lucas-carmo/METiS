@@ -6,12 +6,15 @@ using namespace arma;
 	Constructors
 *****************************************************/
 
-MorisonElement::MorisonElement(vec cog2node1, vec cog2node2, int numIntPoints, 
-							   bool botPressFlag, double axialCD, double axialCa)
-	: m_cog2node1(cog2node1), m_cog2node2(cog2node2), 
+MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints,
+							   const bool botPressFlag, const double axialCD, const double axialCa)
+	: m_node1Pos(node1Pos), m_node2Pos(node2Pos), 
 	  m_botPressFlag(botPressFlag), m_axialCD(axialCD), m_axialCa(axialCa),
-	  m_node1Pos(cog2node1), m_node2Pos(cog2node2), m_node1Vel(fill::zeros), m_node2Vel(fill::zeros), m_node1Acc(fill::zeros), m_node2Acc(fill::zeros)
+	  m_cog2node1(fill::zeros), m_cog2node2(fill::zeros), m_node1Vel(fill::zeros), m_node2Vel(fill::zeros), m_node1Acc(fill::zeros), m_node2Acc(fill::zeros)
 {
+	m_cog2node1 = m_node1Pos - cog;
+	m_cog2node2 = m_node2Pos - cog;
+		
 	// Since Simpson's rule is employed for the integration of the forces along the 
 	// Morison's element, we need to make sure that the number of integration points is odd
 	if (numIntPoints % 2 == 0)
@@ -39,8 +42,11 @@ void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, co
 	m_node1Vel = floaterVel.rows(0, 2) + arma::cross(floaterVel.rows(3, 5), R1);
 	m_node2Vel = floaterVel.rows(0, 2) + arma::cross(floaterVel.rows(3, 5), R2);
 
-	m_node1Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R1) + arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R1));
-	m_node2Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R2) + arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R2));
+	m_node1AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R1));
+	m_node2AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R2));
+
+	m_node1Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R1) + m_node1AccCentrip;
+	m_node2Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R2) + m_node2AccCentrip;
 }
 
 mat::fixed<3, 3> MorisonElement::RotatMatrix(const vec::fixed<3> &rotation) const
@@ -72,25 +78,6 @@ mat::fixed<3, 3> MorisonElement::RotatMatrix(const vec::fixed<3> &rotation) cons
 								   };
 
 	return RotatMatrix;
-
-	/* Alternative calculation for tests*/
-//	mat::fixed<3, 3> RotatX = { {1,0,0},
-//								{0 , cos(rotation(0)), -sin(rotation(0))},
-//								{0 , sin(rotation(0)), cos(rotation(0))}
-//								};
-//
-//	mat::fixed<3, 3> RotatY = { {cos(rotation(1)),0,sin(rotation(1))},
-//								{0,1,0},
-//								{-sin(rotation(1)),0,cos(rotation(1))},
-//								};
-//
-//	mat::fixed<3, 3> RotatZ = { {cos(rotation(2)), -sin(rotation(2)),0},
-//								{sin(rotation(2)), cos(rotation(2)),0},
-//								{0,0,1}
-//								};
-//
-//	return (RotatZ * RotatY * RotatX);
-//
 }
 
 
@@ -122,4 +109,15 @@ vec::fixed<3> MorisonElement::node1Acc() const
 vec::fixed<3> MorisonElement::node2Acc() const
 {
 	return m_node2Acc;;
+}
+
+
+vec::fixed<3> MorisonElement::node1AccCentrip() const
+{
+	return m_node1AccCentrip;
+}
+
+vec::fixed<3> MorisonElement::node2AccCentrip() const
+{
+	return m_node2AccCentrip;
 }

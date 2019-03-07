@@ -25,7 +25,7 @@ std::ofstream IO::m_sumFl;
 
 std::string IO::m_outFilePath = "";
 std::ofstream IO::m_outFl;
-const unsigned int IO::m_outColumnWidth = 16;
+const unsigned int IO::m_outColumnWidth = 18;
 const unsigned int IO::m_outNumPrecision = 4;
 std::array<bool, IO::OUTFLAG_SIZE> IO::m_whichResult2Output;
 
@@ -461,7 +461,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		else if (!caseInsCompare(getKeyword(strInput), "END_OF_INPUT_FILE"))
 		{
-			writeWarningMessage("Unknown keyword '" + getKeyword(strInput) + "' in line " + std::to_string(IO::getInLineNumber()) + ".");
+			print2log("WARNING: Unknown keyword '" + getKeyword(strInput) + "' in line " + std::to_string(IO::getInLineNumber()) + ".");
 		}
 	}
 
@@ -488,50 +488,59 @@ void IO::setFiles(const std::string &inFlPath)
 	}
 
 
-	// Get path of the folder where the input file is located, as that is where the output
-	// will be saved to.
+	// Get path of the folder where the input file is located
 	std::string folderPath = getFileFolder(m_inFilePath);
 
-	// Path of the output folder
-	std::string outputFolder = folderPath + filesep + "output";
+	//// Path of the output folder, which is the same folder where the input file is located
+	//std::string outputFolder = folderPath;
 
-	// Create output folder with name "output" in the same folder as the input file ("folderPath").
-	// If a folder (or file) named "output" already exists in folderPath, create a folder named output_1. If the latter exists as well, create output_2 instead.
-	// Keep this process until output_n does not exist and is then created.
+	// Name of the input file, without extension
+	std::string inFlName = getFileName(m_inFilePath);
+
+	// The output files are created in the same folder as the input file.
+	//
+	// If a file with the same name of a given output file already exists in folderPath, then a _1 is appended to its name. If the latter exists as well, append_2 instead. Keep this process until output_n does not exist and is then created.
+	// For consistency, the same _n is used for all the output files, even if a previous number does not exist for one of the files. This number _n is the largest available number starting from 1.
+	// So, if the files file_out, file_sum_2, file_log_3  already exist, the files file_log_1, file_sum_1, and file_out_1 are created.
 	struct stat info;
-	std::string outputFolder_original = outputFolder; // Original name of folderPath
-	int ii = 1;
-	while (stat(outputFolder.c_str(), &info) == 0)
-	{
-		outputFolder = outputFolder_original + "_" + std::to_string(ii);
-		++ii;
-	}
-	system(("mkdir " + outputFolder).c_str());
-	std::cout << "Output folder: '" << outputFolder << "'\n";
 
-	// Set log file
-	m_logFilePath = outputFolder + filesep + "log.txt";
-	m_logFl.open(m_logFilePath);
+	// Set 'log', 'summary' and 'formatted output' files
+	m_logFilePath = folderPath + filesep + inFlName + "_log.txt";
+	m_sumFilePath = folderPath + filesep + inFlName + "_sum.txt";
+	m_outFilePath = folderPath + filesep + inFlName + "_out.txt";
+
+	int index = 1; // This is the part where we verify if the file exists and append number as needed
+	while (stat(m_logFilePath.c_str(), &info) == 0 || stat(m_sumFilePath.c_str(), &info) == 0 || stat(m_outFilePath.c_str(), &info) == 0) 
+	{
+		m_logFilePath = folderPath + filesep + inFlName + "_log_" + std::to_string(index) + ".txt";
+		m_sumFilePath = folderPath + filesep + inFlName + "_sum_" + std::to_string(index) + ".txt";
+		m_outFilePath = folderPath + filesep + inFlName + "_out_" + std::to_string(index) + ".txt";
+		++index;
+	}	
+
+	// Open the output files
+	m_logFl.open(m_logFilePath); // Check if we can open it
 	if (!m_logFl)
 	{
 		throw std::runtime_error("Unable to open file " + m_logFilePath + " for writting.");
 	}
 
-	// Set summary file
-	m_sumFilePath = outputFolder + filesep + "summary.txt";
 	m_sumFl.open(m_sumFilePath);
 	if (!m_sumFl)
 	{
 		throw std::runtime_error("Unable to open file " + m_sumFilePath + " for writting.");
 	}
 
-	// Set formatted output file
-	m_outFilePath = outputFolder + filesep + "output.txt";
 	m_outFl.open(m_outFilePath);
 	if (!m_outFl)
 	{
 		throw std::runtime_error("Unable to open file " + m_outFilePath + " for writting.");
 	}
+
+	// Print output files path to the console
+	std::cout << "Printing log file to: '"              << m_logFilePath << "'\n";
+	std::cout << "Printing summary file to: '"          << m_sumFilePath << "'\n";
+	std::cout << "Printing formatted output file to: '" << m_outFilePath << "'\n";
 }
 
 
@@ -581,6 +590,16 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_POS) = true;
 	}
 
+	if (caseInsCompare(getKeyword(strInput), "fowt_vel"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_VEL) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "fowt_acc"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_ACC) = true;
+	}
+
 	if (caseInsCompare(getKeyword(strInput), "wave_elev"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ELEV) = true;
@@ -625,6 +644,21 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_TOTAL_FORCE) = true;
 	}	
+
+	if (caseInsCompare(getKeyword(strInput), "hd_inertia_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_INERTIA_FORCE) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "hd_drag_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_DRAG_FORCE) = true;
+	}
+
+	if (caseInsCompare(getKeyword(strInput), "hd_fk_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FK_FORCE) = true;
+	}
 }
 
 
@@ -651,31 +685,17 @@ std::string IO::METiS_Header()
 	return header;
 }
 
-void IO::writeErrorMessage(const std::string &str)
+void IO::print2log(const std::string &str)
 {
-	std::string mess = "ERROR: " + str;
-
 	if (m_logFl) // If we are able to write to the log file, do it
 	{
-		m_logFl << mess << std::endl;
+		m_logFl << str << std::endl;
 	}
 
-	// Write to the console, anyway
-	std::cout << "\n\n" << mess << std::endl;
+	// Write to the console as well
+	std::cout << "\n\n" << str << std::endl;
 }
 
-void IO::writeWarningMessage(const std::string &str)
-{
-	std::string mess = "WARNING: " + str;
-
-	if (m_logFl) // If we are able to write to the log file, do it
-	{
-		m_logFl << mess << std::endl;
-	}
-
-	// Write to the console, anyway
-	std::cout << "\n\n" << mess << std::endl;
-}
 
 // Set m_shouldWriteOutLine to true or false. This is the variable
 // that tells when the program should write to the formatted output file.
@@ -704,7 +724,9 @@ void IO::print2outLineHeader_turnOff()
 void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 {
 	// Check whether the specified flag is indeed one that requires a vector with six components
-	if ((flag != OUTFLAG_FOWT_POS) && (flag != OUTFLAG_HD_FORCE) && (flag != OUTFLAG_HS_FORCE) && (flag != OUTFLAG_TOTAL_FORCE))
+	if ((flag != OUTFLAG_FOWT_POS) && (flag != OUTFLAG_FOWT_VEL) && (flag != OUTFLAG_FOWT_ACC) && 
+		(flag != OUTFLAG_HD_FORCE) && (flag != OUTFLAG_HS_FORCE) && (flag != OUTFLAG_TOTAL_FORCE) &&
+		(flag != OUTFLAG_HD_INERTIA_FORCE) && (flag != OUTFLAG_HD_DRAG_FORCE) && (flag != OUTFLAG_HD_FK_FORCE))
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &force).");
 	}
@@ -737,6 +759,30 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			}
 		}		
 
+		if (flag == OUTFLAG_HD_INERTIA_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("HD_INRT_Force_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_DRAG_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("HD_DRAG_Force_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_FK_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("HD_FK_Force_" + std::to_string(ii));
+			}
+		}
+
 		if (flag == OUTFLAG_FOWT_POS)
 		{
 			print2outLineHeader("Surge");
@@ -745,6 +791,26 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			print2outLineHeader("Roll");
 			print2outLineHeader("Pitch");
 			print2outLineHeader("Yaw");
+		}
+
+		if (flag == OUTFLAG_FOWT_VEL)
+		{
+			print2outLineHeader("Surge_Vel");
+			print2outLineHeader("Sway_Vel");
+			print2outLineHeader("Heave_Vel");
+			print2outLineHeader("Roll_Vel");
+			print2outLineHeader("Pitch_Vel");
+			print2outLineHeader("Yaw_Vel");
+		}
+
+		if (flag == OUTFLAG_FOWT_ACC)
+		{
+			print2outLineHeader("Surge_Acc");
+			print2outLineHeader("Sway_Acc");
+			print2outLineHeader("Heave_Acc");
+			print2outLineHeader("Roll_Acc");
+			print2outLineHeader("Pitch_Acc");
+			print2outLineHeader("Yaw_Acc");
 		}
 	}
 
@@ -891,12 +957,24 @@ std::string IO::printOutVar()
 			break;
 
 		case IO::OUTFLAG_HS_FORCE:
-		    output += "Hydrodynamic force: ";
+		    output += "Hydrostatic force: ";
 			break;	
 
 		case IO::OUTFLAG_TOTAL_FORCE:
 		    output += "Total force: ";
 			break;				
+
+		case IO::OUTFLAG_HD_INERTIA_FORCE:
+			output += "Hydrodynamic inertial force: ";
+			break;
+
+		case IO::OUTFLAG_HD_DRAG_FORCE:
+			output += "Hydrodynamic drag force: ";
+			break;
+
+		case IO::OUTFLAG_HD_FK_FORCE:
+			output += " Hydrodynamic Froude-Krylov force: ";
+			break;
 
 		default:
 			output += "Unknown specifier in output flags.";
@@ -1036,7 +1114,7 @@ std::string getFileFolder(const std::string& path)
 	// Check if input string is empty
 	if (path.empty())
 	{
-		throw std::runtime_error("Empty string passed to getFileFolder(). Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+		throw std::runtime_error("Empty string passed to getFileFolder().");
 	}
 
 	std::vector<std::string> str_tokenized = stringTokenize(path, filesep);
@@ -1055,4 +1133,27 @@ std::string getFileFolder(const std::string& path)
 		found = path.find_last_of(filesep);
 		return path.substr(0, found);
 	}
+}
+
+
+// Get file name, without extension, from a complete file path
+std::string getFileName(const std::string& path)
+{
+	// Check if input string is empty
+	if (path.empty())
+	{
+		throw std::runtime_error("Empty string passed to getFileName().");
+	}
+
+	// Tokenize the passed string based on the file separator. The file name is the last part (works even if only the file name is passed as argument)
+	std::vector<std::string> str_tokenized = stringTokenize(path, filesep);
+	std::string flNm = str_tokenized.back();
+
+	// We need to exclude the file extension. We get everything until the last dot and say that 
+	if (flNm.find_last_not_of(".") != std::string::npos)
+	{
+		flNm = flNm.substr(0, flNm.find_last_of("."));
+	}
+
+	return flNm;
 }
