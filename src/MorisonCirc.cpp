@@ -45,12 +45,12 @@ void MorisonCirc::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3>
 
 
 // TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
-mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double density, const vec::fixed<3> &cog) const
+mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<3> &cog) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
 	// Use a more friendly notation 
-	double Lambda = datum::pi * pow(m_diam / 2., 2) * density * (m_CM - 1);
+	double Lambda = datum::pi * pow(m_diam / 2., 2) * rho * (m_CM - 1);
 	double ncyl = m_numIntPoints;
 	double xG = cog[0];
 	double yG = cog[1];
@@ -262,12 +262,12 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double density, const vec::fi
 
 
 // TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
-mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double density, const vec::fixed<3> &cog) const
+mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const vec::fixed<3> &cog) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
 	// Use a more friendly notation 
-	double Lambda = density * m_axialCa * (4 / 3.) * datum::pi * pow(m_diam / 2, 3);
+	double Lambda = rho * m_axialCa * (4 / 3.) * datum::pi * pow(m_diam / 2, 3);
 	double ncyl = m_numIntPoints;
 	double xG = cog[0];
 	double yG = cog[1];
@@ -432,15 +432,13 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double density, const vec::f
 
 
 
-vec::fixed<6> MorisonCirc::hydrostaticForce(const ENVIR &envir) const
+vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
 
 	// Use a more friendly notation    
 	double D = m_diam;
-	double rho = envir.watDensity();
-	double g = envir.gravity();
 
 
 	// Nodes position

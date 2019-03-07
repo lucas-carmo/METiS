@@ -47,11 +47,11 @@ public:
 	virtual void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
 
 	// Contribution to the added mass
-	virtual mat::fixed<6, 6> addedMass_perp(const double density, const vec::fixed<3> &cog) const = 0;
-	virtual mat::fixed<6, 6> addedMass_paral(const double density, const vec::fixed<3> &cog) const = 0;
+	virtual mat::fixed<6, 6> addedMass_perp(const double rho, const vec::fixed<3> &cog) const = 0;
+	virtual mat::fixed<6, 6> addedMass_paral(const double rho, const vec::fixed<3> &cog) const = 0;
 
 	// Forces
-	virtual vec::fixed<6> hydrostaticForce(const ENVIR &envir) const = 0;	
+	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const = 0;	
 	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const = 0; 
 
 	// Printers and getters
