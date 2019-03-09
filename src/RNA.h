@@ -12,10 +12,8 @@ private:
     double m_rotorTilt;
     double m_rotorYaw;
 
-    int m_numBlades;
-	double m_bladePrecone;
-	double m_bladePitch;
-    Blade m_blade;
+    int m_numBlades = 0;
+    std::vector< Blade > m_blades;
     std::vector< Airfoil > m_airfoils;
 
     double m_hubRadius;
@@ -49,8 +47,8 @@ public:
 	double rotorYaw() const;
 
 	int numBlades() const;
-	double bladePrecone() const;
-	double bladePitch() const;
+	double bladePrecone(const unsigned int ii) const;
+	double bladePitch(const unsigned int ii) const;
 
 	std::string printBladeAero() const;
 	std::string printAirfoils() const;

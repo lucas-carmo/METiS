@@ -22,16 +22,45 @@ void RNA::readRotorYaw(const std::string &data)
 void RNA::readNumBlades(const std::string &data)
 {
 	readDataFromString(data, m_numBlades);
+	m_blades.resize(numBlades());
+
+	double dAzimuth = 360 / numBlades();
+	for (unsigned int ii = 0; ii < numBlades(); ++ii)
+	{		
+		m_blades.at(ii).setInitialAzimuth(ii * dAzimuth);
+	}
 }
 
 void RNA::readBladePrecone(const std::string &data)
 {
-	readDataFromString(data, m_bladePrecone);
+	double precone;
+	readDataFromString(data, precone);
+
+	if (numBlades() == 0)
+	{
+		throw std::runtime_error("Need to specify number of blades before their properties. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+	}
+
+	for (unsigned int ii = 0; ii < numBlades(); ++ii)
+	{		
+		m_blades.at(ii).setPrecone(precone);
+	}	
 }
 
 void RNA::readBladePitch(const std::string &data)
 {
-	readDataFromString(data, m_bladePitch);
+	double pitch;
+	readDataFromString(data, pitch);
+
+	if (numBlades() == 0)
+	{
+		throw std::runtime_error("Need to specify number of blades before their properties. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+	}
+
+	for (unsigned int ii = 0; ii < numBlades(); ++ii)
+	{		
+		m_blades.at(ii).setPitch(pitch);
+	}		
 }
 
 void RNA::readBladeAeroLine(const std::string &data)
@@ -62,8 +91,16 @@ void RNA::readBladeAeroLine(const std::string &data)
 	readDataFromString(input.at(5), chord);
 	readDataFromString(input.at(6), airfoilID);
 
+	if (numBlades() == 0)
+	{
+		throw std::runtime_error("Need to specify number of blades before their properties. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+	}
+
 	// Add the data read in the current line to the blade element
-	m_blade.addBladeAeroLine(span, crvAC, swpAC, crvAng, twist, chord, airfoilID);
+	for (unsigned int ii = 0; ii < numBlades(); ++ii)
+	{		
+		m_blades.at(ii).addBladeAeroLine(span, crvAC, swpAC, crvAng, twist, chord, airfoilID);
+	}	
 }
 
 // Add a new empty airfoil to m_airfoils
@@ -145,14 +182,14 @@ int RNA::numBlades() const
 	return m_numBlades;
 }
 
-double RNA::bladePrecone() const
+double RNA::bladePrecone(const unsigned int ii) const
 {
-	return m_bladePrecone;
+	return m_blades.at(ii).precone();
 }
 
-double RNA::bladePitch() const
+double RNA::bladePitch(const unsigned int ii) const
 {
-	return m_bladePitch;
+	return m_blades.at(ii).pitch();
 }
 
 std::string RNA::printBladeAero() const
@@ -160,9 +197,10 @@ std::string RNA::printBladeAero() const
 	std::string output = "";
 	output = output +  "BlSpn (m)\t" + "BlCrvAC (m)\t" + "BlSwpAC (m)\t" + "BlCrvAng (deg)\t" + "BlTwist (deg)\t" + "BlChord (m)\t" + "BlAfID" + '\n';
 
-	for (unsigned int ii = 0; ii < m_blade.size(); ++ii)
+	// For printing, print only the properties of the first blade
+	for (unsigned int ii = 0; ii < m_blades.at(0).size(); ++ii)
 	{
-		output = output + std::to_string(m_blade.span(ii)) + "\t" + std::to_string(m_blade.crvAC(ii)) + "\t" + std::to_string(m_blade.swpAC(ii)) + "\t" + std::to_string(m_blade.crvAng(ii)) + "\t" + std::to_string(m_blade.twist(ii)) + "\t" + std::to_string(m_blade.chord(ii)) + "\t" + std::to_string(m_blade.airoilID(ii)) + "\n";
+		output = output + std::to_string(m_blades.at(0).span(ii)) + "\t" + std::to_string(m_blades.at(0).crvAC(ii)) + "\t" + std::to_string(m_blades.at(0).swpAC(ii)) + "\t" + std::to_string(m_blades.at(0).crvAng(ii)) + "\t" + std::to_string(m_blades.at(0).twist(ii)) + "\t" + std::to_string(m_blades.at(0).chord(ii)) + "\t" + std::to_string(m_blades.at(0).airoilID(ii)) + "\n";
 	}
 
 	return output;

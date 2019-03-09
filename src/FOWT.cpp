@@ -145,8 +145,8 @@ std::string FOWT::printRNA() const
 	output = output + "\tRotor Tilt :\t" + std::to_string(m_rna.rotorTilt()) + "\n";
 	output = output + "\tRotor Yaw:\t" + std::to_string(m_rna.rotorYaw()) + "\n";
 	output = output + "\tNumBlades:\t" + std::to_string(m_rna.numBlades()) + "\n";
-	output = output + "\tBlade Precone:\t" + std::to_string(m_rna.bladePrecone()) + "\n";
-	output = output + "\tBlade Pitch:\t" + std::to_string(m_rna.bladePitch()) + "\n";
+	output = output + "\tBlades Precone:\t" + std::to_string(m_rna.bladePrecone(0)) + "\n";
+	output = output + "\tBlades Pitch:\t" + std::to_string(m_rna.bladePitch(0)) + "\t" + std::to_string(m_rna.bladePitch(1)) + "\t" + std::to_string(m_rna.bladePitch(2)) + "\n";
 	output = output + "\tHub Radius:\t" + std::to_string(m_rna.hubRadius()) + "\n";
 	output = output + "\tHub Height:\t" + std::to_string(m_rna.hubHeight()) + "\n";
 	output = output + "\tOverhang:\t" + std::to_string(m_rna.overhang()) + "\n";
