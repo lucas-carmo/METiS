@@ -280,7 +280,7 @@ vec::fixed<3> Wave::fluidVel(double x, double y, double z, double t, double h) c
 		double w = angFreq();
 		double A = amp();
 		double k = waveNumber();
-		double beta = direction() * arma::datum::pi / 180;
+		double beta = direction() * arma::datum::pi / 180.;
 
 		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
 		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
@@ -316,7 +316,7 @@ vec::fixed<3> Wave::fluidAcc(double x, double y, double z, double t, double h) c
 		double w = angFreq();
 		double A = amp();
 		double k = waveNumber();
-		double beta = direction() * arma::datum::pi / 180;
+		double beta = direction() * arma::datum::pi / 180.;
 
 		double khz_xy(0), khz_z(0);
 		if (k*h >= 10)
@@ -350,7 +350,7 @@ double Wave::pressure(double x, double y, double z, double t, double rho, double
 		double w = angFreq();
 		double A = amp();
 		double k = waveNumber();
-		double beta = direction() * arma::datum::pi / 180;
+		double beta = direction() * arma::datum::pi / 180.;
 
 		double khz(0);
 		if (k*h >= 10)
