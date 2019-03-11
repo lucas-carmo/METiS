@@ -20,7 +20,12 @@ private:
 	// Properties that belong to the whole blade
 	double m_precone;
 	double m_pitch;
-	double m_initialAzimuth;
+	double m_initialAzimuth; // Azimuth position in t = 0
+
+	// Coordinates of the nodes written in the hub coordinate system.
+	// Since this needs to be calculated only in the first time step, I thought it better to keep it as a member.
+	// It is initialized with NaN, in order to know whether it was already calculated or not.
+	std::vector<vec::fixed<3>> m_nodeCoord_hub;
 
 public:
 	/*****************************************************
@@ -52,6 +57,11 @@ public:
 	/*****************************************************
 		Calculate node position in different coordinate systems
 	*****************************************************/	
-	vec::fixed<3> hubCoord(unsigned int index, double hubRadius) const;
+	vec::fixed<3> nodeCoord_hub(const unsigned int index, const double hubRadius);
+	vec::fixed<3> nodeCoord_hub(const unsigned int index) const;	
+	vec::fixed<3> nodeCoord_shaft(const unsigned int index, const double dAzimuth) const;	
+	vec::fixed<3> nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const double dAzimuth) const;
+	vec::fixed<3> nodeCoord_tower(const vec::fixed<3> &nodeCoord_shaft, const double tilt, const double yaw, const double hubHeight) const;
+	vec::fixed<3> nodeCoord_earth(const vec::fixed<6> &FOWTpos, const vec::fixed<3> &nodeCoord_tower) const;
 };
 

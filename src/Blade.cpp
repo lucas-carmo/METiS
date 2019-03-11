@@ -1,4 +1,5 @@
 #include "Blade.h"
+#include "auxFunctions.h" // For rotatMatrix()
 
 using namespace arma;
 
@@ -26,6 +27,10 @@ void Blade::addBladeAeroLine(const double span, const double crvAC, const double
 	m_twist.push_back(twist);
 	m_chord.push_back(chord);
 	m_airfoilID.push_back(airfoilID);
+
+	vec::fixed<3> nodeCoord_hub;
+	nodeCoord_hub.fill(datum::nan);
+	m_nodeCoord_hub.push_back(nodeCoord_hub);
 }
 
 void Blade::setPrecone(const double precone)
@@ -106,12 +111,64 @@ double Blade::initialAzimuth() const
 /*****************************************************
 	Calculate node position in different coordinate systems
 *****************************************************/	
-vec::fixed<3> Blade::hubCoord(unsigned int index, double hubRadius) const
+
+// Coordinates of a blade node written in the hub coordinate system.
+//
+// It is only calculated once, requiring the index of the node you are interested in and the hub radius.
+// After the calculation, the value is stored in m_nodeCoord_hub(index) for future usage.
+vec::fixed<3> Blade::nodeCoord_hub(const unsigned int index, const double hubRadius)
 {
+	if (arma::is_finite(m_nodeCoord_hub.at(index)))
+	{
+		return m_nodeCoord_hub.at(index);
+	}
+
 	vec::fixed<3> hubCoord;
 	double r = hubRadius + span(index);		
 
 	hubCoord[0] = r * tan(precone());
 	hubCoord[1] = -r * sin(initialAzimuth()) * cos(precone());
 	hubCoord[2] = r * cos(initialAzimuth()) * cos(precone());
+
+	m_nodeCoord_hub.at(index) = hubCoord;
+
+	return hubCoord;
+}
+
+// An overload for when Blade::nodeCoord_hub(unsigned int index, double hubRadius) was already calculated
+vec::fixed<3> Blade::nodeCoord_hub(const unsigned int index) const
+{
+	if (!arma::is_finite(m_nodeCoord_hub.at(index)))
+	{
+		throw std::runtime_error("Need to calculate Blade::m_nodeCoord_hub(unsigned int index, double hubRadius) at least once before calling Blade::nodeCoord_hub(unsigned int index).");	
+	}
+	return m_nodeCoord_hub.at(index);
+}
+
+// Coordinates of a blade node written in the shaft coordinate system.
+vec::fixed<3> Blade::nodeCoord_shaft(const unsigned int index, const double dAzimuth) const
+{	
+	double angle = (initialAzimuth() + dAzimuth) * datum::pi / 180.;
+
+	return ( rotatMatrix(vec::fixed<3> {angle, 0, 0}) * nodeCoord_hub(index) );
+}
+
+// Overload for when the input is the nodeCoord_hub of a certain node itself.
+vec::fixed<3> Blade::nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const double dAzimuth) const
+{
+	double angle = (initialAzimuth() + dAzimuth) * datum::pi / 180.;
+	return ( rotatMatrix(vec::fixed<3> {angle, 0, 0}) * nodeCoord_hub );
+}
+
+// Coordinates of a blade node written in the tower coordinate system.
+vec::fixed<3> Blade::nodeCoord_tower(const vec::fixed<3> &nodeCoord_shaft, const double tilt, const double yaw, const double hubHeight) const
+{
+	mat::fixed<3,3> rotat = rotatMatrix(vec::fixed<3> {0, yaw*datum::pi/180., 0}) * rotatMatrix(vec::fixed<3> {0, -tilt*datum::pi/180., 0});
+	return (rotat * nodeCoord_shaft + vec::fixed<3> {0,0,hubHeight} );
+}
+
+// Coordinates of a blade node written in the earth coordinate system.
+vec::fixed<3> Blade::nodeCoord_earth(const vec::fixed<6> &FOWTpos, const vec::fixed<3> &nodeCoord_tower) const
+{
+	return (FOWTpos.rows(0,2) + rotatMatrix(FOWTpos.rows(3,5)) * nodeCoord_tower);
 }
