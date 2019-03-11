@@ -7,8 +7,6 @@
 #include "ENVIR.h"
 #include "analyses.h"
 
-
-
 // METiS Version
 extern const std::string g_METIS_VERSION{ "0.0.1" };
 
@@ -35,8 +33,9 @@ int main(int argc, char *argv[])
 		std::cout << "Running METiS with file '" << argv[1] << "'\n";
 		IO::setFiles(argv[1]); // Set paths to input file and output files
 		IO::readInputFile(fowt, envir); // Read data from input file to fowt and envir
-		IO::printSumFile(fowt, envir);		
+		IO::printSumFile(fowt, envir);	// Print the summary file for later verification of the input by the user
 
+		// All the time domain calculation is done inside this function
 		timeDomainAnalysis_FOWT(fowt, envir);
 	}
 
@@ -52,7 +51,6 @@ int main(int argc, char *argv[])
 	
 
 	IO::print2log("Elapsed time: " + std::to_string(timer.toc()) + " seconds.");
-
 	return 0;
 }
 
