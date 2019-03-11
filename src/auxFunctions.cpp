@@ -9,30 +9,30 @@ mat::fixed<3, 3> rotatMatrix(const vec::fixed<3> &rotation)
 	/* Rotation matrix is RotatMat = RotatX * RotatY * RotatZ, i.e. a rotation around the Z axis,
 	  followed by a rotation around the new y axis, and a rotation around the new x axis. Each rotation matrix is given by:
 	
-	  RotatX = { { 1 ,        0        ,         0        },
-			     { 0 , cos(rotation(3)) , -sin(rotation(3)) },
-			     { 0 , sin(rotation(3)) ,  cos(rotation(3)) }
-			   };
+	  rotatX = { 	{ 1 ,        0        ,         0        },
+			     			{ 0 , cos(rotation(3)) , -sin(rotation(3)) },
+			     			{ 0 , sin(rotation(3)) ,  cos(rotation(3)) }
+			   			};
 
-	  RotatY = { { cos(rotation(4))  , 0 ,  sin(rotation(4)) },
-		         {        0         , 1 ,         0        },
-			     { -sin(rotation(4)) , 0 , cos(rotation(4)) }
-			   };
+	  rotatY = { 	{ cos(rotation(4))  , 0 ,  sin(rotation(4)) },
+		         		{        0         , 1 ,         0        },
+			     			{ -sin(rotation(4)) , 0 , cos(rotation(4)) }
+			   			};
 
-	  RotatZ = { { cos(rotation(5)) , -sin(rotation(5)) , 0 },			     
-				 { sin(rotation(5)) ,  cos(rotation(5)) , 0 },
-			     {        0        ,         0        , 1 },
-			   };
+	  rotatZ = {	{ cos(rotation(5)) , -sin(rotation(5)) , 0 },			     
+				 				{ sin(rotation(5)) ,  cos(rotation(5)) , 0 },
+			     			{        0        ,         0        , 1 },
+			   			};
 
 	  And the resulting matrix is the one below
 	*/
-	mat::fixed<3, 3> RotatMatrix = { 
+	mat::fixed<3, 3> rotatMatrix = { 
 									{                          cos(rotation(1)) * cos(rotation(2))                               ,                          -cos(rotation(1)) * sin(rotation(2))                               ,            sin(rotation(1))          },
-									{ cos(rotation(0)) * sin(rotation(2)) + sin(rotation(0)) * sin(rotation(1)) * cos(rotation(2))  ,  cos(rotation(0)) * cos(rotation(1)) - sin(rotation(1)) * sin(rotation(1)) * sin(rotation(2))  ,  -sin(rotation(0)) * cos(rotation(1)) },
-									{ sin(rotation(0)) * sin(rotation(2)) - cos(rotation(0)) * sin(rotation(1)) * cos(rotation(2))  ,  sin(rotation(0)) * cos(rotation(2)) + cos(rotation(1)) * sin(rotation(1)) * sin(rotation(2))  ,   cos(rotation(0)) * cos(rotation(1)) }
+									{ cos(rotation(0)) * sin(rotation(2)) + sin(rotation(0)) * sin(rotation(1)) * cos(rotation(2))  ,  cos(rotation(0)) * cos(rotation(1)) - sin(rotation(0)) * sin(rotation(1)) * sin(rotation(2))  ,  -sin(rotation(0)) * cos(rotation(1)) },
+									{ sin(rotation(0)) * sin(rotation(2)) - cos(rotation(0)) * sin(rotation(1)) * cos(rotation(2))  ,  sin(rotation(0)) * cos(rotation(2)) + cos(rotation(0)) * sin(rotation(1)) * sin(rotation(2))  ,   cos(rotation(0)) * cos(rotation(1)) }
 								   };
 
-	return RotatMatrix;
+	return rotatMatrix;
 }
 
 
