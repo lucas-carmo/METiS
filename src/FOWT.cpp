@@ -63,7 +63,7 @@ void FOWT::setRNA(RNA &rna)
 vec::fixed<3> FOWT::CoG()
 {
 	// If CoG was not calculated yet, calculate it
-	if (!is_finite(m_CoG))
+	if (!arma::is_finite(m_CoG))
 	{
 		m_CoG = m_floater.CoG();
 	}
@@ -74,7 +74,7 @@ vec::fixed<3> FOWT::CoG()
 double FOWT::mass()
 {
 	// If m_mass was not calculated yet, calculate it
-	if (!is_finite(m_mass))
+	if (!arma::is_finite(m_mass))
 	{
 		m_mass = m_floater.mass(); 
 	}
