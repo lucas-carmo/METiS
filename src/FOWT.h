@@ -22,7 +22,9 @@ private:
 	double m_mass;
 	vec::fixed<3> m_CoG;
 
-	// FOWT condition (position, velocity, acceleration, etc)
+	// FOWT condition
+	// m_pos(0:2) = Position with respect to the initial CoG (i.e. CoG(t) - CoG(0))
+	// m_pos(3:5) = Rotation with respect to initial configuration. For now, we are considering small rotations.
 	vec::fixed<6> m_pos;
 	vec::fixed<6> m_vel;
 	vec::fixed<6> m_acc;
