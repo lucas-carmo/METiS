@@ -617,12 +617,12 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &
 	vec::fixed<3> force_ii(fill::zeros); // Total force
 	vec::fixed<3> moment_ii(fill::zeros);
 
-    for (int ii = 1; ii <= ncyl; ++ii) 
+	for (int ii = 1; ii <= ncyl; ++ii) 
 	{
-        n_ii = (n2 - n1) * (ii-1)/(ncyl-1) + n1; // Coordinates of the integration point
-        if (n_ii[2] > 0)        
+		n_ii = (n2 - n1) * (ii-1)/(ncyl-1) + n1; // Coordinates of the integration point
+		if (n_ii[2] > 0)        
 		{
-            break; // Since n2 is above n1, if we reach n_ii[2] > 0, all the next n_ii are also above the waterline
+			break; // Since n2 is above n1, if we reach n_ii[2] > 0, all the next n_ii are also above the waterline
 		}
 
 		/*******
@@ -640,12 +640,12 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &
 			Body velocity/acceleration
 		******/
 		// Absolute (R_ii) and relative (lambda) distance between the integration point and the bottom node
-        double R_ii = norm(n_ii - n1, 2);
-        double lambda = R_ii/norm(n2 - n1, 2);
+		double R_ii = norm(n_ii - n1, 2);
+		double lambda = R_ii/norm(n2 - n1, 2);
 
-        // Velocity and acceleration of the integration point
-        vel_ii = v1 + lambda * ( v2 - v1 );
-        acc_ii = a1 + lambda * ( a2 - a1 );		
+		// Velocity and acceleration of the integration point
+		vel_ii = v1 + lambda * ( v2 - v1 );
+		acc_ii = a1 + lambda * ( a2 - a1 );		
 
 		// Component of the velocity and acceleration of the integration point that is perpendicular to the axis of the cylinder
 		vel_ii = dot(vel_ii, xvec) * xvec + dot(vel_ii, yvec) * yvec;
