@@ -1,4 +1,5 @@
 #include "MorisonElement.h"
+#include "auxFunctions.h"
 
 using namespace arma;
 
@@ -32,7 +33,7 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 *****************************************************/
 void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc)
 {
-	mat::fixed<3, 3> RotatMatrix(MorisonElement::RotatMatrix(floaterCoGpos.rows(3,5))); // Calculate it here so we just need to calculate the matrix once
+	mat::fixed<3, 3> RotatMatrix(rotatMatrix(floaterCoGpos.rows(3,5))); // Calculate it here so we just need to calculate the matrix once
 	vec::fixed<3> R1 = RotatMatrix * m_cog2node1; // R1 and R2 are the vectors that give the node1 and node2 positions with respect to the CoG of the structure
 	vec::fixed<3> R2 = RotatMatrix * m_cog2node2;
 
@@ -48,38 +49,6 @@ void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, co
 	m_node1Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R1) + m_node1AccCentrip;
 	m_node2Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R2) + m_node2AccCentrip;
 }
-
-mat::fixed<3, 3> MorisonElement::RotatMatrix(const vec::fixed<3> &rotation) const
-{
-	/* Rotation matrix is RotatMat = RotatX * RotatY * RotatZ, i.e. a rotation around the Z axis,
-	  followed by a rotation around the new y axis, and a rotation around the new x axis. Each rotation matrix is given by:
-	
-	  RotatX = { { 1 ,        0        ,         0        },
-			     { 0 , cos(rotation(3)) , -sin(rotation(3)) },
-			     { 0 , sin(rotation(3)) ,  cos(rotation(3)) }
-			   };
-
-	  RotatY = { { cos(rotation(4))  , 0 ,  sin(rotation(4)) },
-		         {        0         , 1 ,         0        },
-			     { -sin(rotation(4)) , 0 , cos(rotation(4)) }
-			   };
-
-	  RotatZ = { { cos(rotation(5)) , -sin(rotation(5)) , 0 },			     
-				 { sin(rotation(5)) ,  cos(rotation(5)) , 0 },
-			     {        0        ,         0        , 1 },
-			   };
-
-	  And the resulting matrix is the one below
-	*/
-	mat::fixed<3, 3> RotatMatrix = { 
-									{                          cos(rotation(1)) * cos(rotation(2))                               ,                          -cos(rotation(1)) * sin(rotation(2))                               ,            sin(rotation(1))          },
-									{ cos(rotation(0)) * sin(rotation(2)) + sin(rotation(0)) * sin(rotation(1)) * cos(rotation(2))  ,  cos(rotation(0)) * cos(rotation(1)) - sin(rotation(1)) * sin(rotation(1)) * sin(rotation(2))  ,  -sin(rotation(0)) * cos(rotation(1)) },
-									{ sin(rotation(0)) * sin(rotation(2)) - cos(rotation(0)) * sin(rotation(1)) * cos(rotation(2))  ,  sin(rotation(0)) * cos(rotation(2)) + cos(rotation(1)) * sin(rotation(1)) * sin(rotation(2))  ,   cos(rotation(0)) * cos(rotation(1)) }
-								   };
-
-	return RotatMatrix;
-}
-
 
 vec::fixed<3> MorisonElement::node1Pos() const
 {
