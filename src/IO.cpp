@@ -140,7 +140,13 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		else if (caseInsCompare(getKeyword(strInput), "WindVel"))
 		{
-			envir.readWindVel(getData(strInput));
+			envir.readWindRefVel(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "WindHeight"))
+		{
+			envir.readWindRefHeight(getData(strInput));
 			continue;
 		}
 
@@ -908,7 +914,8 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Water Density:\t" << envir.watDensity() << '\n';
 	m_sumFl << "Water Depth:\t" << envir.watDepth() << '\n';
 	m_sumFl << "Air density:\t" << envir.airDensity() << '\n';
-	m_sumFl << "Wind X velocity:\t" << envir.windVel() << '\n';
+	m_sumFl << "Wind X velocity:\t" << envir.windRefVel() << '\n';
+	m_sumFl << "Wind Height:\t" << envir.windRefHeight() << '\n';
 	m_sumFl << "Wind exp:\t" << envir.windExp() << '\n';
 	m_sumFl << "Nodes: \n" << envir.printNodes() << '\n';
 	m_sumFl << "Wave Locations: " << envir.printWaveLocation() << '\n';
