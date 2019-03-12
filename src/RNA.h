@@ -45,7 +45,7 @@ public:
 	double hubRadius() const;
 	double hubHeight() const;
 	double overhang() const;
-	int numBlades() const;
+	unsigned int numBlades() const;
 	double bladePrecone(const unsigned int ii) const;
 	double bladePitch(const unsigned int ii) const;
 

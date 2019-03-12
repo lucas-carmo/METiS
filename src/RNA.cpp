@@ -21,7 +21,7 @@ void RNA::readRotorYaw(const std::string &data)
 
 void RNA::readNumBlades(const std::string &data)
 {
-	int numBlades;
+	unsigned int numBlades;
 	readDataFromString(data, numBlades);
 	m_blades.resize(numBlades);
 
@@ -178,9 +178,9 @@ double RNA::rotorYaw() const
 	return m_rotorYaw;
 }
 
-int RNA::numBlades() const
+unsigned int RNA::numBlades() const
 {
-	return m_blades.size();
+	return static_cast<unsigned int>(m_blades.size());
 }
 
 double RNA::bladePrecone(const unsigned int ii) const
