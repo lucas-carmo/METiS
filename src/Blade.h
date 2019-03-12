@@ -57,7 +57,7 @@ public:
 	/*****************************************************
 		Calculate node position in different coordinate systems
 	*****************************************************/	
-	vec::fixed<3> nodeCoord_hub(const unsigned int index, const double hubRadius);
+	void setNodeCoord_hub(const unsigned int index, const double hubRadius);
 	vec::fixed<3> nodeCoord_hub(const unsigned int index) const;	
 	vec::fixed<3> nodeCoord_shaft(const unsigned int index, const double dAzimuth) const;	
 	vec::fixed<3> nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const double dAzimuth) const;

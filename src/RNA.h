@@ -55,5 +55,6 @@ public:
 	/*****************************************************
 		Caculation functions
 	*****************************************************/	
+	double dAzimuth(const double time) const;
 	vec::fixed<6> aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel) const;
 };

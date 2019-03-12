@@ -6,16 +6,6 @@ using namespace arma;
 /*****************************************************
 	Setters
 *****************************************************/
-// Blade(const double precone, const double azimuth, const double pitch)
-// {
-// 	m_precone = precone;
-// 	m_azimuth = azimuth;
-// 	m_pitch = pitch;
-// Como eles são lidos em linhas diferentes, acho melhor deixar o constructor com NaN e 
-// fazer uma função set pra cada um
-// }
-
-
 void Blade::addBladeAeroLine(const double span, const double crvAC, const double swpAC, 
 							 const double crvAng, const double twist, const double chord, 
 							 const int airfoilID)
@@ -113,16 +103,10 @@ double Blade::initialAzimuth() const
 *****************************************************/	
 
 // Coordinates of a blade node written in the hub coordinate system.
-//
-// It is only calculated once, requiring the index of the node you are interested in and the hub radius.
+// It requires the index of the node you are interested in and the hub radius.
 // After the calculation, the value is stored in m_nodeCoord_hub(index) for future usage.
-vec::fixed<3> Blade::nodeCoord_hub(const unsigned int index, const double hubRadius)
+void Blade::setNodeCoord_hub(const unsigned int index, const double hubRadius)
 {
-	if (arma::is_finite(m_nodeCoord_hub.at(index)))
-	{
-		return m_nodeCoord_hub.at(index);
-	}
-
 	vec::fixed<3> hubCoord;
 	double r = hubRadius + span(index);		
 
@@ -131,21 +115,20 @@ vec::fixed<3> Blade::nodeCoord_hub(const unsigned int index, const double hubRad
 	hubCoord[2] = r * cos(initialAzimuth()) * cos(precone());
 
 	m_nodeCoord_hub.at(index) = hubCoord;
-
-	return hubCoord;
 }
 
-// An overload for when Blade::nodeCoord_hub(unsigned int index, double hubRadius) was already calculated
+// Coordinates of a blade node written in the hub coordinate system.
 vec::fixed<3> Blade::nodeCoord_hub(const unsigned int index) const
 {
 	if (!arma::is_finite(m_nodeCoord_hub.at(index)))
 	{
-		throw std::runtime_error("Need to calculate Blade::m_nodeCoord_hub(unsigned int index, double hubRadius) at least once before calling Blade::nodeCoord_hub(unsigned int index).");	
+		throw std::runtime_error("Need to call Blade::setNodeCoord_hub(unsigned int index, double hubRadius) at least once before calling Blade::nodeCoord_hub(unsigned int index).");	
 	}
 	return m_nodeCoord_hub.at(index);
 }
 
 // Coordinates of a blade node written in the shaft coordinate system.
+// dAzimuth must be given in degrees
 vec::fixed<3> Blade::nodeCoord_shaft(const unsigned int index, const double dAzimuth) const
 {	
 	double angle = (initialAzimuth() + dAzimuth) * datum::pi / 180.;
@@ -154,6 +137,7 @@ vec::fixed<3> Blade::nodeCoord_shaft(const unsigned int index, const double dAzi
 }
 
 // Overload for when the input is the nodeCoord_hub of a certain node itself.
+// dAzimuth must be given in degrees
 vec::fixed<3> Blade::nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const double dAzimuth) const
 {
 	double angle = (initialAzimuth() + dAzimuth) * datum::pi / 180.;
@@ -161,6 +145,7 @@ vec::fixed<3> Blade::nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const d
 }
 
 // Coordinates of a blade node written in the tower coordinate system.
+// tilt and yaw must be given in degrees
 vec::fixed<3> Blade::nodeCoord_tower(const vec::fixed<3> &nodeCoord_shaft, const double tilt, const double yaw, const double hubHeight) const
 {
 	mat::fixed<3,3> rotat = rotatMatrix(vec::fixed<3> {0, yaw*datum::pi/180., 0}) * rotatMatrix(vec::fixed<3> {0, -tilt*datum::pi/180., 0});

@@ -1,6 +1,12 @@
 #include "IO.h"
 #include "RNA.h"
 
+RNA::RNA()
+{
+	m_hubRadius = arma::datum::nan; // Initialize with NaN in order to know whether it was already calculated or not, since it is needed for calling Blade::setNodeCoord_hub()
+}
+
+
 /*****************************************************
 	Setters
 *****************************************************/
@@ -101,6 +107,7 @@ void RNA::readBladeAeroLine(const std::string &data)
 	for (unsigned int ii = 0; ii < numBlades(); ++ii)
 	{		
 		m_blades.at(ii).addBladeAeroLine(span, crvAC, swpAC, crvAng, twist, chord, airfoilID);
+		m_blades.at(ii).setNodeCoord_hub(ii, hubRadius());
 	}	
 }
 
@@ -248,13 +255,45 @@ double RNA::overhang() const
 /*****************************************************
 	Caculation functions
 *****************************************************/	
+double RNA::dAzimuth(const double time) const
+{
+	//time*(param.rt.Spd / 60) * 360
+	return (time * rotorSpeed());
+}
+
 vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel) const
 {
-	for (unsigned int indBlades = 0; indBlades < m_blades.size(); ++indBlades)
+	// Node position written in the different coordinate systems
+	vec::fixed<3> nodeCoord_hub{ 0,0,0 };
+	vec::fixed<3> nodeCoord_shaft{ 0,0,0 };
+	vec::fixed<3> nodeCoord_tower{ 0,0,0 };
+	vec::fixed<3> nodeCoord_earth{ 0,0,0 };
+	
+	vec::fixed<3> windVel{ 0,0,0 };	
+	vec::fixed<3> nodeVel{ 0,0,0 };
+	double deltaAzimuth = dAzimuth(envir.time());
+
+	mat::fixed<3, 3> rigidBodyRotation = rotatMatrix(FOWTpos.rows(0, 2));
+	mat::fixed<3, 3> rotorRotation{ 0,0,0 }; // Needs the azimuth angle, which depends on the blades
+	mat::fixed<3, 3> preconeRotation{ 0,0,0 }; // Needs the blade precone, which is a member of Blade class
+	
+
+	for (unsigned int iiBlades = 0; iiBlades < m_blades.size(); ++iiBlades)
 	{
-		for (unsigned int indNodes = 0; indNodes < m_blades.at(indBlades).size(); ++indNodes)
+		rotorRotation = rotatMatrix_deg(vec::fixed<3> {0, m_blades.at(iiBlades).precone(), 0}) * rotatMatrix_deg(vec::fixed<3> { (deltaAzimuth + m_blades.at(iiBlades).initialAzimuth()), rotorTilt(), rotorYaw()});
+
+		for (unsigned int iiNodes = 0; iiNodes < m_blades.at(iiBlades).size(); ++iiNodes)
 		{
+			nodeCoord_hub = m_blades.at(iiBlades).nodeCoord_hub(iiNodes);
+			nodeCoord_shaft = m_blades.at(iiBlades).nodeCoord_shaft(iiNodes, deltaAzimuth);
+			nodeCoord_tower = m_blades.at(iiBlades).nodeCoord_tower(nodeCoord_shaft, rotorTilt(), rotorYaw(), hubHeight());
+			nodeCoord_earth = m_blades.at(iiBlades).nodeCoord_earth(FOWTpos, nodeCoord_tower);
 			
+			windVel[0] = envir.windVel_X(nodeCoord_earth);			
+
+			// windVel is written in the global coordinate system.
+			// We need to convert it to the node coordinate system.
+			//rotatMatrix(FOWTpos.rows(0, 2)) * rotatMatrix(rotorTilt*180/datum::pi);
 		}
 	}
 
