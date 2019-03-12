@@ -34,7 +34,8 @@ private:
     std::vector<Wave> m_wave;
     std::vector<vec::fixed<3>> m_waveLocation; // Coordinates of the points where the wave elevation is calculated for output
     double m_airDens;
-    double m_windVel;
+    double m_windRefVel;
+	double m_windRefHeight;
     double m_windExp;
 
     /*
@@ -76,7 +77,8 @@ public:
     void readWatDens(const std::string &data);
     void readWatDepth(const std::string &data);
 	void readAirDens(const std::string &data);
-	void readWindVel(const std::string &data);
+	void readWindRefVel(const std::string &data);
+	void readWindRefHeight(const std::string &data);
 	void readWindExp(const std::string &data);
 
 	void addWave(const Wave &wave);
@@ -97,7 +99,8 @@ public:
 	double watDensity() const;
     double watDepth() const;
 	double airDensity() const;
-	double windVel() const;
+	double windRefVel() const;
+	double windRefHeight() const;
 	double windExp() const;
     
 
@@ -138,8 +141,10 @@ public:
     void stepTime(double const step);
 
     double ramp() const;
-	arma::vec::fixed<3> fluidVel(double x, double y, double z) const;	
-	arma::vec::fixed<3> fluidAcc(double x, double y, double z) const;
-	double wavePressure(double x, double y, double z) const;
+	vec::fixed<3> fluidVel(const vec::fixed<3> &coord) const;
+	vec::fixed<3> fluidAcc(const vec::fixed<3> &coord) const;
+	double wavePressure(const vec::fixed<3> &coord) const;
+
+	double windVel_X(const vec::fixed<3> &coord) const;
 };
 

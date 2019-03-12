@@ -38,7 +38,8 @@ WatDens		1025
 WatDepth	200
 
 AirDens     1.225
-WindVel     10.0
+WindVel     10.0 % Measured at the reference height
+WindHeight  90
 WindExp     0.2
 
 Wave
@@ -180,7 +181,7 @@ Morison_rect
 % First node ID \t Second node ID \t Third node ID \t Diameter in local x \t  Drag coefficient in x\t Inertia coefficient in x \t Diameter in local y \t  Drag coefficient in y\t Inertia coefficient in y \t Number of integration points ...
 % ... \t Bottom surface \t Top surface \t Axial drag coefficient \t Axial added mass coefficient \t 1 or 0 for calculating dynamic pressure or not
 % The second part of the data above (the ones in the second line) is only required for heave plates. Input 0 for everything if only forces perpendicular to the axis of the cylinder will be considered
-111	112	113	7.10	4.0	1.65	5.45	5.0	2.20	17	1	2	3	4	1
+%111	112	113	7.10	4.0	1.65	5.45	5.0	2.20	17	1	2	3	4	1
 END
 
 
