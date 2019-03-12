@@ -21,11 +21,12 @@ void RNA::readRotorYaw(const std::string &data)
 
 void RNA::readNumBlades(const std::string &data)
 {
-	readDataFromString(data, m_numBlades);
-	m_blades.resize(numBlades());
+	int numBlades;
+	readDataFromString(data, numBlades);
+	m_blades.resize(numBlades);
 
-	double dAzimuth = 360 / numBlades();
-	for (unsigned int ii = 0; ii < numBlades(); ++ii)
+	double dAzimuth = 360 / numBlades;
+	for (unsigned int ii = 0; ii < numBlades; ++ii)
 	{		
 		m_blades.at(ii).setInitialAzimuth(ii * dAzimuth);
 	}
@@ -179,7 +180,7 @@ double RNA::rotorYaw() const
 
 int RNA::numBlades() const
 {
-	return m_numBlades;
+	return m_blades.size();
 }
 
 double RNA::bladePrecone(const unsigned int ii) const
@@ -239,4 +240,23 @@ double RNA::hubHeight() const
 double RNA::overhang() const
 {
 	return m_overhang;
+}
+
+
+
+
+/*****************************************************
+	Caculation functions
+*****************************************************/	
+vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel) const
+{
+	for (unsigned int indBlades = 0; indBlades < m_blades.size(); ++indBlades)
+	{
+		for (unsigned int indNodes = 0; indNodes < m_blades.at(indBlades).size(); ++indNodes)
+		{
+			
+		}
+	}
+
+	return vec::fixed<6> {0,0,0,0,0,0};
 }

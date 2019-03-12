@@ -11,11 +11,8 @@ private:
     double m_rotorSpeed;
     double m_rotorTilt;
     double m_rotorYaw;
-
-    int m_numBlades = 0;
     std::vector< Blade > m_blades;
     std::vector< Airfoil > m_airfoils;
-
     double m_hubRadius;
     double m_hubHeight;
     double m_overhang;
@@ -45,7 +42,9 @@ public:
 	double rotorSpeed() const;
 	double rotorTilt() const;
 	double rotorYaw() const;
-
+	double hubRadius() const;
+	double hubHeight() const;
+	double overhang() const;
 	int numBlades() const;
 	double bladePrecone(const unsigned int ii) const;
 	double bladePitch(const unsigned int ii) const;
@@ -53,8 +52,8 @@ public:
 	std::string printBladeAero() const;
 	std::string printAirfoils() const;
 
-	double hubRadius() const;
-	double hubHeight() const;
-	double overhang() const;
+	/*****************************************************
+		Caculation functions
+	*****************************************************/	
+	vec::fixed<6> aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel) const;
 };
-
