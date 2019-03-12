@@ -330,7 +330,7 @@ mat::fixed<6, 6> Floater::addedMass(const double density) const
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		A += m_MorisonElements.at(ii)->addedMass_perp(density, CoG()) + m_MorisonElements.at(ii)->addedMass_paral(density, CoG());
+		A += m_MorisonElements.at(ii)->addedMass_perp(density, m_pos.rows(0,2) + CoG()) + m_MorisonElements.at(ii)->addedMass_paral(density, m_pos.rows(0,2) + CoG());
 	}
 
 	return A;
