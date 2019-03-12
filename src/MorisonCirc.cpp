@@ -629,8 +629,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &
 			Fluid velocity/acceleration
 		******/
 		// Fluid velocity and acceleration at the integration point
-		velFluid = envir.fluidVel(n_ii[0], n_ii[1], n_ii[2]);
-		accFluid = envir.fluidAcc(n_ii[0], n_ii[1], n_ii[2]);
+		velFluid = envir.fluidVel(n_ii);
+		accFluid = envir.fluidAcc(n_ii);
 
 		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder - written in the GLOBAL reference frame
 		velFluid = dot(velFluid, xvec) * xvec + dot(velFluid, yvec) * yvec;
@@ -688,8 +688,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &
 		Second part: forces on the bottom of the cylinder
 	*/
 	// Get fluid velocity/acceleration at the bottom node
-	velFluid = envir.fluidVel(n1[0], n1[1], n1[2]);
-	accFluid = envir.fluidAcc(n1[0], n1[1], n1[2]);	
+	velFluid = envir.fluidVel(n1);
+	accFluid = envir.fluidAcc(n1);	
 
 	// Get only the component that is parallel to the cylinder axis
 	velFluid = dot(velFluid, zvec) * zvec;
@@ -708,11 +708,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &
 
 	if (m_botPressFlag)
 	{
-		force.rows(0, 2) += datum::pi * ( pow(botDiam/2, 2) * envir.wavePressure(n1[0], n1[1], n1[2])
-							- (pow(botDiam/2, 2) - pow(topDiam/2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2]) ) * zvec;
+		force.rows(0, 2) += datum::pi * ( pow(botDiam/2, 2) * envir.wavePressure(n1)
+							- (pow(botDiam/2, 2) - pow(topDiam/2, 2)) * envir.wavePressure(n2) ) * zvec;
 
-		force_froudeKrylov.rows(0, 2) += datum::pi * (pow(botDiam / 2, 2) * envir.wavePressure(n1[0], n1[1], n1[2])
-										- (pow(botDiam / 2, 2) - pow(topDiam / 2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2])) * zvec;
+		force_froudeKrylov.rows(0, 2) += datum::pi * (pow(botDiam / 2, 2) * envir.wavePressure(n1)
+										- (pow(botDiam / 2, 2) - pow(topDiam / 2, 2)) * envir.wavePressure(n2) ) * zvec;
 	}
 
 	// The moment was calculated with relation to n1, which may be different from node1.
