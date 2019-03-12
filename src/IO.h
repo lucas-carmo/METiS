@@ -6,8 +6,6 @@
 #include <array>
 #include <sstream>
 #include <algorithm> // Defines a collection of functions especially designed to be used on ranges of elements.
-#include <cctype> // This header declares a set of functions to classify and transform individual characters, like toupper
-#include <cwctype> // Same thing for wide characters
 #include "FOWT.h"
 #include "ENVIR.h"
 #include "auxFunctions.h" // Include functions that are useful for string manipulation (among others) everytime IO.h is included

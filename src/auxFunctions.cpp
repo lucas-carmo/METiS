@@ -1,4 +1,6 @@
 #include "auxFunctions.h"
+#include <cctype> // This header declares a set of functions to classify and transform individual characters, like toupper
+#include <cwctype> // Same thing for wide characters
 
 /*****************************************************
     Useful math/geometric operations
