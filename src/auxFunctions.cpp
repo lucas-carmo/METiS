@@ -37,7 +37,14 @@ mat::fixed<3, 3> rotatMatrix(const vec::fixed<3> &rotation)
 	return rotatMatrix;
 }
 
-
+mat::fixed<3, 3> rotatMatrix_deg(const vec::fixed<3> &rotation)
+{
+	vec::fixed<3> rotRad;
+	rotRad[0] = rotation[0] * 180 / datum::pi;
+	rotRad[1] = rotation[1] * 180 / datum::pi;
+	rotRad[2] = rotation[2] * 180 / datum::pi;
+	return rotatMatrix(rotRad);
+}
 
 
 /*****************************************************
