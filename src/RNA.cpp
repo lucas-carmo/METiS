@@ -1,5 +1,6 @@
 #include "IO.h"
 #include "RNA.h"
+#include "auxFunctions.h"
 
 RNA::RNA()
 {
@@ -258,7 +259,7 @@ double RNA::overhang() const
 double RNA::dAzimuth(const double time) const
 {
 	//time*(param.rt.Spd / 60) * 360
-	return (time * rotorSpeed());
+	return (360 * time * rotorSpeed() / 60.);
 }
 
 vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel) const
@@ -274,13 +275,13 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	double deltaAzimuth = dAzimuth(envir.time());
 
 	mat::fixed<3, 3> rigidBodyRotation = rotatMatrix(FOWTpos.rows(0, 2));
-	mat::fixed<3, 3> rotorRotation{ 0,0,0 }; // Needs the azimuth angle, which depends on the blades
-	mat::fixed<3, 3> preconeRotation{ 0,0,0 }; // Needs the blade precone, which is a member of Blade class
+	mat::fixed<3, 3> rotorRotation{ 0,0,0 }; // Needs the current azimuth angle, which depends on the blades initial azimuth + rotor rotation
 	
 
 	for (unsigned int iiBlades = 0; iiBlades < m_blades.size(); ++iiBlades)
 	{
 		rotorRotation = rotatMatrix_deg(vec::fixed<3> {0, m_blades.at(iiBlades).precone(), 0}) * rotatMatrix_deg(vec::fixed<3> { (deltaAzimuth + m_blades.at(iiBlades).initialAzimuth()), rotorTilt(), rotorYaw()});
+
 
 		for (unsigned int iiNodes = 0; iiNodes < m_blades.at(iiBlades).size(); ++iiNodes)
 		{
