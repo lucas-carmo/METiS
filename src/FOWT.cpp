@@ -54,7 +54,7 @@ void FOWT::setRNA(RNA &rna)
 	m_rna = rna;
 
 	// Need to set the vertical distance between the hub and the CoG
-	if (arma::is_finite(m_floater.CoG()))
+	if (!arma::is_finite(m_floater.CoG()))
 	{
 		throw std::runtime_error( "Need to set the floater CoG before calling FOWT::setRNA(RNA &rna)" );
 	}
