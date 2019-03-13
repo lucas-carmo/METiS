@@ -15,9 +15,12 @@ private:
     std::vector< Airfoil > m_airfoils;
     double m_hubRadius;
     double m_hubHeight;
+	double m_hubHeight2CoG; // z coordinate of the hub in the FOWT coordinate system. It is equal to the relative height in t=0.
     double m_overhang;
 
 public:
+	RNA();
+
 	/*****************************************************
 		Setters
 	*****************************************************/
@@ -35,6 +38,7 @@ public:
 	void readHubRadius(const std::string &data);
 	void readHubHeight(const std::string &data);
 	void readOverhang(const std::string &data);
+	void setHubHeight2CoG(const double zCoG);
 
 	/*****************************************************
 		Getters
@@ -45,6 +49,7 @@ public:
 	double hubRadius() const;
 	double hubHeight() const;
 	double overhang() const;
+	double hubHeight2CoG() const;
 	unsigned int numBlades() const;
 	double bladePrecone(const unsigned int ii) const;
 	double bladePitch(const unsigned int ii) const;

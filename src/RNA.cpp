@@ -5,6 +5,7 @@
 RNA::RNA()
 {
 	m_hubRadius = arma::datum::nan; // Initialize with NaN in order to know whether it was already calculated or not, since it is needed for calling Blade::setNodeCoord_hub()
+	m_hubHeight2CoG = arma::datum::nan; // Same thing
 }
 
 
@@ -167,6 +168,10 @@ void RNA::readOverhang(const std::string &data)
 	readDataFromString(data, m_overhang);
 }
 
+void RNA::setHubHeight2CoG(const double zCoG)
+{
+	m_hubHeight2CoG = hubHeight() - zCoG;
+}
 
 /*****************************************************
 	Getters
@@ -250,7 +255,14 @@ double RNA::overhang() const
 	return m_overhang;
 }
 
-
+double RNA::hubHeight2CoG() const
+{
+	if (!arma::is_finite(m_hubHeight2CoG))
+	{
+		throw std::runtime_error("Need to call Blade::setHubHeight2CoG(const double hubHeight) at least once before calling RNA::hubHeight2CoG().");	
+	}
+	return m_hubHeight2CoG;
+}
 
 
 /*****************************************************
@@ -267,34 +279,48 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	// Node position written in the different coordinate systems
 	vec::fixed<3> nodeCoord_hub{ 0,0,0 };
 	vec::fixed<3> nodeCoord_shaft{ 0,0,0 };
-	vec::fixed<3> nodeCoord_tower{ 0,0,0 };
+	vec::fixed<3> nodeCoord_fowt{ 0,0,0 };
 	vec::fixed<3> nodeCoord_earth{ 0,0,0 };
 	
-	vec::fixed<3> windVel{ 0,0,0 };	
+	vec::fixed<3> windVel{ 0,0,0 };
+
 	vec::fixed<3> nodeVel{ 0,0,0 };
 	double deltaAzimuth = dAzimuth(envir.time());
 
-	mat::fixed<3, 3> rigidBodyRotation = rotatMatrix(FOWTpos.rows(0, 2));
-	mat::fixed<3, 3> rotorRotation{ 0,0,0 }; // Needs the current azimuth angle, which depends on the blades initial azimuth + rotor rotation
+	// At first, the wind velocity is calculated in the earth coordinate system.
+	// For the calculations, it needs to be written in the blade node coordinate system.
+	// This is done using the matrices rigidBodyRotation, which passes the vector
+	// from the earth cordinate system to the one attached to the body,
+	// and then rotorRotation, which is different for each blade and depends on the
+	// rotor configuration (i.e. tilt, yaw, current azimuth and blade precone)
+	mat::fixed<3, 3> rigidBodyRotation = rotatMatrix(-FOWTpos.rows(0, 2));
+	mat::fixed<3, 3> rotorRotation{ 0,0,0 };
 	
 
 	for (unsigned int iiBlades = 0; iiBlades < m_blades.size(); ++iiBlades)
 	{
-		rotorRotation = rotatMatrix_deg(vec::fixed<3> {0, m_blades.at(iiBlades).precone(), 0}) * rotatMatrix_deg(vec::fixed<3> { (deltaAzimuth + m_blades.at(iiBlades).initialAzimuth()), rotorTilt(), rotorYaw()});
+		rotorRotation = rotatMatrix_deg(vec::fixed<3> {0, -m_blades.at(iiBlades).precone(), 0}) * rotatMatrix_deg(vec::fixed<3> { -(deltaAzimuth + m_blades.at(iiBlades).initialAzimuth()), -rotorTilt(), -rotorYaw()});
 
 
 		for (unsigned int iiNodes = 0; iiNodes < m_blades.at(iiBlades).size(); ++iiNodes)
 		{
 			nodeCoord_hub = m_blades.at(iiBlades).nodeCoord_hub(iiNodes);
-			nodeCoord_shaft = m_blades.at(iiBlades).nodeCoord_shaft(iiNodes, deltaAzimuth);
-			nodeCoord_tower = m_blades.at(iiBlades).nodeCoord_tower(nodeCoord_shaft, rotorTilt(), rotorYaw(), hubHeight());
-			nodeCoord_earth = m_blades.at(iiBlades).nodeCoord_earth(FOWTpos, nodeCoord_tower);
+			nodeCoord_shaft = m_blades.at(iiBlades).nodeCoord_shaft(iiNodes, deltaAzimuth, overhang());
+			nodeCoord_fowt = m_blades.at(iiBlades).nodeCoord_fowt(nodeCoord_shaft, rotorTilt(), rotorYaw(), hubHeight2CoG());
+			nodeCoord_earth = m_blades.at(iiBlades).nodeCoord_earth(FOWTpos, nodeCoord_fowt);
 			
+			// windVel is first calculated in the global coordinate system. 
+			// We need to convert it to the node coordinate system, in which:
+			// - windVel[0] is the component that is normal to the rotation plan
+			// - windVel[1] is the component that is in the rotation plan and in the tangential direction
+			// - windVel[2] is the component that is in the rotation plan and in the radial direction
 			windVel[0] = envir.windVel_X(nodeCoord_earth);			
+			windVel = rotorRotation * (rigidBodyRotation * windVel);
 
-			// windVel is written in the global coordinate system.
-			// We need to convert it to the node coordinate system.
-			//rotatMatrix(FOWTpos.rows(0, 2)) * rotatMatrix(rotorTilt*180/datum::pi);
+			// 
+			// rotorRotation * (rigidBodyRotation * FOWTvel)
+
+
 		}
 	}
 

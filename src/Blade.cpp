@@ -129,27 +129,25 @@ vec::fixed<3> Blade::nodeCoord_hub(const unsigned int index) const
 
 // Coordinates of a blade node written in the shaft coordinate system.
 // dAzimuth must be given in degrees
-vec::fixed<3> Blade::nodeCoord_shaft(const unsigned int index, const double dAzimuth) const
+vec::fixed<3> Blade::nodeCoord_shaft(const unsigned int index, const double dAzimuth, const double overhang) const
 {	
-	double angle = (initialAzimuth() + dAzimuth) * datum::pi / 180.;
-
-	return ( rotatMatrix(vec::fixed<3> {angle, 0, 0}) * nodeCoord_hub(index) );
+	return nodeCoord_shaft(nodeCoord_hub(index), dAzimuth, overhang);
 }
 
 // Overload for when the input is the nodeCoord_hub of a certain node itself.
 // dAzimuth must be given in degrees
-vec::fixed<3> Blade::nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const double dAzimuth) const
+vec::fixed<3> Blade::nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const double dAzimuth, const double overhang) const
 {
 	double angle = (initialAzimuth() + dAzimuth) * datum::pi / 180.;
-	return ( rotatMatrix(vec::fixed<3> {angle, 0, 0}) * nodeCoord_hub );
+	return ( vec::fixed<3> {overhang, 0, 0} + rotatMatrix(vec::fixed<3> {angle, 0, 0}) * nodeCoord_hub );
 }
 
-// Coordinates of a blade node written in the tower coordinate system.
+// Coordinates of a blade node written in the fowt coordinate system.
 // tilt and yaw must be given in degrees
-vec::fixed<3> Blade::nodeCoord_tower(const vec::fixed<3> &nodeCoord_shaft, const double tilt, const double yaw, const double hubHeight) const
+vec::fixed<3> Blade::nodeCoord_fowt(const vec::fixed<3> &nodeCoord_shaft, const double tilt, const double yaw, const double hubHeight2CoG) const
 {
 	mat::fixed<3,3> rotat = rotatMatrix(vec::fixed<3> {0, yaw*datum::pi/180., 0}) * rotatMatrix(vec::fixed<3> {0, -tilt*datum::pi/180., 0});
-	return (rotat * nodeCoord_shaft + vec::fixed<3> {0,0,hubHeight} );
+	return (rotat * nodeCoord_shaft + vec::fixed<3> {0,0,hubHeight2CoG} );
 }
 
 // Coordinates of a blade node written in the earth coordinate system.

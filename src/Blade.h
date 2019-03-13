@@ -59,9 +59,9 @@ public:
 	*****************************************************/	
 	void setNodeCoord_hub(const unsigned int index, const double hubRadius);
 	vec::fixed<3> nodeCoord_hub(const unsigned int index) const;	
-	vec::fixed<3> nodeCoord_shaft(const unsigned int index, const double dAzimuth) const;	
-	vec::fixed<3> nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const double dAzimuth) const;
-	vec::fixed<3> nodeCoord_tower(const vec::fixed<3> &nodeCoord_shaft, const double tilt, const double yaw, const double hubHeight) const;
+	vec::fixed<3> nodeCoord_shaft(const unsigned int index, const double dAzimuth, const double overhang) const;	
+	vec::fixed<3> nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const double dAzimuth, const double overhang) const;
+	vec::fixed<3> nodeCoord_fowt(const vec::fixed<3> &nodeCoord_shaft, const double tilt, const double yaw, const double hubHeight2CoG) const;
 	vec::fixed<3> nodeCoord_earth(const vec::fixed<6> &FOWTpos, const vec::fixed<3> &nodeCoord_tower) const;
 };
 
