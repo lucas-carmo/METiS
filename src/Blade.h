@@ -31,9 +31,9 @@ public:
 	/*****************************************************
 		Setters
 	*****************************************************/
-	void addBladeAeroLine(const double span, const double crvAC, const double swpAC, 
+	void addBladeAeroNode(const double span, const double crvAC, const double swpAC, 
 						  const double crvAng, const double twist, const double chord, 
-						  const int airfoilID);
+						  const int airfoilID, const double hubRadius);
 
 	void setPrecone(const double precone);
 	void setPitch(const double pitch);
@@ -57,9 +57,9 @@ public:
 	/*****************************************************
 		Calculate node position in different coordinate systems
 	*****************************************************/	
-	void setNodeCoord_hub(const unsigned int index, const double hubRadius);
-	vec::fixed<3> nodeCoord_hub(const unsigned int index) const;	
-	vec::fixed<3> nodeCoord_shaft(const unsigned int index, const double dAzimuth, const double overhang) const;	
+	void setNodeCoord_hub(const int index, const double hubRadius);
+	vec::fixed<3> nodeCoord_hub(const int index) const;	
+	vec::fixed<3> nodeCoord_shaft(const int index, const double dAzimuth, const double overhang) const;	
 	vec::fixed<3> nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const double dAzimuth, const double overhang) const;
 	vec::fixed<3> nodeCoord_fowt(const vec::fixed<3> &nodeCoord_shaft, const double tilt, const double yaw, const double hubHeight2CoG) const;
 	vec::fixed<3> nodeCoord_earth(const vec::fixed<6> &FOWTpos, const vec::fixed<3> &nodeCoord_tower) const;

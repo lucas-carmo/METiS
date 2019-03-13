@@ -105,11 +105,10 @@ void RNA::readBladeAeroLine(const std::string &data)
 		throw std::runtime_error("Need to specify number of blades before their properties. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
 
-	// Add the data read in the current line to the blade element
+	// Add the data read in the current line to each blade element
 	for (unsigned int ii = 0; ii < numBlades(); ++ii)
 	{		
-		m_blades.at(ii).addBladeAeroLine(span, crvAC, swpAC, crvAng, twist, chord, airfoilID);
-		m_blades.at(ii).setNodeCoord_hub(ii, hubRadius());
+		m_blades.at(ii).addBladeAeroNode(span, crvAC, swpAC, crvAng, twist, chord, airfoilID, hubRadius());
 	}	
 }
 

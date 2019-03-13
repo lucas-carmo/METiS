@@ -6,9 +6,9 @@ using namespace arma;
 /*****************************************************
 	Setters
 *****************************************************/
-void Blade::addBladeAeroLine(const double span, const double crvAC, const double swpAC, 
+void Blade::addBladeAeroNode(const double span, const double crvAC, const double swpAC, 
 							 const double crvAng, const double twist, const double chord, 
-							 const int airfoilID)
+							 const int airfoilID, const double hubRadius)
 {
 	m_span.push_back(span);
 	m_crvAC.push_back(crvAC);
@@ -18,9 +18,8 @@ void Blade::addBladeAeroLine(const double span, const double crvAC, const double
 	m_chord.push_back(chord);
 	m_airfoilID.push_back(airfoilID);
 
-	vec::fixed<3> nodeCoord_hub;
-	nodeCoord_hub.fill(datum::nan);
-	m_nodeCoord_hub.push_back(nodeCoord_hub);
+	m_nodeCoord_hub.push_back(vec::fixed<3> {0, 0, 0});
+	setNodeCoord_hub(size() - 1, hubRadius); // update node position of the current blade node
 }
 
 void Blade::setPrecone(const double precone)
@@ -105,8 +104,13 @@ double Blade::initialAzimuth() const
 // Coordinates of a blade node written in the hub coordinate system.
 // It requires the index of the node you are interested in and the hub radius.
 // After the calculation, the value is stored in m_nodeCoord_hub(index) for future usage.
-void Blade::setNodeCoord_hub(const unsigned int index, const double hubRadius)
+void Blade::setNodeCoord_hub(const int index, const double hubRadius)
 {
+	if (index < 0 || static_cast<unsigned int> (index) >= size())
+	{
+		throw std::runtime_error("Index out of range in Blade::setNodeCord_hub(const unsigned int index, const double hubRadius).");
+	}
+
 	vec::fixed<3> hubCoord;
 	double r = hubRadius + span(index);		
 
@@ -118,19 +122,25 @@ void Blade::setNodeCoord_hub(const unsigned int index, const double hubRadius)
 }
 
 // Coordinates of a blade node written in the hub coordinate system.
-vec::fixed<3> Blade::nodeCoord_hub(const unsigned int index) const
+vec::fixed<3> Blade::nodeCoord_hub(const int index) const
 {
-	if (!arma::is_finite(m_nodeCoord_hub.at(index)))
+	if (index < 0 || static_cast<unsigned int> (index) >= size())
 	{
-		throw std::runtime_error("Need to call Blade::setNodeCoord_hub(unsigned int index, double hubRadius) at least once before calling Blade::nodeCoord_hub(unsigned int index).");	
+		throw std::runtime_error("Index out of range in Blade::nodeCoord_hub(const unsigned int index).");
 	}
+
 	return m_nodeCoord_hub.at(index);
 }
 
 // Coordinates of a blade node written in the shaft coordinate system.
 // dAzimuth must be given in degrees
-vec::fixed<3> Blade::nodeCoord_shaft(const unsigned int index, const double dAzimuth, const double overhang) const
+vec::fixed<3> Blade::nodeCoord_shaft(const int index, const double dAzimuth, const double overhang) const
 {	
+	if (index < 0 || static_cast<unsigned int> (index) >= size())
+	{
+		throw std::runtime_error("Index out of range in Blade::nodeCoord_shaft(const unsigned int index).");
+	}
+
 	return nodeCoord_shaft(nodeCoord_hub(index), dAzimuth, overhang);
 }
 
