@@ -21,7 +21,7 @@ DOFS 1 1 1 1 1 1
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
 %%-----------------------------------------------------------------------------%%
 TimeStep    0.1	                    % Time step, in seconds
-TimeTotal  	1000					% Total simulation time, in secods
+TimeTotal  	600					% Total simulation time, in secods
 TimeRamp	180                     % Numerical ramp, in seconds
 
 
