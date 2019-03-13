@@ -156,7 +156,7 @@ vec::fixed<3> Blade::nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const d
 // tilt and yaw must be given in degrees
 vec::fixed<3> Blade::nodeCoord_fowt(const vec::fixed<3> &nodeCoord_shaft, const double tilt, const double yaw, const double overhang, const double hubHeight2CoG) const
 {	
-	mat::fixed<3,3> rotat = rotatMatrix(vec::fixed<3> {0, -yaw*datum::pi/180., 0}) * rotatMatrix(vec::fixed<3> {0, tilt*datum::pi/180., 0});
+	mat::fixed<3,3> rotat = rotatMatrix(vec::fixed<3> {0,0,-yaw*datum::pi/180.}) * rotatMatrix(vec::fixed<3> {0, tilt*datum::pi/180., 0});
 	return (rotat * (nodeCoord_shaft + vec::fixed<3> {overhang,0,0}) + vec::fixed<3> {0,0,hubHeight2CoG} );
 }
 
