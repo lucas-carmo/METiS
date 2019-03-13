@@ -24,7 +24,7 @@ public:
 	//		- printOutVar()
 	enum OutFlag
 	{
-		OUTFLAG_FOWT_POS,
+		OUTFLAG_FOWT_DISP,
 		OUTFLAG_FOWT_VEL,
 		OUTFLAG_FOWT_ACC,
 //		
@@ -65,7 +65,7 @@ private:
 	static std::array<bool, IO::OUTFLAG_SIZE> m_whichResult2Output;
 
 	static std::stringstream m_outLineHeader; // String stream with the header identifying each column of the formatted output file
-	static std::stringstream m_outLine; // String stream with the data that is output at each time step (FOWT position, hydro force components, anything that is a function of time)
+	static std::stringstream m_outLine; // String stream with the data that is output at each time step (FOWT displacement, hydro force components, anything that is a function of time)
 	static bool m_shouldWriteOutLineHeader;
 	static bool m_shouldWriteOutLine;	
 

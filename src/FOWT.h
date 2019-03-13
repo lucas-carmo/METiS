@@ -23,9 +23,9 @@ private:
 	vec::fixed<3> m_CoG;
 
 	// FOWT condition
-	// m_pos(0:2) = Position with respect to the initial CoG (i.e. CoG(t) - CoG(0))
-	// m_pos(3:5) = Rotation with respect to initial configuration. For now, we are considering small rotations.
-	vec::fixed<6> m_pos;
+	// m_disp(0:2) = Position with respect to the initial CoG (i.e. CoG(t) - CoG(0))
+	// m_disp(3:5) = Rotation with respect to initial configuration. For now, we are considering small rotations.
+	vec::fixed<6> m_disp;
 	vec::fixed<6> m_vel;
 	vec::fixed<6> m_acc;
 
@@ -51,7 +51,7 @@ public:
 	vec::fixed<3> CoG();
 	double mass();
 
-	vec::fixed<6> pos() const;
+	vec::fixed<6> disp() const;
 	vec::fixed<6> vel() const;
 	vec::fixed<6> acc() const;
  
@@ -60,10 +60,10 @@ public:
 	std::string printRNA() const;
 
 	/*****************************************************
-		Forces, acceleration, position, etc
+		Forces, acceleration, displacement, etc
 	*****************************************************/
 	vec::fixed<6> calcAcceleration(const ENVIR &envir);
-	void update(const vec::fixed<6> &pos, const vec::fixed<6> &vel, const vec::fixed<6> &acc);
+	void update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc);
 
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir);
 	vec::fixed<6> hydrostaticForce(const double watDensity, const double gravity);

@@ -587,9 +587,9 @@ unsigned int IO::getInLineNumber()
 // and other necessary information (like the IDs of the points where the wave elevation will be output)
 void IO::setResults2Output(std::string strInput, ENVIR &envir)
 {
-	if (caseInsCompare(getKeyword(strInput), "fowt_pos"))
+	if (caseInsCompare(getKeyword(strInput), "fowt_disp"))
 	{
-		m_whichResult2Output.at(IO::OUTFLAG_FOWT_POS) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_DISP) = true;
 	}
 
 	if (caseInsCompare(getKeyword(strInput), "fowt_vel"))
@@ -726,7 +726,7 @@ void IO::print2outLineHeader_turnOff()
 void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 {
 	// Check whether the specified flag is indeed one that requires a vector with six components
-	if ((flag != OUTFLAG_FOWT_POS) && (flag != OUTFLAG_FOWT_VEL) && (flag != OUTFLAG_FOWT_ACC) && 
+	if ((flag != OUTFLAG_FOWT_DISP) && (flag != OUTFLAG_FOWT_VEL) && (flag != OUTFLAG_FOWT_ACC) && 
 		(flag != OUTFLAG_HD_FORCE) && (flag != OUTFLAG_HS_FORCE) && (flag != OUTFLAG_TOTAL_FORCE) &&
 		(flag != OUTFLAG_HD_INERTIA_FORCE) && (flag != OUTFLAG_HD_DRAG_FORCE) && (flag != OUTFLAG_HD_FK_FORCE))
 	{
@@ -785,7 +785,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			}
 		}
 
-		if (flag == OUTFLAG_FOWT_POS)
+		if (flag == OUTFLAG_FOWT_DISP)
 		{
 			print2outLineHeader("Surge");
 			print2outLineHeader("Sway");
@@ -939,7 +939,7 @@ std::string IO::printOutVar()
 	{
 		switch (ii)
 		{
-		case IO::OUTFLAG_FOWT_POS:
+		case IO::OUTFLAG_FOWT_DISP:
 			output += "FOWT rigid motion: ";
 			break;
 

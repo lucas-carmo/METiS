@@ -6,7 +6,7 @@
 	Constructors
 *****************************************************/
 FOWT::FOWT() : m_linStiff(fill::zeros), m_mass(datum::nan), 
-			   m_pos(fill::zeros), m_vel(fill::zeros), m_acc(fill::zeros)
+			   m_disp(fill::zeros), m_vel(fill::zeros), m_acc(fill::zeros)
 {
 	m_CoG.fill(datum::nan);	
 }
@@ -18,7 +18,7 @@ FOWT& FOWT::operator=(const FOWT &fowt)
 {
 	m_floater = fowt.m_floater;
 	m_linStiff = fowt.m_linStiff;
-	m_pos = fowt.m_pos;
+	m_disp = fowt.m_disp;
 	m_vel = fowt.m_vel;
 	m_acc = fowt.m_acc;
     return *this;	
@@ -52,6 +52,14 @@ void FOWT::setFloater(Floater &floater)
 void FOWT::setRNA(RNA &rna)
 {
 	m_rna = rna;
+
+	// Need to set the vertical distance between the hub and the CoG
+	if (arma::is_finite(m_floater.CoG()))
+	{
+		throw std::runtime_error( "Need to set the floater CoG before calling FOWT::setRNA(RNA &rna)" );
+	}
+
+	m_rna.setHubHeight2CoG(CoG().at(2));
 }
 
 
@@ -82,9 +90,9 @@ double FOWT::mass()
 	return m_mass;
 }
 
-vec::fixed<6> FOWT::pos() const
+vec::fixed<6> FOWT::disp() const
 {
-	return m_pos;
+	return m_disp;
 }
 
 vec::fixed<6> FOWT::vel() const
@@ -158,20 +166,20 @@ std::string FOWT::printRNA() const
 
 
 /*****************************************************
-	Forces, acceleration, position, etc
+	Forces, acceleration, displacement, etc
 *****************************************************/
-// Update FOWT position, velocity, acceleration and any other necessary state
-void FOWT::update(const vec::fixed<6> &pos, const vec::fixed<6> &vel, const vec::fixed<6> &acc)
+// Update FOWT displacement, velocity, acceleration and any other necessary state
+void FOWT::update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc)
 {
-	m_pos = pos;
+	m_disp = disp;
 	m_vel = vel;
 	m_acc = acc;
-	m_floater.updatePosVelAcc(m_pos, m_vel, m_acc);
+	m_floater.updateDispVelAcc(m_disp, m_vel, m_acc);
 }
 
 vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 {
-	IO::print2outLine(IO::OUTFLAG_FOWT_POS, m_pos);
+	IO::print2outLine(IO::OUTFLAG_FOWT_DISP, m_disp);
 	IO::print2outLine(IO::OUTFLAG_FOWT_VEL, m_vel);
 
 	vec::fixed<6> acc(fill::zeros);	
@@ -266,7 +274,7 @@ vec::fixed<6> FOWT::hydrostaticForce(const double watDensity, const double gravi
 
 vec::fixed<6> FOWT::mooringForce()
 {	
-	return vec::fixed<6> {-m_linStiff(0)*m_pos(0), -m_linStiff(1)*m_pos(1), 0, 0, 0, -m_linStiff(2)*m_pos(5)};
+	return vec::fixed<6> {-m_linStiff(0)*m_disp(0), -m_linStiff(1)*m_disp(1), 0, 0, 0, -m_linStiff(2)*m_disp(5)};
 }
 
 vec::fixed<6> FOWT::weightForce(const double gravity)

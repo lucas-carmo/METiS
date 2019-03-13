@@ -1202,7 +1202,7 @@ END
 
 
 OUTPUT
-fowt_pos
+fowt_disp
 hs_force
 hd_force
 total_force
