@@ -273,6 +273,8 @@ double RNA::dAzimuth(const double time) const
 	return (360 * time * rotorSpeed() / 60.);
 }
 
+// FOWTpos is the position of the center of the FOWT coordinate system with respect to the earth fixed system, written in the earth fixed system
+// In other words, it is {m_floater.CoG(),0,0,0} + FOWT.m_disp, i.e. the initial position of the floater CoG + its displacement
 vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel) const
 {
 	// Node position written in the different coordinate systems
@@ -281,10 +283,15 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	vec::fixed<3> nodeCoord_fowt{ 0,0,0 };
 	vec::fixed<3> nodeCoord_earth{ 0,0,0 };
 	
-	vec::fixed<3> windVel{ 0,0,0 };
-
-	vec::fixed<3> nodeVel{ 0,0,0 };
+	// Initialize some useful vectors
+	vec::fixed<3> windVel{ 0,0,0 }; // Wind velocity. In the end of the for below, it is written in the blade node coordinate system
+	vec::fixed<3> nodeVel{ 0,0,0 }; // Blade node structural velocity, written in the blade node coordinate system
+	vec::fixed<3> cog2node{ 0,0,0}; // Vector given by the difference between the position of the blade node and the origin of the fowt coordinate system (around which the body rotation is provided). Written in the earth coordinate system.
+	double windRel_nVel = 0; // Relative wind speed in the x direction of the node coordinate system (normal to the plane of rotation)
+	double windRel_tVel = 0; // Relative wind speed in the y direction of the node coordinate system (in the plane of rotation)
+	double localTipSpeed = 0;
 	double deltaAzimuth = dAzimuth(envir.time());
+	double totalAzimuth = 0;
 
 	// At first, the wind velocity is calculated in the earth coordinate system.
 	// For the calculations, it needs to be written in the blade node coordinate system.
@@ -298,14 +305,15 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 
 	for (unsigned int iiBlades = 0; iiBlades < m_blades.size(); ++iiBlades)
 	{
-		rotorRotation = rotatMatrix_deg(vec::fixed<3> {0, -m_blades.at(iiBlades).precone(), 0}) * rotatMatrix_deg(vec::fixed<3> { -(deltaAzimuth + m_blades.at(iiBlades).initialAzimuth()), -rotorTilt(), -rotorYaw()});
+		totalAzimuth = deltaAzimuth + m_blades.at(iiBlades).initialAzimuth();
+		rotorRotation = rotatMatrix_deg(vec::fixed<3> {0, -m_blades.at(iiBlades).precone(), 0}) * rotatMatrix_deg(vec::fixed<3> { -totalAzimuth, -rotorTilt(), -rotorYaw()});
 
 
 		for (unsigned int iiNodes = 0; iiNodes < m_blades.at(iiBlades).size(); ++iiNodes)
 		{
 			nodeCoord_hub = m_blades.at(iiBlades).nodeCoord_hub(iiNodes);
-			nodeCoord_shaft = m_blades.at(iiBlades).nodeCoord_shaft(iiNodes, deltaAzimuth, overhang());
-			nodeCoord_fowt = m_blades.at(iiBlades).nodeCoord_fowt(nodeCoord_shaft, rotorTilt(), rotorYaw(), hubHeight2CoG());
+			nodeCoord_shaft = m_blades.at(iiBlades).nodeCoord_shaft(iiNodes, deltaAzimuth);
+			nodeCoord_fowt = m_blades.at(iiBlades).nodeCoord_fowt(nodeCoord_shaft, rotorTilt(), rotorYaw(), hubHeight2CoG(), overhang());
 			nodeCoord_earth = m_blades.at(iiBlades).nodeCoord_earth(FOWTpos, nodeCoord_fowt);
 			
 			// windVel is first calculated in the global coordinate system. 
@@ -316,12 +324,19 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			windVel[0] = envir.windVel_X(nodeCoord_earth);			
 			windVel = rotorRotation * (rigidBodyRotation * windVel);
 
-			// 
-			// rotorRotation * (rigidBodyRotation * FOWTvel)
+			// Structural velocity of the nodes. Need to be written in the node coordinate system
+			cog2node = rotatMatrix(FOWTpos.rows(0, 2)) * nodeCoord_fowt;
+			nodeVel = FOWTvel.rows(0,2) + arma::cross(FOWTvel.rows(3,5), cog2node);  // nodeVel = linearVel + angVel ^ r ; this is written in the earth coordinate system			
+			nodeVel = rotorRotation * (rigidBodyRotation * nodeVel); // Need to pass to the node coordinate system
+			nodeVel += rotatMatrix_deg(vec::fixed<3> {-totalAzimuth, 0, 0}) * arma::cross(vec::fixed<3> {rotorSpeed()*2*datum::pi/60, 0, 0}, nodeCoord_shaft); // Need to add the velocity due to the rotor rotation, written in the node coordinate system
 
+			// Normal and tangential componentes of the relative wind velocity
+			windRel_nVel = windVel[0] - nodeVel[0];
+			windRel_tVel = windVel[1] - nodeVel[1];
 
+			// Local tip speed ratio
+			localTipSpeed = std::abs(windRel_tVel/windRel_nVel);
 		}
 	}
-
 	return vec::fixed<6> {0,0,0,0,0,0};
 }
