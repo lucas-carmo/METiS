@@ -149,7 +149,14 @@ void RNA::readAirfoilLine(const std::string &data)
 	}
 
 	// Add the data read in the current line to the last airfoil in m_airfoils
-	m_airfoils.back().addAirfoilLine(angle, CL, CD, CM);
+	try
+	{
+		m_airfoils.back().addAirfoilLine(angle, CL, CD, CM);
+	}
+	catch (std::exception &exception)
+	{
+		throw std::runtime_error(std::string(exception.what()) + " Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+	}
 }
 
 void RNA::readHubRadius(const std::string &data)
@@ -229,7 +236,7 @@ std::string RNA::printAirfoils() const
 		output = output + "\t\tAngle (deg)\t" + "CL\t" + "CD\t" + "CM\n";
 		for (unsigned int jj = 0; jj < m_airfoils.at(ii).size(); ++jj) 
 		{
-			output = output + "\t\t" + std::to_string(m_airfoils.at(ii).angle(jj)) + "\t" + std::to_string(m_airfoils.at(ii).CL(jj)) + "\t" + std::to_string(m_airfoils.at(ii).CD(jj)) + "\t" + std::to_string(m_airfoils.at(ii).CM(jj)) + "\n";
+			output = output + "\t\t" + std::to_string(m_airfoils.at(ii).angle(jj)) + "\t" + std::to_string(m_airfoils.at(ii).getCL(jj)) + "\t" + std::to_string(m_airfoils.at(ii).getCD(jj)) + "\t" + std::to_string(m_airfoils.at(ii).getCM(jj)) + "\n";
 		}
 		output = output + "\n";
 	}
