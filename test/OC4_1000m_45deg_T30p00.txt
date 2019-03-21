@@ -1171,7 +1171,7 @@ Tower_elasto % Structural properties of the tower
 END
 
 OUTPUT
-fowt_pos
+fowt_disp
 fowt_vel
 fowt_acc
 hs_force
