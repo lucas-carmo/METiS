@@ -44,6 +44,10 @@ mat::fixed<3, 3> rotatMatrix_deg(const vec::fixed<3> &rotation)
 	return rotatMatrix(rotRad);
 }
 
+double deg2rad(const double degree)
+{
+	return degree * datum::pi / 180;
+}
 
 /*****************************************************
     String handling

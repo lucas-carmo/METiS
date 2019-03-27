@@ -25,6 +25,7 @@ using namespace arma;
 
 mat::fixed<3, 3> rotatMatrix(const vec::fixed<3> &rotation);	
 mat::fixed<3, 3> rotatMatrix_deg(const vec::fixed<3> &rotation);
+double deg2rad(const double degree);
 
 
 /*****************************************************
