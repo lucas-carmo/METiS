@@ -37,7 +37,7 @@ public:
 	double getCM(unsigned int index) const;
 
 	/*****************************************************
-		Getters based on the angle of attack, using 
+		Getters based on the angle of attack (in degrees), using 
 		cubic spline interpolation
 	*****************************************************/
 	double CL(double angle) const;

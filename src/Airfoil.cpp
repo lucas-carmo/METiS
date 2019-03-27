@@ -68,7 +68,7 @@ double Airfoil::CL(double angle) const
 	}
 	else
 	{
-		// Talvez fosse bom dar um warning se for interpolado pra fora dos limites dos dados
+		// - Talvez fosse bom dar um warning se for interpolado pra fora dos limites dos dados
 		// - Dar um warning e fazer interpolacao linear se for 2.
 		// - Retornar erro se for 1 so.
 		return 0;
