@@ -22,10 +22,18 @@ private:
 	double m_pitch;
 	double m_initialAzimuth; // Azimuth position in t = 0
 
-	// Coordinates of the nodes written in the hub coordinate system.
-	// Since this needs to be calculated only in the first time step, I thought it better to keep it as a member.
-	// It is initialized with NaN, in order to know whether it was already calculated or not.
+	// Radial distance of the node & coordinates of the nodes written in the hub coordinate system.
+	// Since this needs to be calculated only in the first time step, I thought it better to keep them as members.
+	std::vector<double> m_radius;
 	std::vector<vec::fixed<3>> m_nodeCoord_hub;
+
+	// Properties related to the BEMT method. 
+	// They are part of the Blade class to make the value calculated in the time step 'i' available as
+	// first guess to the time step 'i+1'. So, to make it clear, the values stored in the members below
+	// are the ones calculated in the last call of RNA::aeroForce, where the BEMT method is used.
+	std::vector<double> m_a; // Axial induction factor (for each node)
+	std::vector<double> m_ap; // Tangential induction factor (for each node)
+	std::vector<double> m_phi; // Local inflow angle (for each node)
 
 public:
 	/*****************************************************
@@ -50,6 +58,13 @@ public:
 	double twist(const unsigned int index) const;
 	double chord(const unsigned int index) const;
 	int airoilID(const unsigned int index) const;
+	double radius(const unsigned int index) const;
+	double axialIndFactor(const unsigned int index) const;
+	double tangIndFactor(const unsigned int index) const;
+	double phi(const unsigned int index) const; 
+	double alpha(const unsigned int index) const;
+
+
 
 	double precone() const;
 	double pitch() const;
@@ -57,11 +72,14 @@ public:
 	/*****************************************************
 		Calculate node position in different coordinate systems
 	*****************************************************/	
-	void setNodeCoord_hub(const int index, const double hubRadius);
+	void setNodeRadius(const int index, const double hubRadius);
+	void setNodeCoord_hub(const int index);
 	vec::fixed<3> nodeCoord_hub(const int index) const;	
 	vec::fixed<3> nodeCoord_shaft(const int index, const double dAzimuth) const;	
 	vec::fixed<3> nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const double dAzimuth) const;
 	vec::fixed<3> nodeCoord_fowt(const vec::fixed<3> &nodeCoord_shaft, const double tilt, const double yaw, const double overhang, const double hubHeight2CoG) const;
 	vec::fixed<3> nodeCoord_earth(const vec::fixed<6> &FOWTpos, const vec::fixed<3> &nodeCoord_tower) const;
+
+	double localSolidity(const int index) const;
 };
 

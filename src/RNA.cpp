@@ -290,15 +290,30 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	vec::fixed<3> nodeCoord_fowt{ 0,0,0 };
 	vec::fixed<3> nodeCoord_earth{ 0,0,0 };
 	
-	// Initialize some useful vectors
+	// Initialize some variables that are needed for the wind calculation
 	vec::fixed<3> windVel{ 0,0,0 }; // Wind velocity. In the end of the for below, it is written in the blade node coordinate system
 	vec::fixed<3> nodeVel{ 0,0,0 }; // Blade node structural velocity, written in the blade node coordinate system
 	vec::fixed<3> cog2node{ 0,0,0}; // Vector given by the difference between the position of the blade node and the origin of the fowt coordinate system (around which the body rotation is provided). Written in the earth coordinate system.
-	double windRel_nVel = 0; // Relative wind speed in the x direction of the node coordinate system (normal to the plane of rotation)
-	double windRel_tVel = 0; // Relative wind speed in the y direction of the node coordinate system (in the plane of rotation)
-	double localTipSpeed = 0;
+	double windRel_nVel{ 0 }; // Relative wind speed in the x direction of the node coordinate system (normal to the plane of rotation)
+	double windRel_tVel{ 0 }; // Relative wind speed in the y direction of the node coordinate system (in the plane of rotation)
+	double localTipSpeed{ 0 };
 	double deltaAzimuth = dAzimuth(envir.time());
-	double totalAzimuth = 0;
+	double totalAzimuth{ 0 };
+
+	// Initialize the aerodynamic coefficients: lift, drag, in the normal, and in the tangential directions
+	double Cl{ 0 };
+	double Cd{ 0 };
+	double Cn{ 0 };
+	double Ct{ 0 };
+
+	// Initialize the flow angles and parameters needed for the BEMT method.
+	// The values of a, ap and phi are actually stored as members of the Blade class, but calling 
+	// m_blades.at(iiBlades).phi() all the time in the loop below is cumbersome and inefficient.
+	// The value of alpha is calculated by a method of the Blade class.
+	double a{ 0 }; // Axial induction factor
+	double ap{ 0 }; // Tangential induction factor
+	double phi{ 0 }; // Local inflow angle
+	double alpha{ 0 }; // Local angle of attack
 
 	// At first, the wind velocity is calculated in the earth coordinate system.
 	// For the calculations, it needs to be written in the blade node coordinate system.
@@ -309,7 +324,6 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	mat::fixed<3, 3> rigidBodyRotation = rotatMatrix(-FOWTpos.rows(0, 2));
 	mat::fixed<3, 3> rotorRotation{ 0,0,0 };
 	
-
 	for (unsigned int iiBlades = 0; iiBlades < m_blades.size(); ++iiBlades)
 	{
 		totalAzimuth = deltaAzimuth + m_blades.at(iiBlades).initialAzimuth();
@@ -343,7 +357,37 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 
 			// Local tip speed ratio
 			localTipSpeed = std::abs(windRel_tVel/windRel_nVel);
+
+			// Total local solidity
+
+
+			/* 
+			Começa o Brent
+			*/
+
+			// As a first guess, the values of phi, a and ap from the previous time step are used.
+			phi = m_blades.at(iiBlades).phi(iiNodes);
+			alpha = m_blades.at(iiBlades).alpha(iiNodes);
+			a = m_blades.at(iiBlades).axialIndFactor(iiNodes);
+			ap = m_blades.at(iiBlades).tangIndFactor(iiNodes);
+
+
+			// Aerodynamic coefficients in the normal and tangential directions
+			Cl = m_airfoils.at(m_blades.at(iiBlades).airoilID(iiNodes)).CL(alpha);
+			Cd = m_airfoils.at(m_blades.at(iiBlades).airoilID(iiNodes)).CD(alpha);
+			Cn = Cl * cos(deg2rad(phi)) + Cd * sin(deg2rad(phi));
+			Ct = Cl * sin(deg2rad(phi)) - Cd * cos(deg2rad(phi));
+
+			if (envir.time() == 0)
+			{
+
+			}
+
+
 		}
 	}
 	return vec::fixed<6> {0,0,0,0,0,0};
 }
+
+
+//double k(const double phi,)

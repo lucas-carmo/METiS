@@ -18,8 +18,14 @@ void Blade::addBladeAeroNode(const double span, const double crvAC, const double
 	m_chord.push_back(chord);
 	m_airfoilID.push_back(airfoilID);
 
+	m_a.push_back(0);
+	m_ap.push_back(0);
+	m_phi.push_back(0);
+
+	// Set node radial distance to the hub and its coordinates in the hub coordinate system
 	m_nodeCoord_hub.push_back(vec::fixed<3> {0, 0, 0});
-	setNodeCoord_hub(size() - 1, hubRadius); // update node position of the current blade node
+	setNodeRadius(size() - 1, hubRadius); // update node radial distance
+	setNodeCoord_hub(size() - 1); // update node position of the current blade node	
 }
 
 void Blade::setPrecone(const double precone)
@@ -48,37 +54,122 @@ unsigned int Blade::size() const
 
 double Blade::span(const unsigned int index) const
 {
-	return m_span.at(index);
+	if (index < 0 || static_cast<unsigned int> (index) >= m_span.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::span(const unsigned int index).");
+	}
+
+	return m_span[index];
 }
 
 double Blade::crvAC(const unsigned int index) const
 {
-	return m_crvAC.at(index);
+	if (index < 0 || static_cast<unsigned int> (index) >= m_crvAC.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::crvAC(const unsigned int index).");
+	}
+
+	return m_crvAC[index];
 }
 
 double Blade::swpAC(const unsigned int index) const
 {
-	return m_swpAC.at(index);
+	if (index < 0 || static_cast<unsigned int> (index) >= m_swpAC.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::swpAC(const unsigned int index).");
+	}
+
+	return m_swpAC[index];
 }
 
 double Blade::crvAng(const unsigned int index) const
 {
-	return m_crvAng.at(index);
+	if (index < 0 || static_cast<unsigned int> (index) >= m_crvAng.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::crvAng(const unsigned int index).");
+	}
+
+	return m_crvAng[index];
 }
 
 double Blade::twist(const unsigned int index) const
 {
-	return m_twist.at(index);
+	if (index < 0 || static_cast<unsigned int> (index) >= m_twist.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::twist(const unsigned int index).");
+	}
+
+	return m_twist[index];
 }
 
 double Blade::chord(const unsigned int index) const
 {
-	return m_chord.at(index);
+	if (index < 0 || static_cast<unsigned int> (index) >= m_chord.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::chord(const unsigned int index).");
+	}
+
+	return m_chord[index];
 }
 
 int Blade::airoilID(const unsigned int index) const
 {
-	return m_airfoilID.at(index);
+	if (index < 0 || static_cast<unsigned int> (index) >= m_airfoilID.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::airfoilID(const unsigned int index).");
+	}
+
+	return m_airfoilID[index];
+}
+
+double Blade::radius(const unsigned int index) const
+{
+	if (index < 0 || static_cast<unsigned int> (index) >= m_radius.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::radius(const unsigned int index).");
+	}
+
+	return m_radius[index];
+}
+
+double Blade::axialIndFactor(const unsigned int index) const
+{
+	if (index < 0 || static_cast<unsigned int> (index) >= m_a.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::axialIndFactor(const unsigned int index).");
+	}
+
+	return m_a[index];
+}
+
+double Blade::tangIndFactor(const unsigned int index) const
+{
+	if (index < 0 || static_cast<unsigned int> (index) >= m_ap.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::tangIndFactor(const unsigned int index).");
+	}
+
+	return m_ap[index];
+}
+
+double Blade::phi(const unsigned int index) const
+{
+	if (index < 0 || static_cast<unsigned int> (index) >= m_phi.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::phi(const unsigned int index).");
+	}
+
+	return m_phi[index];
+}
+
+double Blade::alpha(const unsigned int index) const
+{
+	if (index < 0 || static_cast<unsigned int> (index) >= m_phi.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::phi(const unsigned int index).");
+	}
+
+	return (m_phi[index] - twist(index) - m_pitch);
 }
 
 double Blade::precone() const
@@ -96,23 +187,32 @@ double Blade::initialAzimuth() const
 	return m_initialAzimuth;
 }
 
-
 /*****************************************************
 	Calculate node position in different coordinate systems
 *****************************************************/	
+void Blade::setNodeRadius(const int index, const double hubRadius)
+{
+	if (index < 0 || static_cast<unsigned int> (index) >= m_radius.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::setNodeCord_hub(const unsigned int index, const double hubRadius).");
+	}
+
+	m_radius[index] = hubRadius + span(index);
+}
+
 
 // Coordinates of a blade node written in the hub coordinate system.
 // It requires the index of the node you are interested in and the hub radius.
 // After the calculation, the value is stored in m_nodeCoord_hub(index) for future usage.
-void Blade::setNodeCoord_hub(const int index, const double hubRadius)
+void Blade::setNodeCoord_hub(const int index)
 {
-	if (index < 0 || static_cast<unsigned int> (index) >= size())
+	if (index < 0 || static_cast<unsigned int> (index) >= m_nodeCoord_hub.size())
 	{
 		throw std::runtime_error("Index out of range in Blade::setNodeCord_hub(const unsigned int index, const double hubRadius).");
 	}
 
 	vec::fixed<3> hubCoord;
-	double r = hubRadius + span(index);		
+	double r = radius(index);
 
 	hubCoord[0] = r * tan(precone());
 	hubCoord[1] = -r * sin(initialAzimuth()) * cos(precone());
@@ -164,4 +264,10 @@ vec::fixed<3> Blade::nodeCoord_fowt(const vec::fixed<3> &nodeCoord_shaft, const 
 vec::fixed<3> Blade::nodeCoord_earth(const vec::fixed<6> &FOWTpos, const vec::fixed<3> &nodeCoord_tower) const
 {
 	return (FOWTpos.rows(0,2) + rotatMatrix(FOWTpos.rows(3,5)) * nodeCoord_tower);
+}
+
+
+double Blade::localSolidity(const int index) const
+{
+	return ( chord(index) / (2 * datum::pi * radius(index) * cos(m_precone*datum::pi/180)) );
 }
