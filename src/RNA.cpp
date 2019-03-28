@@ -202,14 +202,14 @@ unsigned int RNA::numBlades() const
 	return static_cast<unsigned int>(m_blades.size());
 }
 
-double RNA::bladePrecone(const unsigned int ii) const
+double RNA::bladePrecone(const unsigned int indexBlade) const
 {
-	return m_blades.at(ii).precone();
+	return m_blades.at(indexBlade).precone();
 }
 
-double RNA::bladePitch(const unsigned int ii) const
+double RNA::bladePitch(const unsigned int indexBlade) const
 {
-	return m_blades.at(ii).pitch();
+	return m_blades.at(indexBlade).pitch();
 }
 
 std::string RNA::printBladeAero() const
@@ -280,7 +280,7 @@ double RNA::dAzimuth(const double time) const
 	return (360 * time * rotorSpeed() / 60.);
 }
 
-// FOWTpos is the position of the center of the FOWT coordinate system with respect to the earth fixed system, written in the earth fixed system
+// FOWTpos is the position of the center of the FOWT coordinate system with respect to the earth fixed system, written in the earth fixed system.
 // In other words, it is {m_floater.CoG(),0,0,0} + FOWT.m_disp, i.e. the initial position of the floater CoG + its displacement
 vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel) const
 {
@@ -308,12 +308,13 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 
 	// Initialize the flow angles and parameters needed for the BEMT method.
 	// The values of a, ap and phi are actually stored as members of the Blade class, but calling 
-	// m_blades.at(iiBlades).phi() all the time in the loop below is cumbersome and inefficient.
+	// m_blades[iiBlades].phi() all the time in the loop below is cumbersome and inefficient.
 	// The value of alpha is calculated by a method of the Blade class.
 	double a{ 0 }; // Axial induction factor
 	double ap{ 0 }; // Tangential induction factor
 	double phi{ 0 }; // Local inflow angle
 	double alpha{ 0 }; // Local angle of attack
+	double localSolidity{ 0 }; 
 
 	// At first, the wind velocity is calculated in the earth coordinate system.
 	// For the calculations, it needs to be written in the blade node coordinate system.
@@ -326,16 +327,16 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	
 	for (unsigned int iiBlades = 0; iiBlades < m_blades.size(); ++iiBlades)
 	{
-		totalAzimuth = deltaAzimuth + m_blades.at(iiBlades).initialAzimuth();
-		rotorRotation = rotatMatrix_deg(vec::fixed<3> {0, -m_blades.at(iiBlades).precone(), 0}) * rotatMatrix_deg(vec::fixed<3> { -totalAzimuth, -rotorTilt(), -rotorYaw()});
+		totalAzimuth = deltaAzimuth + m_blades[iiBlades].initialAzimuth();
+		rotorRotation = rotatMatrix_deg(vec::fixed<3> {0, -m_blades[iiBlades].precone(), 0}) * rotatMatrix_deg(vec::fixed<3> { -totalAzimuth, -rotorTilt(), -rotorYaw()});
 
 
-		for (unsigned int iiNodes = 0; iiNodes < m_blades.at(iiBlades).size(); ++iiNodes)
+		for (unsigned int iiNodes = 0; iiNodes < m_blades[iiBlades].size(); ++iiNodes)
 		{
-			nodeCoord_hub = m_blades.at(iiBlades).nodeCoord_hub(iiNodes);
-			nodeCoord_shaft = m_blades.at(iiBlades).nodeCoord_shaft(iiNodes, deltaAzimuth);
-			nodeCoord_fowt = m_blades.at(iiBlades).nodeCoord_fowt(nodeCoord_shaft, rotorTilt(), rotorYaw(), hubHeight2CoG(), overhang());
-			nodeCoord_earth = m_blades.at(iiBlades).nodeCoord_earth(FOWTpos, nodeCoord_fowt);
+			nodeCoord_hub = m_blades[iiBlades].nodeCoord_hub(iiNodes);
+			nodeCoord_shaft = m_blades[iiBlades].nodeCoord_shaft(iiNodes, deltaAzimuth);
+			nodeCoord_fowt = m_blades[iiBlades].nodeCoord_fowt(nodeCoord_shaft, rotorTilt(), rotorYaw(), hubHeight2CoG(), overhang());
+			nodeCoord_earth = m_blades[iiBlades].nodeCoord_earth(FOWTpos, nodeCoord_fowt);
 			
 			// windVel is first calculated in the global coordinate system. 
 			// We need to convert it to the node coordinate system, in which:
@@ -359,22 +360,21 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			localTipSpeed = std::abs(windRel_tVel/windRel_nVel);
 
 			// Total local solidity
-
+			localSolidity = numBlades() * m_blades[iiBlades].localSolidity(iiNodes);
 
 			/* 
 			Começa o Brent
 			*/
 
 			// As a first guess, the values of phi, a and ap from the previous time step are used.
-			phi = m_blades.at(iiBlades).phi(iiNodes);
-			alpha = m_blades.at(iiBlades).alpha(iiNodes);
-			a = m_blades.at(iiBlades).axialIndFactor(iiNodes);
-			ap = m_blades.at(iiBlades).tangIndFactor(iiNodes);
-
+			phi = m_blades[iiBlades].phi(iiNodes);
+			alpha = m_blades[iiBlades].alpha(iiNodes);
+			a = m_blades[iiBlades].axialIndFactor(iiNodes);
+			ap = m_blades[iiBlades].tangIndFactor(iiNodes);
 
 			// Aerodynamic coefficients in the normal and tangential directions
-			Cl = m_airfoils.at(m_blades.at(iiBlades).airoilID(iiNodes)).CL(alpha);
-			Cd = m_airfoils.at(m_blades.at(iiBlades).airoilID(iiNodes)).CD(alpha);
+			Cl = m_airfoils.at(m_blades[iiBlades].airoilID(iiNodes)).CL(alpha);
+			Cd = m_airfoils.at(m_blades[iiBlades].airoilID(iiNodes)).CD(alpha);
 			Cn = Cl * cos(deg2rad(phi)) + Cd * sin(deg2rad(phi));
 			Ct = Cl * sin(deg2rad(phi)) - Cd * cos(deg2rad(phi));
 
@@ -390,4 +390,67 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 }
 
 
-//double k(const double phi,)
+double RNA::calcF(const ENVIR &envir, const double phi, const int nodeIndex) const
+{
+	if (phi == 0)
+	{
+		return 0;
+	}
+
+	double Ftip = 1;
+	double Fhub = 1;
+
+	double r = m_blades[0].radius(nodeIndex);
+	double R = m_blades[0].radius(m_blades[0].size() - 1); // Total radius of the blade is equal to the radius of the last node
+
+	if (envir.useTipLoss())
+	{
+		Ftip = (2.0 / datum::pi) * acos( -(numBlades() / 2.0) * (R - r) / (r * sin(deg2rad(phi))) );
+	}
+
+	if (envir.useTipLoss())
+	{
+		Fhub = (2.0 / datum::pi) * acos( -(numBlades() / 2.0) * (r - m_hubRadius) / (m_hubRadius * sin(deg2rad(phi))) );
+	}
+
+	return Ftip * Fhub;
+}
+
+
+// Convenience parameter defined in the algorithm for solving the BEMT equations proposed by Ning, 2013. Related to the axial induction factor by a = k / (1+k)
+double RNA::calcK(const double phi, const double localSolidity, const double Cn, const double F) const
+{
+	if (F == 0)
+	{
+		return 1e6;
+	}
+	else
+	{
+		return localSolidity * Cn / (4 * F * pow(sin(deg2rad(phi)), 2));
+	}
+}
+
+
+// Convenience parameter defined in the algorithm for solving the BEMT equations proposed by Ning, 2013. Related to the tangential induction factor by ap = kp / (1-kp)
+double RNA::calcKp(const double phi, const double localSolidity, const double Ct, const double F) const
+{
+	if (F == 0)
+	{
+		return 1e6;
+	}
+	else
+	{
+		return localSolidity * Ct / (4 * F * sin(deg2rad(phi)) * cos(deg2rad(phi)) );
+	}
+}
+
+
+//double RNA::calcAxialIndFactor(const double k, const double F) const
+//{
+//	return 
+//}
+
+//double RNA::calcTangIndFactor(const double kp, const double F) const
+//{
+//	return 
+//}

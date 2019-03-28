@@ -51,8 +51,8 @@ public:
 	double overhang() const;
 	double hubHeight2CoG() const;
 	unsigned int numBlades() const;
-	double bladePrecone(const unsigned int ii) const;
-	double bladePitch(const unsigned int ii) const;
+	double bladePrecone(const unsigned int indexBlade) const;
+	double bladePitch(const unsigned int indexBlade) const;
 
 	std::string printBladeAero() const;
 	std::string printAirfoils() const;
@@ -62,4 +62,8 @@ public:
 	*****************************************************/	
 	double dAzimuth(const double time) const;
 	vec::fixed<6> aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel) const;
+
+	double calcF(const ENVIR &envir, const double phi, const int nodeIndex) const;
+	double calcK(const double phi, const double localSolidity, const double Cn, const double F) const;
+	double calcKp(const double phi, const double localSolidity, const double Ct, const double F) const;
 };
