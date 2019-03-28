@@ -62,11 +62,6 @@ void ENVIR::readTimeRamp(const std::string &data)
     readDataFromString(data, m_timeRamp);
 }
 
-void ENVIR::readUseBEMT(const std::string &data)
-{
-	readDataFromString(data, m_useBEMT);
-}
-
 void ENVIR::readUseTipLoss(const std::string &data)
 {
 	readDataFromString(data, m_useTipLoss);
@@ -235,11 +230,6 @@ double ENVIR::timeTotal() const
 double ENVIR::time() const
 {
 	return m_time;
-}
-
-bool ENVIR::useBEMT() const
-{
-	return m_useBEMT;
 }
 
 bool ENVIR::useTipLoss() const

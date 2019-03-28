@@ -22,7 +22,6 @@ TimeStep    0.1	                    % Time step
 TimeTotal  	280						% Total simulation time
 TimeRamp	6                       % Numerical ramp to be imposed to the waves. It is given as number of periods of the specified wave with the largest period.
 
-UseBEMT     1
 UseTipLoss  1
 UseHubLoss  1
 UseSkewCorr 1

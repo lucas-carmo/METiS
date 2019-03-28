@@ -46,7 +46,6 @@ private:
     double m_timeRamp;
     double m_time = 0;
 
-    bool m_useBEMT;
     bool m_useTipLoss;
     bool m_useHubLoss;
     // bool m_IncTIFac;
@@ -67,7 +66,6 @@ public:
     void readTimeStep(const std::string &data);
     void readTimeTotal(const std::string &data);
     void readTimeRamp(const std::string &data);
-	void readUseBEMT(const std::string &data);
 	void readUseTipLoss(const std::string &data);
 	void readUseHubLoss(const std::string &data);
 	void readUseSkewCorr(const std::string &data);
@@ -90,7 +88,6 @@ public:
     double timeStep() const;
     double timeTotal() const;
     double time() const;
-	bool useBEMT() const;
 	bool useTipLoss() const;
 	bool useHubLoss() const;
 	bool useSkewCorr() const;
