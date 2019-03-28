@@ -16,18 +16,9 @@ private:
     std::vector<double> m_twist; // Specifies the local aerodynamic twist angle (in degrees) of the airfoil; it is the orientation of the local chord about the vector normal to the plane of the airfoil, positive to feather, leading edge upwind; the blade-pitch angle will be added to the local twist; 
     std::vector<double> m_chord; // Local chord length
     std::vector<int> m_airfoilID; // Airfoil data the local blade node is associated with	
+	std::vector< double > m_localSolidity;
 
-	// Properties that belong to the whole blade
-	double m_precone;
-	double m_pitch;
-	double m_initialAzimuth; // Azimuth position in t = 0
-
-	// Radial distance of the node & coordinates of the nodes written in the hub coordinate system.
-	// Since this needs to be calculated only in the first time step, I thought it better to keep them as members.
-	std::vector<double> m_radius;
-	std::vector<vec::fixed<3>> m_nodeCoord_hub;
-
-	// Properties related to the BEMT method. 
+	// Properties related to the BEMT method AND belong to each node
 	// They are part of the Blade class to make the value calculated in the time step 'i' available as
 	// first guess to the time step 'i+1'. So, to make it clear, the values stored in the members below
 	// are the ones calculated in the last call of RNA::aeroForce, where the BEMT method is used.
@@ -35,7 +26,19 @@ private:
 	std::vector<double> m_ap; // Tangential induction factor (for each node)
 	std::vector<double> m_phi; // Local inflow angle (for each node)
 
+	// Radial distance of the node & coordinates of the nodes written in the hub coordinate system.
+	// Since this needs to be calculated only in the first time step, I thought it better to keep them as members.
+	std::vector<double> m_radius;
+	std::vector<vec::fixed<3>> m_nodeCoord_hub;
+
+	// Properties that belong to the whole blade
+	double m_precone;
+	double m_pitch;
+	double m_initialAzimuth; // Azimuth position in t = 0
+
 public:
+	Blade();
+
 	/*****************************************************
 		Setters
 	*****************************************************/
@@ -46,6 +49,8 @@ public:
 	void setPrecone(const double precone);
 	void setPitch(const double pitch);
 	void setInitialAzimuth(const double initialAzimuth);
+
+	void setNodeRadius(const int index, const double hubRadius);
 
 	/*****************************************************
 		Getters
@@ -63,23 +68,20 @@ public:
 	double tangIndFactor(const unsigned int index) const;
 	double phi(const unsigned int index) const; 
 	double alpha(const unsigned int index) const;
-
-
+	double localSolidity(const unsigned int index) const;
 
 	double precone() const;
 	double pitch() const;
 	double initialAzimuth() const;
+
 	/*****************************************************
 		Calculate node position in different coordinate systems
 	*****************************************************/	
-	void setNodeRadius(const int index, const double hubRadius);
 	void setNodeCoord_hub(const int index);
 	vec::fixed<3> nodeCoord_hub(const int index) const;	
 	vec::fixed<3> nodeCoord_shaft(const int index, const double dAzimuth) const;	
 	vec::fixed<3> nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const double dAzimuth) const;
 	vec::fixed<3> nodeCoord_fowt(const vec::fixed<3> &nodeCoord_shaft, const double tilt, const double yaw, const double overhang, const double hubHeight2CoG) const;
 	vec::fixed<3> nodeCoord_earth(const vec::fixed<6> &FOWTpos, const vec::fixed<3> &nodeCoord_tower) const;
-
-	double localSolidity(const int index) const;
 };
 

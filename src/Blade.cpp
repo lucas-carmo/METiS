@@ -3,6 +3,14 @@
 
 using namespace arma;
 
+
+Blade::Blade()
+{
+	m_precone = datum::nan;
+	m_pitch = datum::nan;
+	m_initialAzimuth = datum::nan;
+}
+
 /*****************************************************
 	Setters
 *****************************************************/
@@ -23,9 +31,18 @@ void Blade::addBladeAeroNode(const double span, const double crvAC, const double
 	m_phi.push_back(0);
 
 	// Set node radial distance to the hub and its coordinates in the hub coordinate system
-	m_nodeCoord_hub.push_back(vec::fixed<3> {0, 0, 0});
+	m_radius.push_back(0);
 	setNodeRadius(size() - 1, hubRadius); // update node radial distance
+
+	m_nodeCoord_hub.push_back(vec::fixed<3> {0, 0, 0});
 	setNodeCoord_hub(size() - 1); // update node position of the current blade node	
+
+	// Need the blades precone angle for calculating local solidity
+	if (!is_finite(m_precone))
+	{
+		throw std::runtime_error("Need to specify blade precone before specifying blade aerodynamic properties.");
+	}
+	m_localSolidity.push_back(chord / (2 * datum::pi * m_radius.back() * cos(deg2rad(m_precone)) ));
 }
 
 void Blade::setPrecone(const double precone)
@@ -172,6 +189,16 @@ double Blade::alpha(const unsigned int index) const
 	return (m_phi[index] - twist(index) - m_pitch);
 }
 
+double Blade::localSolidity(const unsigned int index) const
+{
+	if (index < 0 || static_cast<unsigned int> (index) >= m_localSolidity.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::localSolidity(const unsigned int index).");
+	}
+
+	return m_localSolidity[index];
+}
+
 double Blade::precone() const
 {
 	return m_precone;
@@ -267,7 +294,3 @@ vec::fixed<3> Blade::nodeCoord_earth(const vec::fixed<6> &FOWTpos, const vec::fi
 }
 
 
-double Blade::localSolidity(const int index) const
-{
-	return ( chord(index) / (2 * datum::pi * radius(index) * cos(m_precone*datum::pi/180)) );
-}
