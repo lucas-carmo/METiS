@@ -90,12 +90,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			continue;
 		}
 
-		else if (caseInsCompare(getKeyword(strInput), "UseBEMT"))
-		{
-			envir.readUseBEMT(getData(strInput));
-			continue;
-		}
-
 		else if (caseInsCompare(getKeyword(strInput), "UseTipLoss"))
 		{
 			envir.readUseTipLoss(getData(strInput));
@@ -906,7 +900,6 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Time Step:\t" << envir.timeStep() << '\n';
 	m_sumFl << "Total Time:\t" << envir.timeTotal() << '\n';
 	m_sumFl << "Time Ramp:\t" << envir.printTimeRamp() << '\n';
-	m_sumFl << "Use BEMT:\t" << envir.useBEMT() << '\n';
 	m_sumFl << "Use Tip Loss:\t" << envir.useTipLoss() << '\n';
 	m_sumFl << "Use Hub Loss:\t" << envir.useHubLoss() << '\n';
 	m_sumFl << "Use Skew Correction:\t" << envir.useSkewCorr() << '\n';
