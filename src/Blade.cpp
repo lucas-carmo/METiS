@@ -263,11 +263,7 @@ vec::fixed<3> Blade::nodeCoord_hub(const int index) const
 // dAzimuth must be given in degrees
 vec::fixed<3> Blade::nodeCoord_shaft(const int index, const double dAzimuth) const
 {	
-	if (index < 0 || static_cast<unsigned int> (index) >= size())
-	{
-		throw std::runtime_error("Index out of range in Blade::nodeCoord_shaft(const unsigned int index).");
-	}
-
+	// Do not need to check if index is out of range, since nodeCoord_hub already does that
 	return nodeCoord_shaft(nodeCoord_hub(index), dAzimuth);
 }
 
