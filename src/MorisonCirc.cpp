@@ -592,10 +592,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &
 		topDiam = m_botDiam;
 	}
 
-
-	
-	double dL = norm(n2 - n1, 2) / (ncyl - 1); // length of each interval between points
-
+	// length of each interval between points
+	double dL = norm(n2 - n1, 2) / (ncyl - 1); 
 
 	/*
 		First part: forces on the length of the cylinder
@@ -665,21 +663,21 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &
 		// Integrate the forces along the cylinder using Simpson's Rule
 		if (ii == 1 || ii == ncyl)
 		{
-			force += (dL/3) * join_cols(force_ii, moment_ii);
-			force_inertia += (dL/3) * join_cols(force_inertia_ii, moment_inertia_ii);
-			force_drag += (dL/3) * join_cols(force_drag_ii, moment_drag_ii);
+			force += (dL/3.0) * join_cols(force_ii, moment_ii);
+			force_inertia += (dL/3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
+			force_drag += (dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
 		}		
 		else if (ii % 2 == 0)
 		{
-			force += (4*dL/3) * join_cols(force_ii, moment_ii);
-			force_inertia += (4*dL/3) * join_cols(force_inertia_ii, moment_inertia_ii);
-			force_drag += (4*dL/3) * join_cols(force_drag_ii, moment_drag_ii);
+			force += (4*dL/3.0) * join_cols(force_ii, moment_ii);
+			force_inertia += (4*dL/3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
+			force_drag += (4*dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
 		}
 		else
 		{
-			force += (2*dL/3) * join_cols(force_ii, moment_ii);
-			force_inertia += (2*dL/3) * join_cols(force_inertia_ii, moment_inertia_ii);
-			force_drag += (2*dL/3) * join_cols(force_drag_ii, moment_drag_ii);
+			force += (2*dL/3.0) * join_cols(force_ii, moment_ii);
+			force_inertia += (2*dL/3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
+			force_drag += (2*dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
 		}
 	}
 

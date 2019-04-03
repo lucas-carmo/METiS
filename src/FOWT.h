@@ -72,4 +72,3 @@ public:
 	vec::fixed<6> weightForce(const double gravity);
 	vec::fixed<6> totalForce(const ENVIR &envir);
 };
-
