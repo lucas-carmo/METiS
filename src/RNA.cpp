@@ -174,6 +174,7 @@ void RNA::readOverhang(const std::string &data)
 	readDataFromString(data, m_overhang);
 }
 
+// Should be called when setting the RNA in FOWT::setRNA
 void RNA::setHubHeight2CoG(const double zCoG)
 {
 	m_hubHeight2CoG = hubHeight() - zCoG;
@@ -363,7 +364,7 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			localSolidity = numBlades() * m_blades[iiBlades].localSolidity(iiNodes);
 
 			/* 
-			Começa o Brent
+			Comeï¿½a o Brent
 			*/
 
 			// As a first guess, the values of phi, a and ap from the previous time step are used.
