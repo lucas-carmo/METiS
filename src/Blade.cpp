@@ -241,9 +241,9 @@ void Blade::setNodeCoord_hub(const int index)
 	vec::fixed<3> hubCoord;
 	double r = radius(index);
 
-	hubCoord[0] = r * tan(precone());
-	hubCoord[1] = -r * sin(initialAzimuth()) * cos(precone());
-	hubCoord[2] = r * cos(initialAzimuth()) * cos(precone());
+	hubCoord[0] = r * tan(deg2rad(m_precone));
+	hubCoord[1] = -r * sin(deg2rad(m_initialAzimuth)) * cos(deg2rad(m_precone));
+	hubCoord[2] = r * cos(deg2rad(m_initialAzimuth)) * cos(deg2rad(m_precone));
 
 	m_nodeCoord_hub.at(index) = hubCoord;
 }
