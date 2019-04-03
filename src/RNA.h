@@ -63,8 +63,10 @@ public:
 	double dAzimuth(const double time) const;
 	vec::fixed<6> aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel) const;
 
-	double calcF(const ENVIR &envir, const double phi, const int nodeIndex) const;
+	double calcRes(const double phi, const int nodeIndex, const double localSolidity, const double localTipSpeed, const bool useTipLoss, const bool useHubLoss, const double Cn, const double Ct) const;
+	double calcF(const double phi, const int nodeIndex, const bool useTipLoss, const bool useHubLoss) const;
 	double calcK(const double phi, const double localSolidity, const double Cn, const double F) const;
 	double calcKp(const double phi, const double localSolidity, const double Ct, const double F) const;
 	double calcAxialIndFactor(const double k, const double phi, const double F) const;
+	double calcTangIndFactor(const double kp, const double F) const;
 };

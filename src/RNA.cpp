@@ -373,11 +373,11 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			a = m_blades[iiBlades].axialIndFactor(iiNodes);
 			ap = m_blades[iiBlades].tangIndFactor(iiNodes);
 
-			// Aerodynamic coefficients in the normal and tangential directions
-			Cl = m_airfoils.at(m_blades[iiBlades].airoilID(iiNodes)).CL(alpha);
-			Cd = m_airfoils.at(m_blades[iiBlades].airoilID(iiNodes)).CD(alpha);
-			Cn = Cl * cos(deg2rad(phi)) + Cd * sin(deg2rad(phi));
-			Ct = Cl * sin(deg2rad(phi)) - Cd * cos(deg2rad(phi));
+			// // Aerodynamic coefficients in the normal and tangential directions
+			// Cl = m_airfoils.at(m_blades[iiBlades].airoilID(iiNodes)).CL(alpha);
+			// Cd = m_airfoils.at(m_blades[iiBlades].airoilID(iiNodes)).CD(alpha);
+			// Cn = Cl * cos(deg2rad(phi)) + Cd * sin(deg2rad(phi));
+			// Ct = Cl * sin(deg2rad(phi)) - Cd * cos(deg2rad(phi));
 
 			if (envir.time() == 0)
 			{
@@ -390,8 +390,36 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	return vec::fixed<6> {0,0,0,0,0,0};
 }
 
+double RNA::calcRes(const double phi, const int nodeIndex, const double localSolidity, const double localTipSpeed, const bool useTipLoss, const bool useHubLoss, const double Cn, const double Ct) const
+{
+    double F = calcF(phi, nodeIndex, useTipLoss, useHubLoss);
 
-double RNA::calcF(const ENVIR &envir, const double phi, const int nodeIndex) const
+	if (F == 0)
+	{
+		return 0;
+	}
+    
+	double k = calcK(phi, localSolidity, Cn, F);
+	double kp = calcKp(phi, localSolidity, Ct, F);
+
+	double a{0};
+    if (phi > 0)
+    {
+        a = calcAxialIndFactor(k, phi, F);
+
+        if (abs(a-1) < 1e-6)
+            return -cos(deg2rad(phi))*(1-kp)/localTipSpeed;
+        else
+        {
+            return sin(deg2rad(phi))/(1-a) - cos(deg2rad(phi))*(1-kp)/localTipSpeed;
+        }
+    }
+    else // Propeler brake-region
+        return sin(deg2rad(phi))*(1-k) - cos(deg2rad(phi))*(1-kp)/localTipSpeed;
+}
+
+
+double RNA::calcF(const double phi, const int nodeIndex, const bool useTipLoss, const bool useHubLoss) const
 {
 	if (phi == 0)
 	{
@@ -404,12 +432,12 @@ double RNA::calcF(const ENVIR &envir, const double phi, const int nodeIndex) con
 	double r = m_blades[0].radius(nodeIndex);
 	double R = m_blades[0].radius(m_blades[0].size() - 1); // Total radius of the blade is equal to the radius of the last node
 
-	if (envir.useTipLoss())
+	if (useTipLoss)
 	{
 		Ftip = (2.0 / datum::pi) * acos( -(numBlades() / 2.0) * (R - r) / (r * sin(deg2rad(phi))) );
 	}
 
-	if (envir.useTipLoss())
+	if (useHubLoss)
 	{
 		Fhub = (2.0 / datum::pi) * acos( -(numBlades() / 2.0) * (r - m_hubRadius) / (m_hubRadius * sin(deg2rad(phi))) );
 	}
@@ -479,25 +507,35 @@ double RNA::calcAxialIndFactor(const double k, const double phi, const double F)
 			return k / (k + 1);
 		}
 
-		else // This one corresponds to the empirical region
+		else // This one corresponds to the empirical region. Buhl's correction with Beta = 0.4 is used. See Ning, 2013
 		{
 			g1 = 2.0 * F * k - (10 / 9. - F);
 			g2 = 2.0 * F * k - F * (4 / 3. - F);
 			g3 = 2 * F * k - (25 / 9. - 2 * F);
 
-			//if 
+            if (abs(g3) < 1e-6)
+			{
+				return (1.0 - 1.0/(2.0*sqrt(g2)));
+			}
+			else
+			{
+				return (g1 - sqrt(g2))/g3;
+			}
 		}
-
 	}
 	else // If phi < 0, the flow is in the propeller-brake region
 	{
-
+        if (k > 1.0)
+            return k/(k - 1.0);
+        else
+            return 0;
 	}
-
-	return 5.0;
 }
 
-//double RNA::calcTangIndFactor(const double kp, const double F) const
-//{
-//	return 
-//}
+double RNA::calcTangIndFactor(const double kp, const double F) const
+{
+    if (F == 0)
+        return -1.0;
+    else
+        return kp/(1.0-kp);
+}
