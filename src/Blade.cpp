@@ -284,9 +284,9 @@ vec::fixed<3> Blade::nodeCoord_fowt(const vec::fixed<3> &nodeCoord_shaft, const 
 }
 
 // Coordinates of a blade node written in the earth coordinate system.
-vec::fixed<3> Blade::nodeCoord_earth(const vec::fixed<6> &FOWTpos, const vec::fixed<3> &nodeCoord_tower) const
+vec::fixed<3> Blade::nodeCoord_earth(const vec::fixed<6> &FOWTpos, const vec::fixed<3> &nodeCoord_fowt) const
 {
-	return (FOWTpos.rows(0,2) + rotatMatrix(FOWTpos.rows(3,5)) * nodeCoord_tower);
+	return (FOWTpos.rows(0,2) + rotatMatrix(FOWTpos.rows(3,5)) * nodeCoord_fowt);
 }
 
 
