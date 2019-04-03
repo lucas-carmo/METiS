@@ -66,4 +66,5 @@ public:
 	double calcF(const ENVIR &envir, const double phi, const int nodeIndex) const;
 	double calcK(const double phi, const double localSolidity, const double Cn, const double F) const;
 	double calcKp(const double phi, const double localSolidity, const double Ct, const double F) const;
+	double calcAxialIndFactor(const double k, const double phi, const double F) const;
 };

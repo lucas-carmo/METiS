@@ -445,10 +445,56 @@ double RNA::calcKp(const double phi, const double localSolidity, const double Ct
 }
 
 
-//double RNA::calcAxialIndFactor(const double k, const double F) const
-//{
-//	return 
-//}
+
+double RNA::calcAxialIndFactor(const double k, const double phi, const double F) const
+{
+	if (k <= -1)
+	{
+		throw std::runtime_error("The function RNA::calcAxialIndFactor(const double k, const double phi, const double F) requires k > -1.");
+	}
+
+	// The method proposed by Ning, 2013 uses Buhl's derivation for the region where momentum theory can not be applied. 
+	// That region corresponds to 0.4 < a < 1.0, which is the same as k >= 2/3. The variables g1, g2, and g3 are used in that condition.
+	double g1, g2, g3; 
+
+	if (phi == 0 || F == 0) // If phi == 0, F should be 0 as well. But I decided to put it this way to be sure.
+	{
+		return 1;
+	}
+
+	if (phi > 0)
+	{
+		if (k < 2 / 3.) // This one corresponds to the momentum region
+		{
+			// Deal with the case where the denominator is zero.
+			if (abs(k+1) < 1e-6) 
+			{
+				// Since we are in the momentum region, if we say that the singularity yields a value of 'a' larger than 1, which corresponds to the
+				// propeller brake region, we do not introduce any artificial solutions to the BEMT equations.
+				// We have chosen 10, but any value > 1 would work
+				return 10;
+			}
+
+			return k / (k + 1);
+		}
+
+		else // This one corresponds to the empirical region
+		{
+			g1 = 2.0 * F * k - (10 / 9. - F);
+			g2 = 2.0 * F * k - F * (4 / 3. - F);
+			g3 = 2 * F * k - (25 / 9. - 2 * F);
+
+			//if 
+		}
+
+	}
+	else // If phi < 0, the flow is in the propeller-brake region
+	{
+
+	}
+
+	return 5.0;
+}
 
 //double RNA::calcTangIndFactor(const double kp, const double F) const
 //{
