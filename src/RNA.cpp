@@ -499,7 +499,7 @@ double RNA::Brent(const double phi_min, const double phi_max, const unsigned int
                     }
                 }
                 FB = calcRes(BB, bladeIndex, nodeIndex, localSolidity, localTipSpeed, useTipLoss, useHubLoss);
-                m = m+1.0;
+                m = m+1;
             }
         }
     }
