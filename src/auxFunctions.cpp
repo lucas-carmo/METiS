@@ -49,6 +49,11 @@ double deg2rad(const double degree)
 	return degree * datum::pi / 180;
 }
 
+double minimum(const double x, const double y)
+{
+	return (x > y) ? y : x;
+}
+
 /*****************************************************
     String handling
 *****************************************************/
