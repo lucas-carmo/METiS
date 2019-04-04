@@ -297,6 +297,7 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	vec::fixed<3> cog2node{ 0,0,0}; // Vector given by the difference between the position of the blade node and the origin of the fowt coordinate system (around which the body rotation is provided). Written in the earth coordinate system.
 	double windRel_nVel{ 0 }; // Relative wind speed in the x direction of the node coordinate system (normal to the plane of rotation)
 	double windRel_tVel{ 0 }; // Relative wind speed in the y direction of the node coordinate system (in the plane of rotation)
+	double windRelVel{ 0 }; // Total wind relative velocity. It is the one that includes the correction due to the axial and tangential induction factors
 	double localTipSpeed{ 0 };
 	double deltaAzimuth = dAzimuth(envir.time());
 	double totalAzimuth{ 0 };
@@ -315,6 +316,7 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	double ap{ 0 }; // Tangential induction factor
 	double phi{ 0 }; // Local inflow angle
 	double localSolidity{ 0 }; 
+	double F{ 0 }; // Tip + hub loss factor	
 
 	// At first, the wind velocity is calculated in the earth coordinate system.
 	// For the calculations, it needs to be written in the blade node coordinate system.
@@ -367,36 +369,41 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			localSolidity = numBlades() * m_blades[iiBlades].localSolidity(iiNodes);
 
 			/************
-				The solution of BEMT equations begins here
+				The solution of BEMT equations begins here.
+				The solution method proposed by Ning, 2013 is used.
 			************/
-
-			// As a first guess, the values of phi, a and ap from the previous time step are used.
-			phi = m_blades[iiBlades].phi(iiNodes);
-			a = m_blades[iiBlades].axialIndFactor(iiNodes);
-			ap = m_blades[iiBlades].tangIndFactor(iiNodes);
-		
-			if (envir.time() == 0)
+	
+			// Bracket the solution in order to use Brent's method
+			if (calcRes(90, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss()) >= 0)
 			{
-				if (calcRes(90, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss()) >= 0)
-				{
-					phi_min = 1e-6;
-					phi_max = 90;
-				}
-				else if (calcRes(-45, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss()) >= 0)
-				{
-					phi_min = -45;
-					phi_max = -0.001;
-				}
-				else
-				{
-					phi_min = 90 + 0.001;
-					phi_max = 180 - 0.001;
-				}	
-
-				phi = Brent(phi_min, phi_max, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss());
+				phi_min = 1e-6;
+				phi_max = 90;
 			}
+			else if (calcRes(-45, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss()) >= 0)
+			{
+				phi_min = -45;
+				phi_max = -0.001;
+			}
+			else
+			{
+				phi_min = 90 + 0.001;
+				phi_max = 180 - 0.001;
+			}	
 
+			phi = Brent(phi_min, phi_max, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss());
 
+			Cn = RNA::Cn(phi, iiBlades, iiNodes);
+			Ct = RNA::Ct(phi, iiBlades, iiNodes);
+			F = calcF(phi, iiNodes, envir.useTipLoss(), envir.useHubLoss());
+
+			a = calcAxialIndFactor(calcK(phi, localSolidity, Cn, F), phi, F);				
+			if (F == 0)
+			{
+				phi = 0;
+			}
+			ap = calcTangIndFactor(calcKp(phi, localSolidity, Ct, F), F);
+
+			windRelVel = sqrt( pow(windRel_tVel * (1.0 + ap), 2) + pow(windRel_nVel * (1 - a), 2) );
 		}
 	}
 	return vec::fixed<6> {0,0,0,0,0,0};
@@ -684,3 +691,5 @@ double RNA::calcTangIndFactor(const double kp, const double F) const
     else
         return kp/(1.0-kp);
 }
+
+
