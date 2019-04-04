@@ -61,9 +61,14 @@ public:
 		Caculation functions
 	*****************************************************/	
 	double dAzimuth(const double time) const;
+	
 	vec::fixed<6> aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel) const;
 
-	double calcRes(const double phi, const int nodeIndex, const double localSolidity, const double localTipSpeed, const bool useTipLoss, const bool useHubLoss, const double Cn, const double Ct) const;
+	// Functions for the BEMT method
+	double Brent(const double phi_min, const double phi_max, const unsigned int bladeIndex, const unsigned int nodeIndex, const double localSolidity, const double localTipSpeed, const bool useTipLoss, const bool useHubLoss) const;
+	double calcRes(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex, const double localSolidity, const double localTipSpeed, const bool useTipLoss, const bool useHubLoss) const;
+	double Cn(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex) const;
+	double Ct(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex) const;
 	double calcF(const double phi, const int nodeIndex, const bool useTipLoss, const bool useHubLoss) const;
 	double calcK(const double phi, const double localSolidity, const double Cn, const double F) const;
 	double calcKp(const double phi, const double localSolidity, const double Ct, const double F) const;

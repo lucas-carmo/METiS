@@ -314,7 +314,6 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	double a{ 0 }; // Axial induction factor
 	double ap{ 0 }; // Tangential induction factor
 	double phi{ 0 }; // Local inflow angle
-	double alpha{ 0 }; // Local angle of attack
 	double localSolidity{ 0 }; 
 
 	// At first, the wind velocity is calculated in the earth coordinate system.
@@ -326,6 +325,10 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	mat::fixed<3, 3> rigidBodyRotation = rotatMatrix(-FOWTpos.rows(0, 2));
 	mat::fixed<3, 3> rotorRotation{ 0,0,0 };
 	
+	// Variables that provide the brackets for Brent method
+	double phi_min;
+	double phi_max;
+
 	for (unsigned int iiBlades = 0; iiBlades < m_blades.size(); ++iiBlades)
 	{
 		totalAzimuth = deltaAzimuth + m_blades[iiBlades].initialAzimuth();
@@ -363,25 +366,34 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			// Total local solidity
 			localSolidity = numBlades() * m_blades[iiBlades].localSolidity(iiNodes);
 
-			/* 
-			Come�a o Brent
-			*/
+			/************
+				The solution of BEMT equations begins here
+			************/
 
 			// As a first guess, the values of phi, a and ap from the previous time step are used.
 			phi = m_blades[iiBlades].phi(iiNodes);
-			alpha = m_blades[iiBlades].alpha(iiNodes);
 			a = m_blades[iiBlades].axialIndFactor(iiNodes);
 			ap = m_blades[iiBlades].tangIndFactor(iiNodes);
-
-			// // Aerodynamic coefficients in the normal and tangential directions
-			// Cl = m_airfoils.at(m_blades[iiBlades].airoilID(iiNodes)).CL(alpha);
-			// Cd = m_airfoils.at(m_blades[iiBlades].airoilID(iiNodes)).CD(alpha);
-			// Cn = Cl * cos(deg2rad(phi)) + Cd * sin(deg2rad(phi));
-			// Ct = Cl * sin(deg2rad(phi)) - Cd * cos(deg2rad(phi));
-
+		
 			if (envir.time() == 0)
 			{
+				if (calcRes(90, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss()) >= 0)
+				{
+					phi_min = 1e-6;
+					phi_max = 90;
+				}
+				else if (calcRes(-45, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss()) >= 0)
+				{
+					phi_min = -45;
+					phi_max = -0.001;
+				}
+				else
+				{
+					phi_min = 90 + 0.001;
+					phi_max = 180 - 0.001;
+				}	
 
+				phi = Brent(phi_min, phi_max, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss());
 			}
 
 
@@ -390,7 +402,122 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	return vec::fixed<6> {0,0,0,0,0,0};
 }
 
-double RNA::calcRes(const double phi, const int nodeIndex, const double localSolidity, const double localTipSpeed, const bool useTipLoss, const bool useHubLoss, const double Cn, const double Ct) const
+
+double RNA::Brent(const double phi_min, const double phi_max, const unsigned int bladeIndex, const unsigned int nodeIndex, const double localSolidity, const double localTipSpeed, const bool useTipLoss, const bool useHubLoss) const
+{
+    double FPP{pow(10,-11)};
+    double nearzero{pow(10,-20)};
+	double error{0};
+    double tolerance{pow(10,-5)};
+
+    double AA = phi_min;
+    double BB = phi_max;
+	double FA = calcRes(AA, bladeIndex, nodeIndex, localSolidity, localTipSpeed, useTipLoss, useHubLoss);
+	double FB = calcRes(BB, bladeIndex, nodeIndex, localSolidity, localTipSpeed, useTipLoss, useHubLoss);
+
+	bool not_done{true};
+	int m{0};
+
+	double CC, DD, EE, tol1, xm, phi, SS, PP, QQ, RR;
+
+    if (FA*FB < 0)
+    {
+        double FC = FB;
+        while (not_done)
+        {
+            if (FB*FC > 0)
+            {
+                CC = AA;
+                FC = FA;
+                DD = BB - AA;
+                EE = DD;
+            }
+            if (abs(FC) < abs(FB))
+            {
+                AA = BB; BB = CC; CC = AA;
+                FA = FB; FB = FC; FC = FA;
+            }
+            tol1 = 2.0*FPP*abs(BB) + 0.5*tolerance;
+            xm = 0.5*(CC-BB);
+            if ((abs(xm) <= tol1) || (abs(FA) < nearzero))
+            {
+                phi = BB;
+                not_done = false;
+            }
+            else
+            {
+                if ((abs(EE) >= tol1) && (abs(FA) > abs(FB)))
+                {
+                    SS = FB/FA;
+                    if (abs(AA-CC) < nearzero)
+                    {
+                        PP = 2.0*xm*SS;
+                        QQ = 1.0 - SS;
+                    }
+                    else
+                    {
+                        QQ = FA/FC;
+                        RR = FB/FC;
+                        PP = SS*(2.0*xm*QQ*(QQ-RR) - (BB-AA)*(RR-1.0));
+                        QQ = (QQ-1.0)*(RR-1.0)*(SS-1.0);
+                    }
+                    if (PP>nearzero)
+                    {
+                        QQ = - QQ;
+                    }
+                    PP = abs(PP);
+
+
+                    if ((2.0*PP) < minimum(3.0*xm*QQ-abs(tol1*QQ),abs(EE*QQ)))
+                    {EE = DD;   DD = PP/QQ;}
+                    else
+                    {
+                        DD = xm;
+                        EE = DD;
+                    }
+                }
+                else
+                {
+                    DD = xm;
+                    EE = DD;
+                }
+                AA = BB;
+                FA = FB;
+                if (abs(DD) > tol1)
+                {
+                    BB = BB + DD;
+                }
+                else
+                {
+                    if (xm>0)
+                    {
+                        BB = BB + abs(tol1);
+                    }
+                    else
+                    {
+                        BB = BB - abs(tol1);
+                    }
+                }
+                FB = calcRes(BB, bladeIndex, nodeIndex, localSolidity, localTipSpeed, useTipLoss, useHubLoss);
+                m = m+1.0;
+            }
+        }
+    }
+    else if (FB == 0)
+    {
+        phi = BB;
+    }
+    else
+    {
+		throw std::runtime_error("Interval without roots in RNA::Brent().");
+    }
+
+    return phi;
+}
+
+
+
+double RNA::calcRes(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex, const double localSolidity, const double localTipSpeed, const bool useTipLoss, const bool useHubLoss) const
 {
     double F = calcF(phi, nodeIndex, useTipLoss, useHubLoss);
 
@@ -399,8 +526,8 @@ double RNA::calcRes(const double phi, const int nodeIndex, const double localSol
 		return 0;
 	}
     
-	double k = calcK(phi, localSolidity, Cn, F);
-	double kp = calcKp(phi, localSolidity, Ct, F);
+	double k = calcK(phi, localSolidity, Cn(phi, bladeIndex, nodeIndex), F);
+	double kp = calcKp(phi, localSolidity, Ct(phi, bladeIndex, nodeIndex), F);
 
 	double a{0};
     if (phi > 0)
@@ -416,6 +543,24 @@ double RNA::calcRes(const double phi, const int nodeIndex, const double localSol
     }
     else // Propeler brake-region
         return sin(deg2rad(phi))*(1-k) - cos(deg2rad(phi))*(1-kp)/localTipSpeed;
+}
+
+
+
+double RNA::Cn(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex) const
+{
+	double alpha = m_blades[bladeIndex].alpha(nodeIndex, phi);
+	double Cl = m_airfoils[m_blades[bladeIndex].airoilID(nodeIndex)].CL(alpha);
+	double Cd = m_airfoils[m_blades[bladeIndex].airoilID(nodeIndex)].CD(alpha);	
+	return Cl * cos(deg2rad(phi)) + Cd * sin(deg2rad(phi));
+}
+
+double RNA::Ct(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex) const
+{
+	double alpha = m_blades[bladeIndex].alpha(nodeIndex, phi);
+	double Cl = m_airfoils[m_blades[bladeIndex].airoilID(nodeIndex)].CL(alpha);
+	double Cd = m_airfoils[m_blades[bladeIndex].airoilID(nodeIndex)].CD(alpha);	
+	return Cl * sin(deg2rad(phi)) - Cd * cos(deg2rad(phi));
 }
 
 
