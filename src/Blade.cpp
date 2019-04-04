@@ -179,16 +179,6 @@ double Blade::phi(const unsigned int index) const
 	return m_phi[index];
 }
 
-double Blade::alpha(const unsigned int index) const
-{
-	if (index < 0 || static_cast<unsigned int> (index) >= m_phi.size())
-	{
-		throw std::runtime_error("Index out of range in Blade::phi(const unsigned int index).");
-	}
-
-	return (m_phi[index] - twist(index) - m_pitch);
-}
-
 double Blade::localSolidity(const unsigned int index) const
 {
 	if (index < 0 || static_cast<unsigned int> (index) >= m_localSolidity.size())
@@ -289,4 +279,14 @@ vec::fixed<3> Blade::nodeCoord_earth(const vec::fixed<6> &FOWTpos, const vec::fi
 	return (FOWTpos.rows(0,2) + rotatMatrix(FOWTpos.rows(3,5)) * nodeCoord_fowt);
 }
 
+// Calculate local angle of attack for a given local inflow angle.
+// All the angles are in degrees.
+double Blade::alpha(const unsigned int index, const double phi) const
+{
+	if (index < 0 || static_cast<unsigned int> (index) >= size())
+	{
+		throw std::runtime_error("Index out of range in Blade::alpha(const unsigned int index, const double phi).");
+	}
 
+	return (phi - twist(index) - m_pitch);
+}

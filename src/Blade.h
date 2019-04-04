@@ -64,15 +64,18 @@ public:
 	double chord(const unsigned int index) const;
 	int airoilID(const unsigned int index) const;
 	double radius(const unsigned int index) const;
-	double axialIndFactor(const unsigned int index) const;
-	double tangIndFactor(const unsigned int index) const;
-	double phi(const unsigned int index) const; 
-	double alpha(const unsigned int index) const;
 	double localSolidity(const unsigned int index) const;
 
 	double precone() const;
 	double pitch() const;
 	double initialAzimuth() const;
+
+	// Parameters used in the BEMT equations in aerodynamic force calculation (RNA class).
+	// They store the values calculated in the previous time step, and are used as first
+	// estimation for solving the equations.
+	double axialIndFactor(const unsigned int index) const;
+	double tangIndFactor(const unsigned int index) const;
+	double phi(const unsigned int index) const; 		
 
 	/*****************************************************
 		Calculate node position in different coordinate systems
@@ -83,5 +86,8 @@ public:
 	vec::fixed<3> nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const double dAzimuth) const;
 	vec::fixed<3> nodeCoord_fowt(const vec::fixed<3> &nodeCoord_shaft, const double tilt, const double yaw, const double overhang, const double hubHeight2CoG) const;
 	vec::fixed<3> nodeCoord_earth(const vec::fixed<6> &FOWTpos, const vec::fixed<3> &nodeCoord_fowt) const;
+
+	// Calculate local angle of attack for a given local inflow angle
+	double alpha(const unsigned int index, const double phi) const;
 };
 
