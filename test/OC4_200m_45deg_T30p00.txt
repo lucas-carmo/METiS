@@ -1,7 +1,5 @@
 %>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
 %>-<> OC4 Platform
-%>-<> Teste p/ comparacao c/ o codigo em MATLAB
-%>-<> Profundidade 1000m, ao invés do valor correto de 200m
 %>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
 
 
@@ -20,9 +18,9 @@ DOFS 1 1 1 1 1 1
 %%-----------------------------------------------------------------------------%%
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
 %%-----------------------------------------------------------------------------%%
-TimeStep    0.1	                    % Time step, in seconds
-TimeTotal  	600					% Total simulation time, in secods
-TimeRamp	180                     % Numerical ramp, in seconds
+TimeStep    0.25                % Time step, in seconds
+TimeTotal  	900					% Total simulation time, in secods
+TimeRamp	180                 % Numerical ramp, in seconds
 
 
 
@@ -31,7 +29,7 @@ TimeRamp	180                     % Numerical ramp, in seconds
 %%-----------------------------------------------------------------------------%%
 Grav		9.81
 WatDens		1025
-WatDepth	1000
+WatDepth	200
 
 
 Wave
@@ -49,7 +47,7 @@ END
 FloaterMass		1.4267e7
 FloaterCoG		0,0,-13.46
 FloaterInertia	6.827e9,6.827e9,1.226e10,0,0,0
-LinStiff        0,0,0        % Linear mooring stiffness in surge, sway, yaw
+LinStiff        6.95e+04,6.95e+04,5.98e+07 % Linear mooring stiffness in surge, sway, yaw
 
 
 % Nodes ID must be unique and in ascending order

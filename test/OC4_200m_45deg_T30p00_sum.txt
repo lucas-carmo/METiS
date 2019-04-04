@@ -11,20 +11,20 @@
 Type:	FOWT
 
 ENVIR:
-DOFs:	1 1 0 0 0 1
-Time Step:	0.1
-Total Time:	1000
+DOFs:	1 1 1 1 1 1
+Time Step:	0.25
+Total Time:	900
 Time Ramp:	180.000000
-Use BEMT:	0
 Use Tip Loss:	0
 Use Hub Loss:	0
 Use Skew Correction:	0
 Gravity:	9.81
 Water Density:	1025
-Water Depth:	1000
-Air density:	6.95329e-310
-Wind X velocity:	4.67676e-310
-Wind exp:	4.67676e-310
+Water Depth:	200
+Air density:	0
+Wind X velocity:	0
+Wind Height:	0
+Wind exp:	0
 Nodes: 
 ( 1, 0.000000, 0.000000, -20.000000 )
 ( 2, 0.000000, 0.000000, 10.000000 )
@@ -74,21 +74,20 @@ Nodes:
 ( 112, -25.668000, 0.000000, -12.250000 )
 ( 113, -35.700000, 1.000000, -12.250000 )
 
-Wave Locations: Location #0: (14.430000,25.000000,0.000000)
-
+Wave Locations: 
 
 Wave #0
 Height: 2.000000
 Period: 30.000000
-Wave number: 0.004473
-Length: 1404.825300
+Wave number: 0.005557
+Length: 1130.595261
 Direction: 45.000000
 
 
 
 
 FOWT:
-Linear Stiffness:	(0.000000,0.000000,0.000000)
+Linear Stiffness:	(69500.000000,69500.000000,59800000.000000)
 Floater:
 	Mass:	14267000.000000
 	CoG:	(0.000000,0.000000,-13.460000)
@@ -101,7 +100,7 @@ CoG_2_node1:	(0.000000, 0.000000, 23.460000)
 Diameter:	6.500000
 Drag Coeff.:	0.560000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	25
+Numb. of Int. Points:	121
 Bottom diameter:	6.500000
 Top diameter:	6.500000
 Axial CD:	0.000000
@@ -114,7 +113,7 @@ CoG_2_node1:	(14.430000, 25.000000, 25.460000)
 Diameter:	12.000000
 Drag Coeff.:	0.610000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	25
+Numb. of Int. Points:	105
 Bottom diameter:	0.000000
 Top diameter:	0.000000
 Axial CD:	0.000000
@@ -127,7 +126,7 @@ CoG_2_node1:	(-28.860000, 0.000000, 25.460000)
 Diameter:	12.000000
 Drag Coeff.:	0.610000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	25
+Numb. of Int. Points:	105
 Bottom diameter:	0.000000
 Top diameter:	0.000000
 Axial CD:	0.000000
@@ -140,7 +139,7 @@ CoG_2_node1:	(14.430000, -25.000000, 25.460000)
 Diameter:	12.000000
 Drag Coeff.:	0.610000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	25
+Numb. of Int. Points:	105
 Bottom diameter:	0.000000
 Top diameter:	0.000000
 Axial CD:	0.000000
@@ -153,7 +152,7 @@ CoG_2_node1:	(14.430000, 25.000000, -0.540000)
 Diameter:	24.000000
 Drag Coeff.:	0.680000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	25
+Numb. of Int. Points:	19
 Bottom diameter:	24.000000
 Top diameter:	12.000000
 Axial CD:	4.800000
@@ -166,7 +165,7 @@ CoG_2_node1:	(-28.860000, 0.000000, -0.540000)
 Diameter:	24.000000
 Drag Coeff.:	0.680000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	25
+Numb. of Int. Points:	19
 Bottom diameter:	24.000000
 Top diameter:	12.000000
 Axial CD:	4.800000
@@ -179,7 +178,7 @@ CoG_2_node1:	(14.430000, -25.000000, -0.540000)
 Diameter:	24.000000
 Drag Coeff.:	0.680000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	25
+Numb. of Int. Points:	19
 Bottom diameter:	24.000000
 Top diameter:	12.000000
 Axial CD:	4.800000
@@ -192,7 +191,7 @@ CoG_2_node1:	(-18.470000, 6.000000, -3.540000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	15
+Numb. of Int. Points:	31
 Bottom diameter:	0.000000
 Top diameter:	0.000000
 Axial CD:	0.000000
@@ -205,7 +204,7 @@ CoG_2_node1:	(4.000000, -19.000000, -3.540000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	15
+Numb. of Int. Points:	31
 Bottom diameter:	0.000000
 Top diameter:	0.000000
 Axial CD:	0.000000
@@ -218,7 +217,7 @@ CoG_2_node1:	(14.430000, 13.000000, -3.540000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	15
+Numb. of Int. Points:	31
 Bottom diameter:	0.000000
 Top diameter:	0.000000
 Axial CD:	0.000000
@@ -231,7 +230,7 @@ CoG_2_node1:	(8.400000, 14.600000, -3.540000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	15
+Numb. of Int. Points:	31
 Bottom diameter:	0.000000
 Top diameter:	0.000000
 Axial CD:	0.000000
@@ -244,7 +243,7 @@ CoG_2_node1:	(-16.870000, 0.000000, -3.540000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	15
+Numb. of Int. Points:	31
 Bottom diameter:	0.000000
 Top diameter:	0.000000
 Axial CD:	0.000000
@@ -257,7 +256,7 @@ CoG_2_node1:	(8.400000, -14.600000, -3.540000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	15
+Numb. of Int. Points:	31
 Bottom diameter:	0.000000
 Top diameter:	0.000000
 Axial CD:	0.000000
@@ -270,7 +269,7 @@ CoG_2_node1:	(11.430000, 19.810000, 22.590000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	15
+Numb. of Int. Points:	31
 Bottom diameter:	0.000000
 Top diameter:	0.000000
 Axial CD:	0.000000
@@ -283,7 +282,7 @@ CoG_2_node1:	(-22.870000, 0.000000, 22.590000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	15
+Numb. of Int. Points:	31
 Bottom diameter:	0.000000
 Top diameter:	0.000000
 Axial CD:	0.000000
@@ -296,7 +295,7 @@ CoG_2_node1:	(11.430000, -19.810000, 22.590000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
-Numb. of Int. Points:	15
+Numb. of Int. Points:	31
 Bottom diameter:	0.000000
 Top diameter:	0.000000
 Axial CD:	0.000000
@@ -304,13 +303,21 @@ Axial Ca:	0.000000
 Bot. Press. Flag.:	0
 
 
+	Added Mass for unitary density:
+		8679.341781 		 ; 		0.000000 		 ; 		0.006549 		 ; 		0.000000 		 ; 		2870.039954 		 ; 		0.000000
+		0.000000 		 ; 		8679.100219 		 ; 		0.000000 		 ; 		-2870.918218 		 ; 		0.000000 		 ; 		-1.360387
+		0.006549 		 ; 		0.000000 		 ; 		14728.431586 		 ; 		0.000000 		 ; 		1.577151 		 ; 		0.000000
+		0.000000 		 ; 		-2870.918218 		 ; 		0.000000 		 ; 		6358690.171052 		 ; 		-0.000000 		 ; 		-3.929446
+		2870.039954 		 ; 		0.000000 		 ; 		1.577151 		 ; 		-0.000000 		 ; 		6355545.614465 		 ; 		756.901586
+		0.000000 		 ; 		-1.360387 		 ; 		0.000000 		 ; 		-3.929446 		 ; 		756.901586 		 ; 		6786767.590579
+
 RNA:
 	Rotor Speed:	12.000000
 	Rotor Tilt :	0.000000
 	Rotor Yaw:	0.000000
 	NumBlades:	3
-	Blade Precone:	0.000000
-	Blade Pitch:	5.000000
+	Blades Precone:	0.000000
+	Blades Pitch:	5.000000	5.000000	5.000000
 	Hub Radius:	1.500000
 	Hub Height:	90.000000
 	Overhang:	-5.000000
@@ -1201,9 +1208,14 @@ Airfoil #7
 
 Output Variables:
 FOWT rigid motion: 1
-Wave Elevation: 1
-Wave Velocity: 1
-Wave Acceleration: 1
+Unknown specifier in output flags.1
+Unknown specifier in output flags.1
+Wave Elevation: 0
+Wave Velocity: 0
+Wave Acceleration: 0
+Hydrodynamic inertial force: 1
+Hydrodynamic drag force: 1
+ Hydrodynamic Froude-Krylov force: 1
 Hydrodynamic force: 1
-Hydrodynamic force: 1
+Hydrostatic force: 1
 Total force: 1
