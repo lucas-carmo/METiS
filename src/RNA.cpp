@@ -285,6 +285,16 @@ double RNA::dAzimuth(const double time) const
 // In other words, it is {m_floater.CoG(),0,0,0} + FOWT.m_disp, i.e. the initial position of the floater CoG + its displacement
 vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel) const
 {
+	vec::fixed<6> aeroForce{ 0,0,0,0,0,0 };
+	double nodeForce_n{ 0 };
+	double nodeForce_t{ 0 };
+	double nodeForce_m{ 0 };
+
+	// Initialize the aerodynamic coefficients: normal direction, tangential directions and moment
+	double Cn{ 0 };
+	double Ct{ 0 };
+	double Cm{ 0 };
+
 	// Node position written in the different coordinate systems
 	vec::fixed<3> nodeCoord_hub{ 0,0,0 };
 	vec::fixed<3> nodeCoord_shaft{ 0,0,0 };
@@ -301,12 +311,6 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	double localTipSpeed{ 0 };
 	double deltaAzimuth = dAzimuth(envir.time());
 	double totalAzimuth{ 0 };
-
-	// Initialize the aerodynamic coefficients: lift, drag, in the normal, and in the tangential directions
-	double Cl{ 0 };
-	double Cd{ 0 };
-	double Cn{ 0 };
-	double Ct{ 0 };
 
 	// Initialize the flow angles and parameters needed for the BEMT method.
 	// The values of a, ap and phi are actually stored as members of the Blade class, but calling 
@@ -392,18 +396,25 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 
 			phi = Brent(phi_min, phi_max, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss());
 
+			Cm = RNA::Cm(phi, iiBlades, iiNodes);
 			Cn = RNA::Cn(phi, iiBlades, iiNodes);
 			Ct = RNA::Ct(phi, iiBlades, iiNodes);
 			F = calcF(phi, iiNodes, envir.useTipLoss(), envir.useHubLoss());
-
 			a = calcAxialIndFactor(calcK(phi, localSolidity, Cn, F), phi, F);				
-			if (F == 0)
-			{
-				phi = 0;
-			}
 			ap = calcTangIndFactor(calcKp(phi, localSolidity, Ct, F), F);
 
+			// Wind relative velocity, including axial and tangential induction factors
 			windRelVel = sqrt( pow(windRel_tVel * (1.0 + ap), 2) + pow(windRel_nVel * (1 - a), 2) );
+
+			// Calculate nodal forces
+			nodeForce_m = 0.5 * Cm * pow(m_blades[iiBlades].chord(iiNodes), 2) * envir.airDensity() * pow(windRelVel, 2);
+			nodeForce_n = 0.5 * Cn * m_blades[iiBlades].chord(iiNodes) * envir.airDensity() * pow(windRelVel, 2);
+			nodeForce_t = 0.5 * Ct * m_blades[iiBlades].chord(iiNodes) * envir.airDensity() * pow(windRelVel, 2);
+
+			// Calculate blade forces
+
+			// Calculate hub forces (i.e. aerodynamic forces)
+			// aeroForce += something
 		}
 	}
 	return vec::fixed<6> {0,0,0,0,0,0};
@@ -559,6 +570,7 @@ double RNA::Cn(const double phi, const unsigned int bladeIndex, const unsigned i
 	double alpha = m_blades[bladeIndex].alpha(nodeIndex, phi);
 	double Cl = m_airfoils[m_blades[bladeIndex].airoilID(nodeIndex)].CL(alpha);
 	double Cd = m_airfoils[m_blades[bladeIndex].airoilID(nodeIndex)].CD(alpha);	
+
 	return Cl * cos(deg2rad(phi)) + Cd * sin(deg2rad(phi));
 }
 
@@ -567,10 +579,17 @@ double RNA::Ct(const double phi, const unsigned int bladeIndex, const unsigned i
 	double alpha = m_blades[bladeIndex].alpha(nodeIndex, phi);
 	double Cl = m_airfoils[m_blades[bladeIndex].airoilID(nodeIndex)].CL(alpha);
 	double Cd = m_airfoils[m_blades[bladeIndex].airoilID(nodeIndex)].CD(alpha);	
+
 	return Cl * sin(deg2rad(phi)) - Cd * cos(deg2rad(phi));
 }
 
+double RNA::Cm(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex) const
+{
+	double alpha = m_blades[bladeIndex].alpha(nodeIndex, phi);
+	return m_airfoils[m_blades[bladeIndex].airoilID(nodeIndex)].CM(alpha);
+}
 
+// But what if phi > 180? This leads to weird values of F
 double RNA::calcF(const double phi, const int nodeIndex, const bool useTipLoss, const bool useHubLoss) const
 {
 	if (phi == 0)
@@ -586,12 +605,12 @@ double RNA::calcF(const double phi, const int nodeIndex, const bool useTipLoss, 
 
 	if (useTipLoss)
 	{
-		Ftip = (2.0 / datum::pi) * acos( -(numBlades() / 2.0) * (R - r) / (r * sin(deg2rad(phi))) );
+		Ftip = (2.0 / datum::pi) * acos(exp (-(numBlades() / 2.0) * (R - r) / (r * sin(deg2rad(phi)))) );
 	}
 
 	if (useHubLoss)
 	{
-		Fhub = (2.0 / datum::pi) * acos( -(numBlades() / 2.0) * (r - m_hubRadius) / (m_hubRadius * sin(deg2rad(phi))) );
+		Fhub = (2.0 / datum::pi) * acos(exp(-(numBlades() / 2.0) * (r - m_hubRadius) / (m_hubRadius * sin(deg2rad(phi)))) );
 	}
 
 	return Ftip * Fhub;
@@ -638,7 +657,7 @@ double RNA::calcAxialIndFactor(const double k, const double phi, const double F)
 	// That region corresponds to 0.4 < a < 1.0, which is the same as k >= 2/3. The variables g1, g2, and g3 are used in that condition.
 	double g1, g2, g3; 
 
-	if (phi == 0 || F == 0) // If phi == 0, F should be 0 as well. But I decided to put it this way to be sure.
+	if (F == 0)
 	{
 		return 1;
 	}

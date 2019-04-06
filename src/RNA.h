@@ -69,6 +69,7 @@ public:
 	double calcRes(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex, const double localSolidity, const double localTipSpeed, const bool useTipLoss, const bool useHubLoss) const;
 	double Cn(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex) const;
 	double Ct(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex) const;
+	double Cm(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex) const;
 	double calcF(const double phi, const int nodeIndex, const bool useTipLoss, const bool useHubLoss) const;
 	double calcK(const double phi, const double localSolidity, const double Cn, const double F) const;
 	double calcKp(const double phi, const double localSolidity, const double Ct, const double F) const;
