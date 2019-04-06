@@ -272,6 +272,11 @@ vec::fixed<6> FOWT::hydrostaticForce(const double watDensity, const double gravi
 	return m_floater.hydrostaticForce(watDensity, gravity);
 }
 
+vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)
+{
+	return m_rna.aeroForce(envir, m_disp + CoG(), m_vel);
+}
+
 vec::fixed<6> FOWT::mooringForce()
 {	
 	return vec::fixed<6> {-m_linStiff(0)*m_disp(0), -m_linStiff(1)*m_disp(1), 0, 0, 0, -m_linStiff(2)*m_disp(5)};
@@ -284,5 +289,6 @@ vec::fixed<6> FOWT::weightForce(const double gravity)
 
 vec::fixed<6> FOWT::totalForce(const ENVIR &envir)
 {
+	vec::fixed<6> aeroTest = aeroForce(envir);
 	return (hydrodynamicForce(envir) + hydrostaticForce(envir.watDensity(), envir.gravity()) + mooringForce() + weightForce(envir.gravity()));
 }

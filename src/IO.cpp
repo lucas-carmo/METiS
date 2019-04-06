@@ -655,6 +655,12 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FK_FORCE) = true;
 	}
+
+	if (caseInsCompare(getKeyword(strInput), "ad_hub_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_AD_HUB_FORCE) = true;
+	}
+	
 }
 
 
@@ -722,7 +728,9 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 	// Check whether the specified flag is indeed one that requires a vector with six components
 	if ((flag != OUTFLAG_FOWT_DISP) && (flag != OUTFLAG_FOWT_VEL) && (flag != OUTFLAG_FOWT_ACC) && 
 		(flag != OUTFLAG_HD_FORCE) && (flag != OUTFLAG_HS_FORCE) && (flag != OUTFLAG_TOTAL_FORCE) &&
-		(flag != OUTFLAG_HD_INERTIA_FORCE) && (flag != OUTFLAG_HD_DRAG_FORCE) && (flag != OUTFLAG_HD_FK_FORCE))
+		(flag != OUTFLAG_HD_INERTIA_FORCE) && (flag != OUTFLAG_HD_DRAG_FORCE) && (flag != OUTFLAG_HD_FK_FORCE) &&
+		(flag != OUTFLAG_AD_HUB_FORCE)
+	   )
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &force).");
 	}
@@ -778,6 +786,14 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 				print2outLineHeader("HD_FK_Force_" + std::to_string(ii));
 			}
 		}
+
+		if (flag == OUTFLAG_AD_HUB_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("HD_HUB_Force_" + std::to_string(ii));
+			}
+		}		
 
 		if (flag == OUTFLAG_FOWT_DISP)
 		{
@@ -969,7 +985,11 @@ std::string IO::printOutVar()
 			break;
 
 		case IO::OUTFLAG_HD_FK_FORCE:
-			output += " Hydrodynamic Froude-Krylov force: ";
+			output += "Hydrodynamic Froude-Krylov force: ";
+			break;
+
+		case IO::OUTFLAG_AD_HUB_FORCE:
+			output += "Aerodynamic forces (Hub): ";
 			break;
 
 		default:

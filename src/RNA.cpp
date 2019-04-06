@@ -457,7 +457,8 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			aeroForce.rows(0,2) += rotatMatrix_deg(totalAzimuth, m_blades[iiBlades].precone(), 0) * bladeForce.rows(0,2);
 			aeroForce.rows(3,5) += rotatMatrix_deg(totalAzimuth, m_blades[iiBlades].precone(), 0) * bladeForce.rows(3,5);
 	}
-	
+
+	IO::print2outLine(IO::OUTFLAG_AD_HUB_FORCE, aeroForce);
 	return aeroForce;
 }
 
