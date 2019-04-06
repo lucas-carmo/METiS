@@ -274,7 +274,7 @@ vec::fixed<6> FOWT::hydrostaticForce(const double watDensity, const double gravi
 
 vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)
 {
-	return m_rna.aeroForce(envir, m_disp + CoG(), m_vel);
+	return m_rna.aeroForce(envir, m_disp + join_cols(CoG(), vec::fixed<3> {0, 0 ,0}), m_vel);
 }
 
 vec::fixed<6> FOWT::mooringForce()
