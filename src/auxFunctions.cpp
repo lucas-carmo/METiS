@@ -5,8 +5,7 @@
 /*****************************************************
     Useful math/geometric operations
 *****************************************************/
-
-mat::fixed<3, 3> rotatMatrix(const vec::fixed<3> &rotation)
+mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, const double rotatZ)
 {
 	/* Rotation matrix is RotatMat = RotatX * RotatY * RotatZ, i.e. a rotation around the Z axis,
 	  followed by a rotation around the new y axis, and a rotation around the new x axis. Each rotation matrix is given by:
@@ -29,12 +28,23 @@ mat::fixed<3, 3> rotatMatrix(const vec::fixed<3> &rotation)
 	  And the resulting matrix is the one below
 	*/
 	mat::fixed<3, 3> rotatMatrix = { 
-									{                          cos(rotation(1)) * cos(rotation(2))                               ,                          -cos(rotation(1)) * sin(rotation(2))                               ,            sin(rotation(1))          },
-									{ cos(rotation(0)) * sin(rotation(2)) + sin(rotation(0)) * sin(rotation(1)) * cos(rotation(2))  ,  cos(rotation(0)) * cos(rotation(1)) - sin(rotation(0)) * sin(rotation(1)) * sin(rotation(2))  ,  -sin(rotation(0)) * cos(rotation(1)) },
-									{ sin(rotation(0)) * sin(rotation(2)) - cos(rotation(0)) * sin(rotation(1)) * cos(rotation(2))  ,  sin(rotation(0)) * cos(rotation(2)) + cos(rotation(0)) * sin(rotation(1)) * sin(rotation(2))  ,   cos(rotation(0)) * cos(rotation(1)) }
-								   };
+									{                          cos(rotatY) * cos(rotatZ)                               ,                          -cos(rotatY) * sin(rotatZ)                               ,            sin(rotatY)          },
+									{ cos(rotatX) * sin(rotatZ) + sin(rotatX) * sin(rotatY) * cos(rotatZ)  ,  cos(rotatX) * cos(rotatY) - sin(rotatX) * sin(rotatY) * sin(rotatZ)  ,  -sin(rotatX) * cos(rotatY) },
+									{ sin(rotatX) * sin(rotatZ) - cos(rotatX) * sin(rotatY) * cos(rotatZ)  ,  sin(rotatX) * cos(rotatZ) + cos(rotatX) * sin(rotatY) * sin(rotatZ)  ,   cos(rotatX) * cos(rotatY) }
+								   };	
 
 	return rotatMatrix;
+}
+
+mat::fixed<3, 3> rotatMatrix_deg(const double rotatX, const double rotatY, const double rotatZ)
+{
+	return rotatMatrix(deg2rad(rotatX), deg2rad(rotatY), deg2rad(rotatZ));
+}
+
+
+mat::fixed<3, 3> rotatMatrix(const vec::fixed<3> &rotation)
+{
+	return rotatMatrix(rotation(0),rotation(1), rotation(2));
 }
 
 mat::fixed<3, 3> rotatMatrix_deg(const vec::fixed<3> &rotation)

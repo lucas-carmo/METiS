@@ -262,14 +262,14 @@ vec::fixed<3> Blade::nodeCoord_shaft(const int index, const double dAzimuth) con
 vec::fixed<3> Blade::nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const double dAzimuth) const
 {
 	double angle = (initialAzimuth() + dAzimuth);
-	return ( rotatMatrix_deg(vec::fixed<3> {angle, 0, 0}) * nodeCoord_hub );
+	return ( rotatMatrix_deg(angle, 0, 0) * nodeCoord_hub );
 }
 
 // Coordinates of a blade node written in the fowt coordinate system.
 // tilt and yaw must be given in degrees
 vec::fixed<3> Blade::nodeCoord_fowt(const vec::fixed<3> &nodeCoord_shaft, const double tilt, const double yaw, const double overhang, const double hubHeight2CoG) const
 {	
-	mat::fixed<3,3> rotat = rotatMatrix_deg(vec::fixed<3> {0,0,-yaw}) * rotatMatrix_deg(vec::fixed<3> {0, tilt, 0});
+	mat::fixed<3,3> rotat = rotatMatrix_deg(0,0,-yaw) * rotatMatrix_deg(0, tilt, 0);
 	return (vec::fixed<3> {0,0,hubHeight2CoG} + rotat * (nodeCoord_shaft + vec::fixed<3> {overhang,0,0}) );
 }
 
