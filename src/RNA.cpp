@@ -608,26 +608,28 @@ double RNA::calcRes(const double phi, const unsigned int bladeIndex, const unsig
 
 double RNA::Cn(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex) const
 {
-	double alpha = m_blades[bladeIndex].alpha(nodeIndex, phi);
-	double Cl = m_airfoils[m_blades[bladeIndex].airoilID(nodeIndex)].CL(alpha);
-	double Cd = m_airfoils[m_blades[bladeIndex].airoilID(nodeIndex)].CD(alpha);	
+	double alpha = m_blades.at(bladeIndex).alpha(nodeIndex, phi);
+
+	// Airfoil IDs are counted starting at 1, that's why we need to add -1 to access the element.
+	double Cl = m_airfoils.at(m_blades.at(bladeIndex).airoilID(nodeIndex)-1).CL(alpha);
+	double Cd = m_airfoils.at(m_blades.at(bladeIndex).airoilID(nodeIndex)-1).CD(alpha);
 
 	return Cl * cos(deg2rad(phi)) + Cd * sin(deg2rad(phi));
 }
 
 double RNA::Ct(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex) const
 {
-	double alpha = m_blades[bladeIndex].alpha(nodeIndex, phi);
-	double Cl = m_airfoils[m_blades[bladeIndex].airoilID(nodeIndex)].CL(alpha);
-	double Cd = m_airfoils[m_blades[bladeIndex].airoilID(nodeIndex)].CD(alpha);	
+	double alpha = m_blades.at(bladeIndex).alpha(nodeIndex, phi);
+	double Cl = m_airfoils.at(m_blades.at(bladeIndex).airoilID(nodeIndex)-1).CL(alpha);
+	double Cd = m_airfoils.at(m_blades.at(bladeIndex).airoilID(nodeIndex)-1).CD(alpha);	
 
 	return Cl * sin(deg2rad(phi)) - Cd * cos(deg2rad(phi));
 }
 
 double RNA::Cm(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex) const
 {
-	double alpha = m_blades[bladeIndex].alpha(nodeIndex, phi);
-	return m_airfoils[m_blades[bladeIndex].airoilID(nodeIndex)].CM(alpha);
+	double alpha = m_blades.at(bladeIndex).alpha(nodeIndex, phi);
+	return m_airfoils.at(m_blades.at(bladeIndex).airoilID(nodeIndex)-1).CM(alpha);
 }
 
 // But what if phi > 180? This leads to weird values of F
