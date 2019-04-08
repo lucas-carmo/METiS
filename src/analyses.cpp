@@ -116,3 +116,43 @@ void timeDomainAnalysis_FOWT(FOWT &fowt, ENVIR &envir)
         std::fflush(stdout);        
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+void timeDomainAnalysis_Onshore(FOWT &fowt, ENVIR &envir)
+{    
+    IO::print2outLineHeader_turnOn(); // The header of the formatted output file is written during the first time step
+	IO::print2outLine_turnOn();
+
+    vec::fixed<6> testForce;
+    fowt.update( vec::fixed<6> {0,0,0,0,0,0}, vec::fixed<6> {0,0,0,0,0,0}, vec::fixed<6> {0,0,0,0,0,0} ); 
+    while( envir.time() <= envir.timeTotal() )    
+    {          
+        IO::print2outLine(envir.time());
+
+        testForce = fowt.aeroForce(envir);
+        
+        // After the first time step, we do not need to print anything else to the header of the formatted output file
+        if (envir.time() == 0)
+        {
+			IO::print2outLineHeader_turnOff();
+			IO::printOutLineHeader2outFile();
+        }
+
+		IO::printOutLine2outFile();
+        
+		// Print progress to the screen
+        std::cout << round(100 * envir.time() / envir.timeTotal()) << "%" << '\r';
+        std::fflush(stdout);        
+
+		envir.stepTime();
+    }
+}

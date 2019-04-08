@@ -36,8 +36,18 @@ int main(int argc, char *argv[])
 		IO::readInputFile(fowt, envir); // Read data from input file to fowt and envir
 		IO::printSumFile(fowt, envir);	// Print the summary file for later verification of the input by the user
 
-		// All the time domain calculation is done inside this function
-		timeDomainAnalysis_FOWT(fowt, envir);
+		// All the time domain calculation is done inside one of these functions
+		if (envir.isTypeFOWT())		
+		{
+			std::cout << "\nFOWT\n";
+			timeDomainAnalysis_FOWT(fowt, envir);
+		}
+		if (envir.isTypeOnshore())		
+		{
+			std::cout << "\nOnshore\n";
+			timeDomainAnalysis_Onshore(fowt, envir);
+		}		
+
 	}
 
 	catch(std::exception &exception)
