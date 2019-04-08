@@ -1,5 +1,6 @@
 #include "ENVIR.h"
 #include "IO.h"
+#include "auxFunctions.h"
 
 #include <iostream>
 #include <vector>
@@ -481,5 +482,5 @@ double ENVIR::wavePressure(const vec::fixed<3> &coord) const
 
 double ENVIR::windVel_X(const vec::fixed<3> &coord) const
 {
-	return ( windRefVel() * std::pow(coord[2] / windRefHeight(), windExp()) );
+	return ( windRefVel() * pow(coord[2] / windRefHeight(), windExp()) );
 }
