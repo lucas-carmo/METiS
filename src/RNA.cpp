@@ -322,7 +322,7 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 
 	// Initialize the flow angles and parameters needed for the BEMT method.
 	// The values of a, ap and phi are actually stored as members of the Blade class, but calling 
-	// m_blades[iiBlades].phi() all the time in the loop below is cumbersome and inefficient.
+	// m_blades.at(iiBlades).phi() all the time in the loop below is cumbersome and inefficient.
 	// The value of alpha is calculated by a method of the Blade class.
 	double a{ 0 }; // Axial induction factor
 	double ap{ 0 }; // Tangential induction factor
@@ -345,16 +345,17 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 
 	for (unsigned int iiBlades = 0; iiBlades < m_blades.size(); ++iiBlades)
 	{
-		totalAzimuth = deltaAzimuth + m_blades[iiBlades].initialAzimuth();
-		rotorRotation = rotatMatrix_deg(0, -m_blades[iiBlades].precone(), 0) * rotatMatrix_deg(-totalAzimuth, -rotorTilt(), -rotorYaw());
+		totalAzimuth = deltaAzimuth + m_blades.at(iiBlades).initialAzimuth();
+		rotorRotation = rotatMatrix_deg(0, -m_blades.at(iiBlades).precone(), 0) * rotatMatrix_deg(-totalAzimuth, -rotorTilt(), -rotorYaw());
 
 		bladeForce.zeros();
-		for (unsigned int iiNodes = 0; iiNodes < m_blades[iiBlades].size(); ++iiNodes)
+
+		for (unsigned int iiNodes = 0; iiNodes < m_blades.at(iiBlades).size(); ++iiNodes)
 		{
-			nodeCoord_hub = m_blades[iiBlades].nodeCoord_hub(iiNodes);
-			nodeCoord_shaft = m_blades[iiBlades].nodeCoord_shaft(iiNodes, deltaAzimuth);
-			nodeCoord_fowt = m_blades[iiBlades].nodeCoord_fowt(nodeCoord_shaft, rotorTilt(), rotorYaw(), hubHeight2CoG(), overhang());
-			nodeCoord_earth = m_blades[iiBlades].nodeCoord_earth(FOWTpos, nodeCoord_fowt);
+			nodeCoord_hub = m_blades.at(iiBlades).nodeCoord_hub(iiNodes);
+			nodeCoord_shaft = m_blades.at(iiBlades).nodeCoord_shaft(iiNodes, deltaAzimuth);
+			nodeCoord_fowt = m_blades.at(iiBlades).nodeCoord_fowt(nodeCoord_shaft, rotorTilt(), rotorYaw(), overhang(), hubHeight2CoG());
+			nodeCoord_earth = m_blades.at(iiBlades).nodeCoord_earth(FOWTpos, nodeCoord_fowt);
 			
 			// windVel is first calculated in the global coordinate system. 
 			// We need to convert it to the node coordinate system, in which:
@@ -378,13 +379,13 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			localTipSpeed = std::abs(windRel_tVel/windRel_nVel);
 
 			// Total local solidity
-			localSolidity = numBlades() * m_blades[iiBlades].localSolidity(iiNodes);
+			localSolidity = numBlades() * m_blades.at(iiBlades).localSolidity(iiNodes);
 
 			/************
 				The solution of BEMT equations begins here.
 				The solution method proposed by Ning, 2013 is used.
 			************/
-	
+
 			// Bracket the solution in order to use Brent's method
 			if (calcRes(90, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss()) >= 0)
 			{
@@ -417,22 +418,22 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			/****
 			Calculate nodal forces
 			****/
-			nodeForce_m = 0.5 * Cm * pow(m_blades[iiBlades].chord(iiNodes), 2) * envir.airDensity() * pow(windRelVel, 2);
-			nodeForce_n = 0.5 * Cn * m_blades[iiBlades].chord(iiNodes) * envir.airDensity() * pow(windRelVel, 2);
-			nodeForce_t = 0.5 * Ct * m_blades[iiBlades].chord(iiNodes) * envir.airDensity() * pow(windRelVel, 2);
+			nodeForce_m = 0.5 * Cm * pow(m_blades.at(iiBlades).chord(iiNodes), 2) * envir.airDensity() * pow(windRelVel, 2);
+			nodeForce_n = 0.5 * Cn * m_blades.at(iiBlades).chord(iiNodes) * envir.airDensity() * pow(windRelVel, 2);
+			nodeForce_t = 0.5 * Ct * m_blades.at(iiBlades).chord(iiNodes) * envir.airDensity() * pow(windRelVel, 2);
 
 			/****
 			Calculate blade forces	
 			****/		
 			if (iiNodes == 0)
 			{
-				dr = (m_blades[iiBlades].radius(iiNodes+1) - m_blades[iiBlades].radius(iiNodes)) / 2.0;
-				rm = m_blades[iiBlades].radius(iiNodes) + dr/2;
+				dr = (m_blades.at(iiBlades).radius(iiNodes+1) - m_blades.at(iiBlades).radius(iiNodes)) / 2.0;
+				rm = m_blades.at(iiBlades).radius(iiNodes) + dr/2;
 			}
-			else if (iiNodes == m_blades[iiBlades].size())
+			else if (iiNodes == m_blades.at(iiBlades).size()-1)
 			{
-				dr = (m_blades[iiBlades].radius(iiNodes) - m_blades[iiBlades].radius(iiNodes-1)) / 2.0;
-				rm = m_blades[iiBlades].radius(iiNodes) - dr/2;
+				dr = (m_blades.at(iiBlades).radius(iiNodes) - m_blades.at(iiBlades).radius(iiNodes-1)) / 2.0;
+				rm = m_blades.at(iiBlades).radius(iiNodes) - dr/2;
 			}
 			else
 			{	
@@ -440,10 +441,10 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 				// Since this is inside a loop where iiNodes is increasing, we use the current values of rm and dr
 				// because they correspond to rm[i-1] and dr[i-1].
 				rm += dr/2;			
-				dr = (m_blades[iiBlades].radius(iiNodes+1) - m_blades[iiBlades].radius(iiNodes-1)) / 2.0;				 
+				dr = (m_blades.at(iiBlades).radius(iiNodes+1) - m_blades.at(iiBlades).radius(iiNodes-1)) / 2.0;				 
 				rm += dr/2;
 			}
-			
+
 			bladeForce[0] += nodeForce_n * dr;
 			bladeForce[1] += -nodeForce_t * dr;
 			bladeForce[2] += 0;
@@ -454,8 +455,8 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			/****
 			Calculate hub forces - i.e. the sum of the forces acting on each blade written in the hub coord system
 			****/
-			aeroForce.rows(0,2) += rotatMatrix_deg(totalAzimuth, m_blades[iiBlades].precone(), 0) * bladeForce.rows(0,2);
-			aeroForce.rows(3,5) += rotatMatrix_deg(totalAzimuth, m_blades[iiBlades].precone(), 0) * bladeForce.rows(3,5);
+			aeroForce.rows(0,2) += rotatMatrix_deg(totalAzimuth, m_blades.at(iiBlades).precone(), 0) * bladeForce.rows(0,2);
+			aeroForce.rows(3,5) += rotatMatrix_deg(totalAzimuth, m_blades.at(iiBlades).precone(), 0) * bladeForce.rows(3,5);
 	}
 
 	IO::print2outLine(IO::OUTFLAG_AD_HUB_FORCE, aeroForce);
@@ -568,7 +569,7 @@ double RNA::Brent(const double phi_min, const double phi_max, const unsigned int
     }
     else
     {
-		throw std::runtime_error("Interval without roots in RNA::Brent().");
+		throw std::runtime_error("Interval without roots in RNA::Brent(). The interval is ]" + std::to_string(AA) + "," + std::to_string(BB) + "[" );
     }
 
     return phi;
@@ -648,12 +649,12 @@ double RNA::calcF(const double phi, const int nodeIndex, const bool useTipLoss, 
 
 	if (useTipLoss)
 	{
-		Ftip = (2.0 / datum::pi) * acos(exp (-(numBlades() / 2.0) * (R - r) / (r * sin(deg2rad(phi)))) );
+		Ftip = (2.0 / datum::pi) * acos(exp(-(numBlades() / 2.0) * (R - r) / (r * sin(deg2rad(phi)))) );
 	}
 
 	if (useHubLoss)
 	{
-		Fhub = (2.0 / datum::pi) * acos(exp(-(numBlades() / 2.0) * (r - m_hubRadius) / (m_hubRadius * sin(deg2rad(phi)))) );
+		Fhub = (2.0 / datum::pi) * acos(exp(-(numBlades() / 2.0) * (r - m_hubRadius) / (m_hubRadius * abs(sin(deg2rad(phi))))) );
 	}
 
 	return Ftip * Fhub;
@@ -691,11 +692,6 @@ double RNA::calcKp(const double phi, const double localSolidity, const double Ct
 
 double RNA::calcAxialIndFactor(const double k, const double phi, const double F) const
 {
-	if (k <= -1)
-	{
-		throw std::runtime_error("The function RNA::calcAxialIndFactor(const double k, const double phi, const double F) requires k > -1.");
-	}
-
 	// The method proposed by Ning, 2013 uses Buhl's derivation for the region where momentum theory can not be applied. 
 	// That region corresponds to 0.4 < a < 1.0, which is the same as k >= 2/3. The variables g1, g2, and g3 are used in that condition.
 	double g1, g2, g3; 
