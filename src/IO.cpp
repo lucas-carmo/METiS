@@ -791,7 +791,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
-				print2outLineHeader("HD_HUB_Force_" + std::to_string(ii));
+				print2outLineHeader("AD_HUB_Force_" + std::to_string(ii));
 			}
 		}		
 
