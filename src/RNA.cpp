@@ -184,7 +184,8 @@ void RNA::setHubHeight2CoG(const double zCoG)
 	Getters
 *****************************************************/
 double RNA::rotorSpeed() const
-{
+{	
+	// In rpm
 	return m_rotorSpeed;
 }
 
@@ -283,7 +284,7 @@ double RNA::dAzimuth(const double time) const
 
 // FOWTpos is the position of the center of the FOWT coordinate system with respect to the earth fixed system, written in the earth fixed system.
 // In other words, it is {m_floater.CoG(),0,0,0} + FOWT.m_disp, i.e. the initial position of the floater CoG + its displacement
-vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel) const
+vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel)
 {
 	// Total aerodynamic force/moments acting on the hub
 	vec::fixed<6> aeroForce{ 0,0,0,0,0,0 };
@@ -343,6 +344,7 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	double phi_min;
 	double phi_max;
 
+
 	for (unsigned int iiBlades = 0; iiBlades < m_blades.size(); ++iiBlades)
 	{
 		totalAzimuth = deltaAzimuth + m_blades.at(iiBlades).initialAzimuth();
@@ -352,6 +354,10 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 
 		for (unsigned int iiNodes = 0; iiNodes < m_blades.at(iiBlades).size(); ++iiNodes)
 		{
+			if (envir.time() > 2 && iiBlades == 1 && iiNodes == 2)
+			{
+				int stopHere = 1;
+			}
 			nodeCoord_hub = m_blades.at(iiBlades).nodeCoord_hub(iiNodes);
 			nodeCoord_shaft = m_blades.at(iiBlades).nodeCoord_shaft(iiNodes, deltaAzimuth);
 			nodeCoord_fowt = m_blades.at(iiBlades).nodeCoord_fowt(nodeCoord_shaft, rotorTilt(), rotorYaw(), overhang(), hubHeight2CoG());
@@ -369,11 +375,11 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			cog2node = rotatMatrix(FOWTpos.rows(0, 2)) * nodeCoord_fowt;
 			nodeVel = FOWTvel.rows(0,2) + arma::cross(FOWTvel.rows(3,5), cog2node);  // nodeVel = linearVel + angVel ^ r ; this is written in the earth coordinate system			
 			nodeVel = rotorRotation * (rigidBodyRotation * nodeVel); // Need to pass to the node coordinate system
-			nodeVel += rotatMatrix_deg(vec::fixed<3> {-totalAzimuth, 0, 0}) * arma::cross(vec::fixed<3> {rotorSpeed()*2*datum::pi/60, 0, 0}, nodeCoord_shaft); // Need to add the velocity due to the rotor rotation, written in the node coordinate system
+			nodeVel += rotatMatrix_deg(-totalAzimuth, 0, 0) * arma::cross(vec::fixed<3> {rotorSpeed()*2*datum::pi/60, 0, 0}, nodeCoord_shaft); // Need to add the velocity due to the rotor rotation, written in the node coordinate system
 
 			// Normal and tangential componentes of the relative wind velocity
 			windRel_nVel = windVel[0] - nodeVel[0];
-			windRel_tVel = windVel[1] - nodeVel[1];
+			windRel_tVel = windVel[1] - nodeVel[1];	
 
 			// Local tip speed ratio
 			localTipSpeed = std::abs(windRel_tVel/windRel_nVel);
@@ -381,39 +387,18 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			// Total local solidity
 			localSolidity = numBlades() * m_blades.at(iiBlades).localSolidity(iiNodes);
 
-			/************
-				The solution of BEMT equations begins here.
-				The solution method proposed by Ning, 2013 is used.
-			************/
-
-			// Bracket the solution in order to use Brent's method
-			if (calcRes(90, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss()) >= 0)
-			{
-				phi_min = 1e-6;
-				phi_max = 90;
-			}
-			else if (calcRes(-45, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss()) >= 0)
-			{
-				phi_min = -45;
-				phi_max = -0.001;
-			}
-			else
-			{
-				phi_min = 90 + 0.001;
-				phi_max = 180 - 0.001;
-			}	
-
-			phi = Brent(phi_min, phi_max, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss());
-
-			Cm = RNA::Cm(phi, iiBlades, iiNodes);
-			Cn = RNA::Cn(phi, iiBlades, iiNodes);
-			Ct = RNA::Ct(phi, iiBlades, iiNodes);
-			F = calcF(phi, iiNodes, envir.useTipLoss(), envir.useHubLoss());
-			a = calcAxialIndFactor(calcK(phi, localSolidity, Cn, F), phi, F);				
-			ap = calcTangIndFactor(calcKp(phi, localSolidity, Ct, F), F);
+			// BEMT parameters calculated in the previous time step
+			phi = m_blades.at(iiBlades).phi(iiNodes);
+			a = m_blades.at(iiBlades).axialIndFactor(iiNodes);
+			ap = m_blades.at(iiBlades).tangIndFactor(iiNodes);
 
 			// Wind relative velocity, including axial and tangential induction factors
 			windRelVel = sqrt( pow(windRel_tVel * (1.0 + ap), 2) + pow(windRel_nVel * (1 - a), 2) );
+
+			// Calculate force coefficients
+			Cm = RNA::Cm(phi, iiBlades, iiNodes);
+			Cn = RNA::Cn(phi, iiBlades, iiNodes);
+			Ct = RNA::Ct(phi, iiBlades, iiNodes);
 
 			/****
 			Calculate nodal forces
@@ -447,16 +432,59 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 
 			bladeForce[0] += nodeForce_n * dr;
 			bladeForce[1] += -nodeForce_t * dr;
-			bladeForce[2] += 0;
-			bladeForce.rows(3,5) += arma::cross(vec::fixed<3>{0,0,rm}, bladeForce.rows(0,2)); // Moment generated by the aerodynamic forces
+			bladeForce[2] += 0;			
+			bladeForce.rows(3,5) += arma::cross(vec::fixed<3>{0,0,rm}, vec::fixed<3>{nodeForce_n, -nodeForce_t,rm}) * dr; // Moment generated by the aerodynamic forces
 			bladeForce[5] += nodeForce_m * dr; // Need to add the moment due to Cm 
+			vec::fixed<3> debug = arma::cross(vec::fixed<3>{0, 0, rm}, vec::fixed<3>{nodeForce_n, -nodeForce_t, rm}) * dr;
+			debug[2] += nodeForce_m * dr;
+
+
+			/************
+				The solution of BEMT equations begins here, using the solution method proposed by Ning, 2013.
+				The resulting parameters are used in the next time step.
+			************/
+
+			// Bracket the solution in order to use Brent's method
+			if (calcRes(90, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss()) >= 0)
+			{
+				phi_min = 1e-6;
+				phi_max = 90;
+			}
+			else if (calcRes(-45, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss()) >= 0)
+			{
+				phi_min = -45;
+				phi_max = -0.001;
+			}
+			else
+			{
+				phi_min = 90 + 0.001;
+				phi_max = 180 - 0.001;
+			}
+
+			phi = Brent(phi_min, phi_max, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss());
+
+			Cn = RNA::Cn(phi, iiBlades, iiNodes);
+			Ct = RNA::Ct(phi, iiBlades, iiNodes);
+			F = calcF(phi, iiNodes, envir.useTipLoss(), envir.useHubLoss());
+			a = calcAxialIndFactor(calcK(phi, localSolidity, Cn, F), phi, F);
+			if (F == 0)
+			{
+				phi = 0;
+			}
+			ap = calcTangIndFactor(calcKp(phi, localSolidity, Ct, F), F);
+
+			m_blades.at(iiBlades).setAxialIndFactor(iiNodes, a);
+			m_blades.at(iiBlades).setTangIndFactor(iiNodes, ap);
+			m_blades.at(iiBlades).setPhi(iiNodes, phi);
 		}
 
-			/****
-			Calculate hub forces - i.e. the sum of the forces acting on each blade written in the hub coord system
-			****/
-			aeroForce.rows(0,2) += rotatMatrix_deg(totalAzimuth, m_blades.at(iiBlades).precone(), 0) * bladeForce.rows(0,2);
-			aeroForce.rows(3,5) += rotatMatrix_deg(totalAzimuth, m_blades.at(iiBlades).precone(), 0) * bladeForce.rows(3,5);
+		/****
+		Calculate hub forces - i.e. the sum of the forces acting on each blade written in the hub coord system
+		****/
+		vec::fixed<3> debugAeroForce = rotatMatrix_deg(totalAzimuth, m_blades.at(iiBlades).precone(), 0) * bladeForce.rows(0, 2);
+		vec::fixed<3> debugAeroMoment = rotatMatrix_deg(totalAzimuth, m_blades.at(iiBlades).precone(), 0) * bladeForce.rows(3, 5);
+		aeroForce.rows(0,2) += rotatMatrix_deg(totalAzimuth, m_blades.at(iiBlades).precone(), 0) * bladeForce.rows(0,2);
+		aeroForce.rows(3,5) += rotatMatrix_deg(totalAzimuth, m_blades.at(iiBlades).precone(), 0) * bladeForce.rows(3,5);
 	}
 
 	IO::print2outLine(IO::OUTFLAG_AD_HUB_FORCE, aeroForce);

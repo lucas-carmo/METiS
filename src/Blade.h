@@ -19,8 +19,8 @@ private:
 	std::vector< double > m_localSolidity;
 
 	// Properties related to the BEMT method AND belong to each node
-	// They are part of the Blade class to make the value calculated in the time step 'i' available as
-	// first guess to the time step 'i+1'. So, to make it clear, the values stored in the members below
+	// They are part of the Blade class to make the value calculated in the time step 'i' available to
+	// the force calculation in the time step 'i+1'. So, to make it clear, the values stored in the members below
 	// are the ones calculated in the last call of RNA::aeroForce, where the BEMT method is used.
 	std::vector<double> m_a; // Axial induction factor (for each node)
 	std::vector<double> m_ap; // Tangential induction factor (for each node)
@@ -49,8 +49,11 @@ public:
 	void setPrecone(const double precone);
 	void setPitch(const double pitch);
 	void setInitialAzimuth(const double initialAzimuth);
-
 	void setNodeRadius(const int index, const double hubRadius);
+
+	void setAxialIndFactor(const unsigned int index, const double a);
+	void setTangIndFactor(const unsigned int index, const double ap);
+	void setPhi(const unsigned int index, const double phi);
 
 	/*****************************************************
 		Getters
@@ -70,9 +73,6 @@ public:
 	double pitch() const;
 	double initialAzimuth() const;
 
-	// Parameters used in the BEMT equations in aerodynamic force calculation (RNA class).
-	// They store the values calculated in the previous time step, and are used as first
-	// estimation for solving the equations.
 	double axialIndFactor(const unsigned int index) const;
 	double tangIndFactor(const unsigned int index) const;
 	double phi(const unsigned int index) const; 		

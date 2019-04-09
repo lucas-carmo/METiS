@@ -9,6 +9,13 @@ Blade::Blade()
 	m_precone = datum::nan;
 	m_pitch = datum::nan;
 	m_initialAzimuth = datum::nan;
+
+	for (int ii = 0; ii < m_phi.size(); ++ii)
+	{
+		m_phi.at(ii) = 0;
+		m_a.at(ii) = 0;
+		m_ap.at(ii) = 0;
+	}
 }
 
 /*****************************************************
@@ -60,6 +67,36 @@ void Blade::setInitialAzimuth(const double initialAzimuth)
 	m_initialAzimuth = initialAzimuth;
 }
 
+
+void Blade::setAxialIndFactor(const unsigned int index, const double a)
+{
+	if (index < 0 || static_cast<unsigned int> (index) >= m_a.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::setAxialIndFactor(const unsigned int index, const double a).");
+	}
+
+	m_a[index] = a;
+}
+
+void Blade::setTangIndFactor(const unsigned int index, const double ap)
+{
+	if (index < 0 || static_cast<unsigned int> (index) >= m_ap.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::setTangIndFactor(const unsigned int index, const double ap).");
+	}
+
+	m_ap[index] = ap;
+}
+
+void Blade::setPhi(const unsigned int index, const double phi)
+{
+	if (index < 0 || static_cast<unsigned int> (index) >= m_phi.size())
+	{
+		throw std::runtime_error("Index out of range in Blade::setPhi(const unsigned int index, const double phi).");
+	}
+
+	m_phi[index] = phi;
+}
 
 /*****************************************************
 	Getters
