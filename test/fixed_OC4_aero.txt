@@ -32,6 +32,9 @@ AirDens     1.225
 WindVel     10.0 % Measured at the reference height
 WindHeight  90
 WindExp     0.2
+UseTipLoss  1
+UseHubLoss  1
+UseSkewCorr 1
 
 
 
