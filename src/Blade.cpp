@@ -298,8 +298,7 @@ vec::fixed<3> Blade::nodeCoord_shaft(const int index, const double dAzimuth) con
 // dAzimuth must be given in degrees
 vec::fixed<3> Blade::nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const double dAzimuth) const
 {
-	double angle = (initialAzimuth() + dAzimuth);
-	return ( rotatMatrix_deg(angle, 0, 0) * nodeCoord_hub );
+	return ( rotatMatrix_deg(dAzimuth, 0, 0) * nodeCoord_hub );
 }
 
 // Coordinates of a blade node written in the fowt coordinate system.
