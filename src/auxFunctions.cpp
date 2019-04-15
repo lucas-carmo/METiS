@@ -29,7 +29,7 @@ mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, const dou
 	*/
 	mat::fixed<3, 3> rotatMatrix = { 
 									{                          cos(rotatY) * cos(rotatZ)                               ,                          -cos(rotatY) * sin(rotatZ)                               ,            sin(rotatY)          },
-									{ cos(rotatX) * sin(rotatZ) + sin(rotatX) * sin(rotatY) * cos(rotatZ)  ,  cos(rotatX) * cos(rotatY) - sin(rotatX) * sin(rotatY) * sin(rotatZ)  ,  -sin(rotatX) * cos(rotatY) },
+									{ cos(rotatX) * sin(rotatZ) + sin(rotatX) * sin(rotatY) * cos(rotatZ)  ,  cos(rotatX) * cos(rotatZ) - sin(rotatX) * sin(rotatY) * sin(rotatZ)  ,  -sin(rotatX) * cos(rotatY) },
 									{ sin(rotatX) * sin(rotatZ) - cos(rotatX) * sin(rotatY) * cos(rotatZ)  ,  sin(rotatX) * cos(rotatZ) + cos(rotatX) * sin(rotatY) * sin(rotatZ)  ,   cos(rotatX) * cos(rotatY) }
 								   };	
 
