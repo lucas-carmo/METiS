@@ -48,11 +48,11 @@ FloaterCoG		0,0,0
 %%---------------------------- RNA DESCRIPTION --------------------------------%%
 %%-----------------------------------------------------------------------------%%
 RotSpeed    12  % Rotor speed in rpm (constant)
-RotTilt     0   % Rotor tilt angle (degrees)
-RotYaw      0   % Rotor yaw angle (degrees)
+RotTilt     5   % Rotor tilt angle (degrees)
+RotYaw      3   % Rotor yaw angle (degrees)
 NumBlades   3   % Number of blades
 BldPitch    3   % Blade pitch angle (degrees)
-BldPrecone  0   % Blade coning angle (degrees)
+BldPrecone  -2.5   % Blade coning angle (degrees)
 
 HubRadius   1.5
 HubHeight   90
