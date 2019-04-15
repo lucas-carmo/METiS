@@ -350,8 +350,7 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 		totalAzimuth = deltaAzimuth + m_blades.at(iiBlades).initialAzimuth();
 		rotorRotation = rotatMatrix_deg(0, -m_blades.at(iiBlades).precone(), 0) * rotatMatrix_deg(-totalAzimuth, -rotorTilt(), -rotorYaw());
 
-		bladeForce.zeros();
-
+		bladeForce.zeros();		
 		for (unsigned int iiNodes = 0; iiNodes < m_blades.at(iiBlades).size(); ++iiNodes)
 		{
 			nodeCoord_hub = m_blades.at(iiBlades).nodeCoord_hub(iiNodes);
@@ -364,8 +363,9 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			// - windVel[0] is the component that is normal to the rotation plan
 			// - windVel[1] is the component that is in the rotation plan and in the tangential direction
 			// - windVel[2] is the component that is in the rotation plan and in the radial direction
+			windVel.zeros();
 			windVel[0] = envir.windVel_X(nodeCoord_earth);			
-			windVel = rotorRotation * (rigidBodyRotation * windVel);
+			windVel = rotorRotation * (rigidBodyRotation * windVel);			
 
 			// Structural velocity of the nodes. Need to be written in the node coordinate system
 			cog2node = rotatMatrix(FOWTpos.rows(0, 2)) * nodeCoord_fowt;
