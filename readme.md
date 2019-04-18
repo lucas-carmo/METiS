@@ -62,7 +62,7 @@ This process will be conducted with CMake in the future (I don't know when).
     1. Create a new Empty Project or a new Windows Console Application;
     2. If you are using Visual Studio 2017 or above, downgrade your project to Visual Studio 2015. This is done by right clicking on the project name and selecting **Properties**. In **Configuration Properties**, find **Platform Toolset** and change it to **Visual Studio 2015 (v140)**. I honestly don't know why this is necessary;
     3. Add all the files included in **/src/** (except for Armadillo's **include** folder) to the project;       
-    4. Locate the MKL folder. It is usually in **C:\Program Files (x86)\IntelSWTools\compiler_and_libraries_xxxx/mkl**;
+    4. Locate the MKL folder. It is usually in **C:\Program Files (x86)\IntelSWTools\compiler_and_libraries_xxxx\windows\mkl**;
     5. Tell the compiler to look for header files in Armadillo's and MKL's **include** folders. In Visual Studio 2017, right click on the project name and select properties. Unfold the **C/C++** list, pick **General** -> **Additional Include Directories**, and select **Edit**. Use the yellow button to insert a new entry and paste the path to **mkl\include** directory. Do the same thing for Armadillo's **include** folder;
     6. Next, go to **Linker** -> **General** -> **Additional Library Directories** and select **mkl\lib\intel64_win** (select intel32_win if your computer is 32bits);
     7. Finally, you need to go to **Linker** -> **Input** -> **Additional Dependencies** and add *mkl_core.lib*, *mkl_sequential.lib*, and *mkl_intel_lp64.lib*.

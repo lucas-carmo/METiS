@@ -592,10 +592,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &
 		topDiam = m_botDiam;
 	}
 
-
-	
-	double dL = norm(n2 - n1, 2) / (ncyl - 1); // length of each interval between points
-
+	// length of each interval between points
+	double dL = norm(n2 - n1, 2) / (ncyl - 1); 
 
 	/*
 		First part: forces on the length of the cylinder
@@ -617,20 +615,20 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &
 	vec::fixed<3> force_ii(fill::zeros); // Total force
 	vec::fixed<3> moment_ii(fill::zeros);
 
-    for (int ii = 1; ii <= ncyl; ++ii) 
+	for (int ii = 1; ii <= ncyl; ++ii) 
 	{
-        n_ii = (n2 - n1) * (ii-1)/(ncyl-1) + n1; // Coordinates of the integration point
-        if (n_ii[2] > 0)        
+		n_ii = (n2 - n1) * (ii-1)/(ncyl-1) + n1; // Coordinates of the integration point
+		if (n_ii[2] > 0)        
 		{
-            break; // Since n2 is above n1, if we reach n_ii[2] > 0, all the next n_ii are also above the waterline
+			break; // Since n2 is above n1, if we reach n_ii[2] > 0, all the next n_ii are also above the waterline
 		}
 
 		/*******
 			Fluid velocity/acceleration
 		******/
 		// Fluid velocity and acceleration at the integration point
-		velFluid = envir.fluidVel(n_ii[0], n_ii[1], n_ii[2]);
-		accFluid = envir.fluidAcc(n_ii[0], n_ii[1], n_ii[2]);
+		velFluid = envir.fluidVel(n_ii);
+		accFluid = envir.fluidAcc(n_ii);
 
 		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder - written in the GLOBAL reference frame
 		velFluid = dot(velFluid, xvec) * xvec + dot(velFluid, yvec) * yvec;
@@ -640,12 +638,12 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &
 			Body velocity/acceleration
 		******/
 		// Absolute (R_ii) and relative (lambda) distance between the integration point and the bottom node
-        double R_ii = norm(n_ii - n1, 2);
-        double lambda = R_ii/norm(n2 - n1, 2);
+		double R_ii = norm(n_ii - n1, 2);
+		double lambda = R_ii/norm(n2 - n1, 2);
 
-        // Velocity and acceleration of the integration point
-        vel_ii = v1 + lambda * ( v2 - v1 );
-        acc_ii = a1 + lambda * ( a2 - a1 );		
+		// Velocity and acceleration of the integration point
+		vel_ii = v1 + lambda * ( v2 - v1 );
+		acc_ii = a1 + lambda * ( a2 - a1 );		
 
 		// Component of the velocity and acceleration of the integration point that is perpendicular to the axis of the cylinder
 		vel_ii = dot(vel_ii, xvec) * xvec + dot(vel_ii, yvec) * yvec;
@@ -665,21 +663,21 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &
 		// Integrate the forces along the cylinder using Simpson's Rule
 		if (ii == 1 || ii == ncyl)
 		{
-			force += (dL/3) * join_cols(force_ii, moment_ii);
-			force_inertia += (dL/3) * join_cols(force_inertia_ii, moment_inertia_ii);
-			force_drag += (dL/3) * join_cols(force_drag_ii, moment_drag_ii);
+			force += (dL/3.0) * join_cols(force_ii, moment_ii);
+			force_inertia += (dL/3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
+			force_drag += (dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
 		}		
 		else if (ii % 2 == 0)
 		{
-			force += (4*dL/3) * join_cols(force_ii, moment_ii);
-			force_inertia += (4*dL/3) * join_cols(force_inertia_ii, moment_inertia_ii);
-			force_drag += (4*dL/3) * join_cols(force_drag_ii, moment_drag_ii);
+			force += (4*dL/3.0) * join_cols(force_ii, moment_ii);
+			force_inertia += (4*dL/3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
+			force_drag += (4*dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
 		}
 		else
 		{
-			force += (2*dL/3) * join_cols(force_ii, moment_ii);
-			force_inertia += (2*dL/3) * join_cols(force_inertia_ii, moment_inertia_ii);
-			force_drag += (2*dL/3) * join_cols(force_drag_ii, moment_drag_ii);
+			force += (2*dL/3.0) * join_cols(force_ii, moment_ii);
+			force_inertia += (2*dL/3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
+			force_drag += (2*dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
 		}
 	}
 
@@ -688,8 +686,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &
 		Second part: forces on the bottom of the cylinder
 	*/
 	// Get fluid velocity/acceleration at the bottom node
-	velFluid = envir.fluidVel(n1[0], n1[1], n1[2]);
-	accFluid = envir.fluidAcc(n1[0], n1[1], n1[2]);	
+	velFluid = envir.fluidVel(n1);
+	accFluid = envir.fluidAcc(n1);	
 
 	// Get only the component that is parallel to the cylinder axis
 	velFluid = dot(velFluid, zvec) * zvec;
@@ -708,11 +706,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &
 
 	if (m_botPressFlag)
 	{
-		force.rows(0, 2) += datum::pi * ( pow(botDiam/2, 2) * envir.wavePressure(n1[0], n1[1], n1[2])
-							- (pow(botDiam/2, 2) - pow(topDiam/2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2]) ) * zvec;
+		force.rows(0, 2) += datum::pi * ( pow(botDiam/2, 2) * envir.wavePressure(n1)
+							- (pow(botDiam/2, 2) - pow(topDiam/2, 2)) * envir.wavePressure(n2) ) * zvec;
 
-		force_froudeKrylov.rows(0, 2) += datum::pi * (pow(botDiam / 2, 2) * envir.wavePressure(n1[0], n1[1], n1[2])
-										- (pow(botDiam / 2, 2) - pow(topDiam / 2, 2)) * envir.wavePressure(n2[0], n2[1], n2[2])) * zvec;
+		force_froudeKrylov.rows(0, 2) += datum::pi * (pow(botDiam / 2, 2) * envir.wavePressure(n1)
+										- (pow(botDiam / 2, 2) - pow(topDiam / 2, 2)) * envir.wavePressure(n2) ) * zvec;
 	}
 
 	// The moment was calculated with relation to n1, which may be different from node1.

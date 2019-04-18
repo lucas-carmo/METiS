@@ -3,7 +3,7 @@
 #
 #
 
-echo 'Compiling all the .cpp files in ../src/'
+echo '-- Compiling all the .cpp files in ../src/'
 g++ -std=c++14 -c src/*.cpp
 
 # Need that to find libhdf5.so.101

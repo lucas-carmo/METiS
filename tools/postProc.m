@@ -20,8 +20,8 @@ else
 end
 
 
-flNm = 'C:\Users\lucas.henrique\Nextcloud\Tese\Casos teste\OC4\metis_OC4_completo_h200_45deg_fixed\OC4_200m_45deg_fixed_A4m_T30p00_soft_out.txt';
-flNm2 = 'C:\Users\lucas.henrique\Nextcloud\Tese\Casos teste\OC4\metis_OC4_completo_h200_45deg_fixed\OC4_200m_45deg_fixed_A4m_T30p00_soft_dt0p01_out.txt';
+flNm = 'C:\Users\lucas.henrique\Documents\METiS\test\OC4_200m_45deg_T30p00_out.txt';
+flNm2 = 'C:\Users\lucas.henrique\Nextcloud\Tese\Casos teste\OC4\metis_OC4_completo_h200_45deg\A_1m\OC4_200m_45deg_T30p00_out.txt';
 
 
 

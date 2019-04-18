@@ -90,12 +90,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			continue;
 		}
 
-		else if (caseInsCompare(getKeyword(strInput), "UseBEMT"))
-		{
-			envir.readUseBEMT(getData(strInput));
-			continue;
-		}
-
 		else if (caseInsCompare(getKeyword(strInput), "UseTipLoss"))
 		{
 			envir.readUseTipLoss(getData(strInput));
@@ -140,7 +134,13 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		else if (caseInsCompare(getKeyword(strInput), "WindVel"))
 		{
-			envir.readWindVel(getData(strInput));
+			envir.readWindRefVel(getData(strInput));
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "WindHeight"))
+		{
+			envir.readWindRefHeight(getData(strInput));
 			continue;
 		}
 
@@ -487,12 +487,8 @@ void IO::setFiles(const std::string &inFlPath)
 		throw std::runtime_error("Unable to open file " + m_inFilePath + " for reading.");
 	}
 
-
 	// Get path of the folder where the input file is located
 	std::string folderPath = getFileFolder(m_inFilePath);
-
-	//// Path of the output folder, which is the same folder where the input file is located
-	//std::string outputFolder = folderPath;
 
 	// Name of the input file, without extension
 	std::string inFlName = getFileName(m_inFilePath);
@@ -585,9 +581,9 @@ unsigned int IO::getInLineNumber()
 // and other necessary information (like the IDs of the points where the wave elevation will be output)
 void IO::setResults2Output(std::string strInput, ENVIR &envir)
 {
-	if (caseInsCompare(getKeyword(strInput), "fowt_pos"))
+	if (caseInsCompare(getKeyword(strInput), "fowt_disp"))
 	{
-		m_whichResult2Output.at(IO::OUTFLAG_FOWT_POS) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_DISP) = true;
 	}
 
 	if (caseInsCompare(getKeyword(strInput), "fowt_vel"))
@@ -659,6 +655,12 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FK_FORCE) = true;
 	}
+
+	if (caseInsCompare(getKeyword(strInput), "ad_hub_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_AD_HUB_FORCE) = true;
+	}
+	
 }
 
 
@@ -724,9 +726,11 @@ void IO::print2outLineHeader_turnOff()
 void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 {
 	// Check whether the specified flag is indeed one that requires a vector with six components
-	if ((flag != OUTFLAG_FOWT_POS) && (flag != OUTFLAG_FOWT_VEL) && (flag != OUTFLAG_FOWT_ACC) && 
+	if ((flag != OUTFLAG_FOWT_DISP) && (flag != OUTFLAG_FOWT_VEL) && (flag != OUTFLAG_FOWT_ACC) && 
 		(flag != OUTFLAG_HD_FORCE) && (flag != OUTFLAG_HS_FORCE) && (flag != OUTFLAG_TOTAL_FORCE) &&
-		(flag != OUTFLAG_HD_INERTIA_FORCE) && (flag != OUTFLAG_HD_DRAG_FORCE) && (flag != OUTFLAG_HD_FK_FORCE))
+		(flag != OUTFLAG_HD_INERTIA_FORCE) && (flag != OUTFLAG_HD_DRAG_FORCE) && (flag != OUTFLAG_HD_FK_FORCE) &&
+		(flag != OUTFLAG_AD_HUB_FORCE)
+	   )
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &force).");
 	}
@@ -783,7 +787,15 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			}
 		}
 
-		if (flag == OUTFLAG_FOWT_POS)
+		if (flag == OUTFLAG_AD_HUB_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("AD_HUB_Force_" + std::to_string(ii));
+			}
+		}		
+
+		if (flag == OUTFLAG_FOWT_DISP)
 		{
 			print2outLineHeader("Surge");
 			print2outLineHeader("Sway");
@@ -904,7 +916,6 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Time Step:\t" << envir.timeStep() << '\n';
 	m_sumFl << "Total Time:\t" << envir.timeTotal() << '\n';
 	m_sumFl << "Time Ramp:\t" << envir.printTimeRamp() << '\n';
-	m_sumFl << "Use BEMT:\t" << envir.useBEMT() << '\n';
 	m_sumFl << "Use Tip Loss:\t" << envir.useTipLoss() << '\n';
 	m_sumFl << "Use Hub Loss:\t" << envir.useHubLoss() << '\n';
 	m_sumFl << "Use Skew Correction:\t" << envir.useSkewCorr() << '\n';
@@ -912,7 +923,8 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Water Density:\t" << envir.watDensity() << '\n';
 	m_sumFl << "Water Depth:\t" << envir.watDepth() << '\n';
 	m_sumFl << "Air density:\t" << envir.airDensity() << '\n';
-	m_sumFl << "Wind X velocity:\t" << envir.windVel() << '\n';
+	m_sumFl << "Wind X velocity:\t" << envir.windRefVel() << '\n';
+	m_sumFl << "Wind Height:\t" << envir.windRefHeight() << '\n';
 	m_sumFl << "Wind exp:\t" << envir.windExp() << '\n';
 	m_sumFl << "Nodes: \n" << envir.printNodes() << '\n';
 	m_sumFl << "Wave Locations: " << envir.printWaveLocation() << '\n';
@@ -936,7 +948,7 @@ std::string IO::printOutVar()
 	{
 		switch (ii)
 		{
-		case IO::OUTFLAG_FOWT_POS:
+		case IO::OUTFLAG_FOWT_DISP:
 			output += "FOWT rigid motion: ";
 			break;
 
@@ -973,7 +985,11 @@ std::string IO::printOutVar()
 			break;
 
 		case IO::OUTFLAG_HD_FK_FORCE:
-			output += " Hydrodynamic Froude-Krylov force: ";
+			output += "Hydrodynamic Froude-Krylov force: ";
+			break;
+
+		case IO::OUTFLAG_AD_HUB_FORCE:
+			output += "Aerodynamic forces (Hub): ";
 			break;
 
 		default:
@@ -989,38 +1005,8 @@ std::string IO::printOutVar()
 
 
 /*****************************************************
-Additional functions related to input/output
+	Additional functions related to input/output
 *****************************************************/
-
-// Verify whether a string contains a comment, marked by a '%'
-bool thereIsCommentInString(const std::string& str)
-{
-	return (str.find("%") != std::string::npos);
-}
-
-
-// Verify whether a string has content, i.e. if:
-// 1) it is not empty
-// 2) it is not just white spaces or tabs
-// 3) it does not start with a comment mark ('%')
-bool hasContent(const std::string &str)
-{
-	// Empty strings have no content
-	if (str.empty())
-		return false;
-
-	// The string has content only if it has at least one character that is neither a white-space nor a tab (\t)
-	return ((str.find_first_not_of(" \t") != std::string::npos) && (str.at(0) != '%'));
-}
-
-
-
-void removeComments(std::string &str)
-{
-	str = str.substr(0, str.find("%", 0));
-}
-
-
 std::string getKeyword(const std::string &str)
 {
 	// Get the first part of the string, the one before the first '\t' or white-space
@@ -1051,109 +1037,4 @@ std::string getData(const std::string &str)
 		str_out += str_tokenized.at(ii) + "\t";
 	}
 	return str_out;
-}
-
-
-// Tokenize a string using a given delimiter.
-// Return a std::vector with the resulting strings at the different elements
-std::vector<std::string> stringTokenize(const std::string &str, const std::string &delim)
-{
-	std::vector<std::string> tokens;
-	std::string aux = str;
-
-	while (hasContent(aux))
-	{
-		if (aux.find_first_not_of(delim) == std::string::npos) // Check if there is something besides delimiters in the line
-		{
-			break; // Then we break the while loop and return tokens as an empty std::vector
-		}
-
-		aux = aux.substr(aux.find_first_not_of(delim)); // Get the part of aux starting at the first character that is not a delimiter
-		tokens.push_back(aux.substr(0, aux.find_first_of(delim))); // Take content before next delimiter and add to tokens
-
-		if (aux.find_first_of(delim, 0) != std::string::npos) // If there is another delimiter in the string...
-		{
-			aux = aux.substr(aux.find_first_of(delim, 0)); // ... keep in aux everything after the second delimiter, including the delimiter
-		}
-		else // Otherwise, we have already included the last element in tokens, so we can end this loop.
-		{
-			break;
-		}
-	}
-
-	return tokens;
-}
-
-
-// Convert lowercase letter to uppercase and compare if they are equal
-inline bool caseInsCharCompareN(char a, char b) {
-	return(std::toupper(a) == std::toupper(b));
-}
-
-// Same thing for wchar
-inline bool caseInsCharCompareW(wchar_t a, wchar_t b) {
-	return(std::towupper(a) == std::towupper(b));
-}
-
-// Compare each character of the strings to see if they match
-bool caseInsCompare(const std::string& s1, const std::string& s2) {
-	return((s1.size() == s2.size()) &&
-		std::equal(s1.begin(), s1.end(), s2.begin(), caseInsCharCompareN));
-}
-
-// Same thing for wstring
-bool caseInsCompare(const std::wstring& s1, const std::wstring& s2) {
-	return((s1.size() == s2.size()) &&
-		std::equal(s1.begin(), s1.end(), s2.begin(), caseInsCharCompareW));
-}
-
-
-// Get folder path from a complete file path
-std::string getFileFolder(const std::string& path)
-{
-	// Check if input string is empty
-	if (path.empty())
-	{
-		throw std::runtime_error("Empty string passed to getFileFolder().");
-	}
-
-	std::vector<std::string> str_tokenized = stringTokenize(path, filesep);
-
-	// If there is only one element in str_tokenized, it means that only the file name
-	// was provided as an argument. Hence, the fileFolder is the current directory, "."
-	if (str_tokenized.size() == 1)
-	{
-		return ".";
-	}
-
-	// Otherwise, return the full path until the last delimiter
-	else
-	{
-		size_t found;
-		found = path.find_last_of(filesep);
-		return path.substr(0, found);
-	}
-}
-
-
-// Get file name, without extension, from a complete file path
-std::string getFileName(const std::string& path)
-{
-	// Check if input string is empty
-	if (path.empty())
-	{
-		throw std::runtime_error("Empty string passed to getFileName().");
-	}
-
-	// Tokenize the passed string based on the file separator. The file name is the last part (works even if only the file name is passed as argument)
-	std::vector<std::string> str_tokenized = stringTokenize(path, filesep);
-	std::string flNm = str_tokenized.back();
-
-	// We need to exclude the file extension. We get everything until the last dot and say that 
-	if (flNm.find_last_not_of(".") != std::string::npos)
-	{
-		flNm = flNm.substr(0, flNm.find_last_of("."));
-	}
-
-	return flNm;
 }

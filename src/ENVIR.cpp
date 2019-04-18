@@ -1,5 +1,6 @@
 #include "ENVIR.h"
 #include "IO.h"
+#include "auxFunctions.h"
 
 #include <iostream>
 #include <vector>
@@ -62,11 +63,6 @@ void ENVIR::readTimeRamp(const std::string &data)
     readDataFromString(data, m_timeRamp);
 }
 
-void ENVIR::readUseBEMT(const std::string &data)
-{
-	readDataFromString(data, m_useBEMT);
-}
-
 void ENVIR::readUseTipLoss(const std::string &data)
 {
 	readDataFromString(data, m_useTipLoss);
@@ -97,9 +93,14 @@ void ENVIR::readAirDens(const std::string &data)
 	readDataFromString(data, m_airDens);
 }
 
-void ENVIR::readWindVel(const std::string &data)
+void ENVIR::readWindRefVel(const std::string &data)
 {
-	readDataFromString(data, m_windVel);
+	readDataFromString(data, m_windRefVel);
+}
+
+void ENVIR::readWindRefHeight(const std::string &data)
+{
+	readDataFromString(data, m_windRefHeight);
 }
 
 void ENVIR::readWindExp(const std::string &data)
@@ -232,11 +233,6 @@ double ENVIR::time() const
 	return m_time;
 }
 
-bool ENVIR::useBEMT() const
-{
-	return m_useBEMT;
-}
-
 bool ENVIR::useTipLoss() const
 {
 	return m_useTipLoss;
@@ -272,9 +268,14 @@ double ENVIR::airDensity() const
 	return m_airDens;
 }
 
-double ENVIR::windVel() const
+double ENVIR::windRefVel() const
 {
-	return m_windVel;
+	return m_windRefVel;
+}
+
+double ENVIR::windRefHeight() const
+{
+	return m_windRefHeight;
 }
 
 double ENVIR::windExp() const
@@ -442,38 +443,44 @@ double ENVIR::ramp() const
 }
 
 
-arma::vec::fixed<3> ENVIR::fluidVel(double x, double y, double z) const
+vec::fixed<3> ENVIR::fluidVel(const vec::fixed<3> &coord) const
 {
 	arma::vec::fixed<3> vel = {0,0,0};
 	for (int ii = 0; ii < m_wave.size(); ++ii)
 	{
-		vel += m_wave.at(ii).fluidVel(x, y, z, m_time, m_watDepth);
+		vel += m_wave.at(ii).fluidVel(coord, m_time, m_watDepth);
 	}
 
 	vel = vel*ramp();
 	return vel;
 }
 
-arma::vec::fixed<3> ENVIR::fluidAcc(double x, double y, double z) const
+vec::fixed<3> ENVIR::fluidAcc(const vec::fixed<3> &coord) const
 {
 	arma::vec::fixed<3> acc = { 0,0,0 };
 	for (int ii = 0; ii < m_wave.size(); ++ii)
 	{
-		acc += m_wave.at(ii).fluidAcc(x, y, z, m_time, m_watDepth);
+		acc += m_wave.at(ii).fluidAcc(coord, m_time, m_watDepth);
 	}
 
 	acc = acc*ramp();
 	return acc;
 }
 
-double ENVIR::wavePressure(double x, double y, double z) const
+double ENVIR::wavePressure(const vec::fixed<3> &coord) const
 {
 	double p{ 0 };
 	for (int ii = 0; ii < m_wave.size(); ++ii)
 	{
-		p += m_wave.at(ii).pressure(x, y, z, m_time, m_watDens, m_gravity, m_watDepth);
+		p += m_wave.at(ii).pressure(coord, m_time, m_watDens, m_gravity, m_watDepth);
 	}
 
 	p = p*ramp();
 	return p;
+}
+
+
+double ENVIR::windVel_X(const vec::fixed<3> &coord) const
+{
+	return ( windRefVel() * pow(coord[2] / windRefHeight(), windExp()) );
 }

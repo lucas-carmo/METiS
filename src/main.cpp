@@ -7,8 +7,6 @@
 #include "ENVIR.h"
 #include "analyses.h"
 
-
-
 // METiS Version
 extern const std::string g_METIS_VERSION{ "0.0.1" };
 
@@ -22,7 +20,8 @@ int main(int argc, char *argv[])
 	std::cout << IO::METiS_Header() << '\n';
    
 	// All the errors in the code are dealt by exceptions thrown in the different components
-	try{ 
+	try
+	{ 
 		if (argc != 2)
 		{
 			throw std::runtime_error("Please provide one input file");
@@ -35,9 +34,20 @@ int main(int argc, char *argv[])
 		std::cout << "Running METiS with file '" << argv[1] << "'\n";
 		IO::setFiles(argv[1]); // Set paths to input file and output files
 		IO::readInputFile(fowt, envir); // Read data from input file to fowt and envir
-		IO::printSumFile(fowt, envir);		
+		IO::printSumFile(fowt, envir);	// Print the summary file for later verification of the input by the user
 
-		timeDomainAnalysis_FOWT(fowt, envir);
+		// All the time domain calculation is done inside one of these functions
+		if (envir.isTypeFOWT())		
+		{
+			std::cout << "\nFOWT\n";
+			timeDomainAnalysis_FOWT(fowt, envir);
+		}
+		if (envir.isTypeOnshore())		
+		{
+			std::cout << "\nOnshore\n";
+			timeDomainAnalysis_Onshore(fowt, envir);
+		}		
+
 	}
 
 	catch(std::exception &exception)
@@ -52,7 +62,6 @@ int main(int argc, char *argv[])
 	
 
 	IO::print2log("Elapsed time: " + std::to_string(timer.toc()) + " seconds.");
-
 	return 0;
 }
 

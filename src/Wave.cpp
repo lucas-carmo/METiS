@@ -268,9 +268,12 @@ double Wave::length(const double watDepth, const double gravity) const
 /*****************************************************
 	Other functions
 *****************************************************/
-vec::fixed<3> Wave::fluidVel(double x, double y, double z, double t, double h) const
+vec::fixed<3> Wave::fluidVel(const vec::fixed<3> &coord, double t, double h) const
 {
 	double u1(0), u2(0), u3(0); // Initialize the three wave velocity components
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
 
 	// We consider linear Airy waves, with velocity potential:
 	// phi = g*A/w * cosh(k(z+h))/cosh(k*h) * sin(k*x - w*t)
@@ -280,7 +283,7 @@ vec::fixed<3> Wave::fluidVel(double x, double y, double z, double t, double h) c
 		double w = angFreq();
 		double A = amp();
 		double k = waveNumber();
-		double beta = direction() * arma::datum::pi / 180;
+		double beta = direction() * arma::datum::pi / 180.;
 
 		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
 		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
@@ -306,17 +309,20 @@ vec::fixed<3> Wave::fluidVel(double x, double y, double z, double t, double h) c
 }
 
 
-vec::fixed<3> Wave::fluidAcc(double x, double y, double z, double t, double h) const
+vec::fixed<3> Wave::fluidAcc(const vec::fixed<3> &coord, double t, double h) const
 {
 	// Procedure is quite the same as the one employed in Wave::fluidVel for calculating the fluid velocity
 	double a1(0), a2(0), a3(0); 
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
 
 	if (z <= 0)
 	{
 		double w = angFreq();
 		double A = amp();
 		double k = waveNumber();
-		double beta = direction() * arma::datum::pi / 180;
+		double beta = direction() * arma::datum::pi / 180.;
 
 		double khz_xy(0), khz_z(0);
 		if (k*h >= 10)
@@ -340,17 +346,20 @@ vec::fixed<3> Wave::fluidAcc(double x, double y, double z, double t, double h) c
 }
 
 
-double Wave::pressure(double x, double y, double z, double t, double rho, double g, double h) const
+double Wave::pressure(const vec::fixed<3> &coord, double t, double rho, double g, double h) const
 {
 	// Procedure is similar to the one employed in Wave::fluidVel for calculating the fluid velocity
 	double p{ 0 };
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
 
 	if (z <= 0)
 	{
 		double w = angFreq();
 		double A = amp();
 		double k = waveNumber();
-		double beta = direction() * arma::datum::pi / 180;
+		double beta = direction() * arma::datum::pi / 180.;
 
 		double khz(0);
 		if (k*h >= 10)
