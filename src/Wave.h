@@ -10,6 +10,7 @@ private:
     double m_height;
     double m_period;
     double m_direction;
+	double m_phase;
 
 	// Since the wave number and length are directly related to the wave period by the 
 	// dispersion relation, having them as members is a violation of the DRY principle.
@@ -30,7 +31,7 @@ public:
 	/*****************************************************
 		Constructors
 	*****************************************************/
-	Wave(double height, double period, double direction, double watDepth, double gravity);
+	Wave(double height, double period, double direction, double phase, double watDepth, double gravity);
 
 	Wave(const std::string &wholeWaveLine);
 

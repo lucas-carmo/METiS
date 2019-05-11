@@ -9,7 +9,7 @@ using namespace arma;
 /*****************************************************
 	Constructors
 *****************************************************/
-Wave::Wave(double height, double period, double direction, double watDepth, double gravity)
+Wave::Wave(double height, double period, double direction, double phase, double watDepth, double gravity)
 	: m_height(height), m_period(period), m_direction(direction)
 {
 	if (period == 0)
@@ -23,6 +23,8 @@ Wave::Wave(double height, double period, double direction, double watDepth, doub
 
 	m_height = height;
 	m_direction = direction;
+	m_phase = phase - std::floor(phase / 360) * 360; // Make sure phase is between 0 and 2pi
+	m_phase = deg2rad(m_phase);
 
 	m_waveNumber = waveNumber(watDepth, gravity);
 	m_length = 2 * arma::datum::pi / m_waveNumber; // The function Wave::waveNumber never outputs 0, hence this division is safe
