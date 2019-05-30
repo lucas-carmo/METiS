@@ -127,7 +127,7 @@ void ENVIR::addWave(const Wave &wave)
 		throw std::runtime_error("You should specify the gravity before the waves. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
 
-	m_wave.push_back(Wave(wave.height(), wave.period(), wave.direction(), m_watDepth, m_gravity));
+	m_wave.push_back(Wave(wave.height(), wave.period(), wave.direction(), wave.phase(), m_watDepth, m_gravity));
 }
 
 
@@ -344,7 +344,8 @@ std::string ENVIR::printWave() const
 		output = output + "Period: " + std::to_string( m_wave.at(ii).period() ) + "\n";
 		output = output + "Wave number: " + std::to_string( m_wave.at(ii).waveNumber() ) + "\n";
 		output = output + "Length: " + std::to_string(m_wave.at(ii).length()) + "\n";
-		output = output + "Direction: " + std::to_string(m_wave.at(ii).direction()) + "\n\n";
+		output = output + "Direction: " + std::to_string(m_wave.at(ii).direction()) + "\n";
+		output = output + "Phase: " + std::to_string(m_wave.at(ii).phase()) + "\n\n";
 	}
 	return output;
 }
