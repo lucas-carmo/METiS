@@ -940,6 +940,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Output Variables:\n" << IO::printOutVar();
 }
 
+
 // Some printing functions
 std::string IO::printOutVar()
 {
@@ -949,6 +950,14 @@ std::string IO::printOutVar()
 		switch (ii)
 		{
 		case IO::OUTFLAG_FOWT_DISP:
+			output += "FOWT rigid motion: ";
+			break;
+
+		case IO::OUTFLAG_FOWT_VEL:
+			output += "FOWT rigid motion: ";
+			break;
+
+		case IO::OUTFLAG_FOWT_ACC:
 			output += "FOWT rigid motion: ";
 			break;
 
@@ -970,11 +979,7 @@ std::string IO::printOutVar()
 
 		case IO::OUTFLAG_HS_FORCE:
 		    output += "Hydrostatic force: ";
-			break;	
-
-		case IO::OUTFLAG_TOTAL_FORCE:
-		    output += "Total force: ";
-			break;				
+			break;		
 
 		case IO::OUTFLAG_HD_INERTIA_FORCE:
 			output += "Hydrodynamic inertial force: ";
@@ -990,6 +995,11 @@ std::string IO::printOutVar()
 
 		case IO::OUTFLAG_AD_HUB_FORCE:
 			output += "Aerodynamic forces (Hub): ";
+			break;
+
+
+		case IO::OUTFLAG_TOTAL_FORCE:
+			output += "Total force: ";
 			break;
 
 		default:

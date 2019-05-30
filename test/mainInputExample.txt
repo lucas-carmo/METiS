@@ -42,12 +42,12 @@ WindHeight  90
 WindExp     0.2
 
 Wave
-% WRWAVE \t Height \t Angular frequency \t Direction (in degrees)
-% FRWAVE \t Height \t Frequency         \t Direction (in degrees)
-% TRWAVE \t Height \t Period            \t Direction (in degrees)
-TRWAVE	2	10	45
-WRWAVE	1	1	60
-FRWAVE	1	10	60
+% WRWAVE \t Height \t Angular frequency \t Direction (in degrees) \t phase (in degrees)
+% FRWAVE \t Height \t Frequency         \t Direction (in degrees) \t phase (in degrees)
+% TRWAVE \t Height \t Period            \t Direction (in degrees) \t phase (in degrees)
+TRWAVE	2	10	45 45
+WRWAVE	1	1	60 630
+FRWAVE	1	10	60 60
 END
 
 
@@ -1209,9 +1209,5 @@ wave_elev 11
 wave_vel
 wave_acc
 END
-
-
-
-
 
 

@@ -441,7 +441,7 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			// Bracket the solution in order to use Brent's method
 			if (calcRes(90, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss()) >= 0)
 			{
-				phi_min = 1e-6;
+				phi_min = 1e-10;
 				phi_max = 90;
 			}
 			else if (calcRes(-45, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss()) >= 0)
@@ -583,10 +583,14 @@ double RNA::Brent(const double phi_min, const double phi_max, const unsigned int
             }
         }
     }
-    else if (FB == 0)
+    else if (almostEqual(FB, 0, tolerance))
     {
         phi = BB;
     }
+	else if (almostEqual(FA, 0, tolerance))
+	{
+		phi = AA;
+	}
     else
     {
 		throw std::runtime_error("Interval without roots in RNA::Brent(). The interval is ]" + std::to_string(AA) + "," + std::to_string(BB) + "[" );
@@ -614,7 +618,7 @@ double RNA::calcRes(const double phi, const unsigned int bladeIndex, const unsig
     {
         a = calcAxialIndFactor(k, phi, F);
 
-        if (abs(a-1) < 1e-6)
+        if (abs(a-1) < 1e-5)
             return -cos(deg2rad(phi))*(1-kp)/localTipSpeed;
         else
         {

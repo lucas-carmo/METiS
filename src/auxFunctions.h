@@ -28,6 +28,7 @@ mat::fixed<3, 3> rotatMatrix(const vec::fixed<3> &rotation);
 mat::fixed<3, 3> rotatMatrix_deg(const vec::fixed<3> &rotation);
 double deg2rad(const double degree);
 double minimum(const double x, const double y);
+bool almostEqual(const double x, const double y, double eps);
 
 
 /*****************************************************
