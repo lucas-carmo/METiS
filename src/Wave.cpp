@@ -24,7 +24,6 @@ Wave::Wave(double height, double period, double direction, double phase, double 
 	m_height = height;
 	m_direction = direction;
 	m_phase = phase - std::floor(phase / 360) * 360; // Make sure phase is between 0 and 2pi
-	m_phase = deg2rad(m_phase);
 
 	m_waveNumber = waveNumber(watDepth, gravity);
 	m_length = 2 * arma::datum::pi / m_waveNumber; // The function Wave::waveNumber never outputs 0, hence this division is safe
@@ -53,8 +52,8 @@ Wave::Wave(const std::string &wholeWaveLine)
 	}
 
 
-	// Check if there are exactly three inputs (Wave height, period/frequency/angular frequency, and direction)
-	if (input.size() != 3)
+	// Check if there are exactly four inputs (Wave height, period/frequency/angular frequency, direction, and phase)
+	if (input.size() != 4)
 	{
 		throw std::runtime_error("Unable to read the wave in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");				  
 		return;
@@ -64,6 +63,7 @@ Wave::Wave(const std::string &wholeWaveLine)
 	// Finally, read wave data
 	readDataFromString(input.at(0), m_height);
 	readDataFromString(input.at(2), m_direction);
+	readDataFromString(input.at(3), m_phase);
 
 	if ( caseInsCompare(getKeyword(wholeWaveLine), "TRWave") )
 	{
@@ -136,6 +136,10 @@ double Wave::direction() const
 	return m_direction;
 }
 
+double Wave::phase() const
+{
+	return m_phase;
+}
 
 double Wave::freq() const
 {

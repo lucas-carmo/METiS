@@ -9,8 +9,8 @@ class Wave{
 private:
     double m_height;
     double m_period;
-    double m_direction;
-	double m_phase;
+    double m_direction; // In degrees
+	double m_phase; // In degrees
 
 	// Since the wave number and length are directly related to the wave period by the 
 	// dispersion relation, having them as members is a violation of the DRY principle.
@@ -41,8 +41,9 @@ public:
 	*****************************************************/
 	double height() const;
 	double amp() const;
-	double period() const;
+	double period() const;	
 	double direction() const;
+	double phase() const;
 	double freq() const;
 	double angFreq() const;
 
