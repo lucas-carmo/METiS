@@ -62,6 +62,11 @@ double minimum(const double x, const double y)
 	return (x > y) ? y : x;
 }
 
+bool almostEqual(const double x, const double y, double eps)
+{
+	return (abs(x - y) < eps);
+}
+
 /*****************************************************
     String handling
 *****************************************************/
