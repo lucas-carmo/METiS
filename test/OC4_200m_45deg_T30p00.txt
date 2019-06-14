@@ -11,7 +11,10 @@
 % *) FixedOffshore -> For offshore wind turbines that are fixed
 % *) Onshore -> For onshore wind turbines
 % Each of the analyses requires different inputs
-TYPE FOWT
+Hydro   1
+Aero    1
+Moor    1
+
 DOFS 1 1 1 1 1 1
 
 

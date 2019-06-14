@@ -67,3 +67,36 @@ This process will be conducted with CMake in the future (I don't know when).
     6. Next, go to **Linker** -> **General** -> **Additional Library Directories** and select **mkl\lib\intel64_win** (select intel32_win if your computer is 32bits);
     7. Finally, you need to go to **Linker** -> **Input** -> **Additional Dependencies** and add *mkl_core.lib*, *mkl_sequential.lib*, and *mkl_intel_lp64.lib*.
 
+
+
+
+
+
+
+
+
+
+
+# **Types of analyses**
+
+## **FOWT**
+Choose the **DoFs** and the **forces** that you want to include the analyses. Ex:
+```
+    Hydro   1
+    Aero    1
+    Moor    1
+
+    DOFS 1 1 0 0 0 1
+```    
+Includes hydrodynamic/hydrostatic, aerodynamic and mooring forces + include all the DoFs except for heave, roll and pitch. Note that although the forces are calculated and output for all the DoFs, only the forces in the active DoFs are considered in the equations of motion.
+
+
+## **Fixed offshore**
+Disable the **DoFs** + choose the **forces** that you want to include in the analyses
+```
+    Hydro   1
+    Aero    1
+    Moor    0
+
+    DOFS 0 0 0 0 0 0
+```    
