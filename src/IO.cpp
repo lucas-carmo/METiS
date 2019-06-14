@@ -665,6 +665,21 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 
 
 
+static void checkInputs(const FOWT &fowt, const ENVIR &envir)
+{
+
+}
+
+
+
+
+
+
+
+
+
+
+
 /*****************************************************
 Class functions related to output
 *****************************************************/
