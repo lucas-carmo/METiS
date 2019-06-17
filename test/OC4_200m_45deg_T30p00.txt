@@ -6,11 +6,6 @@
 %%-----------------------------------------------------------------------------%%
 %%----------------------------- ACTIVE ANALYSES -------------------------------%%
 %%-----------------------------------------------------------------------------%%
-% The analysis can be of three different types, specified by the following strings:
-% *) FOWT -> For Floating Offshore Wind Turbines
-% *) FixedOffshore -> For offshore wind turbines that are fixed
-% *) Onshore -> For onshore wind turbines
-% Each of the analyses requires different inputs
 Hydro   1
 Aero    1
 Moor    1
