@@ -13,16 +13,6 @@ class ENVIR
 {
 private:
     /*
-    Type of analysis
-    */
-    std::string m_typeAnalysis;
-
-    /*
-    Flags to specify the active degrees of freedom
-    */
-    std::array<bool, 6> m_dofs = {1, 1, 1, 1, 1, 1};
-
-    /*
     Data to specify the environment
     */
 	std::vector< unsigned int > m_nodesID; // Nodes provide a spatial description of the environment
@@ -59,10 +49,7 @@ public:
 
 	/*****************************************************
 		Setters
-	*****************************************************/
-    void readTypeAnalysis(const std::string &data);
-    
-    void readDOFs(const std::string &data);
+	*****************************************************/   
     void readTimeStep(const std::string &data);
     void readTimeTotal(const std::string &data);
     void readTimeRamp(const std::string &data);
@@ -104,8 +91,6 @@ public:
 	/*****************************************************
 		Printing
 	*****************************************************/
-    std::string printTypeAnalysis() const;
-
 	std::string printTimeStep() const;
 	std::string printTimeTotal() const;
 	std::string printTimeRamp() const;
@@ -119,17 +104,6 @@ public:
 	/*****************************************************
 		Other functions
 	*****************************************************/
-    bool isTypeFOWT() const;
-    bool isTypeFixedOffshore() const;
-    bool isTypeOnshore() const;
-
-    bool isSurgeActive() const;
-    bool isSwayActive() const;
-    bool isHeaveActive() const;
-    bool isRollActive() const;
-    bool isPitchActive() const;
-    bool isYawActive() const;    
-
     bool isNodeEmpty() const;
     bool isWaveLocationEmpty() const;
     arma::vec::fixed<3> getNode(unsigned int ID) const;

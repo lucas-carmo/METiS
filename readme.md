@@ -92,7 +92,7 @@ Includes hydrodynamic/hydrostatic, aerodynamic and mooring forces + include all 
 
 
 ## **Fixed offshore**
-Disable the **DoFs** + choose the **forces** that you want to include in the analyses
+Disable all **DoFs** + choose the **forces** that you want to include in the analyses
 ```
     Hydro   1
     Aero    1
