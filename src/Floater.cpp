@@ -312,11 +312,9 @@ std::string Floater::printMorisonElements() const
 /*****************************************************
 	Forces, acceleration, displacement, etc
 *****************************************************/
-void Floater::updateDispVelAcc(const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc)
+void Floater::update(const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc)
 {
 	m_disp = FOWTdisp;
-	m_vel = FOWTvel;
-	m_acc = FOWTacc;
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{

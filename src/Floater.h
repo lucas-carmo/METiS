@@ -19,21 +19,16 @@ private:
 	vec::fixed<6> m_inertia; // Moments and products of inertia. It is a 6x1 array. Actually, it is a symmetric 3x3 matrix, hence 3 elements are simply repeated.
 	std::vector<std::unique_ptr<MorisonElement>> m_MorisonElements;	
 
-	// Floater condition (displacement, velocity, acceleration, etc)
+	// Floater displacement
 	vec::fixed<6> m_disp;
-	vec::fixed<6> m_vel;
-	vec::fixed<6> m_acc;
-
 
 public:
 	Floater();
-
 
 	/*****************************************************
 		Overloaded operators
 	*****************************************************/
 	Floater& operator=(const Floater &floater);
-
 
 	/*****************************************************
 		Setters
@@ -61,7 +56,7 @@ public:
 	/*****************************************************
 		Forces, acceleration, displacement, etc
 	*****************************************************/
-	void updateDispVelAcc(const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc);
+	void update(const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc);
 	mat::fixed<6, 6> addedMass(const double density) const;
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir) const;
 	vec::fixed<6> hydrostaticForce(const double watDensity, const double gravity) const;

@@ -237,7 +237,7 @@ void FOWT::update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec
 	m_disp = disp;
 	m_vel = vel;
 	m_acc = acc;
-	m_floater.updateDispVelAcc(m_disp, m_vel, m_acc);
+	m_floater.update(m_disp, m_vel, m_acc);
 }
 
 vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
