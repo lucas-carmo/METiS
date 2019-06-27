@@ -9,7 +9,7 @@ using namespace arma;
 class MorisonElement
 {
 protected:
-	vec::fixed<3> m_cog2node1;
+	vec::fixed<3> m_cog2node1; // Position of node 1 with respect do the floater CoG (note that this is NOT the CoG of the FOWT), i.e. m_node1Pos(t) - CoG(t). Since the floater is treated as a rigid body, this is constant.  
 	vec::fixed<3> m_cog2node2;
 	int m_numIntPoints;
 
@@ -46,8 +46,8 @@ public:
 	virtual void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
 
 	// Contribution to the added mass
-	virtual mat::fixed<6, 6> addedMass_perp(const double rho, const vec::fixed<3> &cog) const = 0;
-	virtual mat::fixed<6, 6> addedMass_paral(const double rho, const vec::fixed<3> &cog) const = 0;
+	virtual mat::fixed<6, 6> addedMass_perp(const double rho) const = 0;
+	virtual mat::fixed<6, 6> addedMass_paral(const double rho) const = 0;
 
 	// Forces
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const = 0;	
