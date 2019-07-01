@@ -391,27 +391,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			continue;
 		}
 
-
-		else if (caseInsCompare(getKeyword(strInput), "Airfoil_data"))
-		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
-
-			while (!caseInsCompare(getKeyword(strInput), "END"))
-			{
-				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{
-					throw std::runtime_error("End of file reached before END keyword in AIRFOIL_DATA specification.");
-					return;
-				}
-
-				// Implement in the future
-
-				IO::readLineInputFile(strInput);
-			}
-			continue;
-		}
-
-
 		else if (caseInsCompare(getKeyword(strInput), "Tower_Aero"))
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
