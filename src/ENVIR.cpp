@@ -129,6 +129,7 @@ void ENVIR::addWaveLocation(const std::string &data)
 		readDataFromString(input.at(ii), nodeID); // Read the node ID specified as a string to the nodeID variable
 		m_waveLocation.push_back( this->getNode(nodeID) ); // Get the node coordinate and add it to m_waveLocation
 		m_waveLocation.back().at(2) = 0; // Set z=0
+		m_waveLocationID.push_back(nodeID);
 	}
 }
 
@@ -312,6 +313,18 @@ std::string ENVIR::printWaveLocation() const
 }
 
 
+void ENVIR::printWaveCharact() const
+{
+	for (int ii = 0; ii < m_waveLocation.size(); ++ii)
+	{
+		IO::print2outLine(IO::OUTFLAG_WAVE_ELEV, m_waveLocationID[ii], waveElev(m_waveLocation[ii][0], m_waveLocation[ii][1]));
+		IO::print2outLine(IO::OUTFLAG_WAVE_VEL, m_waveLocationID[ii], fluidVel(m_waveLocation[ii]));
+		IO::print2outLine(IO::OUTFLAG_WAVE_ACC, m_waveLocationID[ii], fluidAcc(m_waveLocation[ii]));
+		IO::print2outLine(IO::OUTFLAG_WAVE_PRES, m_waveLocationID[ii], wavePressure(m_waveLocation[ii]));
+	}
+}
+
+
 /*****************************************************
 	Other functions
 *****************************************************/
@@ -368,6 +381,18 @@ double ENVIR::ramp() const
 }
 
 
+double ENVIR::waveElev(const double x, const double y) const
+{
+	double elev{ 0 };
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		elev += m_wave.at(ii).waveElev(x, y, m_time, m_watDepth);
+	}
+
+	return elev * ramp();
+}
+
+
 vec::fixed<3> ENVIR::fluidVel(const vec::fixed<3> &coord) const
 {
 	arma::vec::fixed<3> vel = {0,0,0};
@@ -376,8 +401,7 @@ vec::fixed<3> ENVIR::fluidVel(const vec::fixed<3> &coord) const
 		vel += m_wave.at(ii).fluidVel(coord, m_time, m_watDepth);
 	}
 
-	vel = vel*ramp();
-	return vel;
+	return vel * ramp();
 }
 
 vec::fixed<3> ENVIR::fluidAcc(const vec::fixed<3> &coord) const
@@ -388,8 +412,7 @@ vec::fixed<3> ENVIR::fluidAcc(const vec::fixed<3> &coord) const
 		acc += m_wave.at(ii).fluidAcc(coord, m_time, m_watDepth);
 	}
 
-	acc = acc*ramp();
-	return acc;
+	return acc * ramp();
 }
 
 double ENVIR::wavePressure(const vec::fixed<3> &coord) const
@@ -400,8 +423,7 @@ double ENVIR::wavePressure(const vec::fixed<3> &coord) const
 		p += m_wave.at(ii).pressure(coord, m_time, m_watDens, m_gravity, m_watDepth);
 	}
 
-	p = p*ramp();
-	return p;
+	return p * ramp();
 }
 
 

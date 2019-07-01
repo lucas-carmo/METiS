@@ -1176,4 +1176,8 @@ hd_inertia_force
 hd_drag_force
 hd_fk_force
 total_force
+wave_elev 1 13
+wave_pres
+wave_vel
+wave_acc
 END

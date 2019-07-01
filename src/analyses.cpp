@@ -56,6 +56,9 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
         vel0 = fowt.vel();
         acc0 = fowt.acc();   
 
+		// Print wave characteristics that may have been requested in the input file
+		envir.printWaveCharact();		
+
         // RK4: first estimation
         acc_k1 = fowt.calcAcceleration(envir);
         vel_k1 = acc_k1 * envir.timeStep();
@@ -112,6 +115,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		IO::printOutLine2outFile();
         
 		// Print progress to the screen
+		// TO DO: PARAR DE IMPRIMIR ISSO TODO TIME STEP. FAZER ESPACADO (A CADA 10? 20?)
         std::cout << round(100 * envir.time() / envir.timeTotal()) << "%" << '\r';
         std::fflush(stdout);        
     }

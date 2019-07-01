@@ -22,7 +22,8 @@ private:
     double m_watDens;
     double m_watDepth;
     std::vector<Wave> m_wave;
-    std::vector<vec::fixed<3>> m_waveLocation; // Coordinates of the points where the wave elevation is calculated for output
+	std::vector<unsigned int> m_waveLocationID;
+    std::vector<vec::fixed<3>> m_waveLocation; // Coordinates of the points where the wave characteristics (elevation, velocity, etc) are calculated for output
     double m_airDens;
     double m_windRefVel;
 	double m_windRefHeight;
@@ -101,6 +102,8 @@ public:
 	std::string printWave() const;
 	std::string printWaveLocation() const;
 
+	void printWaveCharact() const; // Print the wave characteristics (elevation, velocity, etc) specified for output in the locations given by m_waveLocation
+
 	/*****************************************************
 		Other functions
 	*****************************************************/
@@ -112,6 +115,7 @@ public:
     void stepTime(double const step);
 
     double ramp() const;
+	double waveElev(const double x, const double y) const;
 	vec::fixed<3> fluidVel(const vec::fixed<3> &coord) const;
 	vec::fixed<3> fluidAcc(const vec::fixed<3> &coord) const;
 	double wavePressure(const vec::fixed<3> &coord) const;

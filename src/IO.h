@@ -31,6 +31,7 @@ public:
 		OUTFLAG_WAVE_ELEV,
 		OUTFLAG_WAVE_VEL,
 		OUTFLAG_WAVE_ACC,
+		OUTFLAG_WAVE_PRES,
 //		
 		OUTFLAG_HD_INERTIA_FORCE,
 		OUTFLAG_HD_DRAG_FORCE,
@@ -101,6 +102,9 @@ public:
 
 	// Functions that write to the stringstreams m_outLineHeader and m_outLine
 	static void print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6);
+	static void print2outLine(const OutFlag &flag, const int ID, const double num);
+	static void print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed<3> &vector_3);
+
 	static void print2outLine(const std::string &str);
 	static void print2outLine(const double num);
 	static void print2outLine(const int num);
@@ -111,7 +115,7 @@ public:
 	static void printOutLine2outFile();
 	static void newLineOutFile();
 
-	// Some printing functions
+	// Other printing functions
 	static std::string printOutVar();
 };
 
