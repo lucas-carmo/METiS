@@ -31,7 +31,7 @@ public:
 	virtual void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const override;
 	virtual mat::fixed<6, 6> addedMass_perp(const double rho) const override;
 	virtual mat::fixed<6, 6> addedMass_paral(const double rho) const override;
-	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const override;
+	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g, const double z_wl) const override;
 	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const override;
 
 	/*****************************************************
