@@ -18,6 +18,18 @@ private:
 	RNA m_rna;
 	vec::fixed<3> m_linStiff;
 
+	/*
+	Forces included in the analysis
+	*/
+	int m_hydroMode;
+	int m_aeroMode;
+	int m_moorMode;
+
+	/*
+	Flags to specify the active degrees of freedom
+	*/
+	std::array<bool, 6> m_dofs = { 1, 1, 1, 1, 1, 1 };
+
 	// Properties derived from the other ones
 	double m_mass;
 	vec::fixed<3> m_CoG;
@@ -41,6 +53,11 @@ public:
 	/*****************************************************
 		Setters
 	*****************************************************/
+	void readHydroMode(const std::string &data);
+	void readAeroMode(const std::string &data);
+	void readMoorMode(const std::string &data);
+	void readDOFs(const std::string &data);
+
 	void readLinStiff(const std::string &data);
 	void setFloater(Floater &floater);
 	void setRNA(RNA &rna);
@@ -58,6 +75,10 @@ public:
 	std::string printLinStiff() const;
 	std::string printFloater() const;
 	std::string printRNA() const;
+	std::string printHydroMode() const;
+	std::string printAeroMode() const;
+	std::string printMoorMode() const;
+	std::string printDoF() const;
 
 	/*****************************************************
 		Forces, acceleration, displacement, etc

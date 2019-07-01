@@ -312,11 +312,9 @@ std::string Floater::printMorisonElements() const
 /*****************************************************
 	Forces, acceleration, displacement, etc
 *****************************************************/
-void Floater::updateDispVelAcc(const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc)
+void Floater::update(const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc)
 {
 	m_disp = FOWTdisp;
-	m_vel = FOWTvel;
-	m_acc = FOWTacc;
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
@@ -330,7 +328,7 @@ mat::fixed<6, 6> Floater::addedMass(const double density) const
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		A += m_MorisonElements.at(ii)->addedMass_perp(density, m_disp.rows(0,2) + CoG()) + m_MorisonElements.at(ii)->addedMass_paral(density, m_disp.rows(0,2) + CoG());
+		A += m_MorisonElements.at(ii)->addedMass_perp(density) + m_MorisonElements.at(ii)->addedMass_paral(density);
 	}
 
 	return A;

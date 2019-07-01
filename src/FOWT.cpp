@@ -27,6 +27,42 @@ FOWT& FOWT::operator=(const FOWT &fowt)
 /*****************************************************
 	Setters
 *****************************************************/
+void FOWT::readHydroMode(const std::string &data)
+{
+	readDataFromString(data, m_hydroMode);
+}
+
+void FOWT::readAeroMode(const std::string &data)
+{
+	readDataFromString(data, m_aeroMode);
+}
+
+void FOWT::readMoorMode(const std::string &data)
+{
+	readDataFromString(data, m_moorMode);
+}
+
+void FOWT::readDOFs(const std::string &data)
+{
+	// The flags for each of the six degrees of freedom are separated by white spaces in the input string (whitespace or tab)
+	std::vector<std::string> input = stringTokenize(data, " \t");
+
+	// Check number of inputs
+	if (input.size() != 6)
+	{
+		throw std::runtime_error("Unable to read the DoFs in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+	}
+
+	// Read data
+	readDataFromString(input.at(0), m_dofs[0]);
+	readDataFromString(input.at(1), m_dofs[1]);
+	readDataFromString(input.at(2), m_dofs[2]);
+	readDataFromString(input.at(3), m_dofs[3]);
+	readDataFromString(input.at(4), m_dofs[4]);
+	readDataFromString(input.at(5), m_dofs[5]);
+}
+
+
 void FOWT::readLinStiff(const std::string &data)
 {
     // The mooring line stiffness in surge, sway and yaw are separated by commas in the input string
@@ -164,6 +200,33 @@ std::string FOWT::printRNA() const
 	return output;
 }
 
+std::string FOWT::printHydroMode() const
+{
+	return std::to_string(m_hydroMode);
+}
+
+std::string FOWT::printAeroMode() const
+{
+	return std::to_string(m_aeroMode);
+}
+
+std::string FOWT::printMoorMode() const
+{
+	return std::to_string(m_moorMode);
+}
+
+
+std::string FOWT::printDoF() const
+{
+	std::string output = "";
+	for (int ii = 0; ii < 6; ++ii)
+	{
+		output += std::to_string(m_dofs[ii]) + ' ';
+	}
+
+	return output;
+}
+
 
 /*****************************************************
 	Forces, acceleration, displacement, etc
@@ -174,7 +237,7 @@ void FOWT::update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec
 	m_disp = disp;
 	m_vel = vel;
 	m_acc = acc;
-	m_floater.updateDispVelAcc(m_disp, m_vel, m_acc);
+	m_floater.update(m_disp, m_vel, m_acc);
 }
 
 vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
@@ -189,73 +252,31 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 
 	// Calculate the total force acting on the FOWT
 	vec::fixed<6> force = totalForce(envir);
-
-	if (!envir.isSurgeActive())
-	{
-		force[0] = 0;
-	}
-
-	if (!envir.isSwayActive())
-	{
-		force[1] = 0;
-	}
-
-	if (!envir.isHeaveActive())
-	{
-		force[2] = 0;
-	}
-
-	if (!envir.isRollActive())
-	{
-		force[3] = 0;
-	}
-
-	if (!envir.isPitchActive())
-	{
-		force[4] = 0;
-	}
-
-	if (!envir.isYawActive())
-	{
-		force[5] = 0;
-	}
-
 	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE, force);
+
+	// Avoid coupling effects when a DoF is disabled and the others are not.
+	// For doing so, set the calculated force to zero if the dof is deactivated.
+	// Please note that the force was printed BEFORE this is done, in such a way
+	// that the full 6 component force vector is printed, even if the DoF is not active.
+	for (int ii = 0; ii < 6; ++ii)
+	{
+		if (!m_dofs[ii])
+		{
+			force[ii] = 0;
+		}
+	}
 
 	// Solve inertiaMatrix * acc = force
 	acc = arma::solve(inertiaMatrix, force);
 
 	// Due to the coupling effects, it is necessary to set the accelerations of the inactive DoFs to 0
-	if (!envir.isSurgeActive())
+	for (int ii = 0; ii < 6; ++ii)
 	{
-		acc[0] = 0;
+		if (!m_dofs[ii])
+		{
+			acc[ii] = 0;
+		}
 	}
-
-	if (!envir.isSwayActive())
-	{
-		acc[1] = 0;
-	}
-
-	if (!envir.isHeaveActive())
-	{
-		acc[2] = 0;
-	}
-
-	if (!envir.isRollActive())
-	{
-		acc[3] = 0;
-	}
-
-	if (!envir.isPitchActive())
-	{
-		acc[4] = 0;
-	}
-
-	if (!envir.isYawActive())
-	{
-		acc[5] = 0;
-	}
-
 
 	IO::print2outLine(IO::OUTFLAG_FOWT_ACC, m_acc);
 
@@ -264,22 +285,42 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 
 vec::fixed<6> FOWT::hydrodynamicForce(const ENVIR &envir)
 {
-	return m_floater.hydrodynamicForce(envir);
+	if (m_hydroMode == 1)
+	{
+		return m_floater.hydrodynamicForce(envir);
+	}
+
+	return vec::fixed<6> {0, 0, 0, 0, 0, 0};
 }
 
 vec::fixed<6> FOWT::hydrostaticForce(const double watDensity, const double gravity)
 {
-	return m_floater.hydrostaticForce(watDensity, gravity);
+	if (m_hydroMode == 1)
+	{	
+		return m_floater.hydrostaticForce(watDensity, gravity);
+	}
+
+	return vec::fixed<6> {0, 0, 0, 0, 0, 0};
 }
 
 vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)
 {
-	return m_rna.aeroForce(envir, m_disp + join_cols(CoG(), vec::fixed<3> {0, 0 ,0}), m_vel);
+	if (m_aeroMode == 1) 
+	{
+		return m_rna.aeroForce(envir, m_disp + join_cols(CoG(), vec::fixed<3> {0, 0, 0}), m_vel);
+	}
+
+	return vec::fixed<6> {0, 0, 0, 0, 0, 0};
 }
 
 vec::fixed<6> FOWT::mooringForce()
 {	
-	return vec::fixed<6> {-m_linStiff(0)*m_disp(0), -m_linStiff(1)*m_disp(1), 0, 0, 0, -m_linStiff(2)*m_disp(5)};
+	if (m_moorMode == 1)
+	{
+		return vec::fixed<6> {-m_linStiff(0)*m_disp(0), -m_linStiff(1)*m_disp(1), 0, 0, 0, -m_linStiff(2)*m_disp(5)};
+	}
+
+	return vec::fixed<6> {0, 0, 0, 0, 0, 0};
 }
 
 vec::fixed<6> FOWT::weightForce(const double gravity)
@@ -288,7 +329,6 @@ vec::fixed<6> FOWT::weightForce(const double gravity)
 }
 
 vec::fixed<6> FOWT::totalForce(const ENVIR &envir)
-{
-	vec::fixed<6> aeroTest = aeroForce(envir);
+{		
 	return (hydrodynamicForce(envir) + hydrostaticForce(envir.watDensity(), envir.gravity()) + mooringForce() + weightForce(envir.gravity()));
 }

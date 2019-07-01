@@ -4,15 +4,13 @@
 
 
 %%-----------------------------------------------------------------------------%%
-%%----------------------------- ACTIVE ANALYSES -------------------------------%%
+%%----------------------------- ACTIVE FORCES ---------------------------------%%
 %%-----------------------------------------------------------------------------%%
-% The analysis can be of three different types, specified by the following strings:
-% *) FOWT -> For Floating Offshore Wind Turbines
-% *) FixedOffshore -> For offshore wind turbines that are fixed
-% *) Onshore -> For onshore wind turbines
-% Each of the analyses requires different inputs
-TYPE FOWT
-DOFS 1 1 1 1 1 1
+Hydro   1
+Aero    0
+Moor    1
+
+DOFS 0 1 0 1 1 0
 
 
 %%-----------------------------------------------------------------------------%%
@@ -33,9 +31,9 @@ WatDepth	200
 
 
 Wave
-% WRWAVE \t Height \t Angular frequency \t Direction (in degrees)
-% FRWAVE \t Height \t Frequency         \t Direction (in degrees)
-% TRWAVE \t Height \t Period            \t Direction (in degrees)
+% WRWAVE \t Height \t Angular frequency \t Direction (in degrees) \t Phase (in degrees)
+% FRWAVE \t Height \t Frequency         \t Direction (in degrees) \t Phase (in degrees)
+% TRWAVE \t Height \t Period            \t Direction (in degrees) \t Phase (in degrees)
 TRWAVE	2	30	45 0
 END
 
