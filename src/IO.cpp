@@ -60,15 +60,27 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		/*
 			Read data to envir
 		*/
-		if (caseInsCompare(getKeyword(strInput), "TYPE"))
+		if (caseInsCompare(getKeyword(strInput), "Hydro"))
 		{
-			envir.readTypeAnalysis(getData(strInput));
+			fowt.readHydroMode(getData(strInput));
+			continue;
+		}
+
+		if (caseInsCompare(getKeyword(strInput), "Aero"))
+		{
+			fowt.readAeroMode(getData(strInput));
+			continue;
+		}
+
+		if (caseInsCompare(getKeyword(strInput), "Moor"))
+		{
+			fowt.readMoorMode(getData(strInput));
 			continue;
 		}
 
 		if (caseInsCompare(getKeyword(strInput), "DOFS"))
 		{
-			envir.readDOFs(getData(strInput));
+			fowt.readDOFs(getData(strInput));
 			continue;
 		}		
 
@@ -505,7 +517,7 @@ void IO::setFiles(const std::string &inFlPath)
 	m_sumFilePath = folderPath + filesep + inFlName + "_sum.txt";
 	m_outFilePath = folderPath + filesep + inFlName + "_out.txt";
 
-	int index = 1; // This is the part where we verify if the file exists and append number as needed
+	int index = 1; // This is the part where we verify if the file exists and append numbers as needed
 	while (stat(m_logFilePath.c_str(), &info) == 0 || stat(m_sumFilePath.c_str(), &info) == 0 || stat(m_outFilePath.c_str(), &info) == 0) 
 	{
 		m_logFilePath = folderPath + filesep + inFlName + "_log_" + std::to_string(index) + ".txt";
@@ -662,6 +674,21 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	}
 	
 }
+
+
+
+static void checkInputs(const FOWT &fowt, const ENVIR &envir)
+{
+
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -908,11 +935,8 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 
 	m_sumFl << IO::METiS_Header();
 	m_sumFl << "\n\n";
-
-	m_sumFl << "Type:\t" << envir.printTypeAnalysis() << "\n\n";
+	
 	m_sumFl << "ENVIR:\n";	
-	m_sumFl << "DOFs:\t" << envir.isSurgeActive() << ' ' << envir.isSwayActive() << ' ' << envir.isHeaveActive()
-						 << ' ' << envir.isRollActive() << ' ' << envir.isPitchActive() << ' ' << envir.isYawActive() << '\n';
 	m_sumFl << "Time Step:\t" << envir.timeStep() << '\n';
 	m_sumFl << "Total Time:\t" << envir.timeTotal() << '\n';
 	m_sumFl << "Time Ramp:\t" << envir.printTimeRamp() << '\n';
@@ -932,6 +956,10 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 
 	m_sumFl << "\n\n";
 	m_sumFl << "FOWT:\n";
+	m_sumFl << "Hydro Mode:\t" << fowt.printHydroMode() << "\n";
+	m_sumFl << "Aero Mode:\t" << fowt.printAeroMode() << "\n";
+	m_sumFl << "Moor Mode:\t" << fowt.printMoorMode() << "\n";
+	m_sumFl << "DOFs:\t" << fowt.printDoF() << '\n';
 	m_sumFl << "Linear Stiffness:\t" << fowt.printLinStiff() << '\n';
 	m_sumFl << "Floater:\n" << fowt.printFloater();
 	m_sumFl << "RNA:\n" << fowt.printRNA();

@@ -45,20 +45,22 @@ void MorisonCirc::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3>
 
 
 // TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
-mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<3> &cog) const
+mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
 	// Use a more friendly notation 
 	double Lambda = datum::pi * pow(m_diam / 2., 2) * rho * (m_CM - 1);
 	double ncyl = m_numIntPoints;
-	double xG = cog[0];
-	double yG = cog[1];
-	double zG = cog[2];
 
 	// Nodes position
 	vec::fixed<3> n1 = node1Pos();
 	vec::fixed<3> n2 = node2Pos();
+
+	// Center of Gravity
+	double xG = n1[0] - m_cog2node1[0];
+	double yG = n1[1] - m_cog2node1[1];
+	double zG = n1[2] - m_cog2node1[2];
 
 	// Vectors of the local coordinate system vectors
 	vec::fixed<3> xvec(fill::zeros);
@@ -262,20 +264,22 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 
 
 // TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
-mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const vec::fixed<3> &cog) const
+mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
 	// Use a more friendly notation 
 	double Lambda = rho * m_axialCa * (4 / 3.) * datum::pi * pow(m_diam / 2, 3);
 	double ncyl = m_numIntPoints;
-	double xG = cog[0];
-	double yG = cog[1];
-	double zG = cog[2];
 
 	// Nodes position
 	vec::fixed<3> n1 = node1Pos();
 	vec::fixed<3> n2 = node2Pos();
+
+	// Center of Gravity
+	double xG = n1[0] - m_cog2node1[0];
+	double yG = n1[1] - m_cog2node1[1];
+	double zG = n1[2] - m_cog2node1[2];
 
 	// Vectors of the local coordinate system vectors
 	vec::fixed<3> xvec(fill::zeros);

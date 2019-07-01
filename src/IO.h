@@ -82,6 +82,7 @@ public:
 	static unsigned int getInLineNumber();
 	static void readInputFile(FOWT &fowt, ENVIR &envir);	
 	static void setResults2Output(std::string strInput, ENVIR &envir);
+	static void checkInputs(const FOWT &fowt, const ENVIR &envir);
 
 	/*
 	Functions related to output

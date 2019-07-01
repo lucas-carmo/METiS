@@ -22,32 +22,6 @@ ENVIR::ENVIR()
 /*****************************************************
 	Setters
 *****************************************************/
-void ENVIR::readTypeAnalysis(const std::string &data)
-{
-	readDataFromString(data, m_typeAnalysis);
-}
-
-void ENVIR::readDOFs(const std::string &data)
-{
-	// The flags for each of the six degrees of freedom are separated by white spaces in the input string (whitespace or tab)
-	std::vector<std::string> input = stringTokenize(data, " \t");
-
-	// Check number of inputs
-	if (input.size() != 6)
-	{
-		throw std::runtime_error("Unable to read the DoFs in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}	
-
-	// Read data
-	readDataFromString(input.at(0), m_dofs[0]);
-	readDataFromString(input.at(1), m_dofs[1]);
-	readDataFromString(input.at(2), m_dofs[2]);
-	readDataFromString(input.at(3), m_dofs[3]);
-	readDataFromString(input.at(4), m_dofs[4]);
-	readDataFromString(input.at(5), m_dofs[5]);
-}
-
-
 void ENVIR::readTimeStep(const std::string &data)
 {
     readDataFromString(data, m_timeStep);
@@ -199,25 +173,6 @@ void ENVIR::addNode(const std::string &data)
 /*****************************************************
 	Getters
 *****************************************************/
-// Return coordinates of a node based on its ID
-// Throws a std::runtime_error if the node could not be found
-arma::vec::fixed<3> ENVIR::getNode(unsigned int ID) const
-{
-	std::vector<unsigned int>::const_iterator iter = std::find(m_nodesID.begin(), m_nodesID.end(), ID); // Find node by its ID.
-	vec::fixed<3> node_coord(fill::zeros);
-	if (iter != m_nodesID.end())
-	{
-		auto index = std::distance(m_nodesID.begin(), iter); // Get index by the distance between the iterator found above and m_nodes.begin()
-		node_coord = m_nodesCoord.at(index);
-	}
-	else
-	{
-		throw std::runtime_error("Unable to find node with ID " + std::to_string(ID) + ". Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
-	}
-
-	return node_coord;
-}
-
 double ENVIR::timeStep() const
 {
 	return m_timeStep;
@@ -286,11 +241,6 @@ double ENVIR::windExp() const
 /*****************************************************
 	Printing
 *****************************************************/
-std::string ENVIR::printTypeAnalysis() const
-{
-	return m_typeAnalysis;
-}
-
 std::string ENVIR::printTimeStep() const
 {
 	return std::to_string(m_timeStep);
@@ -365,49 +315,23 @@ std::string ENVIR::printWaveLocation() const
 /*****************************************************
 	Other functions
 *****************************************************/
-bool ENVIR::isSurgeActive() const
+// Return coordinates of a node based on its ID
+// Throws a std::runtime_error if the node could not be found
+arma::vec::fixed<3> ENVIR::getNode(unsigned int ID) const
 {
-	return m_dofs[0];
-}
+	std::vector<unsigned int>::const_iterator iter = std::find(m_nodesID.begin(), m_nodesID.end(), ID); // Find node by its ID.
+	vec::fixed<3> node_coord(fill::zeros);
+	if (iter != m_nodesID.end())
+	{
+		auto index = std::distance(m_nodesID.begin(), iter); // Get index by the distance between the iterator found above and m_nodes.begin()
+		node_coord = m_nodesCoord.at(index);
+	}
+	else
+	{
+		throw std::runtime_error("Unable to find node with ID " + std::to_string(ID) + ". Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+	}
 
-bool ENVIR::isSwayActive() const
-{
-	return m_dofs[1];
-}
-
-bool ENVIR::isHeaveActive() const
-{
-	return m_dofs[2];
-}
-
-bool ENVIR::isRollActive() const
-{
-	return m_dofs[3];
-}
-
-bool ENVIR::isPitchActive() const
-{
-	return m_dofs[4];
-}
-
-bool ENVIR::isYawActive() const
-{
-	return m_dofs[5];
-}
-
-bool ENVIR::isTypeFOWT() const
-{
-	return (caseInsCompare(m_typeAnalysis, "FOWT"));
-}
-
-bool ENVIR::isTypeFixedOffshore() const
-{
-	return (caseInsCompare(m_typeAnalysis, "FixedOffshore"));
-}
-
-bool ENVIR::isTypeOnshore() const
-{
-	return (caseInsCompare(m_typeAnalysis, "Onshore"));
+	return node_coord;
 }
 
 bool ENVIR::isNodeEmpty() const
