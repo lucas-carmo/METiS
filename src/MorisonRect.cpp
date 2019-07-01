@@ -42,7 +42,7 @@ mat::fixed<6, 6> MorisonRect::addedMass_paral(const double rho) const
 }
 
 
-vec::fixed<6> MorisonRect::hydrostaticForce(const double rho, const double g) const
+vec::fixed<6> MorisonRect::hydrostaticForce(const double rho, const double g, const double z_wl) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;

@@ -436,7 +436,7 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho) const
 
 
 
-vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) const
+vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g, const double z_wl) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
@@ -468,7 +468,7 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 	}
 
 	// If the cylinder is above the waterline, then the hydrostatic force is zero
-	if (n1[2] >= 0)
+	if (n1[2] >= z_wl)
 	{
 		return force;
 	}
@@ -496,7 +496,7 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 	double zb{ 0 };
 
 	// If the cylinder is completely submerged, then the center of volume is at the center of the cylinder
-	if (n2[2] < 0)
+	if (n2[2] < z_wl)
 	{
 		L = norm(n2 - n1);
 		xb = 0;
@@ -509,7 +509,7 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 		// If only one of the nodes is above the water line, the coordinates of the other node
 		// are changed by those of the intersection between the cylinder axis and the static
 		// water line(defined by z_global = 0)
-		n2 = n1 + (std::abs(0 - n1[2]) / (n2[2] - n1[2])) * norm(n2 - n1) * zvec;
+		n2 = n1 + (std::abs(z_wl - n1[2]) / (n2[2] - n1[2])) * norm(n2 - n1) * zvec;
 		L = norm(n2 - n1);
 
 		xb = tanAlpha * pow(D/2, 2) / (4 * L);
