@@ -391,27 +391,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			continue;
 		}
 
-
-		else if (caseInsCompare(getKeyword(strInput), "Airfoil_data"))
-		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
-
-			while (!caseInsCompare(getKeyword(strInput), "END"))
-			{
-				if (!m_inFl) // Signal if the end of file is reached before the end keyword
-				{
-					throw std::runtime_error("End of file reached before END keyword in AIRFOIL_DATA specification.");
-					return;
-				}
-
-				// Implement in the future
-
-				IO::readLineInputFile(strInput);
-			}
-			continue;
-		}
-
-
 		else if (caseInsCompare(getKeyword(strInput), "Tower_Aero"))
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
@@ -638,6 +617,16 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		}
 	}
 
+	if (caseInsCompare(getKeyword(strInput), "wave_pres")) // Similar to wave_elev
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_WAVE_PRES) = true;
+
+		if (!getData(strInput).empty())
+		{
+			envir.addWaveLocation(getData(strInput));
+		}
+	}
+
 	if (caseInsCompare(getKeyword(strInput), "hd_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE) = true;
@@ -677,7 +666,7 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 
 
 
-static void checkInputs(const FOWT &fowt, const ENVIR &envir)
+void IO::checkInputs(const FOWT &fowt, const ENVIR &envir)
 {
 
 }
@@ -749,7 +738,8 @@ void IO::print2outLineHeader_turnOff()
 	m_shouldWriteOutLineHeader = false;
 }
 
-// Different functions to print to the formatted output file string streams depending on the output flag
+// Different functions to print to the formatted output file string streams depending on the output flag. This one is for
+// outputs represented by vectors with six components (forces with moments, FOWT displacements, etc)
 void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 {
 	// Check whether the specified flag is indeed one that requires a vector with six components
@@ -862,6 +852,81 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 		{
 			print2outLine(vector_6.at(ii));
 		}
+	}
+}
+
+
+// This one is useful for wave velocity and acceleration, which need the ID of the node where they are calculated
+// and the value itself, which three component vector. Other future outputs may profit from this function as well. 
+void IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed<3> &vector_3)
+{
+
+	if ((flag != OUTFLAG_WAVE_VEL) && (flag != OUTFLAG_WAVE_ACC))
+	{
+		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed<3> &vector_3).");
+	}
+
+	// If the print header flag is true and if this is one of the requested output variables,
+	// then print the header based on the output flag	
+	if (m_shouldWriteOutLineHeader && m_whichResult2Output.at(flag))
+	{
+		if (flag == OUTFLAG_WAVE_VEL)
+		{
+			print2outLineHeader("WAVE_VEL_" + std::to_string(ID) + "_X");
+			print2outLineHeader("WAVE_VEL_" + std::to_string(ID) + "_Y");
+			print2outLineHeader("WAVE_VEL_" + std::to_string(ID) + "_Z");
+		}
+
+		if (flag == OUTFLAG_WAVE_ACC)
+		{
+			print2outLineHeader("WAVE_ACC_" + std::to_string(ID) + "_X");
+			print2outLineHeader("WAVE_ACC_" + std::to_string(ID) + "_Y");
+			print2outLineHeader("WAVE_ACC_" + std::to_string(ID) + "_Z");
+		}
+	}
+
+	// If the printing flag is true and if this is one of the requested output variables,
+	// then print it to the output line
+	if (m_shouldWriteOutLine && m_whichResult2Output.at(flag))
+	{
+		for (int ii = 0; ii < 3; ++ii)
+		{
+			print2outLine(vector_3.at(ii));
+		}
+	}
+}
+
+
+// This one is useful for wave elevation and wave pressure, which need the ID of the node where it is calculated
+// and the value itself, which is a double. Other future outputs may profit from this function as well.
+void IO::print2outLine(const OutFlag &flag, const int ID, const double num)
+{
+
+	if ( (flag != OUTFLAG_WAVE_ELEV) && (flag != OUTFLAG_WAVE_PRES))
+	{
+		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const int ID, const double num).");
+	}
+
+	// If the print header flag is true and if this is one of the requested output variables,
+	// then print the header based on the output flag	
+	if (m_shouldWriteOutLineHeader && m_whichResult2Output.at(flag))
+	{
+		if (flag == OUTFLAG_WAVE_ELEV)
+		{
+			print2outLineHeader("WAVE_ELEV_" + std::to_string(ID));
+		}
+
+		if (flag == OUTFLAG_WAVE_PRES)
+		{
+			print2outLineHeader("WAVE_PRES_" + std::to_string(ID));
+		}
+	}
+	
+	// If the printing flag is true and if this is one of the requested output variables,
+	// then print it to the output line
+	if (m_shouldWriteOutLine && m_whichResult2Output.at(flag))
+	{
+		print2outLine(num);
 	}
 }
 
@@ -1001,6 +1066,10 @@ std::string IO::printOutVar()
 			output += "Wave Acceleration: ";
 			break;
 
+		case IO::OUTFLAG_WAVE_PRES:
+			output += "Wave Pressure: ";
+			break;
+
 		case IO::OUTFLAG_HD_FORCE:
 		    output += "Hydrodynamic force: ";
 			break;
@@ -1024,7 +1093,6 @@ std::string IO::printOutVar()
 		case IO::OUTFLAG_AD_HUB_FORCE:
 			output += "Aerodynamic forces (Hub): ";
 			break;
-
 
 		case IO::OUTFLAG_TOTAL_FORCE:
 			output += "Total force: ";
