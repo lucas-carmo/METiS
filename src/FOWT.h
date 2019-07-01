@@ -87,7 +87,7 @@ public:
 	void update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc);
 
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir);
-	vec::fixed<6> hydrostaticForce(const double watDensity, const double gravity);
+	vec::fixed<6> hydrostaticForce(const ENVIR &envir);
 	vec::fixed<6> aeroForce(const ENVIR &envir);
 	vec::fixed<6> mooringForce();
 	vec::fixed<6> weightForce(const double gravity);
