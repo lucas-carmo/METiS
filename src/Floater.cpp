@@ -334,7 +334,7 @@ mat::fixed<6, 6> Floater::addedMass(const double density) const
 	return A;
 }
 
-vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir) const
+vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode) const
 {	
 	vec::fixed<6> force(fill::zeros); // Total hydrodynamic force acting on the floater
 	vec::fixed<6> df(fill::zeros); // Total hydrodynamic force acting on each cylinder
@@ -356,8 +356,7 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir) const
 		df_drag.zeros();
 		df_froudeKrylov.zeros();
 
-
-		df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, df_inertia, df_drag, df_froudeKrylov);
+		df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, df_inertia, df_drag, df_froudeKrylov);
 		
 		// The moments acting on the cylinders were calculated with respect to the first node
 		// We need to change the fulcrum to the CoG
@@ -383,14 +382,24 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir) const
 	return force;
 }
 
-vec::fixed<6> Floater::hydrostaticForce(const double watDensity, const double gravity) const
+vec::fixed<6> Floater::hydrostaticForce(const double watDensity, const double gravity, const int hydroMode) const
 {
 	vec::fixed<6> force(fill::zeros);		
 	vec::fixed<6> df(fill::zeros);
 
+	// Z coordinate of cylinder intersection with water line. 
+	// If hydroMode = 1, z_wl = 0, i.e. wave elevation is not considered. This works just like traditional linear hydrostatics if displacements are indeed small)
+	// If hydroMode = 2, z_wl is set to the z coordinate of the intersection of the cylinder with the wave elevation.
+	double z_wl{ 0 }; 
+
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		df = m_MorisonElements.at(ii)->hydrostaticForce(watDensity, gravity, 0);
+		//if (hydroMode == 2)
+		//{
+		//	// Ainda não faz nada
+		//}
+
+		df = m_MorisonElements.at(ii)->hydrostaticForce(watDensity, gravity, z_wl);
 
 		// The moments acting on the cylinders were calculated with respect to the first node
 		// We need to change the fulcrum to the CoG

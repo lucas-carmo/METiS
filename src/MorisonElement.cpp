@@ -11,7 +11,8 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 							   const bool botPressFlag, const double axialCD, const double axialCa)
 	: m_node1Pos(node1Pos), m_node2Pos(node2Pos), 
 	  m_botPressFlag(botPressFlag), m_axialCD(axialCD), m_axialCa(axialCa),
-	  m_cog2node1(fill::zeros), m_cog2node2(fill::zeros), m_node1Vel(fill::zeros), m_node2Vel(fill::zeros), m_node1Acc(fill::zeros), m_node2Acc(fill::zeros)
+	  m_cog2node1(fill::zeros), m_cog2node2(fill::zeros), m_node1Vel(fill::zeros), m_node2Vel(fill::zeros), m_node1Acc(fill::zeros), m_node2Acc(fill::zeros),
+	  m_node1Pos_t0(node1Pos), m_node2Pos_t0(node2Pos)
 {
 	m_cog2node1 = m_node1Pos - cog;
 	m_cog2node2 = m_node2Pos - cog;

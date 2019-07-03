@@ -285,22 +285,12 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 
 vec::fixed<6> FOWT::hydrodynamicForce(const ENVIR &envir)
 {
-	if (m_hydroMode == 1)
-	{
-		return m_floater.hydrodynamicForce(envir);
-	}
-
-	return vec::fixed<6> {0, 0, 0, 0, 0, 0};
+	return m_floater.hydrodynamicForce(envir, m_hydroMode);
 }
 
 vec::fixed<6> FOWT::hydrostaticForce(const ENVIR &envir)
 {
-	if (m_hydroMode == 1)
-	{	
-		return m_floater.hydrostaticForce(envir.watDensity(), envir.gravity());
-	}
-
-	return vec::fixed<6> {0, 0, 0, 0, 0, 0};
+	return m_floater.hydrostaticForce(envir.watDensity(), envir.gravity(), m_hydroMode);
 }
 
 vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)
