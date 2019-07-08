@@ -6,11 +6,11 @@
 %%-----------------------------------------------------------------------------%%
 %%----------------------------- ACTIVE FORCES ---------------------------------%%
 %%-----------------------------------------------------------------------------%%
-Hydro   1
+Hydro   3 % 1: HD in initial position + HS matrix; 2: HD in instantaneous position + HS in instantaneous position (still WL); 3: Same as 2, but with Wheeler's stretching and HS up to wave height
 Aero    0
 Moor    1
 
-DOFS 0 1 0 1 1 0
+DOFS 1 1 1 1 1 1
 
 
 %%-----------------------------------------------------------------------------%%

@@ -382,24 +382,25 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 	return force;
 }
 
-vec::fixed<6> Floater::hydrostaticForce(const double watDensity, const double gravity, const int hydroMode) const
+vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir, const int hydroMode) const
 {
 	vec::fixed<6> force(fill::zeros);		
 	vec::fixed<6> df(fill::zeros);
-
+	
 	// Z coordinate of cylinder intersection with water line. 
-	// If hydroMode = 1, z_wl = 0, i.e. wave elevation is not considered. This works just like traditional linear hydrostatics if displacements are indeed small)
-	// If hydroMode = 2, z_wl is set to the z coordinate of the intersection of the cylinder with the wave elevation.
+	// If hydroMode = 1, hydrostatics should be done using hydrostatics matrix. Since this is not implemented yet, it is the same as hydroMode = 2
+	// If hydroMode = 2, z_wl = 0, i.e. wave elevation is not considered. This works just like traditional linear hydrostatics if displacements are indeed small)
+	// If hydroMode = 3, z_wl is set to the z coordinate of the intersection of the cylinder with the wave elevation.
 	double z_wl{ 0 }; 
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		//if (hydroMode == 2)
-		//{
-		//	// Ainda não faz nada
-		//}
+		if (hydroMode == 3)
+		{
+			z_wl = m_MorisonElements.at(ii)->findIntersectWL(envir);
+		}
 
-		df = m_MorisonElements.at(ii)->hydrostaticForce(watDensity, gravity, z_wl);
+		df = m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity(), z_wl);
 
 		// The moments acting on the cylinders were calculated with respect to the first node
 		// We need to change the fulcrum to the CoG

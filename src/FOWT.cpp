@@ -315,7 +315,7 @@ vec::fixed<6> FOWT::hydrostaticForce(const ENVIR &envir)
 		return vec::fixed<6> {0, 0, 0, 0, 0, 0};
 	}
 
-	return m_floater.hydrostaticForce(envir.watDensity(), envir.gravity(), m_hydroMode);
+	return m_floater.hydrostaticForce(envir, m_hydroMode);
 }
 
 vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)

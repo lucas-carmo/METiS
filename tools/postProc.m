@@ -20,12 +20,13 @@ else
 end
 
 
-flNm = 'C:\Users\lucas.henrique\Documents\METiS\test\OC4_200m_45deg_T30p00_out.txt';
-flNm2 = 'C:\Users\lucas.henrique\Documents\METiS\test\OC4_200m_45deg_T30p00_out_3.txt';
+% flNm = '/home/lucas/Nextcloud/Doutorado/Casos teste/preliminares/OC4-regular/HD_movel-HS_linear/H2p0m_T30p00_out.txt';
+flNm = '/home/lucas/Work/METiS/test/OC4_200m_45deg_T30p00_out_HM2.txt';
+flNm2 = '/home/lucas/Work/METiS/test/OC4_200m_45deg_T30p00_out_HM3.txt';
 
 
 
-legStr = {'dt = 0.25s', 'dt = 0.01s'};
+legStr = {'HD = 2', 'HD = 3'};
 
 
 
@@ -37,52 +38,50 @@ data_2_root = importdata(flNm2);
 data_2 = data_2_root.data;
 
 figure
-suptitle('Fixo - A = 4m - 45deg')
 set(gcf,'color','w')
 sizeOfFont = 12;
-suptitle('Fixo - A = 4m - 45deg')
 
 subplot(2,3,1)
-plot(data(:,1),data(:,2))
+plot(data(:,1),data(:,18))
 hold on
-plot(data_2(:,1),data_2(:,2))
+plot(data_2(:,1),data_2(:,18))
 hl = legend(legStr);
 set(hl, 'location', 'northwest')
 title('surge')
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,2)
-plot(data(:,1),data(:,3))
+plot(data(:,1),data(:,19))
 hold on
-plot(data_2(:,1),data_2(:,3))
+plot(data_2(:,1),data_2(:,19))
 title('sway')   
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,3)
-plot(data(:,1),data(:,4))
+plot(data(:,1),data(:,20))
 hold on
-plot(data_2(:,1),data_2(:,4))
+plot(data_2(:,1),data_2(:,20))
 title('heave')
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,4)
-plot(data(:,1),data(:,5))
+plot(data(:,1),data(:,21))
 hold on
-plot(data_2(:,1),data_2(:,5))
+plot(data_2(:,1),data_2(:,21))
 title('roll')
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,5)
-plot(data(:,1),data(:,6))
+plot(data(:,1),data(:,22))
 hold on
-plot(data_2(:,1),data_2(:,6))
+plot(data_2(:,1),data_2(:,22))
 title('pitch')
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,6)
-plot(data(:,1),data(:,7))
+plot(data(:,1),data(:,23))
 hold on
-plot(data_2(:,1),data_2(:,7))
+plot(data_2(:,1),data_2(:,23))
 title('yaw')
 set(gca, 'fontsize', sizeOfFont)
 
