@@ -45,7 +45,7 @@ void MorisonCirc::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3>
 
 
 // TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
-mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho) const
+mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const int hydroMode) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
@@ -56,6 +56,11 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho) const
 	// Nodes position
 	vec::fixed<3> n1 = node1Pos();
 	vec::fixed<3> n2 = node2Pos();
+	if (hydroMode == 1) // Check if the hydrodynamic force should be calculated considering the initial position of the floater
+	{
+		n1 = m_node1Pos_t0;
+		n2 = m_node2Pos_t0;
+	}
 
 	// Center of Gravity
 	double xG = n1[0] - m_cog2node1[0];
@@ -264,7 +269,7 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho) const
 
 
 // TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
-mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho) const
+mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const int hydroMode) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
@@ -275,6 +280,11 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho) const
 	// Nodes position
 	vec::fixed<3> n1 = node1Pos();
 	vec::fixed<3> n2 = node2Pos();
+	if (hydroMode == 1) // Check if the hydrodynamic force should be calculated considering the initial position of the floater
+	{
+		n1 = m_node1Pos_t0;
+		n2 = m_node2Pos_t0;
+	}
 
 	// Center of Gravity
 	double xG = n1[0] - m_cog2node1[0];

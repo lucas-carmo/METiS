@@ -51,8 +51,8 @@ public:
 	virtual void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
 
 	// Contribution to the added mass
-	virtual mat::fixed<6, 6> addedMass_perp(const double rho) const = 0;
-	virtual mat::fixed<6, 6> addedMass_paral(const double rho) const = 0;
+	virtual mat::fixed<6, 6> addedMass_perp(const double rho, const int hydroMode) const = 0;
+	virtual mat::fixed<6, 6> addedMass_paral(const double rho, const int hydroMode) const = 0;
 
 	// Forces
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g, const double z_wl) const = 0;

@@ -27,14 +27,14 @@ void MorisonRect::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3>
 
 
 // TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
-mat::fixed<6, 6> MorisonRect::addedMass_perp(const double rho) const
+mat::fixed<6, 6> MorisonRect::addedMass_perp(const double rho, const int hydroMode) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
 	return A;
 }
 
-mat::fixed<6, 6> MorisonRect::addedMass_paral(const double rho) const
+mat::fixed<6, 6> MorisonRect::addedMass_paral(const double rho, const int hydroMode) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 

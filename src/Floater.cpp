@@ -322,13 +322,13 @@ void Floater::update(const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel
 	}
 }
 
-mat::fixed<6, 6> Floater::addedMass(const double density) const
+mat::fixed<6, 6> Floater::addedMass(const double density, const int hydroMode) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		A += m_MorisonElements.at(ii)->addedMass_perp(density) + m_MorisonElements.at(ii)->addedMass_paral(density);
+		A += m_MorisonElements.at(ii)->addedMass_perp(density, hydroMode) + m_MorisonElements.at(ii)->addedMass_paral(density, hydroMode);
 	}
 
 	return A;
