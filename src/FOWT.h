@@ -21,9 +21,9 @@ private:
 	/*
 	Forces included in the analysis
 	*/
-	int m_hydroMode;
-	int m_aeroMode;
-	int m_moorMode;
+	int m_hydroMode{ 0 };
+	int m_aeroMode{ 0 };
+	int m_moorMode{ 0 };
 
 	/*
 	Flags to specify the active degrees of freedom
@@ -65,6 +65,10 @@ public:
 	/*****************************************************
 		Getters
 	*****************************************************/
+	int hydroMode() const;
+	int aeroMode() const;
+	int moorMode() const;
+
 	vec::fixed<3> CoG();
 	double mass();
 
@@ -87,7 +91,7 @@ public:
 	void update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc);
 
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir);
-	vec::fixed<6> hydrostaticForce(const double watDensity, const double gravity);
+	vec::fixed<6> hydrostaticForce(const ENVIR &envir);
 	vec::fixed<6> aeroForce(const ENVIR &envir);
 	vec::fixed<6> mooringForce();
 	vec::fixed<6> weightForce(const double gravity);
