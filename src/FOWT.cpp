@@ -104,6 +104,21 @@ void FOWT::setRNA(RNA &rna)
 /*****************************************************
 	Getters
 *****************************************************/
+int FOWT::hydroMode() const
+{
+	return m_hydroMode;
+}
+
+int FOWT::aeroMode() const
+{
+	return m_aeroMode;
+}
+
+int FOWT::moorMode() const
+{
+	return m_moorMode;
+}
+
 vec::fixed<3> FOWT::CoG()
 {
 	// If CoG was not calculated yet, calculate it
@@ -162,7 +177,7 @@ std::string FOWT::printFloater() const
 	output = output + "\tInertia Matrix:\t" + m_floater.printInertia() + "\n";
 	output = output + "\tMorison Elements:\n" + m_floater.printMorisonElements() + "\n";
 
-	mat::fixed<6, 6> A = m_floater.addedMass(1);
+	mat::fixed<6, 6> A = m_floater.addedMass(1, 1);
 	output = output + "\tAdded Mass for unitary density:\n";
 	for (int ii = 0; ii < 6; ++ii)
 	{
@@ -245,10 +260,10 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 	IO::print2outLine(IO::OUTFLAG_FOWT_DISP, m_disp);
 	IO::print2outLine(IO::OUTFLAG_FOWT_VEL, m_vel);
 
-	vec::fixed<6> acc(fill::zeros);	
+	vec::fixed<6> acc(fill::zeros);
 
 	// Inertia matrix including added matrix
-	mat::fixed<6, 6> inertiaMatrix = m_floater.addedMass(envir.watDensity()) + m_floater.inertiaMatrix();
+	mat::fixed<6, 6> inertiaMatrix = m_floater.addedMass(envir.watDensity(), m_hydroMode) + m_floater.inertiaMatrix();
 
 	// Calculate the total force acting on the FOWT
 	vec::fixed<6> force = totalForce(envir);
@@ -285,22 +300,22 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 
 vec::fixed<6> FOWT::hydrodynamicForce(const ENVIR &envir)
 {
-	if (m_hydroMode == 1)
+	if (m_hydroMode == 0)
 	{
-		return m_floater.hydrodynamicForce(envir);
+		return vec::fixed<6> {0, 0, 0, 0, 0, 0};
 	}
 
-	return vec::fixed<6> {0, 0, 0, 0, 0, 0};
+	return m_floater.hydrodynamicForce(envir, m_hydroMode);
 }
 
 vec::fixed<6> FOWT::hydrostaticForce(const ENVIR &envir)
 {
-	if (m_hydroMode == 1)
-	{	
-		return m_floater.hydrostaticForce(envir.watDensity(), envir.gravity());
+	if (m_hydroMode == 0)
+	{
+		return vec::fixed<6> {0, 0, 0, 0, 0, 0};
 	}
 
-	return vec::fixed<6> {0, 0, 0, 0, 0, 0};
+	return m_floater.hydrostaticForce(envir, m_hydroMode);
 }
 
 vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)

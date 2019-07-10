@@ -21,9 +21,9 @@ private:
 	/*
 	Forces included in the analysis
 	*/
-	int m_hydroMode;
-	int m_aeroMode;
-	int m_moorMode;
+	int m_hydroMode{ 0 };
+	int m_aeroMode{ 0 };
+	int m_moorMode{ 0 };
 
 	/*
 	Flags to specify the active degrees of freedom
@@ -65,6 +65,10 @@ public:
 	/*****************************************************
 		Getters
 	*****************************************************/
+	int hydroMode() const;
+	int aeroMode() const;
+	int moorMode() const;
+
 	vec::fixed<3> CoG();
 	double mass();
 

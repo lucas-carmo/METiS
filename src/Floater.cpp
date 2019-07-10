@@ -322,19 +322,19 @@ void Floater::update(const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel
 	}
 }
 
-mat::fixed<6, 6> Floater::addedMass(const double density) const
+mat::fixed<6, 6> Floater::addedMass(const double density, const int hydroMode) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		A += m_MorisonElements.at(ii)->addedMass_perp(density) + m_MorisonElements.at(ii)->addedMass_paral(density);
+		A += m_MorisonElements.at(ii)->addedMass_perp(density, hydroMode) + m_MorisonElements.at(ii)->addedMass_paral(density, hydroMode);
 	}
 
 	return A;
 }
 
-vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir) const
+vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode) const
 {	
 	vec::fixed<6> force(fill::zeros); // Total hydrodynamic force acting on the floater
 	vec::fixed<6> df(fill::zeros); // Total hydrodynamic force acting on each cylinder
@@ -356,8 +356,7 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir) const
 		df_drag.zeros();
 		df_froudeKrylov.zeros();
 
-
-		df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, df_inertia, df_drag, df_froudeKrylov);
+		df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, df_inertia, df_drag, df_froudeKrylov);
 		
 		// The moments acting on the cylinders were calculated with respect to the first node
 		// We need to change the fulcrum to the CoG
@@ -383,14 +382,18 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir) const
 	return force;
 }
 
-vec::fixed<6> Floater::hydrostaticForce(const double watDensity, const double gravity) const
+vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir, const int hydroMode) const
 {
 	vec::fixed<6> force(fill::zeros);		
 	vec::fixed<6> df(fill::zeros);
+	
+	// Z coordinate of cylinder intersection with water line. 
+	// If hydroMode = 1, hydrostatics should be done using hydrostatics matrix. Since this is not implemented yet, it is the same as the other hydromodes.
+	// Otherwise, the hydrostatics is calculated using the instantaneous position of the cylinder.
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		df = m_MorisonElements.at(ii)->hydrostaticForce(watDensity, gravity, 0);
+		df = m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity());
 
 		// The moments acting on the cylinders were calculated with respect to the first node
 		// We need to change the fulcrum to the CoG

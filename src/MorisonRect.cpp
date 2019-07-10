@@ -27,14 +27,14 @@ void MorisonRect::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3>
 
 
 // TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
-mat::fixed<6, 6> MorisonRect::addedMass_perp(const double rho) const
+mat::fixed<6, 6> MorisonRect::addedMass_perp(const double rho, const int hydroMode) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
 	return A;
 }
 
-mat::fixed<6, 6> MorisonRect::addedMass_paral(const double rho) const
+mat::fixed<6, 6> MorisonRect::addedMass_paral(const double rho, const int hydroMode) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
@@ -42,13 +42,13 @@ mat::fixed<6, 6> MorisonRect::addedMass_paral(const double rho) const
 }
 
 
-vec::fixed<6> MorisonRect::hydrostaticForce(const double rho, const double g, const double z_wl) const
+vec::fixed<6> MorisonRect::hydrostaticForce(const double rho, const double g) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;
 }
 
-vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const
+vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir, const int hydroMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;

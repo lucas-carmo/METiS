@@ -29,6 +29,11 @@ protected:
 	vec::fixed<3> m_node1AccCentrip;
 	vec::fixed<3> m_node2AccCentrip;
 
+	// Nodes position at the beginning of the simulation, which is useful for
+	// calculating the hydrodynamic forces considering only first order terms
+	vec::fixed<3> m_node1Pos_t0;
+	vec::fixed<3> m_node2Pos_t0;
+
 public:
 	MorisonElement(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints, 
 				   const bool botPressFlag, const double axialCD, const double axialCa);
@@ -46,12 +51,13 @@ public:
 	virtual void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
 
 	// Contribution to the added mass
-	virtual mat::fixed<6, 6> addedMass_perp(const double rho) const = 0;
-	virtual mat::fixed<6, 6> addedMass_paral(const double rho) const = 0;
+	virtual mat::fixed<6, 6> addedMass_perp(const double rho, const int hydroMode) const = 0;
+	virtual mat::fixed<6, 6> addedMass_paral(const double rho, const int hydroMode) const = 0;
 
-	// Forces
-	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g, const double z_wl) const = 0;
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const = 0; 
+	// Forces and their auxiliaries
+	virtual double findIntersectWL(const ENVIR &envir) const;
+	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const = 0;
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const = 0;
 
 	// Printers and getters
 	virtual std::string print() const = 0;

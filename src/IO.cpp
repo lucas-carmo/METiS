@@ -1025,9 +1025,33 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Aero Mode:\t" << fowt.printAeroMode() << "\n";
 	m_sumFl << "Moor Mode:\t" << fowt.printMoorMode() << "\n";
 	m_sumFl << "DOFs:\t" << fowt.printDoF() << '\n';
-	m_sumFl << "Linear Stiffness:\t" << fowt.printLinStiff() << '\n';
-	m_sumFl << "Floater:\n" << fowt.printFloater();
-	m_sumFl << "RNA:\n" << fowt.printRNA();
+	
+	if (fowt.moorMode() == 0)
+	{
+		m_sumFl << "No stiffness considered because Moor Mode = 0\n";
+	}
+	else
+	{
+		m_sumFl << "Linear Stiffness:\t" << fowt.printLinStiff() << '\n';
+	}
+
+	if (fowt.hydroMode() == 0)
+	{
+		m_sumFl << "No floater considered because Hydro Mode = 0\n";
+	}
+	else
+	{
+		m_sumFl << "Floater:\n" << fowt.printFloater();
+	}
+
+	if (fowt.aeroMode() == 0)
+	{
+		m_sumFl << "No RNA considered because Aero Mode = 0\n";
+	}
+	else
+	{
+		m_sumFl << "RNA:\n" << fowt.printRNA();
+	}
 
 	m_sumFl << "\n\n";
 	m_sumFl << "Output Variables:\n" << IO::printOutVar();

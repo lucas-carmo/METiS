@@ -6,11 +6,11 @@
 %%-----------------------------------------------------------------------------%%
 %%----------------------------- ACTIVE FORCES ---------------------------------%%
 %%-----------------------------------------------------------------------------%%
-Hydro   1
+Hydro   2 % 1: HD in initial position + HS matrix; 2: HD in instantaneous position with linear wave kinematics + HS in instantaneous position; 3: HD in instantaneous position with non-linear wave kinematics + HS in instantaneous position
 Aero    0
 Moor    1
 
-DOFS 0 1 0 1 1 0
+DOFS 1 1 1 1 1 1
 
 
 %%-----------------------------------------------------------------------------%%
