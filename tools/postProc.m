@@ -21,12 +21,12 @@ end
 
 
 % flNm = '/home/lucas/Nextcloud/Doutorado/Casos teste/preliminares/OC4-regular/HD_movel-HS_linear/H2p0m_T30p00_out.txt';
-flNm = '/home/lucas/Work/METiS/test/OC4_200m_45deg_T30p00_out_HM2.txt';
-flNm2 = '/home/lucas/Work/METiS/test/OC4_200m_45deg_T30p00_out_HM3.txt';
+flNm = '..\test\OC4_200m_45deg_T30p00_out.txt';
+flNm2 = '..\test\OC4_200m_45deg_T30p00_out_3.txt';
 
 
 
-legStr = {'HD = 2', 'HD = 3'};
+legStr = {'HD = 3', 'HD = 2'};
 
 
 

@@ -55,8 +55,8 @@ public:
 	virtual mat::fixed<6, 6> addedMass_paral(const double rho, const int hydroMode) const = 0;
 
 	// Forces and their auxiliaries
-	virtual double findIntersectWL(const ENVIR &envir) const = 0;
-	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g, const double z_wl) const = 0;
+	virtual double findIntersectWL(const ENVIR &envir) const;
+	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const = 0;
 	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const = 0;
 
 	// Printers and getters

@@ -41,12 +41,8 @@ mat::fixed<6, 6> MorisonRect::addedMass_paral(const double rho, const int hydroM
 	return A;
 }
 
-double MorisonRect::findIntersectWL(const ENVIR &envir) const
-{
-	return 0;
-}
 
-vec::fixed<6> MorisonRect::hydrostaticForce(const double rho, const double g, const double z_wl) const
+vec::fixed<6> MorisonRect::hydrostaticForce(const double rho, const double g) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;
