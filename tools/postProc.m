@@ -21,8 +21,8 @@ end
 
 
 % flNm = '/home/lucas/Nextcloud/Doutorado/Casos teste/preliminares/OC4-regular/HD_movel-HS_linear/H2p0m_T30p00_out.txt';
-flNm = '..\test\OC4_200m_45deg_T30p00_out.txt';
-flNm2 = '..\test\OC4_200m_45deg_T30p00_out_3.txt';
+flNm = '..\test\OC4_200m_45deg_Tirreg_out.txt';
+flNm2 = '..\test\OC4_200m_45deg_Tirreg_out.txt';
 
 
 
@@ -42,49 +42,54 @@ set(gcf,'color','w')
 sizeOfFont = 12;
 
 subplot(2,3,1)
-plot(data(:,1),data(:,18))
+plot(data(:,1),data(:,3))
 hold on
-plot(data_2(:,1),data_2(:,18))
+plot(data_2(:,1),data_2(:,3))
 hl = legend(legStr);
 set(hl, 'location', 'northwest')
 title('surge')
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,2)
-plot(data(:,1),data(:,19))
+plot(data(:,1),data(:,4))
 hold on
-plot(data_2(:,1),data_2(:,19))
+plot(data_2(:,1),data_2(:,4))
 title('sway')   
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,3)
-plot(data(:,1),data(:,20))
+plot(data(:,1),data(:,5))
 hold on
-plot(data_2(:,1),data_2(:,20))
+plot(data_2(:,1),data_2(:,5))
 title('heave')
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,4)
-plot(data(:,1),data(:,21))
+plot(data(:,1),data(:,6))
 hold on
-plot(data_2(:,1),data_2(:,21))
+plot(data_2(:,1),data_2(:,6))
 title('roll')
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,5)
-plot(data(:,1),data(:,22))
+plot(data(:,1),data(:,7))
 hold on
-plot(data_2(:,1),data_2(:,22))
+plot(data_2(:,1),data_2(:,7))
 title('pitch')
 set(gca, 'fontsize', sizeOfFont)
 
 subplot(2,3,6)
-plot(data(:,1),data(:,23))
+plot(data(:,1),data(:,8))
 hold on
-plot(data_2(:,1),data_2(:,23))
+plot(data_2(:,1),data_2(:,8))
 title('yaw')
 set(gca, 'fontsize', sizeOfFont)
 
+
+figure
+plot(data(:,1),data(:,2))
+ylabel('wave elevation (m)')
+xlabel('time (s)')
 
 
 % % Hydrodynamic force - Total

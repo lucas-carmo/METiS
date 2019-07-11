@@ -174,7 +174,8 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				envir.addWave(Wave(strInput)); // Add this wave to the environment
+
+				envir.addWave(strInput); // Add this wave to the environment
 
 				IO::readLineInputFile(strInput);
 			}
