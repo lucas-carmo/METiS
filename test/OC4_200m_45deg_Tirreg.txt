@@ -35,16 +35,7 @@ Wave
 % FRWAVE \t Height \t Frequency         \t Direction (in degrees) \t Phase (in degrees)
 % TRWAVE \t Height \t Period            \t Direction (in degrees) \t Phase (in degrees)
 % JONSW  \t Significant Height \t Peak Period \t Gamma \t Direction (in degrees) \t Lowest frequency (rad/s) \t Highest frequency (rad/s)
-TRWAVE	0.26	5.50    45  5
-TRWAVE	0.15	3.00    45  12
-TRWAVE	0.34	6.43    45  3
-TRWAVE	0.63	8.92    45  86
-TRWAVE	0.80	9.74    45  32
-TRWAVE	0.75	12.5    45  156
-TRWAVE	0.86	15.7    45  66
-TRWAVE	0.10	18.6    45  26
-TRWAVE	1.50	22.3    45  46
-TRWAVE	1.30	25.0    45  77
+JONSW   2       11      3.3     45      0.314159    1.570796
 END
 
 
