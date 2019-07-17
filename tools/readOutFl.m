@@ -24,6 +24,6 @@ end
 
 
 for ii = 1 : numel(data.colheaders)
-    str4field = data.colheaders{ii};
+    str4field = lower(data.colheaders{ii});
     out.(str4field) = data.data(:,ii);
 end
