@@ -1,32 +1,17 @@
 % Post processing routine for METiS output 
-% POR ENQUANTO TA UMA ZONA. Vou arrumar direitinho depois que validar as
-% coisas mais basicas
 
 clear all
 close all
 clc
 
-% I do not know why, but MATLAB's function 'filesep' was not working
-% properly in Ubuntu, so I decided to to specify the file separator this
-% way
-if ispc
-    flSep = '\';
-elseif isunix
-    flSep = '/';
-elseif ismac
-    flSep = ':';
-else
-    flSep = '/';
-end
 
+flNm = {'/home/lucas/Work/METiS/test/OC4_200m_45deg_T30p00_out.txt'
+        '/home/lucas/Work/METiS/test/OC4_200m_45deg_T30p00_out.txt'
+        '/home/lucas/Work/METiS/test/OC4_200m_45deg_T30p00_out.txt'
+        };
 
-% flNm = '/home/lucas/Nextcloud/Doutorado/Casos teste/preliminares/OC4-regular/HD_movel-HS_linear/H2p0m_T30p00_out.txt';
-flNm = '..\test\OC4_200m_45deg_Tirreg_out.txt';
-flNm2 = '..\test\OC4_200m_45deg_Tirreg_out.txt';
-
-
-
-legStr = {'HD = 3', 'HD = 2'};
+% Choose the output
+motions = [1 1 1 1 1 1]; % 
 
 
 
