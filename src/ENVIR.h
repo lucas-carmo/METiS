@@ -66,9 +66,10 @@ public:
 	void readWindRefVel(const std::string &data);
 	void readWindRefHeight(const std::string &data);
 	void readWindExp(const std::string &data);
-
-	void addWave(const Wave &wave);
+	
 	void addWave(const std::string &wholeWaveLine);
+	void jonswap(const std::string &wholeWaveLine);
+
 	void addWaveLocation(const std::string &data);
 
 	/*****************************************************
