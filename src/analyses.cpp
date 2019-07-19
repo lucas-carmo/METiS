@@ -114,9 +114,11 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 
 		IO::printOutLine2outFile();
         
-		// Print progress to the screen
-		// TO DO: PARAR DE IMPRIMIR ISSO TODO TIME STEP. FAZER ESPACADO (A CADA 10? 20?)
-        std::cout << round(100 * envir.time() / envir.timeTotal()) << "%" << '\r';
+		// Print progress to the screen. Print only in integer seconds.
+		if (std::floor(envir.time()) == envir.time())
+		{
+			std::cout << "\n   Progress: " << std::setprecision(0) << envir.time() << " of " << envir.timeTotal() << " seconds -- " << std::fixed << std::setprecision(1) << 100 * envir.time() / envir.timeTotal() << "%" << '\r';
+		}
         std::fflush(stdout);        
     }
 }
