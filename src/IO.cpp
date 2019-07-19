@@ -1018,7 +1018,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Wind exp:\t" << envir.windExp() << '\n';
 	m_sumFl << "Nodes: \n" << envir.printNodes() << '\n';
 	m_sumFl << "Wave Locations: " << envir.printWaveLocation() << '\n';
-	m_sumFl << "\n" << envir.printWave() << '\n';
+	//m_sumFl << "\n" << envir.printWave() << '\n';
 
 	m_sumFl << "\n\n";
 	m_sumFl << "FOWT:\n";

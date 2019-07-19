@@ -155,6 +155,43 @@ void ENVIR::jonswap(const std::string &wholeWaveLine)
 	readDataFromString(input.at(4), wlow);
 	readDataFromString(input.at(5), whigh);
 
+	// Frequency resolution and maximum possible frequency are determined by the total time simulation and time step
+	// See Mérigaud, A. and Ringwood, John V. - Free-Surface Time-Series Generation for Wave Energy Applications - IEEE J. of Oceanic Eng. - 2018
+	const double pi = arma::datum::pi;
+	double dw = 2 * pi / m_timeTotal;
+	double wmax = pi / m_timeStep;
+
+	// Wave parameters that will be calculated using the JONSWAP spectrum
+	double height(0);
+	double phase(0);
+
+	// JONSWAP parameters
+	double wp = 2*pi/Tp;
+	double sigma(0);
+	double A(0);
+	double Sw(0);
+
+	// Loop to create the waves
+	int ii = 0;
+	for (double w = wlow; w <= whigh; w += dw)
+	{
+		if (w <= wp)
+		{
+			sigma = 0.07;
+		}
+		else
+		{
+			sigma = 0.09;
+		}
+
+		A = std::exp(-0.5 * std::pow((w / wp - 1) / sigma, 2));
+		Sw = 0.315 * std::pow(Hs, 2) * Tp * std::pow(w / wp, -5) * std::exp(-1.25 * std::pow(wp / w, 4)) * (1 - 0.287*std::log(gamma)) * std::pow(gamma, A);
+
+		height = 2 * std::sqrt(2 * Sw * dw);
+		phase = -pi + (pi + pi) * randu(1, 1).at(0, 0);
+		m_wave.push_back(Wave(height, 2*pi/w, dir, phase, m_watDepth, m_gravity));
+	}
+
 	double b = 1;
 }
 
