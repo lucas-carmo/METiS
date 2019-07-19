@@ -42,21 +42,10 @@ Wave::Wave(const std::string &wholeWaveLine)
 	// 3) Direction of propagation	
 	std::vector<std::string> input = stringTokenize(getData(wholeWaveLine), " \t");
 
-	// Test if the keyword is known
-	if ( !caseInsCompare(getKeyword(wholeWaveLine), "TRWave") 
-	  && !caseInsCompare(getKeyword(wholeWaveLine), "FRWave") 
-	  && !caseInsCompare(getKeyword(wholeWaveLine), "WRWave") )
-	{
-		throw std::runtime_error( "Unknown keyword '" + getKeyword(wholeWaveLine) + "' in input line " + std::to_string(IO::getInLineNumber()) + ".");
-		return;
-	}
-
-
 	// Check if there are exactly four inputs (Wave height, period/frequency/angular frequency, direction, and phase)
 	if (input.size() != 4)
 	{
 		throw std::runtime_error("Unable to read the wave in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");				  
-		return;
 	}
 
 
@@ -268,128 +257,4 @@ double Wave::length(const double watDepth, const double gravity) const
 {
 	// The function Wave::waveNumber never outputs 0	
 	return 2*arma::datum::pi / this->waveNumber(watDepth, gravity);
-}
-
-
-/*****************************************************
-	Other functions
-*****************************************************/
-double Wave::waveElev(const double x, const double y, const double t, const double h) const
-{
-	// We consider linear Airy waves, with velocity potential:
-	// phi = g*A/w * cosh(k(z+h))/cosh(k*h) * sin(k*x - w*t)
-	double w = angFreq();
-	double k = waveNumber();
-	double beta = direction() * arma::datum::pi / 180.;
-
-	return amp() * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase() );
-}
-
-vec::fixed<3> Wave::fluidVel(const vec::fixed<3> &coord, const double t, const double h) const
-{
-	double u1(0), u2(0), u3(0); // Initialize the three wave velocity components
-	double x = coord[0];
-	double y = coord[1];
-	double z = coord[2];
-
-	// We consider linear Airy waves, with velocity potential:
-	// phi = g*A/w * cosh(k(z+h))/cosh(k*h) * sin(k*x - w*t)
-	// This formulation is valid only below the mean water level, i.e. z <= 0
-	if (z <= 0)
-	{
-		double w = angFreq();
-		double A = amp();
-		double k = waveNumber();
-		double beta = direction() * arma::datum::pi / 180.;
-
-		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
-		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
-		double khz_xy(0), khz_z(0);
-		if (k*h >= 10)
-		{
-			khz_xy = exp(k*z);
-			khz_z = khz_xy;
-		}
-		else
-		{
-			khz_xy = cosh(k * (z + h)) / sinh(k*h);
-			khz_z = sinh(k * (z + h)) / sinh(k*h);
-		}
-
-		u1 = w * A * khz_xy * cos(beta) * cos( k*cos(beta)*x + k*sin(beta)*y - w*t + phase() );
-		u2 = w * A * khz_xy * sin(beta) * cos( k*cos(beta)*x + k*sin(beta)*y - w*t + phase() );
-		u3 = w * A * khz_z * sin( k*cos(beta)*x + k*sin(beta)*y - w*t + phase() );
-	}
-
-	vec::fixed<3> vel = { u1, u2, u3 };
-	return vel;
-}
-
-
-vec::fixed<3> Wave::fluidAcc(const vec::fixed<3> &coord, const double t, const double h) const
-{
-	// Procedure is quite the same as the one employed in Wave::fluidVel for calculating the fluid velocity
-	double a1(0), a2(0), a3(0); 
-	double x = coord[0];
-	double y = coord[1];
-	double z = coord[2];
-
-	if (z <= 0)
-	{
-		double w = angFreq();
-		double A = amp();
-		double k = waveNumber();
-		double beta = direction() * arma::datum::pi / 180.;
-
-		double khz_xy(0), khz_z(0);
-		if (k*h >= 10)
-		{
-			khz_xy = exp(k*z);
-			khz_z = khz_xy;
-		}
-		else
-		{
-			khz_xy = cosh(k * (z + h)) / sinh(k*h);
-			khz_z = sinh(k * (z + h)) / sinh(k*h);
-		}
-
-		a1 = pow(w, 2) * A * khz_xy * cos(beta) * sin( k*cos(beta)*x + k*sin(beta)*y - w*t + phase() );
-		a2 = pow(w, 2) * A * khz_xy * sin(beta) * sin( k*cos(beta)*x + k*sin(beta)*y - w*t + phase() );
-		a3 = -pow(w, 2) * A * khz_z * cos( k*cos(beta)*x + k*sin(beta)*y - w*t + phase());
-
-	}
-    vec::fixed<3> acc = { a1, a2, a3 };
-	return acc;
-}
-
-
-double Wave::pressure(const vec::fixed<3> &coord, const double t, const  double rho, const double g, const double h) const
-{
-	// Procedure is similar to the one employed in Wave::fluidVel for calculating the fluid velocity
-	double p{ 0 };
-	double x = coord[0];
-	double y = coord[1];
-	double z = coord[2];
-
-	if (z <= 0)
-	{
-		double w = angFreq();
-		double A = amp();
-		double k = waveNumber();
-		double beta = direction() * arma::datum::pi / 180.;
-
-		double khz(0);
-		if (k*h >= 10)
-		{
-			khz = exp(k*z);
-		}
-		else
-		{
-			khz = cosh(k * (z + h)) / cosh(k*h);
-		}
-
-		p = rho * g * A * khz * cos( k*cos(beta)*x + k*sin(beta)*y - w*t + phase() );
-	}
-
-	return p;
 }

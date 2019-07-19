@@ -87,10 +87,10 @@ void ENVIR::readWatDepth(const std::string &data)
 	readDataFromString(data, m_watDepth);
 }
 
-void ENVIR::addWave(const Wave &wave)
+void ENVIR::addWave(const std::string &wholeWaveLine)
 {
 	// Check whether the water depth was defined
-	if ( !is_finite(m_watDepth) )
+	if (!is_finite(m_watDepth))
 	{
 		throw std::runtime_error("You should specify the water depth before the waves. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
@@ -101,9 +101,99 @@ void ENVIR::addWave(const Wave &wave)
 		throw std::runtime_error("You should specify the gravity before the waves. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
 
-	m_wave.push_back(Wave(wave.height(), wave.period(), wave.direction(), wave.phase(), m_watDepth, m_gravity));
+	// Test if the keyword is related to regular waves
+	if (caseInsCompare(getKeyword(wholeWaveLine), "TRWave")
+		|| caseInsCompare(getKeyword(wholeWaveLine), "FRWave")
+		|| caseInsCompare(getKeyword(wholeWaveLine), "WRWave"))
+	{
+		Wave tempWave(wholeWaveLine);
+		m_wave.push_back(Wave(tempWave.height(), tempWave.period(), tempWave.direction(), tempWave.phase(), m_watDepth, m_gravity));
+	}
+
+	// Check if it is a JONSWAP spectrum
+	else if (caseInsCompare(getKeyword(wholeWaveLine), "JONSW"))
+	{
+		jonswap(wholeWaveLine);
+	}
+
+	else
+	{
+		throw std::runtime_error("Unknown keyword '" + getKeyword(wholeWaveLine) + "' in input line " + std::to_string(IO::getInLineNumber()) + ".");
+	}
 }
 
+void ENVIR::jonswap(const std::string &wholeWaveLine)
+{
+	// JONSWAP characteristics are divided by a space or a tab.
+	// The characteristics are 
+	// 1) Wave significant height
+	// 2) Wave peark period
+	// 3) Gamma
+	// 4) Direction (in degrees)
+	// 5) Lowest frequency for the spectrum (rad/s)
+	// 6) Highest frequency for the spectrum (rad/s)
+	std::vector<std::string> input = stringTokenize(getData(wholeWaveLine), " \t");
+
+	// Check if there are exactly six outputs
+	if (input.size() != 6)
+	{
+		throw std::runtime_error("Unable to read JONSWAP spectrum in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+	}
+	
+	double Hs;
+	double Tp;
+	double gamma;
+	double dir;
+	double wlow;
+	double whigh;
+
+	// Finally, read data
+	readDataFromString(input.at(0), Hs);
+	readDataFromString(input.at(1), Tp);
+	readDataFromString(input.at(2), gamma);
+	readDataFromString(input.at(3), dir);
+	readDataFromString(input.at(4), wlow);
+	readDataFromString(input.at(5), whigh);
+
+	// Frequency resolution and maximum possible frequency are determined by the total time simulation and time step
+	// See Mérigaud, A. and Ringwood, John V. - Free-Surface Time-Series Generation for Wave Energy Applications - IEEE J. of Oceanic Eng. - 2018
+	const double pi = arma::datum::pi;
+	double dw = 2 * pi / m_timeTotal;
+	double wmax = pi / m_timeStep;
+
+	// Wave parameters that will be calculated using the JONSWAP spectrum
+	double height(0);
+	double phase(0);
+
+	// JONSWAP parameters
+	double wp = 2*pi/Tp;
+	double sigma(0);
+	double A(0);
+	double Sw(0);
+
+	// Loop to create the waves
+	int ii = 0;
+	for (double w = wlow; w <= whigh; w += dw)
+	{
+		if (w <= wp)
+		{
+			sigma = 0.07;
+		}
+		else
+		{
+			sigma = 0.09;
+		}
+
+		A = std::exp(-0.5 * std::pow((w / wp - 1) / sigma, 2));
+		Sw = 0.315 * std::pow(Hs, 2) * Tp * std::pow(w / wp, -5) * std::exp(-1.25 * std::pow(wp / w, 4)) * (1 - 0.287*std::log(gamma)) * std::pow(gamma, A);
+
+		height = 2 * std::sqrt(2 * Sw * dw);
+		phase = -pi + (pi + pi) * randu(1, 1).at(0, 0);
+		m_wave.push_back(Wave(height, 2*pi/w, dir, phase, m_watDepth, m_gravity));
+	}
+
+	double b = 1;
+}
 
 void ENVIR::addWaveLocation(const std::string &data)
 {
@@ -318,8 +408,8 @@ void ENVIR::printWaveCharact() const
 	for (int ii = 0; ii < m_waveLocation.size(); ++ii)
 	{
 		IO::print2outLine(IO::OUTFLAG_WAVE_ELEV, m_waveLocationID[ii], waveElev(m_waveLocation[ii][0], m_waveLocation[ii][1]));
-		IO::print2outLine(IO::OUTFLAG_WAVE_VEL, m_waveLocationID[ii], fluidVel(m_waveLocation[ii]));
-		IO::print2outLine(IO::OUTFLAG_WAVE_ACC, m_waveLocationID[ii], fluidAcc(m_waveLocation[ii]));
+		IO::print2outLine(IO::OUTFLAG_WAVE_VEL, m_waveLocationID[ii], u1(m_waveLocation[ii]));
+		IO::print2outLine(IO::OUTFLAG_WAVE_ACC, m_waveLocationID[ii], du1dt(m_waveLocation[ii]));
 		IO::print2outLine(IO::OUTFLAG_WAVE_PRES, m_waveLocationID[ii], wavePressure(m_waveLocation[ii]));
 	}
 }
@@ -384,47 +474,171 @@ double ENVIR::ramp() const
 double ENVIR::waveElev(const double x, const double y) const
 {
 	double elev{ 0 };
+
+	// Variables that are used for each wave
+	double w(0), A(0), k(0), beta(0), phase(0);
+
+	// We consider linear Airy waves, with velocity potential:
+	// phi = g*A/w * cosh(k(z+h))/cosh(k*h) * sin(k*x - w*t)
 	for (int ii = 0; ii < m_wave.size(); ++ii)
 	{
-		elev += m_wave.at(ii).waveElev(x, y, m_time, m_watDepth);
+		w = m_wave.at(ii).angFreq();
+		A = m_wave.at(ii).amp();
+		k = m_wave.at(ii).waveNumber();
+		beta = m_wave.at(ii).direction() * arma::datum::pi / 180.;
+		phase = m_wave.at(ii).phase();
+
+		elev += A * cos(k*cos(beta)*x + k * sin(beta)*y - w * m_time + phase);
 	}
 
 	return elev * ramp();
 }
 
 
-vec::fixed<3> ENVIR::fluidVel(const vec::fixed<3> &coord) const
+vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord) const
 {
 	arma::vec::fixed<3> vel = {0,0,0};
-	for (int ii = 0; ii < m_wave.size(); ++ii)
+
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+
+	// Variables that are used for each wave
+	double w(0), A(0), k(0), beta(0), phase(0);
+	double khz_xy(0), khz_z(0);
+
+	// This formulation is valid only below the mean water level, i.e. z <= 0
+	if (z <= 0)
 	{
-		vel += m_wave.at(ii).fluidVel(coord, m_time, m_watDepth);
+		for (int ii = 0; ii < m_wave.size(); ++ii)
+		{
+			w = m_wave.at(ii).angFreq();
+			A = m_wave.at(ii).amp();
+			k = m_wave.at(ii).waveNumber();
+			beta = m_wave.at(ii).direction() * arma::datum::pi / 180.;
+			phase = m_wave.at(ii).phase();
+
+			// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+			// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+			if (k*h >= 10)
+			{
+				khz_xy = exp(k*z);
+				khz_z = khz_xy;
+			}
+			else
+			{
+				khz_xy = cosh(k * (z + h)) / sinh(k*h);
+				khz_z = sinh(k * (z + h)) / sinh(k*h);
+			}
+
+			vel[0] += w * A * khz_xy * cos(beta) * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
+			vel[1] += w * A * khz_xy * sin(beta) * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
+			vel[2] += w * A * khz_z * sin(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
+		}
 	}
 
 	return vel * ramp();
 }
 
-vec::fixed<3> ENVIR::fluidAcc(const vec::fixed<3> &coord) const
+vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord) const
 {
-	arma::vec::fixed<3> acc = { 0,0,0 };
-	for (int ii = 0; ii < m_wave.size(); ++ii)
+	arma::vec::fixed<3> acc = {0,0,0};
+
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+
+	// Variables that are used for each wave
+	double w(0), A(0), k(0), beta(0), phase(0);
+	double khz_xy(0), khz_z(0);
+
+	// We consider linear Airy waves, with velocity potential:
+	// phi = g*A/w * cosh(k(z+h))/cosh(k*h) * sin(k*x - w*t)
+	// This formulation is valid only below the mean water level, i.e. z <= 0
+	if (z <= 0)
 	{
-		acc += m_wave.at(ii).fluidAcc(coord, m_time, m_watDepth);
+		for (int ii = 0; ii < m_wave.size(); ++ii)
+		{
+			w = m_wave.at(ii).angFreq();
+			A = m_wave.at(ii).amp();
+			k = m_wave.at(ii).waveNumber();
+			beta = m_wave.at(ii).direction() * arma::datum::pi / 180.;
+			phase = m_wave.at(ii).phase();
+
+			// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+			// Hence, we chose a threshold of 10, above which the deep water approximation is employed.			
+			if (k*h >= 10)
+			{
+				khz_xy = exp(k*z);
+				khz_z = khz_xy;
+			}
+			else
+			{
+				khz_xy = cosh(k * (z + h)) / sinh(k*h);
+				khz_z = sinh(k * (z + h)) / sinh(k*h);
+			}
+
+			acc[0] += pow(w, 2) * A * khz_xy * cos(beta) * sin(k*cos(beta)*x + k * sin(beta)*y - w * t);
+			acc[1] += pow(w, 2) * A * khz_xy * sin(beta) * sin(k*cos(beta)*x + k * sin(beta)*y - w * t);
+			acc[2] += -pow(w, 2) * A * khz_z * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
+		}
 	}
 
 	return acc * ramp();
 }
 
+
 double ENVIR::wavePressure(const vec::fixed<3> &coord) const
 {
-	double p{ 0 };
-	for (int ii = 0; ii < m_wave.size(); ++ii)
+	double p(0);
+
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+	double rho = m_watDens;
+	double g = m_gravity;
+
+	// Variables that are used for each wave
+	double w(0), A(0), k(0), beta(0), phase(0);
+
+	// We consider linear Airy waves, with velocity potential:
+	// phi = g*A/w * cosh(k(z+h))/cosh(k*h) * sin(k*x - w*t)
+	// This formulation is valid only below the mean water level, i.e. z <= 0
+	if (z <= 0)
 	{
-		p += m_wave.at(ii).pressure(coord, m_time, m_watDens, m_gravity, m_watDepth);
+		for (int ii = 0; ii < m_wave.size(); ++ii)
+		{
+			w = m_wave.at(ii).angFreq();
+			A = m_wave.at(ii).amp();
+			k = m_wave.at(ii).waveNumber();
+			beta = m_wave.at(ii).direction() * arma::datum::pi / 180.;
+			phase = m_wave.at(ii).phase();
+
+			// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+			// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+			double khz(0);
+			if (k*h >= 10)
+			{
+				khz = exp(k*z);
+			}
+			else
+			{
+				khz = cosh(k * (z + h)) / cosh(k*h);
+			}
+
+			p = rho * g * A * khz * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
+		}
 	}
 
 	return p * ramp();
 }
+
 
 
 double ENVIR::windVel_X(const vec::fixed<3> &coord) const

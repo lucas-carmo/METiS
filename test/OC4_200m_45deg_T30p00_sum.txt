@@ -1,0 +1,335 @@
+>--------<>--------<>--------<+>--------<>--------<>--------<
+>                                                           <
+>                        METiS - USP                        <
+>          Morison Equation Time Domain Simulation          <
+>              University of Sao Paulo - Brazil             <
+>                                                           <
+>                                                   v. 0.0.1<
+>--------<>--------<>--------<+>--------<>--------<>--------<
+
+
+ENVIR:
+Time Step:	0.25
+Total Time:	900
+Time Ramp:	180.000000
+Use Tip Loss:	0
+Use Hub Loss:	0
+Use Skew Correction:	0
+Gravity:	9.81
+Water Density:	1025
+Water Depth:	200
+Air density:	0
+Wind X velocity:	0
+Wind Height:	0
+Wind exp:	0
+Nodes: 
+( 1, 0.000000, 0.000000, -20.000000 )
+( 2, 0.000000, 0.000000, 10.000000 )
+( 11, 14.430000, 25.000000, -14.000000 )
+( 12, 14.430000, 25.000000, 12.000000 )
+( 13, -28.860000, 0.000000, -14.000000 )
+( 14, -28.860000, 0.000000, 12.000000 )
+( 15, 14.430000, -25.000000, -14.000000 )
+( 16, 14.430000, -25.000000, 12.000000 )
+( 21, 14.430000, 25.000000, -20.000000 )
+( 22, 14.430000, 25.000000, -14.000000 )
+( 23, -28.860000, 0.000000, -20.000000 )
+( 24, -28.860000, 0.000000, -14.000000 )
+( 25, 14.430000, -25.000000, -20.000000 )
+( 26, 14.430000, -25.000000, -14.000000 )
+( 31, 9.200000, 22.000000, 10.000000 )
+( 32, -23.670000, 3.000000, 10.000000 )
+( 33, -23.670000, -3.000000, 10.000000 )
+( 34, 9.200000, -22.000000, 10.000000 )
+( 35, 14.430000, -19.000000, 10.000000 )
+( 36, 14.430000, 19.000000, 10.000000 )
+( 41, 4.000000, 19.000000, -17.000000 )
+( 42, -18.470000, 6.000000, -17.000000 )
+( 43, -18.470000, -6.000000, -17.000000 )
+( 44, 4.000000, -19.000000, -17.000000 )
+( 45, 14.430000, -13.000000, -17.000000 )
+( 46, 14.430000, 13.000000, -17.000000 )
+( 51, 1.625000, 2.815000, 10.000000 )
+( 52, 11.430000, 19.810000, 10.000000 )
+( 53, -3.250000, 0.000000, 10.000000 )
+( 54, -22.870000, 0.000000, 10.000000 )
+( 55, 1.625000, -2.815000, 10.000000 )
+( 56, 11.430000, -19.810000, 10.000000 )
+( 61, 1.625000, 2.815000, -17.000000 )
+( 62, 8.400000, 14.600000, -17.000000 )
+( 63, -3.250000, 0.000000, -17.000000 )
+( 64, -16.870000, 0.000000, -17.000000 )
+( 65, 1.625000, -2.815000, -17.000000 )
+( 66, 8.400000, -14.600000, -17.000000 )
+( 71, 1.625000, 2.815000, -16.200000 )
+( 72, 11.430000, 19.810000, 9.130000 )
+( 73, -3.250000, 0.000000, -16.200000 )
+( 74, -22.870000, 0.000000, 9.130000 )
+( 75, 1.625000, -2.815000, -16.200000 )
+( 76, 11.430000, -19.810000, 9.130000 )
+( 111, -35.700000, 0.000000, -12.250000 )
+( 112, -25.668000, 0.000000, -12.250000 )
+( 113, -35.700000, 1.000000, -12.250000 )
+
+Wave Locations: Location #0: (0.000000,0.000000,0.000000)
+Location #1: (-28.860000,0.000000,0.000000)
+
+
+Wave #0
+Height: 2.000000
+Period: 30.000000
+Wave number: 0.005557
+Length: 1130.595261
+Direction: 45.000000
+Phase: 0.000000
+
+
+
+
+FOWT:
+Hydro Mode:	2
+Aero Mode:	0
+Moor Mode:	1
+DOFs:	1 1 1 1 1 1 
+Linear Stiffness:	(69500.000000,69500.000000,59800000.000000)
+Floater:
+	Mass:	14267000.000000
+	CoG:	(0.000000,0.000000,-13.460000)
+	Inertia Matrix:	Ixx = 6827000000.000000 Iyy = 6827000000.000000 Izz = 12260000000.000000 Ixy = 0.000000 Ixz = 0.000000 Iyy = 0.000000
+	Morison Elements:
+Number of Morison Elements: 16
+Morison Element #0
+CoG_2_node1:	(0.000000, 0.000000, -6.540000)
+CoG_2_node1:	(0.000000, 0.000000, 23.460000)
+Diameter:	6.500000
+Drag Coeff.:	0.560000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	121
+Bottom diameter:	6.500000
+Top diameter:	6.500000
+Axial CD:	0.000000
+Axial Ca:	0.000000
+Bot. Press. Flag.:	1
+
+Morison Element #1
+CoG_2_node1:	(14.430000, 25.000000, -0.540000)
+CoG_2_node1:	(14.430000, 25.000000, 25.460000)
+Diameter:	12.000000
+Drag Coeff.:	0.610000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	105
+Bottom diameter:	0.000000
+Top diameter:	0.000000
+Axial CD:	0.000000
+Axial Ca:	0.000000
+Bot. Press. Flag.:	0
+
+Morison Element #2
+CoG_2_node1:	(-28.860000, 0.000000, -0.540000)
+CoG_2_node1:	(-28.860000, 0.000000, 25.460000)
+Diameter:	12.000000
+Drag Coeff.:	0.610000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	105
+Bottom diameter:	0.000000
+Top diameter:	0.000000
+Axial CD:	0.000000
+Axial Ca:	0.000000
+Bot. Press. Flag.:	0
+
+Morison Element #3
+CoG_2_node1:	(14.430000, -25.000000, -0.540000)
+CoG_2_node1:	(14.430000, -25.000000, 25.460000)
+Diameter:	12.000000
+Drag Coeff.:	0.610000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	105
+Bottom diameter:	0.000000
+Top diameter:	0.000000
+Axial CD:	0.000000
+Axial Ca:	0.000000
+Bot. Press. Flag.:	0
+
+Morison Element #4
+CoG_2_node1:	(14.430000, 25.000000, -6.540000)
+CoG_2_node1:	(14.430000, 25.000000, -0.540000)
+Diameter:	24.000000
+Drag Coeff.:	0.680000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	19
+Bottom diameter:	24.000000
+Top diameter:	12.000000
+Axial CD:	4.800000
+Axial Ca:	0.670000
+Bot. Press. Flag.:	1
+
+Morison Element #5
+CoG_2_node1:	(-28.860000, 0.000000, -6.540000)
+CoG_2_node1:	(-28.860000, 0.000000, -0.540000)
+Diameter:	24.000000
+Drag Coeff.:	0.680000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	19
+Bottom diameter:	24.000000
+Top diameter:	12.000000
+Axial CD:	4.800000
+Axial Ca:	0.670000
+Bot. Press. Flag.:	1
+
+Morison Element #6
+CoG_2_node1:	(14.430000, -25.000000, -6.540000)
+CoG_2_node1:	(14.430000, -25.000000, -0.540000)
+Diameter:	24.000000
+Drag Coeff.:	0.680000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	19
+Bottom diameter:	24.000000
+Top diameter:	12.000000
+Axial CD:	4.800000
+Axial Ca:	0.670000
+Bot. Press. Flag.:	1
+
+Morison Element #7
+CoG_2_node1:	(4.000000, 19.000000, -3.540000)
+CoG_2_node1:	(-18.470000, 6.000000, -3.540000)
+Diameter:	1.600000
+Drag Coeff.:	0.630000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	31
+Bottom diameter:	0.000000
+Top diameter:	0.000000
+Axial CD:	0.000000
+Axial Ca:	0.000000
+Bot. Press. Flag.:	0
+
+Morison Element #8
+CoG_2_node1:	(-18.470000, -6.000000, -3.540000)
+CoG_2_node1:	(4.000000, -19.000000, -3.540000)
+Diameter:	1.600000
+Drag Coeff.:	0.630000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	31
+Bottom diameter:	0.000000
+Top diameter:	0.000000
+Axial CD:	0.000000
+Axial Ca:	0.000000
+Bot. Press. Flag.:	0
+
+Morison Element #9
+CoG_2_node1:	(14.430000, -13.000000, -3.540000)
+CoG_2_node1:	(14.430000, 13.000000, -3.540000)
+Diameter:	1.600000
+Drag Coeff.:	0.630000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	31
+Bottom diameter:	0.000000
+Top diameter:	0.000000
+Axial CD:	0.000000
+Axial Ca:	0.000000
+Bot. Press. Flag.:	0
+
+Morison Element #10
+CoG_2_node1:	(1.625000, 2.815000, -3.540000)
+CoG_2_node1:	(8.400000, 14.600000, -3.540000)
+Diameter:	1.600000
+Drag Coeff.:	0.630000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	31
+Bottom diameter:	0.000000
+Top diameter:	0.000000
+Axial CD:	0.000000
+Axial Ca:	0.000000
+Bot. Press. Flag.:	0
+
+Morison Element #11
+CoG_2_node1:	(-3.250000, 0.000000, -3.540000)
+CoG_2_node1:	(-16.870000, 0.000000, -3.540000)
+Diameter:	1.600000
+Drag Coeff.:	0.630000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	31
+Bottom diameter:	0.000000
+Top diameter:	0.000000
+Axial CD:	0.000000
+Axial Ca:	0.000000
+Bot. Press. Flag.:	0
+
+Morison Element #12
+CoG_2_node1:	(1.625000, -2.815000, -3.540000)
+CoG_2_node1:	(8.400000, -14.600000, -3.540000)
+Diameter:	1.600000
+Drag Coeff.:	0.630000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	31
+Bottom diameter:	0.000000
+Top diameter:	0.000000
+Axial CD:	0.000000
+Axial Ca:	0.000000
+Bot. Press. Flag.:	0
+
+Morison Element #13
+CoG_2_node1:	(1.625000, 2.815000, -2.740000)
+CoG_2_node1:	(11.430000, 19.810000, 22.590000)
+Diameter:	1.600000
+Drag Coeff.:	0.630000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	31
+Bottom diameter:	0.000000
+Top diameter:	0.000000
+Axial CD:	0.000000
+Axial Ca:	0.000000
+Bot. Press. Flag.:	0
+
+Morison Element #14
+CoG_2_node1:	(-3.250000, 0.000000, -2.740000)
+CoG_2_node1:	(-22.870000, 0.000000, 22.590000)
+Diameter:	1.600000
+Drag Coeff.:	0.630000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	31
+Bottom diameter:	0.000000
+Top diameter:	0.000000
+Axial CD:	0.000000
+Axial Ca:	0.000000
+Bot. Press. Flag.:	0
+
+Morison Element #15
+CoG_2_node1:	(1.625000, -2.815000, -2.740000)
+CoG_2_node1:	(11.430000, -19.810000, 22.590000)
+Diameter:	1.600000
+Drag Coeff.:	0.630000
+Inert. Coeff.:	1.630000
+Numb. of Int. Points:	31
+Bottom diameter:	0.000000
+Top diameter:	0.000000
+Axial CD:	0.000000
+Axial Ca:	0.000000
+Bot. Press. Flag.:	0
+
+
+	Added Mass for unitary density:
+		8679.341781 		 ; 		0.000000 		 ; 		0.006549 		 ; 		0.000000 		 ; 		2870.039954 		 ; 		0.000000
+		0.000000 		 ; 		8679.100219 		 ; 		0.000000 		 ; 		-2870.918218 		 ; 		0.000000 		 ; 		-1.360387
+		0.006549 		 ; 		0.000000 		 ; 		14728.431586 		 ; 		0.000000 		 ; 		1.577151 		 ; 		0.000000
+		0.000000 		 ; 		-2870.918218 		 ; 		0.000000 		 ; 		6358690.171052 		 ; 		-0.000000 		 ; 		-3.929446
+		2870.039954 		 ; 		0.000000 		 ; 		1.577151 		 ; 		-0.000000 		 ; 		6355545.614465 		 ; 		756.901586
+		0.000000 		 ; 		-1.360387 		 ; 		0.000000 		 ; 		-3.929446 		 ; 		756.901586 		 ; 		6786767.590579
+
+No RNA considered because Aero Mode = 0
+
+
+Output Variables:
+FOWT rigid motion: 1
+FOWT rigid motion: 1
+FOWT rigid motion: 1
+Wave Elevation: 1
+Wave Velocity: 1
+Wave Acceleration: 1
+Wave Pressure: 1
+Hydrodynamic inertial force: 1
+Hydrodynamic drag force: 1
+Hydrodynamic Froude-Krylov force: 1
+Hydrodynamic force: 1
+Hydrostatic force: 1
+Aerodynamic forces (Hub): 0
+Total force: 1

@@ -66,8 +66,10 @@ public:
 	void readWindRefVel(const std::string &data);
 	void readWindRefHeight(const std::string &data);
 	void readWindExp(const std::string &data);
+	
+	void addWave(const std::string &wholeWaveLine);
+	void jonswap(const std::string &wholeWaveLine);
 
-	void addWave(const Wave &wave);
 	void addWaveLocation(const std::string &data);
 
 	/*****************************************************
@@ -116,8 +118,8 @@ public:
 
     double ramp() const;
 	double waveElev(const double x, const double y) const;
-	vec::fixed<3> fluidVel(const vec::fixed<3> &coord) const;
-	vec::fixed<3> fluidAcc(const vec::fixed<3> &coord) const;
+	vec::fixed<3> u1(const vec::fixed<3> &coord) const;
+	vec::fixed<3> du1dt(const vec::fixed<3> &coord) const;
 	double wavePressure(const vec::fixed<3> &coord) const;
 
 	double windVel_X(const vec::fixed<3> &coord) const;

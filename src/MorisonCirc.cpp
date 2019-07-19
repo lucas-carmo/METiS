@@ -644,8 +644,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			Fluid velocity/acceleration
 		******/
 		// Fluid velocity and acceleration at the integration point
-		velFluid = envir.fluidVel(n_ii);
-		accFluid = envir.fluidAcc(n_ii);
+		velFluid = envir.u1(n_ii);
+		accFluid = envir.du1dt(n_ii);
 
 		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder - written in the GLOBAL reference frame
 		velFluid = dot(velFluid, xvec) * xvec + dot(velFluid, yvec) * yvec;
@@ -703,8 +703,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		Second part: forces on the bottom of the cylinder
 	*/
 	// Get fluid velocity/acceleration at the bottom node
-	velFluid = envir.fluidVel(n1);
-	accFluid = envir.fluidAcc(n1);	
+	velFluid = envir.u1(n1);
+	accFluid = envir.du1dt(n1);	
 
 	// Get only the component that is parallel to the cylinder axis
 	velFluid = dot(velFluid, zvec) * zvec;
