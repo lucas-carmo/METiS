@@ -712,7 +712,7 @@ void IO::print2log(const std::string &str)
 	}
 
 	// Write to the console as well
-	std::cout << "\n\n" << str << std::endl;
+	std::cout << "\n" << str << std::endl;
 }
 
 
