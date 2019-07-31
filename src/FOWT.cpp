@@ -12,19 +12,6 @@ FOWT::FOWT() : m_linStiff(fill::zeros), m_mass(datum::nan),
 }
 
 /*****************************************************
-	Overloaded operators
-*****************************************************/
-FOWT& FOWT::operator=(const FOWT &fowt)
-{
-	m_floater = fowt.m_floater;
-	m_linStiff = fowt.m_linStiff;
-	m_disp = fowt.m_disp;
-	m_vel = fowt.m_vel;
-	m_acc = fowt.m_acc;
-    return *this;	
-}
-
-/*****************************************************
 	Setters
 *****************************************************/
 void FOWT::readHydroMode(const std::string &data)
@@ -252,7 +239,7 @@ void FOWT::update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec
 	m_disp = disp;
 	m_vel = vel;
 	m_acc = acc;
-	m_floater.update(m_disp, m_vel, m_acc);
+	m_floater.update(m_disp, m_vel, m_acc); // Aqui tem que passar os deslocamentos com relacao ao CoG do floater. Calcular aqui mesmo baseado na posicao do centro de referencia de movimento
 }
 
 vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
