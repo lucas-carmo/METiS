@@ -5,7 +5,7 @@
 /*****************************************************
 	Constructors
 *****************************************************/
-FOWT::FOWT() : m_linStiff(fill::zeros), m_mass(datum::nan), 
+FOWT::FOWT() : m_extLinStiff(fill::zeros), m_mass(datum::nan), 
 			   m_disp(fill::zeros), m_vel(fill::zeros), m_acc(fill::zeros)
 {
 	m_CoG.fill(datum::nan);	
@@ -50,7 +50,7 @@ void FOWT::readDOFs(const std::string &data)
 }
 
 
-void FOWT::readLinStiff(const std::string &data)
+void FOWT::readExtLinStiff(const std::string &data)
 {
     // The mooring line stiffness in surge, sway and yaw are separated by commas in the input string
     std::vector<std::string> input = stringTokenize( data, "," );        
@@ -62,10 +62,25 @@ void FOWT::readLinStiff(const std::string &data)
     
     for ( int ii = 0; ii < input.size(); ++ii )
     {
-        readDataFromString( input.at(ii), m_linStiff(ii) );
+        readDataFromString( input.at(ii), m_extLinStiff(ii) );
     }    
 }
 
+void FOWT::readExtConstForce(const std::string &data)
+{
+	// The 6 components of the external constant force are separated by commas in the input string
+	std::vector<std::string> input = stringTokenize(data, ",");
+
+	if (input.size() != 6)
+	{
+		throw std::runtime_error("Unable to read external constant force in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+	}
+
+	for (int ii = 0; ii < input.size(); ++ii)
+	{
+		readDataFromString(input.at(ii), m_extConstForce(ii));
+	}
+}
 
 void FOWT::setFloater(Floater &floater)
 {
@@ -146,10 +161,10 @@ vec::fixed<6> FOWT::acc() const
 
 std::string FOWT::printLinStiff() const
 {	
-	std::string output = "(" + std::to_string( m_linStiff(0) );
-	for ( int ii = 1; ii < m_linStiff.n_elem; ++ii )
+	std::string output = "(" + std::to_string( m_extLinStiff(0) );
+	for ( int ii = 1; ii < m_extLinStiff.n_elem; ++ii )
 	{
-		output = output + "," + std::to_string( m_linStiff(ii) );
+		output = output + "," + std::to_string( m_extLinStiff(ii) );
 	}
 	return output + ")";
 }
@@ -319,7 +334,7 @@ vec::fixed<6> FOWT::mooringForce()
 {	
 	if (m_moorMode == 1)
 	{
-		return vec::fixed<6> {-m_linStiff(0)*m_disp(0), -m_linStiff(1)*m_disp(1), 0, 0, 0, -m_linStiff(2)*m_disp(5)};
+		return (vec::fixed<6> {-m_extLinStiff(0)*m_disp(0), -m_extLinStiff(1)*m_disp(1), 0, 0, 0, -m_extLinStiff(2)*m_disp(5)} + m_extConstForce);
 	}
 
 	return vec::fixed<6> {0, 0, 0, 0, 0, 0};
