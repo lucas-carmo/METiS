@@ -1,1 +1,4 @@
-Elapsed time: 25.167201 seconds.
+WARNING: Unknown keyword 'BldSpan' in line 166.
+WARNING: Unknown keyword 'TowerLength' in line 1141.
+WARNING: Unknown keyword 'TowerElev' in line 1142.
+Elapsed time: 53.043431 seconds.
