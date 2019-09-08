@@ -579,8 +579,8 @@ vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord) const
 				khz_z = sinh(k * (z + h)) / sinh(k*h);
 			}
 
-			acc[0] += pow(w, 2) * A * khz_xy * cos(beta) * sin(k*cos(beta)*x + k * sin(beta)*y - w * t);
-			acc[1] += pow(w, 2) * A * khz_xy * sin(beta) * sin(k*cos(beta)*x + k * sin(beta)*y - w * t);
+			acc[0] += pow(w, 2) * A * khz_xy * cos(beta) * sin(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
+			acc[1] += pow(w, 2) * A * khz_xy * sin(beta) * sin(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
 			acc[2] += -pow(w, 2) * A * khz_z * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
 		}
 	}
@@ -629,7 +629,7 @@ double ENVIR::wavePressure(const vec::fixed<3> &coord) const
 				khz = cosh(k * (z + h)) / cosh(k*h);
 			}
 
-			p = rho * g * A * khz * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
+			p += rho * g * A * khz * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
 		}
 	}
 
