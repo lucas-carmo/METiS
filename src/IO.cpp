@@ -205,10 +205,16 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		/*
 			Read data to fowt
 		*/
-		else if (caseInsCompare(getKeyword(strInput), "LinStiff"))
+		else if (caseInsCompare(getKeyword(strInput), "ExtLinStiff"))
 		{
-			fowt.readLinStiff(getData(strInput));
+			fowt.readExtLinStiff(getData(strInput));
 			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "ExtConstForce"))
+		{
+		fowt.readExtConstForce(getData(strInput));
+		continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "FloaterMass"))
@@ -712,7 +718,7 @@ void IO::print2log(const std::string &str)
 	}
 
 	// Write to the console as well
-	std::cout << "\n\n" << str << std::endl;
+	std::cout << "\n" << str << std::endl;
 }
 
 

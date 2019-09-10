@@ -157,16 +157,15 @@ void ENVIR::jonswap(const std::string &wholeWaveLine)
 
 	// Frequency resolution and maximum possible frequency are determined by the total time simulation and time step
 	// See Mérigaud, A. and Ringwood, John V. - Free-Surface Time-Series Generation for Wave Energy Applications - IEEE J. of Oceanic Eng. - 2018
-	const double pi = arma::datum::pi;
-	double dw = 2 * pi / m_timeTotal;
-	double wmax = pi / m_timeStep;
+	double dw = 2 * arma::datum::pi / m_timeTotal;
+	double wmax = arma::datum::pi / m_timeStep;
 
 	// Wave parameters that will be calculated using the JONSWAP spectrum
 	double height(0);
 	double phase(0);
 
 	// JONSWAP parameters
-	double wp = 2*pi/Tp;
+	double wp = 2* arma::datum::pi /Tp;
 	double sigma(0);
 	double A(0);
 	double Sw(0);
@@ -185,14 +184,12 @@ void ENVIR::jonswap(const std::string &wholeWaveLine)
 		}
 
 		A = std::exp(-0.5 * std::pow((w / wp - 1) / sigma, 2));
-		Sw = 0.315 * std::pow(Hs, 2) * Tp * std::pow(w / wp, -5) * std::exp(-1.25 * std::pow(wp / w, 4)) * (1 - 0.287*std::log(gamma)) * std::pow(gamma, A);
+		Sw = 0.3125 * std::pow(Hs, 2) * Tp * std::pow(w / wp, -5) * std::exp(-1.25 * std::pow(wp / w, 4)) * (1 - 0.287*std::log(gamma)) * std::pow(gamma, A);
 
 		height = 2 * std::sqrt(2 * Sw * dw);
-		phase = -pi + (pi + pi) * randu(1, 1).at(0, 0);
-		m_wave.push_back(Wave(height, 2*pi/w, dir, phase, m_watDepth, m_gravity));
+		phase = -360 + (360 + 360) * randu(1, 1).at(0, 0);
+		m_wave.push_back(Wave(height, 2*arma::datum::pi/w, dir, phase, m_watDepth, m_gravity));
 	}
-
-	double b = 1;
 }
 
 void ENVIR::addWaveLocation(const std::string &data)
@@ -582,8 +579,8 @@ vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord) const
 				khz_z = sinh(k * (z + h)) / sinh(k*h);
 			}
 
-			acc[0] += pow(w, 2) * A * khz_xy * cos(beta) * sin(k*cos(beta)*x + k * sin(beta)*y - w * t);
-			acc[1] += pow(w, 2) * A * khz_xy * sin(beta) * sin(k*cos(beta)*x + k * sin(beta)*y - w * t);
+			acc[0] += pow(w, 2) * A * khz_xy * cos(beta) * sin(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
+			acc[1] += pow(w, 2) * A * khz_xy * sin(beta) * sin(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
 			acc[2] += -pow(w, 2) * A * khz_z * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
 		}
 	}
@@ -632,7 +629,7 @@ double ENVIR::wavePressure(const vec::fixed<3> &coord) const
 				khz = cosh(k * (z + h)) / cosh(k*h);
 			}
 
-			p = rho * g * A * khz * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
+			p += rho * g * A * khz * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
 		}
 	}
 

@@ -10,7 +10,7 @@
 
 ENVIR:
 Time Step:	0.25
-Total Time:	900
+Total Time:	1800
 Time Ramp:	180.000000
 Use Tip Loss:	0
 Use Hub Loss:	0
@@ -72,17 +72,6 @@ Nodes:
 ( 113, -35.700000, 1.000000, -12.250000 )
 
 Wave Locations: Location #0: (0.000000,0.000000,0.000000)
-Location #1: (-28.860000,0.000000,0.000000)
-
-
-Wave #0
-Height: 2.000000
-Period: 30.000000
-Wave number: 0.005557
-Length: 1130.595261
-Direction: 45.000000
-Phase: 0.000000
-
 
 
 
@@ -91,16 +80,16 @@ Hydro Mode:	2
 Aero Mode:	0
 Moor Mode:	1
 DOFs:	1 1 1 1 1 1 
-Linear Stiffness:	(69500.000000,69500.000000,59800000.000000)
+Linear Stiffness:	(70800.000000,70800.000000,117000000.000000)
 Floater:
-	Mass:	14267000.000000
-	CoG:	(0.000000,0.000000,-13.460000)
-	Inertia Matrix:	Ixx = 6827000000.000000 Iyy = 6827000000.000000 Izz = 12260000000.000000 Ixy = 0.000000 Ixz = 0.000000 Iyy = 0.000000
+	Mass:	14072000.000000
+	CoG:	(-0.006000,0.000000,-9.890000)
+	Inertia Matrix:	Ixx = 11320000000.000000 Iyy = 11300000000.000000 Izz = 12280000000.000000 Ixy = 0.000000 Ixz = 0.000000 Iyy = 0.000000
 	Morison Elements:
 Number of Morison Elements: 16
 Morison Element #0
-CoG_2_node1:	(0.000000, 0.000000, -6.540000)
-CoG_2_node1:	(0.000000, 0.000000, 23.460000)
+CoG_2_node1:	(0.006000, 0.000000, -10.110000)
+CoG_2_node1:	(0.006000, 0.000000, 19.890000)
 Diameter:	6.500000
 Drag Coeff.:	0.560000
 Inert. Coeff.:	1.630000
@@ -112,8 +101,8 @@ Axial Ca:	0.000000
 Bot. Press. Flag.:	1
 
 Morison Element #1
-CoG_2_node1:	(14.430000, 25.000000, -0.540000)
-CoG_2_node1:	(14.430000, 25.000000, 25.460000)
+CoG_2_node1:	(14.436000, 25.000000, -4.110000)
+CoG_2_node1:	(14.436000, 25.000000, 21.890000)
 Diameter:	12.000000
 Drag Coeff.:	0.610000
 Inert. Coeff.:	1.630000
@@ -125,8 +114,8 @@ Axial Ca:	0.000000
 Bot. Press. Flag.:	0
 
 Morison Element #2
-CoG_2_node1:	(-28.860000, 0.000000, -0.540000)
-CoG_2_node1:	(-28.860000, 0.000000, 25.460000)
+CoG_2_node1:	(-28.854000, 0.000000, -4.110000)
+CoG_2_node1:	(-28.854000, 0.000000, 21.890000)
 Diameter:	12.000000
 Drag Coeff.:	0.610000
 Inert. Coeff.:	1.630000
@@ -138,8 +127,8 @@ Axial Ca:	0.000000
 Bot. Press. Flag.:	0
 
 Morison Element #3
-CoG_2_node1:	(14.430000, -25.000000, -0.540000)
-CoG_2_node1:	(14.430000, -25.000000, 25.460000)
+CoG_2_node1:	(14.436000, -25.000000, -4.110000)
+CoG_2_node1:	(14.436000, -25.000000, 21.890000)
 Diameter:	12.000000
 Drag Coeff.:	0.610000
 Inert. Coeff.:	1.630000
@@ -151,8 +140,8 @@ Axial Ca:	0.000000
 Bot. Press. Flag.:	0
 
 Morison Element #4
-CoG_2_node1:	(14.430000, 25.000000, -6.540000)
-CoG_2_node1:	(14.430000, 25.000000, -0.540000)
+CoG_2_node1:	(14.436000, 25.000000, -10.110000)
+CoG_2_node1:	(14.436000, 25.000000, -4.110000)
 Diameter:	24.000000
 Drag Coeff.:	0.680000
 Inert. Coeff.:	1.630000
@@ -164,8 +153,8 @@ Axial Ca:	0.670000
 Bot. Press. Flag.:	1
 
 Morison Element #5
-CoG_2_node1:	(-28.860000, 0.000000, -6.540000)
-CoG_2_node1:	(-28.860000, 0.000000, -0.540000)
+CoG_2_node1:	(-28.854000, 0.000000, -10.110000)
+CoG_2_node1:	(-28.854000, 0.000000, -4.110000)
 Diameter:	24.000000
 Drag Coeff.:	0.680000
 Inert. Coeff.:	1.630000
@@ -177,8 +166,8 @@ Axial Ca:	0.670000
 Bot. Press. Flag.:	1
 
 Morison Element #6
-CoG_2_node1:	(14.430000, -25.000000, -6.540000)
-CoG_2_node1:	(14.430000, -25.000000, -0.540000)
+CoG_2_node1:	(14.436000, -25.000000, -10.110000)
+CoG_2_node1:	(14.436000, -25.000000, -4.110000)
 Diameter:	24.000000
 Drag Coeff.:	0.680000
 Inert. Coeff.:	1.630000
@@ -190,8 +179,8 @@ Axial Ca:	0.670000
 Bot. Press. Flag.:	1
 
 Morison Element #7
-CoG_2_node1:	(4.000000, 19.000000, -3.540000)
-CoG_2_node1:	(-18.470000, 6.000000, -3.540000)
+CoG_2_node1:	(4.006000, 19.000000, -7.110000)
+CoG_2_node1:	(-18.464000, 6.000000, -7.110000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
@@ -203,8 +192,8 @@ Axial Ca:	0.000000
 Bot. Press. Flag.:	0
 
 Morison Element #8
-CoG_2_node1:	(-18.470000, -6.000000, -3.540000)
-CoG_2_node1:	(4.000000, -19.000000, -3.540000)
+CoG_2_node1:	(-18.464000, -6.000000, -7.110000)
+CoG_2_node1:	(4.006000, -19.000000, -7.110000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
@@ -216,8 +205,8 @@ Axial Ca:	0.000000
 Bot. Press. Flag.:	0
 
 Morison Element #9
-CoG_2_node1:	(14.430000, -13.000000, -3.540000)
-CoG_2_node1:	(14.430000, 13.000000, -3.540000)
+CoG_2_node1:	(14.436000, -13.000000, -7.110000)
+CoG_2_node1:	(14.436000, 13.000000, -7.110000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
@@ -229,8 +218,8 @@ Axial Ca:	0.000000
 Bot. Press. Flag.:	0
 
 Morison Element #10
-CoG_2_node1:	(1.625000, 2.815000, -3.540000)
-CoG_2_node1:	(8.400000, 14.600000, -3.540000)
+CoG_2_node1:	(1.631000, 2.815000, -7.110000)
+CoG_2_node1:	(8.406000, 14.600000, -7.110000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
@@ -242,8 +231,8 @@ Axial Ca:	0.000000
 Bot. Press. Flag.:	0
 
 Morison Element #11
-CoG_2_node1:	(-3.250000, 0.000000, -3.540000)
-CoG_2_node1:	(-16.870000, 0.000000, -3.540000)
+CoG_2_node1:	(-3.244000, 0.000000, -7.110000)
+CoG_2_node1:	(-16.864000, 0.000000, -7.110000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
@@ -255,8 +244,8 @@ Axial Ca:	0.000000
 Bot. Press. Flag.:	0
 
 Morison Element #12
-CoG_2_node1:	(1.625000, -2.815000, -3.540000)
-CoG_2_node1:	(8.400000, -14.600000, -3.540000)
+CoG_2_node1:	(1.631000, -2.815000, -7.110000)
+CoG_2_node1:	(8.406000, -14.600000, -7.110000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
@@ -268,8 +257,8 @@ Axial Ca:	0.000000
 Bot. Press. Flag.:	0
 
 Morison Element #13
-CoG_2_node1:	(1.625000, 2.815000, -2.740000)
-CoG_2_node1:	(11.430000, 19.810000, 22.590000)
+CoG_2_node1:	(1.631000, 2.815000, -6.310000)
+CoG_2_node1:	(11.436000, 19.810000, 19.020000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
@@ -281,8 +270,8 @@ Axial Ca:	0.000000
 Bot. Press. Flag.:	0
 
 Morison Element #14
-CoG_2_node1:	(-3.250000, 0.000000, -2.740000)
-CoG_2_node1:	(-22.870000, 0.000000, 22.590000)
+CoG_2_node1:	(-3.244000, 0.000000, -6.310000)
+CoG_2_node1:	(-22.864000, 0.000000, 19.020000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
@@ -294,8 +283,8 @@ Axial Ca:	0.000000
 Bot. Press. Flag.:	0
 
 Morison Element #15
-CoG_2_node1:	(1.625000, -2.815000, -2.740000)
-CoG_2_node1:	(11.430000, -19.810000, 22.590000)
+CoG_2_node1:	(1.631000, -2.815000, -6.310000)
+CoG_2_node1:	(11.436000, -19.810000, 19.020000)
 Diameter:	1.600000
 Drag Coeff.:	0.630000
 Inert. Coeff.:	1.630000
@@ -308,28 +297,28 @@ Bot. Press. Flag.:	0
 
 
 	Added Mass for unitary density:
-		8679.341781 		 ; 		0.000000 		 ; 		0.006549 		 ; 		0.000000 		 ; 		2870.039954 		 ; 		0.000000
-		0.000000 		 ; 		8679.100219 		 ; 		0.000000 		 ; 		-2870.918218 		 ; 		0.000000 		 ; 		-1.360387
-		0.006549 		 ; 		0.000000 		 ; 		14728.431586 		 ; 		0.000000 		 ; 		1.577151 		 ; 		0.000000
-		0.000000 		 ; 		-2870.918218 		 ; 		0.000000 		 ; 		6358690.171052 		 ; 		-0.000000 		 ; 		-3.929446
-		2870.039954 		 ; 		0.000000 		 ; 		1.577151 		 ; 		-0.000000 		 ; 		6355545.614465 		 ; 		756.901586
-		0.000000 		 ; 		-1.360387 		 ; 		0.000000 		 ; 		-3.929446 		 ; 		756.901586 		 ; 		6786767.590579
+		8679.341781 		 ; 		0.000000 		 ; 		0.006549 		 ; 		0.000000 		 ; 		-28115.210243 		 ; 		0.000000
+		0.000000 		 ; 		8679.100219 		 ; 		0.000000 		 ; 		28113.469563 		 ; 		0.000000 		 ; 		50.714215
+		0.006549 		 ; 		0.000000 		 ; 		14728.431586 		 ; 		0.000000 		 ; 		-86.816819 		 ; 		0.000000
+		0.000000 		 ; 		28113.469563 		 ; 		0.000000 		 ; 		6448806.079354 		 ; 		-0.000000 		 ; 		159.894791
+		-28115.210243 		 ; 		0.000000 		 ; 		-86.816819 		 ; 		-0.000000 		 ; 		6445671.383835 		 ; 		753.569068
+		0.000000 		 ; 		50.714215 		 ; 		0.000000 		 ; 		159.894791 		 ; 		753.569068 		 ; 		6786767.886702
 
 No RNA considered because Aero Mode = 0
 
 
 Output Variables:
 FOWT rigid motion: 1
-FOWT rigid motion: 1
-FOWT rigid motion: 1
+FOWT rigid motion: 0
+FOWT rigid motion: 0
 Wave Elevation: 1
-Wave Velocity: 1
-Wave Acceleration: 1
-Wave Pressure: 1
-Hydrodynamic inertial force: 1
-Hydrodynamic drag force: 1
-Hydrodynamic Froude-Krylov force: 1
+Wave Velocity: 0
+Wave Acceleration: 0
+Wave Pressure: 0
+Hydrodynamic inertial force: 0
+Hydrodynamic drag force: 0
+Hydrodynamic Froude-Krylov force: 0
 Hydrodynamic force: 1
-Hydrostatic force: 1
+Hydrostatic force: 0
 Aerodynamic forces (Hub): 0
 Total force: 1

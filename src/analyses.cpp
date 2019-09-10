@@ -117,8 +117,8 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		// Print progress to the screen. Print only in integer seconds.
 		if (std::floor(envir.time()) == envir.time())
 		{
-			std::cout << "\n   Progress: " << std::setprecision(0) << envir.time() << " of " << envir.timeTotal() << " seconds -- " << std::fixed << std::setprecision(1) << 100 * envir.time() / envir.timeTotal() << "%" << '\r';
-		}
-        std::fflush(stdout);        
+			std::cout << "   Progress: " << std::setprecision(0) << envir.time() << " of " << envir.timeTotal() << " seconds -- " << std::fixed << std::setprecision(1) << 100 * envir.time() / envir.timeTotal() << "%" << '\r';
+			std::fflush(stdout);
+		} 
     }
 }

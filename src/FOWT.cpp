@@ -5,23 +5,10 @@
 /*****************************************************
 	Constructors
 *****************************************************/
-FOWT::FOWT() : m_linStiff(fill::zeros), m_mass(datum::nan), 
+FOWT::FOWT() : m_extLinStiff(fill::zeros), m_mass(datum::nan), 
 			   m_disp(fill::zeros), m_vel(fill::zeros), m_acc(fill::zeros)
 {
 	m_CoG.fill(datum::nan);	
-}
-
-/*****************************************************
-	Overloaded operators
-*****************************************************/
-FOWT& FOWT::operator=(const FOWT &fowt)
-{
-	m_floater = fowt.m_floater;
-	m_linStiff = fowt.m_linStiff;
-	m_disp = fowt.m_disp;
-	m_vel = fowt.m_vel;
-	m_acc = fowt.m_acc;
-    return *this;	
 }
 
 /*****************************************************
@@ -63,7 +50,7 @@ void FOWT::readDOFs(const std::string &data)
 }
 
 
-void FOWT::readLinStiff(const std::string &data)
+void FOWT::readExtLinStiff(const std::string &data)
 {
     // The mooring line stiffness in surge, sway and yaw are separated by commas in the input string
     std::vector<std::string> input = stringTokenize( data, "," );        
@@ -75,10 +62,25 @@ void FOWT::readLinStiff(const std::string &data)
     
     for ( int ii = 0; ii < input.size(); ++ii )
     {
-        readDataFromString( input.at(ii), m_linStiff(ii) );
+        readDataFromString( input.at(ii), m_extLinStiff(ii) );
     }    
 }
 
+void FOWT::readExtConstForce(const std::string &data)
+{
+	// The 6 components of the external constant force are separated by commas in the input string
+	std::vector<std::string> input = stringTokenize(data, ",");
+
+	if (input.size() != 6)
+	{
+		throw std::runtime_error("Unable to read external constant force in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+	}
+
+	for (int ii = 0; ii < input.size(); ++ii)
+	{
+		readDataFromString(input.at(ii), m_extConstForce(ii));
+	}
+}
 
 void FOWT::setFloater(Floater &floater)
 {
@@ -159,10 +161,10 @@ vec::fixed<6> FOWT::acc() const
 
 std::string FOWT::printLinStiff() const
 {	
-	std::string output = "(" + std::to_string( m_linStiff(0) );
-	for ( int ii = 1; ii < m_linStiff.n_elem; ++ii )
+	std::string output = "(" + std::to_string( m_extLinStiff(0) );
+	for ( int ii = 1; ii < m_extLinStiff.n_elem; ++ii )
 	{
-		output = output + "," + std::to_string( m_linStiff(ii) );
+		output = output + "," + std::to_string( m_extLinStiff(ii) );
 	}
 	return output + ")";
 }
@@ -252,7 +254,7 @@ void FOWT::update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec
 	m_disp = disp;
 	m_vel = vel;
 	m_acc = acc;
-	m_floater.update(m_disp, m_vel, m_acc);
+	m_floater.update(m_disp, m_vel, m_acc); // Aqui tem que passar os deslocamentos com relacao ao CoG do floater. Calcular aqui mesmo baseado na posicao do centro de referencia de movimento
 }
 
 vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
@@ -332,7 +334,7 @@ vec::fixed<6> FOWT::mooringForce()
 {	
 	if (m_moorMode == 1)
 	{
-		return vec::fixed<6> {-m_linStiff(0)*m_disp(0), -m_linStiff(1)*m_disp(1), 0, 0, 0, -m_linStiff(2)*m_disp(5)};
+		return (vec::fixed<6> {-m_extLinStiff(0)*m_disp(0), -m_extLinStiff(1)*m_disp(1), 0, 0, 0, -m_extLinStiff(2)*m_disp(5)} + m_extConstForce);
 	}
 
 	return vec::fixed<6> {0, 0, 0, 0, 0, 0};

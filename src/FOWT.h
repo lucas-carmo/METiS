@@ -16,7 +16,8 @@ private:
 	Floater m_floater;
 	//Tower m_tower;
 	RNA m_rna;
-	vec::fixed<3> m_linStiff;
+	vec::fixed<3> m_extLinStiff;
+	vec::fixed<6> m_extConstForce;
 
 	/*
 	Forces included in the analysis
@@ -44,11 +45,6 @@ private:
 public:
 	FOWT();
 
-	/*****************************************************
-		Overloaded operators
-	*****************************************************/
-	FOWT& operator=(const FOWT &fowt);
-	
 
 	/*****************************************************
 		Setters
@@ -58,7 +54,9 @@ public:
 	void readMoorMode(const std::string &data);
 	void readDOFs(const std::string &data);
 
-	void readLinStiff(const std::string &data);
+	void readExtLinStiff(const std::string &data);
+	void readExtConstForce(const std::string &data);
+
 	void setFloater(Floater &floater);
 	void setRNA(RNA &rna);
 
