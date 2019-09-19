@@ -347,5 +347,5 @@ vec::fixed<6> FOWT::weightForce(const double gravity)
 
 vec::fixed<6> FOWT::totalForce(const ENVIR &envir)
 {		
-	return (hydrodynamicForce(envir) + hydrostaticForce(envir) + mooringForce() + weightForce(envir.gravity()));
+	return (hydrodynamicForce(envir) + hydrostaticForce(envir) + mooringForce() + weightForce(envir.gravity()) + aeroForce(envir));
 }
