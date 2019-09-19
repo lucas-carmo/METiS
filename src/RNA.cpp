@@ -283,7 +283,7 @@ double RNA::dAzimuth(const double time) const
 }
 
 // FOWTpos is the position of the center of the FOWT coordinate system with respect to the earth fixed system, written in the earth fixed system.
-// In other words, it is {m_floater.CoG(),0,0,0} + FOWT.m_disp, i.e. the initial position of the floater CoG + its displacement
+// In other words, it is {m_FOWT.CoG(),0,0,0} + FOWT.m_disp, i.e. the initial position of the FOWT CoG + its displacement
 vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel)
 {
 	// Total aerodynamic force/moments acting on the hub
@@ -478,8 +478,27 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 		aeroForce.rows(0,2) += rotatMatrix_deg(m_blades.at(iiBlades).initialAzimuth(), m_blades.at(iiBlades).precone(), 0) * bladeForce.rows(0,2);
 		aeroForce.rows(3,5) += rotatMatrix_deg(m_blades.at(iiBlades).initialAzimuth(), m_blades.at(iiBlades).precone(), 0) * bladeForce.rows(3,5);
 	}
-
 	IO::print2outLine(IO::OUTFLAG_AD_HUB_FORCE, aeroForce);
+
+	// Need to write aeroForce in the global reference plane + change the fulcrum to the FOWT CoG
+	// 1) Write aeroForce in the shaft coordinate system
+	aeroForce.rows(0, 2) = rotatMatrix_deg(deltaAzimuth, 0, 0) * aeroForce.rows(0, 2);
+	aeroForce.rows(3, 5) = rotatMatrix_deg(deltaAzimuth, 0, 0) * aeroForce.rows(3, 5);
+
+	// 2) Write aeroForce in the fowt coordinate system
+	mat::fixed<3, 3> rotatShaft2FOWT = rotatMatrix_deg(0, 0, -rotorYaw()) * rotatMatrix_deg(0, rotorTilt(), 0);
+	aeroForce.rows(0, 2) = rotatShaft2FOWT * aeroForce.rows(0, 2);
+	aeroForce.rows(3, 5) = rotatShaft2FOWT * aeroForce.rows(3, 5);
+
+	// 3) Change the fulcrum to the CoG of the FOWT. Distance is hubHeight2CoG() along the tower and overhang() along the shaft
+	vec::fixed<3> leverHub2CoG{ 0,0,0 };
+	leverHub2CoG = vec::fixed<3>{ 0,0,hubHeight2CoG() } + rotatShaft2FOWT * vec::fixed<3> {overhang(), 0, 0};
+	aeroForce.rows(3, 5) += cross(leverHub2CoG, aeroForce.rows(0, 2));
+
+	// 4) Write aeroForce in the global coordinate system
+	aeroForce.rows(0, 2) = rotatMatrix(FOWTpos.rows(3, 5)) * aeroForce.rows(0, 2);
+	aeroForce.rows(3, 5) = rotatMatrix(FOWTpos.rows(3, 5)) * aeroForce.rows(3, 5);
+
 	return aeroForce;
 }
 
