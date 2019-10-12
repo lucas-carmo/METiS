@@ -63,7 +63,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		*/
 		if (caseInsCompare(getKeyword(strInput), "Hydro"))
 		{
-			int aux{};
+			int aux{0};
 			readDataFromString(getData(strInput), aux);			
 			fowt.setHydroMode(aux);
 			continue;						
@@ -71,7 +71,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		if (caseInsCompare(getKeyword(strInput), "Aero"))
 		{
-			int aux{};
+			int aux{0};
 			readDataFromString(getData(strInput), aux);			
 			fowt.setAeroMode(aux);
 			continue;						
@@ -79,7 +79,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		if (caseInsCompare(getKeyword(strInput), "Moor"))
 		{
-			int aux{};
+			int aux{0};
 			readDataFromString(getData(strInput), aux);			
 			fowt.setMoorMode(aux);
 			continue;	
@@ -107,7 +107,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		if (caseInsCompare(getKeyword(strInput), "TimeStep"))
 		{
-			double aux{};
+			double aux{0};
 			readDataFromString(getData(strInput), aux);			
 			envir.setTimeStep(aux);
 			continue;
@@ -115,43 +115,57 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		else if (caseInsCompare(getKeyword(strInput), "TimeTotal"))
 		{
-			envir.readTimeTotal(getData(strInput));
+			double aux{0};
+			readDataFromString(getData(strInput), aux);			
+			envir.setTimeTotal(aux);
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "TimeRamp"))
 		{
-			envir.readTimeRamp(getData(strInput));
+			double aux{0};
+			readDataFromString(getData(strInput), aux);			
+			envir.setTimeRamp(aux);
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "UseTipLoss"))
 		{				
-			envir.readUseTipLoss(getData(strInput));			
+			bool aux{0};
+			readDataFromString(getData(strInput), aux);			
+			rna.setUseTipLoss(aux);
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "UseHubLoss"))
 		{
-			envir.readUseHubLoss(getData(strInput));
+			bool aux{0};
+			readDataFromString(getData(strInput), aux);			
+			rna.setUseHubLoss(aux);
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "UseSkewCorr"))
 		{
-			envir.readUseSkewCorr(getData(strInput));
+			bool aux{0};
+			readDataFromString(getData(strInput), aux);			
+			rna.setUseSkewCorr(aux);
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Grav"))
 		{
-			envir.readGrav(getData(strInput));
+			double aux{0};
+			readDataFromString(getData(strInput), aux);			
+			envir.setGravity(aux);
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WatDens"))
 		{
-			envir.readWatDens(getData(strInput));
+			double aux{0};
+			readDataFromString(getData(strInput), aux);			
+			envir.setWatDens(aux);
 			continue;
 		}
 
@@ -1060,9 +1074,6 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Time Step:\t" << envir.timeStep() << '\n';
 	m_sumFl << "Total Time:\t" << envir.timeTotal() << '\n';
 	m_sumFl << "Time Ramp:\t" << envir.printTimeRamp() << '\n';
-	m_sumFl << "Use Tip Loss:\t" << envir.useTipLoss() << '\n';
-	m_sumFl << "Use Hub Loss:\t" << envir.useHubLoss() << '\n';
-	m_sumFl << "Use Skew Correction:\t" << envir.useSkewCorr() << '\n';
 	m_sumFl << "Gravity:\t" << envir.gravity() << '\n';
 	m_sumFl << "Water Density:\t" << envir.watDensity() << '\n';
 	m_sumFl << "Water Depth:\t" << envir.watDepth() << '\n';
@@ -1105,7 +1116,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	}
 	else
 	{
-		m_sumFl << "RNA:\n" << fowt.printRNA();
+		m_sumFl << "RNA:\n" << fowt.printRNA();		
 	}
 
 	m_sumFl << "\n\n";

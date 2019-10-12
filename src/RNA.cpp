@@ -12,6 +12,21 @@ RNA::RNA()
 /*****************************************************
 	Setters
 *****************************************************/
+void RNA::setUseTipLoss(const bool useTipLoss)
+{
+	m_useTipLoss = useTipLoss;
+}
+
+void RNA::setUseHubLoss(const bool useHubLoss)
+{
+	m_useHubLoss = useHubLoss;
+}
+
+void RNA::setUseSkewCorr(const bool useSkewCorr)
+{
+	m_useSkewCorr = useSkewCorr;
+}
+
 void RNA::readRotorSpeed(const std::string &data)
 {
 	readDataFromString(data, m_rotorSpeed);
@@ -183,6 +198,21 @@ void RNA::setHubHeight2CoG(const double zCoG)
 /*****************************************************
 	Getters
 *****************************************************/
+bool RNA::useTipLoss() const
+{
+	return m_useTipLoss;
+}
+
+bool RNA::useHubLoss() const
+{
+	return m_useHubLoss;
+}
+
+bool RNA::useSkewCorr() const
+{
+	return m_useSkewCorr;
+}
+
 double RNA::rotorSpeed() const
 {	
 	// In rpm
@@ -245,8 +275,6 @@ std::string RNA::printAirfoils() const
 
 	return output;
 }
-
-//std::string printAirofoils() const;
 
 double RNA::hubRadius() const
 {
@@ -388,12 +416,12 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			************/
 
 			// Bracket the solution in order to use Brent's method
-			if (calcRes(90, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss()) >= 0)
+			if (calcRes(90, iiBlades, iiNodes, localSolidity, localTipSpeed) >= 0)
 			{
 				phi_min = 1e-10;
 				phi_max = 90;
 			}
-			else if (calcRes(-45, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss()) >= 0)
+			else if (calcRes(-45, iiBlades, iiNodes, localSolidity, localTipSpeed) >= 0)
 			{
 				phi_min = -45;
 				phi_max = -0.001;
@@ -404,14 +432,14 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 				phi_max = 180 - 0.001;
 			}
 
-			phi = Brent(phi_min, phi_max, iiBlades, iiNodes, localSolidity, localTipSpeed, envir.useTipLoss(), envir.useHubLoss());
+			phi = Brent(phi_min, phi_max, iiBlades, iiNodes, localSolidity, localTipSpeed);
 
 			// Calculate force coefficients
 			Cm = RNA::Cm(phi, iiBlades, iiNodes);
 			Cn = RNA::Cn(phi, iiBlades, iiNodes);
 			Ct = RNA::Ct(phi, iiBlades, iiNodes);
 
-			F = calcF(phi, iiNodes, envir.useTipLoss(), envir.useHubLoss());
+			F = calcF(phi, iiNodes);
 			a = calcAxialIndFactor(calcK(phi, localSolidity, Cn, F), phi, F);
 			if (F == 0)
 			{
@@ -490,7 +518,7 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	return aeroForce;
 }
 
-double RNA::Brent(const double phi_min, const double phi_max, const unsigned int bladeIndex, const unsigned int nodeIndex, const double localSolidity, const double localTipSpeed, const bool useTipLoss, const bool useHubLoss) const
+double RNA::Brent(const double phi_min, const double phi_max, const unsigned int bladeIndex, const unsigned int nodeIndex, const double localSolidity, const double localTipSpeed) const
 {
     double FPP{pow(10,-11)};
     double nearzero{pow(10,-20)};
@@ -499,8 +527,8 @@ double RNA::Brent(const double phi_min, const double phi_max, const unsigned int
 
     double AA = phi_min;
     double BB = phi_max;
-	double FA = calcRes(AA, bladeIndex, nodeIndex, localSolidity, localTipSpeed, useTipLoss, useHubLoss);
-	double FB = calcRes(BB, bladeIndex, nodeIndex, localSolidity, localTipSpeed, useTipLoss, useHubLoss);
+	double FA = calcRes(AA, bladeIndex, nodeIndex, localSolidity, localTipSpeed);
+	double FB = calcRes(BB, bladeIndex, nodeIndex, localSolidity, localTipSpeed);
 
 	bool not_done{true};
 	int m{0};
@@ -585,7 +613,7 @@ double RNA::Brent(const double phi_min, const double phi_max, const unsigned int
                         BB = BB - abs(tol1);
                     }
                 }
-                FB = calcRes(BB, bladeIndex, nodeIndex, localSolidity, localTipSpeed, useTipLoss, useHubLoss);
+                FB = calcRes(BB, bladeIndex, nodeIndex, localSolidity, localTipSpeed);
                 m = m+1;
             }
         }
@@ -608,10 +636,9 @@ double RNA::Brent(const double phi_min, const double phi_max, const unsigned int
 
 
 
-double RNA::calcRes(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex, const double localSolidity, const double localTipSpeed, const bool useTipLoss, const bool useHubLoss) const
+double RNA::calcRes(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex, const double localSolidity, const double localTipSpeed) const
 {
-    double F = calcF(phi, nodeIndex, useTipLoss, useHubLoss);
-
+    double F = calcF(phi, nodeIndex);
 	if (F == 0)
 	{
 		return 0;
@@ -637,7 +664,6 @@ double RNA::calcRes(const double phi, const unsigned int bladeIndex, const unsig
 }
 
 
-
 double RNA::Cn(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex) const
 {
 	double alpha = m_blades.at(bladeIndex).alpha(nodeIndex, phi);
@@ -649,6 +675,7 @@ double RNA::Cn(const double phi, const unsigned int bladeIndex, const unsigned i
 	return Cl * cos(deg2rad(phi)) + Cd * sin(deg2rad(phi));
 }
 
+
 double RNA::Ct(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex) const
 {
 	double alpha = m_blades.at(bladeIndex).alpha(nodeIndex, phi);
@@ -658,14 +685,16 @@ double RNA::Ct(const double phi, const unsigned int bladeIndex, const unsigned i
 	return Cl * sin(deg2rad(phi)) - Cd * cos(deg2rad(phi));
 }
 
+
 double RNA::Cm(const double phi, const unsigned int bladeIndex, const unsigned int nodeIndex) const
 {
 	double alpha = m_blades.at(bladeIndex).alpha(nodeIndex, phi);
 	return m_airfoils.at(m_blades.at(bladeIndex).airoilID(nodeIndex)-1).CM(alpha);
 }
 
+
 // But what if phi > 180? This leads to weird values of F
-double RNA::calcF(const double phi, const int nodeIndex, const bool useTipLoss, const bool useHubLoss) const
+double RNA::calcF(const double phi, const int nodeIndex) const
 {
 	if (phi == 0)
 	{
@@ -678,12 +707,12 @@ double RNA::calcF(const double phi, const int nodeIndex, const bool useTipLoss, 
 	double r = m_blades[0].radius(nodeIndex);
 	double R = m_blades[0].radius(m_blades[0].size() - 1); // Total radius of the blade is equal to the radius of the last node
 
-	if (useTipLoss)
+	if (m_useTipLoss)
 	{
 		Ftip = (2.0 / datum::pi) * acos(exp(-(numBlades() / 2.0) * (R - r) / (r * sin(deg2rad(phi)))) );
 	}
 
-	if (useHubLoss)
+	if (m_useHubLoss)
 	{
 		Fhub = (2.0 / datum::pi) * acos(exp(-(numBlades() / 2.0) * (r - m_hubRadius) / (m_hubRadius * abs(sin(deg2rad(phi))))) );
 	}
@@ -718,7 +747,6 @@ double RNA::calcKp(const double phi, const double localSolidity, const double Ct
 		return localSolidity * Ct / (4 * F * sin(deg2rad(phi)) * cos(deg2rad(phi)) );
 	}
 }
-
 
 
 double RNA::calcAxialIndFactor(const double k, const double phi, const double F) const
@@ -772,6 +800,7 @@ double RNA::calcAxialIndFactor(const double k, const double phi, const double F)
             return 0;
 	}
 }
+
 
 double RNA::calcTangIndFactor(const double kp, const double F) const
 {

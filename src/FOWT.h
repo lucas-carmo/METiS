@@ -12,7 +12,9 @@ using namespace arma; // For armadillo classes
 class FOWT
 {
 private:
-	//Physical members of the FOWT (floater, rotor nacelle assembly (RNA), tower, mooring lines, ...)
+	/*
+	Physical members of the FOWT (floater, rotor nacelle assembly (RNA), tower, mooring lines, ...)
+	*/
 	Floater m_floater;
 	//Tower m_tower;
 	RNA m_rna;
@@ -31,11 +33,15 @@ private:
 	*/
 	std::array<bool, 6> m_dofs = { 1, 1, 1, 1, 1, 1 };
 
-	// Properties derived from the other ones
+	/* 
+	FOWT properties derived from its subsystems
+	*/
 	double m_mass;
 	vec::fixed<3> m_CoG;
 
-	// FOWT condition
+	/*
+	FOWT condition
+	*/
 	// m_disp(0:2) = Position with respect to the initial CoG (i.e. CoG(t) - CoG(0))
 	// m_disp(3:5) = Rotation with respect to initial configuration. For now, we are considering small rotations.
 	vec::fixed<6> m_disp;

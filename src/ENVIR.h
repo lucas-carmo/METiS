@@ -37,18 +37,6 @@ private:
     double m_timeRamp;
     double m_time = 0;
 
-
-	// Mudar isso tudo pra classe RNA 
-    bool m_useTipLoss;
-    bool m_useHubLoss;
-    // bool m_IncTIFace RNA ;
-    // bool m_IncDragAIFac;
-    // bool m_IncDe RNA ragTIFac;
-    bool m_useSkewCorr;
-
-	// Isso aqui pra class FOWT, se é que é necessário ter isso aqui
-    bool m_TwrLoads;
-
 public:
 	ENVIR();
 
@@ -56,17 +44,13 @@ public:
 		Setters
 	*****************************************************/
 	void setTimeStep(const double timeStep);
+	void setTimeTotal(const double timeTotal);
+	void setTimeRamp(const double timeRamp);
+	void setGravity(const double gravity);
+	void setWatDens(const double watDens);
+
 	void addNode(const unsigned int nodeID, const double nodeCoordX, const double nodeCoordY, const double nodeCoordZ);
 
-    
-    void readTimeTotal(const std::string &data);
-    void readTimeRamp(const std::string &data);
-	void readUseTipLoss(const std::string &data);
-	void readUseHubLoss(const std::string &data);
-	void readUseSkewCorr(const std::string &data);
-
-    void readGrav(const std::string &data);
-    void readWatDens(const std::string &data);
     void readWatDepth(const std::string &data);
 	void readAirDens(const std::string &data);
 	void readWindRefVel(const std::string &data);
@@ -84,9 +68,6 @@ public:
     double timeStep() const;
     double timeTotal() const;
     double time() const;
-	bool useTipLoss() const;
-	bool useHubLoss() const;
-	bool useSkewCorr() const;
 
     double gravity() const;
 	double watDensity() const;

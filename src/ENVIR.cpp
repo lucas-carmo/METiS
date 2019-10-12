@@ -27,40 +27,24 @@ void ENVIR::setTimeStep(const double timeStep)
 	m_timeStep = timeStep;
 }
 
-
-void ENVIR::readTimeTotal(const std::string &data)
+void ENVIR::setTimeTotal(const double timeTotal)
 {
-    readDataFromString(data, m_timeTotal);
+	m_timeTotal = timeTotal;
 }
 
-void ENVIR::readTimeRamp(const std::string &data)
+void ENVIR::setTimeRamp(const double timeRamp)
 {
-    readDataFromString(data, m_timeRamp);
+    m_timeRamp = timeRamp;
 }
 
-void ENVIR::readUseTipLoss(const std::string &data)
+void ENVIR::setGravity(const double gravity)
 {
-	readDataFromString(data, m_useTipLoss);
+	m_gravity = gravity;
 }
 
-void ENVIR::readUseHubLoss(const std::string &data)
+void ENVIR::setWatDens(const double watDens)
 {
-	readDataFromString(data, m_useHubLoss);
-}
-
-void ENVIR::readUseSkewCorr(const std::string &data)
-{
-	readDataFromString(data, m_useSkewCorr);
-}
-
-void ENVIR::readGrav(const std::string &data)
-{
-	readDataFromString(data, m_gravity);
-}
-
-void ENVIR::readWatDens(const std::string &data)
-{
-	readDataFromString(data, m_watDens);
+	m_watDens = watDens;
 }
 
 void ENVIR::readAirDens(const std::string &data)
@@ -253,21 +237,6 @@ double ENVIR::timeTotal() const
 double ENVIR::time() const
 {
 	return m_time;
-}
-
-bool ENVIR::useTipLoss() const
-{
-	return m_useTipLoss;
-}
-
-bool ENVIR::useHubLoss() const
-{
-	return m_useHubLoss;
-}
-
-bool ENVIR::useSkewCorr() const
-{
-	return m_useSkewCorr;
 }
 
 double ENVIR::gravity() const

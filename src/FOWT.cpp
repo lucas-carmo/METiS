@@ -187,6 +187,9 @@ std::string FOWT::printRNA() const
 {
 	std::string output = "";
 
+	output = output + "Use Tip Loss:\t" + std::to_string(m_rna.useTipLoss()) + "\n";
+	output = output + "Use Hub Loss:\t" + std::to_string(m_rna.useHubLoss()) + "\n";
+	output = output + "Use Skew Correction:\t" + std::to_string(m_rna.useSkewCorr()) + "\n";
 	output = output + "\tRotor Speed:\t" + std::to_string(m_rna.rotorSpeed()) + "\n";
 	output = output + "\tRotor Tilt :\t" + std::to_string(m_rna.rotorTilt()) + "\n";
 	output = output + "\tRotor Yaw:\t" + std::to_string(m_rna.rotorYaw()) + "\n";
