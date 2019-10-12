@@ -37,12 +37,16 @@ private:
     double m_timeRamp;
     double m_time = 0;
 
+
+	// Mudar isso tudo pra classe RNA 
     bool m_useTipLoss;
     bool m_useHubLoss;
-    // bool m_IncTIFac;
+    // bool m_IncTIFace RNA ;
     // bool m_IncDragAIFac;
-    // bool m_IncDragTIFac;
+    // bool m_IncDe RNA ragTIFac;
     bool m_useSkewCorr;
+
+	// Isso aqui pra class FOWT, se é que é necessário ter isso aqui
     bool m_TwrLoads;
 
 public:
@@ -50,14 +54,16 @@ public:
 
 	/*****************************************************
 		Setters
-	*****************************************************/   
-    void readTimeStep(const std::string &data);
+	*****************************************************/
+	void setTimeStep(const double timeStep);
+	void addNode(const unsigned int nodeID, const double nodeCoordX, const double nodeCoordY, const double nodeCoordZ);
+
+    
     void readTimeTotal(const std::string &data);
     void readTimeRamp(const std::string &data);
 	void readUseTipLoss(const std::string &data);
 	void readUseHubLoss(const std::string &data);
 	void readUseSkewCorr(const std::string &data);
-	void addNode(const std::string &data);
 
     void readGrav(const std::string &data);
     void readWatDens(const std::string &data);

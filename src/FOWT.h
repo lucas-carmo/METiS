@@ -49,10 +49,10 @@ public:
 	/*****************************************************
 		Setters
 	*****************************************************/
-	void readHydroMode(const std::string &data);
-	void readAeroMode(const std::string &data);
-	void readMoorMode(const std::string &data);
-	void readDOFs(const std::string &data);
+	void setHydroMode(const int hydroMode);
+	void setAeroMode(const int aeroMode);
+	void setMoorMode(const int moorMode);
+	void setDoFs(std::array<bool, 6> &dofs);
 
 	void readExtLinStiff(const std::string &data);
 	void readExtConstForce(const std::string &data);

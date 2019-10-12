@@ -8,6 +8,7 @@
 #include <sys/types.h> // Using this and stat.h to check if directories and files exist
 #include <sys/stat.h>
 #include <cstdlib> // for exit()
+#include <array>
 
 
 /*****************************************************
@@ -62,31 +63,53 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		*/
 		if (caseInsCompare(getKeyword(strInput), "Hydro"))
 		{
-			fowt.readHydroMode(getData(strInput));
-			continue;
+			int aux{};
+			readDataFromString(getData(strInput), aux);			
+			fowt.setHydroMode(aux);
+			continue;						
 		}
 
 		if (caseInsCompare(getKeyword(strInput), "Aero"))
 		{
-			fowt.readAeroMode(getData(strInput));
-			continue;
+			int aux{};
+			readDataFromString(getData(strInput), aux);			
+			fowt.setAeroMode(aux);
+			continue;						
 		}
 
 		if (caseInsCompare(getKeyword(strInput), "Moor"))
 		{
-			fowt.readMoorMode(getData(strInput));
-			continue;
+			int aux{};
+			readDataFromString(getData(strInput), aux);			
+			fowt.setMoorMode(aux);
+			continue;	
 		}
 
 		if (caseInsCompare(getKeyword(strInput), "DOFS"))
 		{
-			fowt.readDOFs(getData(strInput));
+			// The flags for each of the six degrees of freedom are separated by white spaces in the input string (whitespace or tab)
+			std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
+			if (input.size() != 6)
+			{
+				throw std::runtime_error("Unable to read the DoFs in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+			}
+
+			// Read to an auxiliar array before passing to fowt			
+			std::array<bool, 6> aux_activeDoFs;
+			for (int ii = 0; ii < aux_activeDoFs.size(); ++ii)
+			{
+				readDataFromString(input.at(ii), aux_activeDoFs.at(ii));	
+			}
+
+			fowt.setDoFs(aux_activeDoFs);
 			continue;
 		}		
 
 		if (caseInsCompare(getKeyword(strInput), "TimeStep"))
 		{
-			envir.readTimeStep(getData(strInput));
+			double aux{};
+			readDataFromString(getData(strInput), aux);			
+			envir.setTimeStep(aux);
 			continue;
 		}
 
@@ -103,8 +126,8 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "UseTipLoss"))
-		{
-			envir.readUseTipLoss(getData(strInput));
+		{				
+			envir.readUseTipLoss(getData(strInput));			
 			continue;
 		}
 
@@ -192,14 +215,34 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				{
 					throw std::runtime_error("End of file reached before END keyword in NODES specification.");
 					return;
-				}
+				}				
 
-				envir.addNode(strInput); // Add this node to the floater
+				// Nodes are specified by a vec with four components: ID, X coord, Y coord, and Z coord. 
+				// They are separated by commas in the input string.
+				std::vector<std::string> input = stringTokenize(strInput, ",");
+				if (input.size() != 4)
+				{
+					throw std::runtime_error("Unable to read the node in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+					return;
+				}	
 
+				// Read data to auxiliary temporary variables
+				unsigned int aux_nodeID{0};
+				double aux_nodeCoordX{0}, aux_nodeCoordY{0}, aux_nodeCoordZ{0};
+				readDataFromString(input.at(0), aux_nodeID);
+				readDataFromString(input.at(1), aux_nodeCoordX);
+				readDataFromString(input.at(2), aux_nodeCoordY);
+				readDataFromString(input.at(3), aux_nodeCoordZ);
+
+				// Add node
+				envir.addNode(aux_nodeID, aux_nodeCoordX, aux_nodeCoordY, aux_nodeCoordZ);
+
+				// Done with this line. Read next one.
 				IO::readLineInputFile(strInput);
 			}
 			continue;
 		}
+
 
 
 		/*
@@ -468,7 +511,12 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 }
 
 
-
+/*
+	Set output files path and open them. There are three output files:
+	- Formatted output file, with the time series of selected outputs;
+	- Summary file, with a summary of the simulation;
+	- Log file, with errors and warnings.
+*/
 void IO::setFiles(const std::string &inFlPath)
 {
 	// Check whether we are not trying to reset the input file

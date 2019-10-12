@@ -14,39 +14,24 @@ FOWT::FOWT() : m_extLinStiff(fill::zeros), m_mass(datum::nan),
 /*****************************************************
 	Setters
 *****************************************************/
-void FOWT::readHydroMode(const std::string &data)
+void FOWT::setHydroMode(const int hydroMode)
 {
-	readDataFromString(data, m_hydroMode);
+	m_hydroMode = hydroMode;
 }
 
-void FOWT::readAeroMode(const std::string &data)
+void FOWT::setAeroMode(const int aeroMode)
 {
-	readDataFromString(data, m_aeroMode);
+	m_aeroMode = aeroMode;
 }
 
-void FOWT::readMoorMode(const std::string &data)
+void FOWT::setMoorMode(const int moorMode)
 {
-	readDataFromString(data, m_moorMode);
+	m_moorMode = moorMode;
 }
 
-void FOWT::readDOFs(const std::string &data)
+void FOWT::setDoFs(std::array<bool, 6> &dofs)
 {
-	// The flags for each of the six degrees of freedom are separated by white spaces in the input string (whitespace or tab)
-	std::vector<std::string> input = stringTokenize(data, " \t");
-
-	// Check number of inputs
-	if (input.size() != 6)
-	{
-		throw std::runtime_error("Unable to read the DoFs in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}
-
-	// Read data
-	readDataFromString(input.at(0), m_dofs[0]);
-	readDataFromString(input.at(1), m_dofs[1]);
-	readDataFromString(input.at(2), m_dofs[2]);
-	readDataFromString(input.at(3), m_dofs[3]);
-	readDataFromString(input.at(4), m_dofs[4]);
-	readDataFromString(input.at(5), m_dofs[5]);
+    m_dofs = dofs;
 }
 
 

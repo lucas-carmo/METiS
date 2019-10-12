@@ -22,10 +22,11 @@ ENVIR::ENVIR()
 /*****************************************************
 	Setters
 *****************************************************/
-void ENVIR::readTimeStep(const std::string &data)
+void ENVIR::setTimeStep(const double timeStep)
 {
-    readDataFromString(data, m_timeStep);
+	m_timeStep = timeStep;
 }
+
 
 void ENVIR::readTimeTotal(const std::string &data)
 {
@@ -156,7 +157,7 @@ void ENVIR::jonswap(const std::string &wholeWaveLine)
 	readDataFromString(input.at(5), whigh);
 
 	// Frequency resolution and maximum possible frequency are determined by the total time simulation and time step
-	// See Mérigaud, A. and Ringwood, John V. - Free-Surface Time-Series Generation for Wave Energy Applications - IEEE J. of Oceanic Eng. - 2018
+	// See Merigaud, A. and Ringwood, John V. - Free-Surface Time-Series Generation for Wave Energy Applications - IEEE J. of Oceanic Eng. - 2018
 	double dw = 2 * arma::datum::pi / m_timeTotal;
 	double wmax = arma::datum::pi / m_timeStep;
 
@@ -220,22 +221,8 @@ void ENVIR::addWaveLocation(const std::string &data)
 	}
 }
 
-void ENVIR::addNode(const std::string &data)
+void ENVIR::addNode(const unsigned int nodeID, const double nodeCoordX, const double nodeCoordY, const double nodeCoordZ)
 {
-	// Nodes are specified by a vec with four components: ID, X coord, Y coord, and Z coord. 
-	// They are separated by commas in the input string.
-	std::vector<std::string> input = stringTokenize(data, ",");
-
-	if (input.size() != 4)
-	{
-		throw std::runtime_error("Unable to read the node in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-		return;
-	}
-
-	// Read node ID
-	unsigned int nodeID{0};
-	readDataFromString( input.at(0), nodeID );
-
 	if (m_nodesID.size() != 0) // If this is not the first node that will be added to m_nodesID
 	{
 		if (nodeID <= m_nodesID.back()) // Then verify if its ID is larger than the previous one, thus garanteeing that m_nodesID is in ascending order (this is needed to use binary search to find nodes IDs)
@@ -244,18 +231,10 @@ void ENVIR::addNode(const std::string &data)
 		}
 	}
 
-	m_nodesID.push_back( nodeID );
-
-
-	// Read node coord
-	vec::fixed<3> nodeCoord(fill::zeros);
-	for (int ii = 0; ii < nodeCoord.n_elem; ++ii)
-	{
-		readDataFromString( input.at(ii+1), nodeCoord(ii) );
-	}
-
-	m_nodesCoord.push_back( nodeCoord );
+	m_nodesID.push_back( nodeID );	
+	m_nodesCoord.push_back(vec::fixed<3> {nodeCoordX, nodeCoordY, nodeCoordZ});
 }
+
 
 
 /*****************************************************
