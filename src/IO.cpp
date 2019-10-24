@@ -171,38 +171,55 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		else if (caseInsCompare(getKeyword(strInput), "WatDepth"))
 		{
-			envir.readWatDepth(getData(strInput));
+			double aux{0};
+			readDataFromString(getData(strInput), aux);			
+			envir.setWatDepth(aux);
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "AirDens"))
 		{
-			envir.readAirDens(getData(strInput));
+			double aux{0};
+			readDataFromString(getData(strInput), aux);			
+			envir.setAirDens(aux);
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WindVel"))
 		{
-			envir.readWindRefVel(getData(strInput));
-			continue;
+			double aux{0};
+			readDataFromString(getData(strInput), aux);			
+			envir.setWindRefVel(aux);
+			continue;			
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WindHeight"))
 		{
-			envir.readWindRefHeight(getData(strInput));
-			continue;
+			double aux{0};
+			readDataFromString(getData(strInput), aux);			
+			envir.setWindRefHeight(aux);
+			continue;			
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WindExp"))
 		{
-			envir.readWindExp(getData(strInput));
-			continue;
+			double aux{0};
+			readDataFromString(getData(strInput), aux);			
+			envir.setWindExp(aux);
+			continue;	
 		}
 
-		else if (caseInsCompare(getKeyword(strInput), "Wave")) // A list of Waves is supposed to follow the "Wave keyword"
+
+		else if (caseInsCompare(getKeyword(strInput), "Wave")) // A list of Waves is supposed to follow the "Wave" keyword
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
+			// Aux variables
+			std::vector<std::string> aux_input; // For tokenizing the different information contained in the input line			
+			double aux_height, aux_freqORperiod, aux_direction, aux_phase; // For regular waves
+			double aux_Hs, aux_Tp, aux_gamma, aux_dir, aux_wlow, aux_whigh; // For JONSWAP
+
+			// Loop the lines in the Wave section of the input file and add the waves to envir
 			while (!caseInsCompare(getKeyword(strInput), "END")) // The END keyword indicates the end of the list of waves
 			{
 				if (!m_inFl) // Signal if the end of file is reached before the end keyword
@@ -211,15 +228,62 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
+				// Check if the keyword is related to regular waves
+				if (caseInsCompare(getKeyword(strInput), "TRWave") || caseInsCompare(getKeyword(strInput), "FRWave") || caseInsCompare(getKeyword(strInput), "WRWave"))
+				{
+					// Wave characteristics are divided by a space or a tab.
+					aux_input = stringTokenize(getData(strInput), " \t");
 
-				envir.addWave(strInput); // Add this wave to the environment
+					// Check if there are exactly four inputs (Wave height, period or frequency orangular frequency, direction of propagation, and phase)
+					if (aux_input.size() != 4)
+					{
+						throw std::runtime_error("Unable to read the wave in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+					}
+
+					// Read wave characteristics to aux variables
+					readDataFromString(aux_input.at(0), aux_height);
+					readDataFromString(aux_input.at(1), aux_freqORperiod);
+					readDataFromString(aux_input.at(2), aux_direction);
+					readDataFromString(aux_input.at(3), aux_phase);
+
+					envir.addRegularWave(getKeyword(strInput), aux_height, aux_freqORperiod, aux_direction, aux_phase);
+				}
+
+				// Check if it is a JONSWAP spectrum
+				else if (caseInsCompare(getKeyword(strInput), "JONSW"))
+				{
+					std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
+
+					// Check if there are exactly six outputs
+					if (input.size() != 6)
+					{
+						throw std::runtime_error("Unable to read JONSWAP spectrum in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+					}
+
+					// Read wave characteristics to aux variables
+					readDataFromString(input.at(0), aux_Hs);
+					readDataFromString(input.at(1), aux_Tp);
+					readDataFromString(input.at(2), aux_gamma);
+					readDataFromString(input.at(3), aux_dir);
+					readDataFromString(input.at(4), aux_wlow);
+					readDataFromString(input.at(5), aux_whigh);
+
+					envir.addJonswap(aux_Hs, aux_Tp, aux_gamma, aux_dir, aux_wlow, aux_whigh);
+				}
+
+				// Otherwise, there could be a typo or something of the kind. Warn the user, but continue anyway.
+				else
+				{
+					print2log("WARNING: Unknown wave type '" + getKeyword(strInput) + "' in line " + std::to_string(IO::getInLineNumber()) + ".");
+				}
 
 				IO::readLineInputFile(strInput);
 			}
 			continue;
 		}
 
-		else if (caseInsCompare(getKeyword(strInput), "Nodes")) // A list of Nodes is supposed to follow the "Wave keyword"
+
+		else if (caseInsCompare(getKeyword(strInput), "Nodes")) // A list of Nodes is supposed to follow the "Nodes" keyword
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
@@ -1083,7 +1147,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Wind exp:\t" << envir.windExp() << '\n';
 	m_sumFl << "Nodes: \n" << envir.printNodes() << '\n';
 	m_sumFl << "Wave Locations: " << envir.printWaveLocation() << '\n';
-	//m_sumFl << "\n" << envir.printWave() << '\n';
+	m_sumFl << "\n" << envir.printWave() << '\n';
 
 	m_sumFl << "\n\n";
 	m_sumFl << "FOWT:\n";

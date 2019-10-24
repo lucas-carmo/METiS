@@ -18,11 +18,11 @@ private:
 	// decided to keep them and to avoid any setter, in such a way that it is necessary 
 	// to use the constructors to set the parameters.
 	//
-	// In any case, they receive NaN as default value. If the user tries to call
+	// In any case, they receive NaN in the default constructor. If the user tries to call
 	// ENVIR.waveNumber() or ENVIR.length() and they are NaN, an exception is thrown.
-	// Nevertheless, you can call ENVIR.waveNumber(watDepth, gravity).
-	double m_waveNumber = arma::datum::nan;
-	double m_length = arma::datum::nan;
+	// In this case it is still safe to call ENVIR.waveNumber(watDepth, gravity).
+	double m_waveNumber;
+	double m_length;
 
 	// Absolute tolerance for the numerical solution of the dispersion equation
 	static double constexpr m_epsWave = 1e-7;
@@ -30,10 +30,9 @@ private:
 public:
 	/*****************************************************
 		Constructors
-	*****************************************************/
-	Wave(double height, double period, double direction, double phase, double watDepth, double gravity);
-
-	Wave(const std::string &wholeWaveLine);
+	****************z************************************/
+	Wave();
+	Wave(const std::string &waveType, const double height, const double freqORperiod, const double direction, const double phase, const double watDepth, const double gravity);
 
 
 	/*****************************************************
