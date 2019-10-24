@@ -47,29 +47,43 @@ void ENVIR::setWatDens(const double watDens)
 	m_watDens = watDens;
 }
 
-void ENVIR::readAirDens(const std::string &data)
+void ENVIR::setWatDepth(const double watDepth)
 {
-	readDataFromString(data, m_airDens);
+	m_watDepth = watDepth;
 }
 
-void ENVIR::readWindRefVel(const std::string &data)
+void ENVIR::setAirDens(const double airDens)
 {
-	readDataFromString(data, m_windRefVel);
+	m_airDens = airDens;
 }
 
-void ENVIR::readWindRefHeight(const std::string &data)
+void ENVIR::setWindRefVel(const double windRefVel)
 {
-	readDataFromString(data, m_windRefHeight);
+	m_windRefVel = windRefVel;
 }
 
-void ENVIR::readWindExp(const std::string &data)
+void ENVIR::setWindRefHeight(const double windRefHeight)
 {
-	readDataFromString(data, m_windExp);
+	m_windRefHeight = windRefHeight;
 }
 
-void ENVIR::readWatDepth(const std::string &data)
+void ENVIR::setWindExp(const double windExp)
 {
-	readDataFromString(data, m_watDepth);
+	m_windExp = windExp;
+}
+
+void ENVIR::addNode(const unsigned int nodeID, const double nodeCoordX, const double nodeCoordY, const double nodeCoordZ)
+{
+	if (m_nodesID.size() != 0) // If this is not the first node that will be added to m_nodesID
+	{
+		if (nodeID <= m_nodesID.back()) // Then verify if its ID is larger than the previous one, thus garanteeing that m_nodesID is in ascending order (this is needed to use binary search to find nodes IDs)
+		{
+			throw std::runtime_error( "Nodes must be organized in ascending order. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+		}
+	}
+
+	m_nodesID.push_back( nodeID );	
+	m_nodesCoord.push_back(vec::fixed<3> {nodeCoordX, nodeCoordY, nodeCoordZ});
 }
 
 void ENVIR::addWave(const std::string &wholeWaveLine)
@@ -203,20 +217,6 @@ void ENVIR::addWaveLocation(const std::string &data)
 		m_waveLocation.back().at(2) = 0; // Set z=0
 		m_waveLocationID.push_back(nodeID);
 	}
-}
-
-void ENVIR::addNode(const unsigned int nodeID, const double nodeCoordX, const double nodeCoordY, const double nodeCoordZ)
-{
-	if (m_nodesID.size() != 0) // If this is not the first node that will be added to m_nodesID
-	{
-		if (nodeID <= m_nodesID.back()) // Then verify if its ID is larger than the previous one, thus garanteeing that m_nodesID is in ascending order (this is needed to use binary search to find nodes IDs)
-		{
-			throw std::runtime_error( "Nodes must be organized in ascending order. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
-		}
-	}
-
-	m_nodesID.push_back( nodeID );	
-	m_nodesCoord.push_back(vec::fixed<3> {nodeCoordX, nodeCoordY, nodeCoordZ});
 }
 
 

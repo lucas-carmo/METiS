@@ -48,14 +48,13 @@ public:
 	void setTimeRamp(const double timeRamp);
 	void setGravity(const double gravity);
 	void setWatDens(const double watDens);
+	void setWatDepth(const double watDepth);
+	void setAirDens(const double airDens);	
+	void setWindRefVel(const double windRefVel);
+	void setWindRefHeight(const double windRefHeight);
+	void setWindExp(const double windExp);
 
 	void addNode(const unsigned int nodeID, const double nodeCoordX, const double nodeCoordY, const double nodeCoordZ);
-
-    void readWatDepth(const std::string &data);
-	void readAirDens(const std::string &data);
-	void readWindRefVel(const std::string &data);
-	void readWindRefHeight(const std::string &data);
-	void readWindExp(const std::string &data);
 	
 	void addWave(const std::string &wholeWaveLine);
 	void jonswap(const std::string &wholeWaveLine);

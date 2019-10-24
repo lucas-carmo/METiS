@@ -171,32 +171,42 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		else if (caseInsCompare(getKeyword(strInput), "WatDepth"))
 		{
-			envir.readWatDepth(getData(strInput));
+			double aux{0};
+			readDataFromString(getData(strInput), aux);			
+			envir.setWatDepth(aux);
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "AirDens"))
 		{
-			envir.readAirDens(getData(strInput));
+			double aux{0};
+			readDataFromString(getData(strInput), aux);			
+			envir.setAirDens(aux);
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WindVel"))
 		{
-			envir.readWindRefVel(getData(strInput));
-			continue;
+			double aux{0};
+			readDataFromString(getData(strInput), aux);			
+			envir.setWindRefVel(aux);
+			continue;			
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WindHeight"))
 		{
-			envir.readWindRefHeight(getData(strInput));
-			continue;
+			double aux{0};
+			readDataFromString(getData(strInput), aux);			
+			envir.setWindRefHeight(aux);
+			continue;			
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WindExp"))
 		{
-			envir.readWindExp(getData(strInput));
-			continue;
+			double aux{0};
+			readDataFromString(getData(strInput), aux);			
+			envir.setWindExp(aux);
+			continue;	
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Wave")) // A list of Waves is supposed to follow the "Wave keyword"
