@@ -21,7 +21,7 @@ private:
     double m_gravity;
     double m_watDens;
     double m_watDepth;
-    std::vector<Wave> m_wave;
+    std::vector<Wave> m_wave; // The sea is specified by a vector with regular wave components. You can add a wave component using the method addRegularWave(), or many components using addJonswap().
 	std::vector<unsigned int> m_waveLocationID;
     std::vector<vec::fixed<3>> m_waveLocation; // Coordinates of the points where the wave characteristics (elevation, velocity, etc) are calculated for output
     double m_airDens;
@@ -55,9 +55,10 @@ public:
 	void setWindExp(const double windExp);
 
 	void addNode(const unsigned int nodeID, const double nodeCoordX, const double nodeCoordY, const double nodeCoordZ);
-	
-	void addWave(const std::string &wholeWaveLine);
-	void jonswap(const std::string &wholeWaveLine);
+	void addRegularWave(const std::string &waveType, const double height, const double freqORperiod, const double direction, const double phase);
+	void addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh);
+
+
 
 	void addWaveLocation(const std::string &data);
 

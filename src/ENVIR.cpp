@@ -86,7 +86,8 @@ void ENVIR::addNode(const unsigned int nodeID, const double nodeCoordX, const do
 	m_nodesCoord.push_back(vec::fixed<3> {nodeCoordX, nodeCoordY, nodeCoordZ});
 }
 
-void ENVIR::addWave(const std::string &wholeWaveLine)
+
+void ENVIR::addRegularWave(const std::string &waveType, const double height, const double freqORperiod, const double direction, const double phase)
 {
 	// Check whether the water depth was defined
 	if (!is_finite(m_watDepth))
@@ -100,60 +101,12 @@ void ENVIR::addWave(const std::string &wholeWaveLine)
 		throw std::runtime_error("You should specify the gravity before the waves. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
 
-	// Test if the keyword is related to regular waves
-	if (caseInsCompare(getKeyword(wholeWaveLine), "TRWave")
-		|| caseInsCompare(getKeyword(wholeWaveLine), "FRWave")
-		|| caseInsCompare(getKeyword(wholeWaveLine), "WRWave"))
-	{
-		Wave tempWave(wholeWaveLine);
-		m_wave.push_back(Wave(tempWave.height(), tempWave.period(), tempWave.direction(), tempWave.phase(), m_watDepth, m_gravity));
-	}
-
-	// Check if it is a JONSWAP spectrum
-	else if (caseInsCompare(getKeyword(wholeWaveLine), "JONSW"))
-	{
-		jonswap(wholeWaveLine);
-	}
-
-	else
-	{
-		throw std::runtime_error("Unknown keyword '" + getKeyword(wholeWaveLine) + "' in input line " + std::to_string(IO::getInLineNumber()) + ".");
-	}
+	m_wave.push_back(Wave(waveType, height, freqORperiod, direction, phase, m_watDepth, m_gravity));
 }
 
-void ENVIR::jonswap(const std::string &wholeWaveLine)
+
+void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh)
 {
-	// JONSWAP characteristics are divided by a space or a tab.
-	// The characteristics are 
-	// 1) Wave significant height
-	// 2) Wave peark period
-	// 3) Gamma
-	// 4) Direction (in degrees)
-	// 5) Lowest frequency for the spectrum (rad/s)
-	// 6) Highest frequency for the spectrum (rad/s)
-	std::vector<std::string> input = stringTokenize(getData(wholeWaveLine), " \t");
-
-	// Check if there are exactly six outputs
-	if (input.size() != 6)
-	{
-		throw std::runtime_error("Unable to read JONSWAP spectrum in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}
-	
-	double Hs;
-	double Tp;
-	double gamma;
-	double dir;
-	double wlow;
-	double whigh;
-
-	// Finally, read data
-	readDataFromString(input.at(0), Hs);
-	readDataFromString(input.at(1), Tp);
-	readDataFromString(input.at(2), gamma);
-	readDataFromString(input.at(3), dir);
-	readDataFromString(input.at(4), wlow);
-	readDataFromString(input.at(5), whigh);
-
 	// Frequency resolution and maximum possible frequency are determined by the total time simulation and time step
 	// See Merigaud, A. and Ringwood, John V. - Free-Surface Time-Series Generation for Wave Energy Applications - IEEE J. of Oceanic Eng. - 2018
 	double dw = 2 * arma::datum::pi / m_timeTotal;
@@ -164,7 +117,7 @@ void ENVIR::jonswap(const std::string &wholeWaveLine)
 	double phase(0);
 
 	// JONSWAP parameters
-	double wp = 2* arma::datum::pi /Tp;
+	double wp = 2 * arma::datum::pi / Tp;
 	double sigma(0);
 	double A(0);
 	double Sw(0);
@@ -187,7 +140,7 @@ void ENVIR::jonswap(const std::string &wholeWaveLine)
 
 		height = 2 * std::sqrt(2 * Sw * dw);
 		phase = -360 + (360 + 360) * randu(1, 1).at(0, 0);
-		m_wave.push_back(Wave(height, 2*arma::datum::pi/w, dir, phase, m_watDepth, m_gravity));
+		m_wave.push_back(Wave("TRWave", height, 2 * arma::datum::pi / w, direction, phase, m_watDepth, m_gravity));
 	}
 }
 
