@@ -705,96 +705,109 @@ unsigned int IO::getInLineNumber()
 // and other necessary information (like the IDs of the points where the wave elevation will be output)
 void IO::setResults2Output(std::string strInput, ENVIR &envir)
 {
-	if (caseInsCompare(getKeyword(strInput), "fowt_disp"))
+	const std::string keyword = getKeyword(strInput);
+
+	if (caseInsCompare(keyword, "fowt_disp"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_DISP) = true;
 	}
 
-	if (caseInsCompare(getKeyword(strInput), "fowt_vel"))
+	if (caseInsCompare(keyword, "fowt_vel"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_VEL) = true;
 	}
 
-	if (caseInsCompare(getKeyword(strInput), "fowt_acc"))
+	if (caseInsCompare(keyword, "fowt_acc"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_ACC) = true;
 	}
-
-	if (caseInsCompare(getKeyword(strInput), "wave_elev"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ELEV) = true;
-
-		if (!getData(strInput).empty())
-		{
-			envir.addWaveLocation(getData(strInput)); // Add the wave locations to envir. Pass only the part of the string after the keyword
-		}
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "wave_vel")) // Similar to wave_elev
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_WAVE_VEL) = true;
-
-		if (!getData(strInput).empty())
-		{
-			envir.addWaveLocation(getData(strInput));
-		}
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "wave_acc")) // Similar to wave_elev
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ACC) = true;
-
-		if (!getData(strInput).empty())
-		{
-			envir.addWaveLocation(getData(strInput));
-		}
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "wave_pres")) // Similar to wave_elev
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_WAVE_PRES) = true;
-
-		if (!getData(strInput).empty())
-		{
-			envir.addWaveLocation(getData(strInput));
-		}
-	}
-
-	if (caseInsCompare(getKeyword(strInput), "hd_force"))
+	
+	if (caseInsCompare(keyword, "hd_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE) = true;
 	}
 
-	if (caseInsCompare(getKeyword(strInput), "hs_force"))
+	if (caseInsCompare(keyword, "hs_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HS_FORCE) = true;
 	}
 
-	if (caseInsCompare(getKeyword(strInput), "total_force"))
+	if (caseInsCompare(keyword, "total_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_TOTAL_FORCE) = true;
 	}	
 
-	if (caseInsCompare(getKeyword(strInput), "hd_inertia_force"))
+	if (caseInsCompare(keyword, "hd_inertia_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_INERTIA_FORCE) = true;
 	}
 
-	if (caseInsCompare(getKeyword(strInput), "hd_drag_force"))
+	if (caseInsCompare(keyword, "hd_drag_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_DRAG_FORCE) = true;
 	}
 
-	if (caseInsCompare(getKeyword(strInput), "hd_fk_force"))
+	if (caseInsCompare(keyword, "hd_fk_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FK_FORCE) = true;
 	}
 
-	if (caseInsCompare(getKeyword(strInput), "ad_hub_force"))
+	if (caseInsCompare(keyword, "ad_hub_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_AD_HUB_FORCE) = true;
 	}
 	
+	// Add wave probes for wave elev, velocity, acceleration or pressure
+	bool addWaveProbe{ false };
+	if (caseInsCompare(keyword, "wave_elev"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ELEV) = true;
+		addWaveProbe = true;			
+	}
+
+	if (caseInsCompare(keyword, "wave_vel"))
+	{		
+		m_whichResult2Output.at(IO::OUTFLAG_WAVE_VEL) = true;
+		addWaveProbe = true;
+	}
+
+	if (caseInsCompare(keyword, "wave_acc"))		
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ACC) = true;
+		addWaveProbe = true;
+	}
+	
+	if (caseInsCompare(keyword, "wave_pres"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_WAVE_PRES) = true;
+		addWaveProbe = true;
+	}
+
+	if (addWaveProbe)
+	{		
+		if (!getData(strInput).empty())
+		{			
+			// The wave locations are specified by node IDs separated by tabs or white-spaces	
+			std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
+
+			// Check whether input is not empty
+			if (input.empty())
+			{
+				throw std::runtime_error("You should specify at least one node ID for defining a wave location. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+			}
+
+			// For each of the node IDs:
+			unsigned int nodeID(0); // Initialize a variable to read the node ID
+			for (int ii = 0; ii < input.size(); ++ii)
+			{
+				readDataFromString(input.at(ii), nodeID); // Read the node ID specified as a string to the nodeID variable
+				envir.addWaveProbe(nodeID);
+			}
+		}
+	}
+	
+
+
 }
 
 
@@ -1146,7 +1159,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Wind Height:\t" << envir.windRefHeight() << '\n';
 	m_sumFl << "Wind exp:\t" << envir.windExp() << '\n';
 	m_sumFl << "Nodes: \n" << envir.printNodes() << '\n';
-	m_sumFl << "Wave Locations: " << envir.printWaveLocation() << '\n';
+	m_sumFl << "Wave Locations: " << envir.printWaveProbe() << '\n';
 	m_sumFl << "\n" << envir.printWave() << '\n';
 
 	m_sumFl << "\n\n";

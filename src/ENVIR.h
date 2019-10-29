@@ -22,12 +22,13 @@ private:
     double m_watDens;
     double m_watDepth;
     std::vector<Wave> m_wave; // The sea is specified by a vector with regular wave components. You can add a wave component using the method addRegularWave(), or many components using addJonswap().
-	std::vector<unsigned int> m_waveLocationID;
-    std::vector<vec::fixed<3>> m_waveLocation; // Coordinates of the points where the wave characteristics (elevation, velocity, etc) are calculated for output
     double m_airDens;
     double m_windRefVel;
 	double m_windRefHeight;
     double m_windExp;
+
+	std::vector<unsigned int> m_waveProbeID;
+	std::vector<vec::fixed<3>> m_waveProbe; // Coordinates of the points where the wave characteristics (elevation, velocity, etc) are calculated for output
 
     /*
     Data to specify the numerical analysis
@@ -58,9 +59,7 @@ public:
 	void addRegularWave(const std::string &waveType, const double height, const double freqORperiod, const double direction, const double phase);
 	void addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh);
 
-
-
-	void addWaveLocation(const std::string &data);
+	void addWaveProbe(const unsigned int ID);
 
 	/*****************************************************
 		Getters
@@ -89,7 +88,7 @@ public:
 	std::string printWatDens() const;
 	std::string printWatDepth() const;
 	std::string printWave() const;
-	std::string printWaveLocation() const;
+	std::string printWaveProbe() const;
 
 	void printWaveCharact() const; // Print the wave characteristics (elevation, velocity, etc) specified for output in the locations given by m_waveLocation
 
@@ -97,7 +96,7 @@ public:
 		Other functions
 	*****************************************************/
     bool isNodeEmpty() const;
-    bool isWaveLocationEmpty() const;
+    bool isWaveProbeEmpty() const;
     arma::vec::fixed<3> getNode(unsigned int ID) const;
 
     void stepTime();
