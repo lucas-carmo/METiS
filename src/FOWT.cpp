@@ -35,36 +35,14 @@ void FOWT::setDoFs(std::array<bool, 6> &dofs)
 }
 
 
-void FOWT::readExtLinStiff(const std::string &data)
+void FOWT::setExtLinStiff(const vec::fixed<3> &extLinStiff)
 {
-    // The mooring line stiffness in surge, sway and yaw are separated by commas in the input string
-    std::vector<std::string> input = stringTokenize( data, "," );        
-    
-    if ( input.size() != 3 )
-    {
-		throw std::runtime_error("Unable to read linear stiffness in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}
-    
-    for ( int ii = 0; ii < input.size(); ++ii )
-    {
-        readDataFromString( input.at(ii), m_extLinStiff(ii) );
-    }    
+	m_extLinStiff = extLinStiff;
 }
 
-void FOWT::readExtConstForce(const std::string &data)
+void FOWT::setExtConstForce(const vec::fixed<6> &extConstForce)
 {
-	// The 6 components of the external constant force are separated by commas in the input string
-	std::vector<std::string> input = stringTokenize(data, ",");
-
-	if (input.size() != 6)
-	{
-		throw std::runtime_error("Unable to read external constant force in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}
-
-	for (int ii = 0; ii < input.size(); ++ii)
-	{
-		readDataFromString(input.at(ii), m_extConstForce(ii));
-	}
+	m_extConstForce = extConstForce;
 }
 
 void FOWT::setFloater(Floater &floater)
@@ -143,6 +121,10 @@ vec::fixed<6> FOWT::acc() const
 	return m_acc;
 }
 
+vec::fixed<6> FOWT::constForce() const
+{
+	return m_extConstForce;
+}
 
 std::string FOWT::printLinStiff() const
 {	

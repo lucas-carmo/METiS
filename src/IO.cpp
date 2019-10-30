@@ -50,9 +50,9 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 	RNA rna;
 
 	// Read file line by line
+	std::string strInput{""};
 	while (m_inFl)
-	{
-		std::string strInput;
+	{		
 		IO::readLineInputFile(strInput);
 
 		/**************************
@@ -61,50 +61,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		/*
 			Read data to envir
 		*/
-		if (caseInsCompare(getKeyword(strInput), "Hydro"))
-		{
-			int aux{0};
-			readDataFromString(getData(strInput), aux);			
-			fowt.setHydroMode(aux);
-			continue;						
-		}
-
-		if (caseInsCompare(getKeyword(strInput), "Aero"))
-		{
-			int aux{0};
-			readDataFromString(getData(strInput), aux);			
-			fowt.setAeroMode(aux);
-			continue;						
-		}
-
-		if (caseInsCompare(getKeyword(strInput), "Moor"))
-		{
-			int aux{0};
-			readDataFromString(getData(strInput), aux);			
-			fowt.setMoorMode(aux);
-			continue;	
-		}
-
-		if (caseInsCompare(getKeyword(strInput), "DOFS"))
-		{
-			// The flags for each of the six degrees of freedom are separated by white spaces in the input string (whitespace or tab)
-			std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
-			if (input.size() != 6)
-			{
-				throw std::runtime_error("Unable to read the DoFs in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-			}
-
-			// Read to an auxiliar array before passing to fowt			
-			std::array<bool, 6> aux_activeDoFs;
-			for (int ii = 0; ii < aux_activeDoFs.size(); ++ii)
-			{
-				readDataFromString(input.at(ii), aux_activeDoFs.at(ii));	
-			}
-
-			fowt.setDoFs(aux_activeDoFs);
-			continue;
-		}		
-
 		if (caseInsCompare(getKeyword(strInput), "TimeStep"))
 		{
 			double aux{0};
@@ -126,30 +82,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			double aux{0};
 			readDataFromString(getData(strInput), aux);			
 			envir.setTimeRamp(aux);
-			continue;
-		}
-
-		else if (caseInsCompare(getKeyword(strInput), "UseTipLoss"))
-		{				
-			bool aux{0};
-			readDataFromString(getData(strInput), aux);			
-			rna.setUseTipLoss(aux);
-			continue;
-		}
-
-		else if (caseInsCompare(getKeyword(strInput), "UseHubLoss"))
-		{
-			bool aux{0};
-			readDataFromString(getData(strInput), aux);			
-			rna.setUseHubLoss(aux);
-			continue;
-		}
-
-		else if (caseInsCompare(getKeyword(strInput), "UseSkewCorr"))
-		{
-			bool aux{0};
-			readDataFromString(getData(strInput), aux);			
-			rna.setUseSkewCorr(aux);
 			continue;
 		}
 
@@ -326,18 +258,92 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		/*
 			Read data to fowt
 		*/
+		if (caseInsCompare(getKeyword(strInput), "Hydro"))
+		{
+			int aux{ 0 };
+			readDataFromString(getData(strInput), aux);
+			fowt.setHydroMode(aux);
+			continue;
+		}
+
+		if (caseInsCompare(getKeyword(strInput), "Aero"))
+		{
+			int aux{ 0 };
+			readDataFromString(getData(strInput), aux);
+			fowt.setAeroMode(aux);
+			continue;
+		}
+
+		if (caseInsCompare(getKeyword(strInput), "Moor"))
+		{
+			int aux{ 0 };
+			readDataFromString(getData(strInput), aux);
+			fowt.setMoorMode(aux);
+			continue;
+		}
+
+		if (caseInsCompare(getKeyword(strInput), "DOFS"))
+		{
+			// The flags for each of the six degrees of freedom are separated by white spaces in the input string (whitespace or tab)
+			std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
+			if (input.size() != 6)
+			{
+				throw std::runtime_error("Unable to read the DoFs in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+			}
+
+			// Read to an auxiliar array before passing to fowt			
+			std::array<bool, 6> aux_activeDoFs;
+			for (int ii = 0; ii < aux_activeDoFs.size(); ++ii)
+			{
+				readDataFromString(input.at(ii), aux_activeDoFs.at(ii));
+			}
+
+			fowt.setDoFs(aux_activeDoFs);
+			continue;
+		}
+
 		else if (caseInsCompare(getKeyword(strInput), "ExtLinStiff"))
 		{
-			fowt.readExtLinStiff(getData(strInput));
+			// The mooring line stiffness in surge, sway and yaw are separated by commas in the input string
+			std::vector<std::string> input = stringTokenize(getData(strInput), ",");
+			if (input.size() != 3)
+			{
+				throw std::runtime_error("Unable to read linear stiffness in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+			}
+
+			// Read data to auxiliary temporary variables
+			vec::fixed<3> aux;
+		
+			for (int ii = 0; ii < aux.size(); ++ii)
+			{
+				readDataFromString(input.at(ii), aux(ii));
+			}
+
+			fowt.setExtLinStiff(aux);
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "ExtConstForce"))
 		{
-		fowt.readExtConstForce(getData(strInput));
-		continue;
+			// The 6 components of the external constant force are separated by commas in the input string
+			std::vector<std::string> input = stringTokenize(getData(strInput), ",");
+			if (input.size() != 6)
+			{
+				throw std::runtime_error("Unable to read external constant force in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+			}
+
+			// Read data to auxiliary temporary variables
+			vec::fixed<6> aux;
+			for (int ii = 0; ii < aux.size(); ++ii)
+			{
+				readDataFromString(input.at(ii), aux(ii));
+			}
+
+			fowt.setExtConstForce(aux);
+			continue;
 		}
 
+		// Read data to floater - which is a part of FOWT
 		else if (caseInsCompare(getKeyword(strInput), "FloaterMass"))
 		{
 			floater.readMass(getData(strInput));
@@ -375,7 +381,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			continue;
 		}
 
-
 		else if (caseInsCompare(getKeyword(strInput), "Morison_rect")) // A list of rectangular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
@@ -395,6 +400,31 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			continue;
 		}
 
+
+		// Read data to rna - which is a part of FOWT
+		else if (caseInsCompare(getKeyword(strInput), "UseTipLoss"))
+		{
+			bool aux{ 0 };
+			readDataFromString(getData(strInput), aux);
+			rna.setUseTipLoss(aux);
+		continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "UseHubLoss"))
+		{
+			bool aux{ 0 };
+			readDataFromString(getData(strInput), aux);
+			rna.setUseHubLoss(aux);
+			continue;
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "UseSkewCorr"))
+		{
+			bool aux{ 0 };
+			readDataFromString(getData(strInput), aux);
+			rna.setUseSkewCorr(aux);
+			continue;
+		}
 
 		else if (caseInsCompare(getKeyword(strInput), "RotSpeed"))
 		{
@@ -1176,6 +1206,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	else
 	{
 		m_sumFl << "Linear Stiffness:\t" << fowt.printLinStiff() << '\n';
+		m_sumFl << "Const force:\t" << fowt.constForce() << '\n';
 	}
 
 	if (fowt.hydroMode() == 0)
