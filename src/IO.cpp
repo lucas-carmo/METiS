@@ -1,3 +1,6 @@
+// This is a complete mess. I need to take some time and organize this class. 
+// - The function readInputFile has a lot of repetition. I should make a template that reads the input line based on the aux variable used in each block. Or overload a function that does it,
+
 #include "IO.h"
 
 #include <fstream> // Include file input/output classes
@@ -311,7 +314,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				throw std::runtime_error("Unable to read linear stiffness in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 			}
 
-			// Read data to auxiliary temporary variables
+			// Read data to an auxiliary temporary variable
 			vec::fixed<3> aux;
 		
 			for (int ii = 0; ii < aux.size(); ++ii)
@@ -332,7 +335,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				throw std::runtime_error("Unable to read external constant force in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 			}
 
-			// Read data to auxiliary temporary variables
+			// Read data to an auxiliary temporary variable
 			vec::fixed<6> aux;
 			for (int ii = 0; ii < aux.size(); ++ii)
 			{
@@ -346,19 +349,47 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		// Read data to floater - which is a part of FOWT
 		else if (caseInsCompare(getKeyword(strInput), "FloaterMass"))
 		{
-			floater.readMass(getData(strInput));
+			double aux{ 0 };
+			readDataFromString(getData(strInput), aux);
+			floater.setMass(aux);
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "FloaterInertia"))
 		{
-			floater.readInertia(getData(strInput));
+			// The different components of the inertia matrix are separated by commas in the input string
+			std::vector<std::string> input = stringTokenize(getData(strInput), ",");
+			if (input.size() != 6)
+			{
+				throw std::runtime_error("Unable to read the floater inertia matrix in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+			}
+
+			vec::fixed<6> aux;
+			for (int ii = 0; ii < aux.size(); ++ii)
+			{
+				readDataFromString(input.at(ii), aux(ii));
+			}
+			
+			floater.setInertia(aux);
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "FloaterCoG"))
 		{
-			floater.readCoG(getData(strInput));
+			// The different components of the inertia matrix are separated by commas in the input string
+			std::vector<std::string> input = stringTokenize(getData(strInput), ",");
+			if (input.size() != 3)
+			{
+				throw std::runtime_error("Unable to read the CoG in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+			}
+
+			vec::fixed<3> aux;
+			for (int ii = 0; ii < aux.size(); ++ii)
+			{
+				readDataFromString(input.at(ii), aux(ii));
+			}
+
+			floater.setCoG(aux);
 			continue;
 		}
 
@@ -374,14 +405,53 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				floater.addMorisonCirc(strInput, envir); // Add this Morison Element to the floater. Need envir for the nodes location.
+				// Aux variables to handle the data read from the input file
+				unsigned int aux_node1_ID{ 0 }, aux_node2_ID{ 0 }, aux_numIntPoints{ 0 };
+				double aux_diam{ 0 }, aux_CD{ 0 }, aux_CM{ 0 }, aux_botDiam{ 0 }, aux_topDiam{ 0 }, aux_axialCD{ 0 }, aux_axialCa{ 0 };
+				bool aux_botPressFlag = false;
 
+				// The eleven properties of a circular cylinder Morison's Element are separated by white spaces in the input string.
+				std::vector<std::string> input = stringTokenize(strInput, " \t");
+
+				// Check number of inputs
+				if (input.size() != 11)
+				{
+					throw std::runtime_error("Unable to read the circular cylinder in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+				}
+
+				// Check whether nodes were specified
+				if (envir.isNodeEmpty())
+				{
+					throw std::runtime_error("Nodes should be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()));
+				}
+
+				// Read data
+				readDataFromString(input.at(0), aux_node1_ID);
+				readDataFromString(input.at(1), aux_node2_ID);
+				readDataFromString(input.at(2), aux_diam);
+				readDataFromString(input.at(3), aux_CD);
+				readDataFromString(input.at(4), aux_CM);
+				readDataFromString(input.at(5), aux_numIntPoints);
+				readDataFromString(input.at(6), aux_botDiam);
+				readDataFromString(input.at(7), aux_topDiam);
+				readDataFromString(input.at(8), aux_axialCD);
+				readDataFromString(input.at(9), aux_axialCa);
+				readDataFromString(input.at(10), aux_botPressFlag);
+
+				// Get coordinates of nodes based on their ID
+				vec::fixed<3> aux_node1_coord = envir.getNode(aux_node1_ID);
+				vec::fixed<3> aux_node2_coord = envir.getNode(aux_node2_ID);
+							   
+				// Add this morison element to the floater
+				floater.addMorisonCirc(aux_node1_coord, aux_node2_coord, aux_diam, aux_CD, aux_CM, aux_numIntPoints, aux_botDiam, aux_topDiam, aux_axialCD, aux_axialCa, aux_botPressFlag);
+
+				// Go to next line
 				IO::readLineInputFile(strInput);
 			}
 			continue;
 		}
 
-		else if (caseInsCompare(getKeyword(strInput), "Morison_rect")) // A list of rectangular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
+		else if (caseInsCompare(getKeyword(strInput), "Morison_rect")) // A list of rectangular cylinder Morison Elements is supposed to follow the "Morison_rect" keyword
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
@@ -393,7 +463,51 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				floater.addMorisonRect(strInput, envir); // Add this Morison Element to the floater. Need envir for the nodes location.
+				// Aux variables to handle the data read from the input file
+				unsigned int aux_node1_ID{ 0 }, aux_node2_ID{ 0 }, aux_node3_ID{ 0 }, aux_numIntPoints{ 0 };
+				double aux_diam_X{ 0 }, aux_diam_Y{ 0 }, aux_CD_X{ 0 }, aux_CD_Y{ 0 }, aux_CM_X{ 0 }, aux_CM_Y{ 0 }, aux_botArea{ 0 }, aux_topArea{ 0 }, aux_axialCD{ 0 }, aux_axialCa{ 0 };
+				bool aux_botPressFlag = false;			
+
+				// The eleven properties of a circular cylinder Morison's Element are separated by white spaces in the input string.
+				std::vector<std::string> input = stringTokenize(strInput, " \t");
+
+				// Check number of inputs
+				if (input.size() != 15)
+				{
+					throw std::runtime_error("Unable to read the rectangular cylinder in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+				}
+
+				// Check whether nodes were specified
+				if (envir.isNodeEmpty())
+				{
+					throw std::runtime_error("Nodes should be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()));
+				}
+
+				// Read data
+				readDataFromString(input.at(0), aux_node1_ID);
+				readDataFromString(input.at(1), aux_node2_ID);
+				readDataFromString(input.at(2), aux_node3_ID);
+				readDataFromString(input.at(3), aux_diam_X);
+				readDataFromString(input.at(4), aux_CD_X);
+				readDataFromString(input.at(5), aux_CM_X);
+				readDataFromString(input.at(6), aux_diam_Y);
+				readDataFromString(input.at(7), aux_CD_Y);
+				readDataFromString(input.at(8), aux_CM_Y);
+				readDataFromString(input.at(9), aux_numIntPoints);
+				readDataFromString(input.at(10), aux_botArea);
+				readDataFromString(input.at(11), aux_topArea);
+				readDataFromString(input.at(12), aux_axialCD);
+				readDataFromString(input.at(13), aux_axialCa);
+				readDataFromString(input.at(14), aux_botPressFlag);
+
+				// Get coordinates of nodes based on their ID
+				vec::fixed<3> aux_node1_coord = envir.getNode(aux_node1_ID);
+				vec::fixed<3> aux_node2_coord = envir.getNode(aux_node2_ID);
+				vec::fixed<3> aux_node3_coord = envir.getNode(aux_node3_ID);
+
+				// Add this morison element to the floater
+				floater.addMorisonRect(aux_node1_coord, aux_node2_coord, aux_node3_coord, aux_diam_X, aux_diam_Y, aux_CD_X, aux_CD_Y, 
+					aux_CM_X, aux_CM_Y, aux_numIntPoints, aux_botArea, aux_topArea, aux_axialCD, aux_axialCa, aux_botPressFlag);
 
 				IO::readLineInputFile(strInput);
 			}

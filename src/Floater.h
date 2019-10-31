@@ -32,12 +32,15 @@ public:
 	/*****************************************************
 		Setters
 	*****************************************************/
-	void readMass(const std::string &data);
-	void readInertia(const std::string &data);
-	void readCoG(const std::string &data);
-	void addMorisonCirc(const std::string &data, const ENVIR &envir); // Need envir class for nodes location
-	void addMorisonRect(const std::string &data, const ENVIR &envir);
+	void setMass(const double mass);
+	void setInertia(const vec::fixed<6> &inertia);
+	void setCoG(const vec::fixed<3> &cog);
 
+	void addMorisonCirc(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_coord, const double diam, const double CD, const double CM, const unsigned int numIntPoints,
+		const double botDiam, const double topDiam, const double axialCD, const double axialCa, const bool botPressFlag);
+	void addMorisonRect(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_coord, vec::fixed<3> &node3_coord, const double diam_X, const double diam_Y,
+		const double CD_X, const double CD_Y, const double CM_X, const double CM_Y, const unsigned int numIntPoints,
+		const double botArea, const double topArea, const double axialCD, const double axialCa, const bool botPressFlag);
 
 	/*****************************************************
 		Getters
