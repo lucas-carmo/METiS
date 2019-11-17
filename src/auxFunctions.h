@@ -24,7 +24,7 @@ const std::string filesep =
 using namespace arma;
 mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, const double rotatZ);
 mat::fixed<3, 3> rotatMatrix_deg(const double rotatX, const double rotatY, const double rotatZ);
-mat::fixed<3, 3> rotatMatrix(const vec::fixed<3> &rotation);	
+mat::fixed<3, 3> rotatMatrix(const vec::fixed<3> &rotation);
 mat::fixed<3, 3> rotatMatrix_deg(const vec::fixed<3> &rotation);
 double deg2rad(const double degree);
 double minimum(const double x, const double y);
@@ -78,6 +78,35 @@ inline bool string2num(const std::string& sString, T &tX)
 	std::istringstream iStream(sString);
 	return (iStream >> tX) ? true : false; // extract value into tX, return success or not
 }
+
+// string2num: used to convert from string to a numerical type (double, float, int...)
+// Adapted from the one found at http://www.learncpp.com/cpp-tutorial/17-2-stdstring-construction-and-destruction/
+//
+// Examples:
+// --> double a = string2num<double>("15");
+// leads to a == 15
+//
+// --> double a = estring2num<double>("15 32");
+// --> double a = string2num<double>("15 a");
+// --> double a = string2num<double>("15a32");
+// --> double a = string2num<double>("15a");
+// all lead to a == 15
+//
+// --> double a = string2num<double>("a");
+// throws an exception
+template <typename T>
+inline T string2num(const std::string& string)
+{
+	std::istringstream iStream(string);
+	T tX;
+	if (!(iStream >> tX))
+	{
+		throw std::runtime_error( "Conversion from string failed. Tried to convert the string'" + string + "' to a number.");
+	}
+	return tX;
+}
+
+
 
 
 /*****************************************************

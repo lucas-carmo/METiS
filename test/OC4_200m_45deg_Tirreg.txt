@@ -17,8 +17,8 @@ DOFS 1 1 1 1 1 1
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
 %%-----------------------------------------------------------------------------%%
 TimeStep    0.25        % Time step, in seconds
-TimeTotal  	1800        % Total simulation time, in secods
-TimeRamp	180         % Numerical ramp, in seconds
+TimeTotal  	1800        % Total simulation time, in seconds
+TimeRamp  	180         % Numerical ramp, in seconds
 
 
 
@@ -132,7 +132,7 @@ Morison_circ
 % First node ID \t Second node ID \t Diameter \t Drag coefficient \t Inertia coefficient \t Number of integration points ...
 % ... \t Bottom diameter \t Top diameter \t Axial drag coefficient \t Axial added mass coefficient \t 1 or 0 for calculating dynamic pressure or not
 % The second part of the data above (the ones in the second line) is only required for heave plates. Input 0 for everything if only forces perpendicular to the % axis of the cylinder will be considered
-1	2	6.5	0.56	1.63	120 6.5	6.5	0	0	1	
+1	2	6.5	0.56	1.63	120 6.5	6.5	0	0	1
 11	12	12	0.61	1.63	104	0	0	0	0	0
 13	14	12	0.61	1.63	104	0	0	0	0	0
 15	16	12	0.61	1.63	104	0	0	0	0	0
@@ -177,9 +177,9 @@ Overhang    -5
 %%-------------------------- BLADES DESCRIPTION -------------------------------%%
 %%-----------------------------------------------------------------------------%%
 % Tem que dar uma uniformizada nisso (coisa que o FAST não faz). No aero, tá o comprimento da pá
-% em metros, enquanto que no estrutural tá em fração do comprimento total. Acho que o melhor é colocar 
+% em metros, enquanto que no estrutural tá em fração do comprimento total. Acho que o melhor é colocar
 % o blade span como um parametro isolado, talvez próximo ao numBlades, e deixar tudo como fração do comprimento da pá
- 
+
 Blades_aero  % Aerodynamic properties of the blades
 %   BlSpn         BlCrvAC       BlSwpAC        BlCrvAng      BlTwist       BlChord          BlAFID - Airfoil data the local blade node is associated with (1 to numAirfoils)
 %    (m)            (m)           (m)           (deg)         (deg)          (m)             (-)
@@ -1144,34 +1144,34 @@ TowerElev       10.00
 Tower_aero % Aerodynamic properties of the tower
 %TwrElev        TwrDiam        TwrCd
 %(m)              (m)           (-)
-1.0000000E+01  6.5000000E+00  1.0000000E+00  
-1.7760000E+01  6.2400000E+00  1.0000000E+00  
-2.5520000E+01  5.9700000E+00  1.0000000E+00  
-3.3280000E+01  5.7100000E+00  1.0000000E+00  
-4.1040000E+01  5.4500000E+00  1.0000000E+00  
-4.8800000E+01  5.1800000E+00  1.0000000E+00  
-5.6560000E+01  4.9200000E+00  1.0000000E+00  
-6.4320000E+01  4.6600000E+00  1.0000000E+00  
-7.2080000E+01  4.4000000E+00  1.0000000E+00  
-7.9840000E+01  4.1300000E+00  1.0000000E+00  
-8.7600000E+01  3.8700000E+00  1.0000000E+00  
+1.0000000E+01  6.5000000E+00  1.0000000E+00
+1.7760000E+01  6.2400000E+00  1.0000000E+00
+2.5520000E+01  5.9700000E+00  1.0000000E+00
+3.3280000E+01  5.7100000E+00  1.0000000E+00
+4.1040000E+01  5.4500000E+00  1.0000000E+00
+4.8800000E+01  5.1800000E+00  1.0000000E+00
+5.6560000E+01  4.9200000E+00  1.0000000E+00
+6.4320000E+01  4.6600000E+00  1.0000000E+00
+7.2080000E+01  4.4000000E+00  1.0000000E+00
+7.9840000E+01  4.1300000E+00  1.0000000E+00
+8.7600000E+01  3.8700000E+00  1.0000000E+00
 END
 
 
 Tower_elasto % Structural properties of the tower
 % HtFract       TMassDen         TwFAStif       TwSSStif
 %  (-)           (kg/m)           (Nm^2)         (Nm^2)
-0.0000000E+000  4.6670000E+003  6.0390300E+011  6.0390300E+011  
-1.0000000E-001  4.3452800E+003  5.1764400E+011  5.1764400E+011  
-2.0000000E-001  4.0347600E+003  4.4092500E+011  4.4092500E+011  
-3.0000000E-001  3.7354400E+003  3.7302200E+011  3.7302200E+011  
-4.0000000E-001  3.4473200E+003  3.1323600E+011  3.1323600E+011  
-5.0000000E-001  3.1704000E+003  2.6089700E+011  2.6089700E+011  
-6.0000000E-001  2.9046900E+003  2.1536500E+011  2.1536500E+011  
-7.0000000E-001  2.6501800E+003  1.7602800E+011  1.7602800E+011  
-8.0000000E-001  2.4068800E+003  1.4230100E+011  1.4230100E+011  
-9.0000000E-001  2.1747700E+003  1.1363000E+011  1.1363000E+011  
-1.0000000E+000  1.9538700E+003  8.9488000E+010  8.9488000E+010  
+0.0000000E+000  4.6670000E+003  6.0390300E+011  6.0390300E+011
+1.0000000E-001  4.3452800E+003  5.1764400E+011  5.1764400E+011
+2.0000000E-001  4.0347600E+003  4.4092500E+011  4.4092500E+011
+3.0000000E-001  3.7354400E+003  3.7302200E+011  3.7302200E+011
+4.0000000E-001  3.4473200E+003  3.1323600E+011  3.1323600E+011
+5.0000000E-001  3.1704000E+003  2.6089700E+011  2.6089700E+011
+6.0000000E-001  2.9046900E+003  2.1536500E+011  2.1536500E+011
+7.0000000E-001  2.6501800E+003  1.7602800E+011  1.7602800E+011
+8.0000000E-001  2.4068800E+003  1.4230100E+011  1.4230100E+011
+9.0000000E-001  2.1747700E+003  1.1363000E+011  1.1363000E+011
+1.0000000E+000  1.9538700E+003  8.9488000E+010  8.9488000E+010
 END
 
 OUTPUT

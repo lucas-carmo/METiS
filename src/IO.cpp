@@ -1,4 +1,4 @@
-// This is a complete mess. I need to take some time and organize this class. 
+// This is a complete mess. I need to take some time and organize this class.
 // - The function readInputFile has a lot of repetition. I should make a template that reads the input line based on the aux variable used in each block. Or overload a function that does it,
 
 #include "IO.h"
@@ -33,7 +33,7 @@ const unsigned int IO::m_outColumnWidth = 18;
 const unsigned int IO::m_outNumPrecision = 4;
 std::array<bool, IO::OUTFLAG_SIZE> IO::m_whichResult2Output;
 
-std::stringstream IO::m_outLineHeader; 
+std::stringstream IO::m_outLineHeader;
 std::stringstream IO::m_outLine;
 bool IO::m_shouldWriteOutLineHeader = true;
 bool IO::m_shouldWriteOutLine = true;
@@ -55,7 +55,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 	// Read file line by line
 	std::string strInput{""};
 	while (m_inFl)
-	{		
+	{
 		IO::readLineInputFile(strInput);
 
 		/**************************
@@ -66,93 +66,72 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		*/
 		if (caseInsCompare(getKeyword(strInput), "TimeStep"))
 		{
-			double aux{0};
-			readDataFromString(getData(strInput), aux);			
-			envir.setTimeStep(aux);
+			envir.setTimeStep(string2num<double>(getData(strInput)));
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "TimeTotal"))
 		{
-			double aux{0};
-			readDataFromString(getData(strInput), aux);			
-			envir.setTimeTotal(aux);
+			envir.setTimeTotal(string2num<double>(getData(strInput)));
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "TimeRamp"))
 		{
-			double aux{0};
-			readDataFromString(getData(strInput), aux);			
-			envir.setTimeRamp(aux);
+			envir.setTimeRamp(string2num<double>(getData(strInput)));
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Grav"))
 		{
-			double aux{0};
-			readDataFromString(getData(strInput), aux);			
-			envir.setGravity(aux);
+			envir.setGravity(string2num<double>(getData(strInput)));
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WatDens"))
 		{
-			double aux{0};
-			readDataFromString(getData(strInput), aux);			
-			envir.setWatDens(aux);
+			envir.setWatDens(string2num<double>(getData(strInput)));
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WatDepth"))
 		{
-			double aux{0};
-			readDataFromString(getData(strInput), aux);			
-			envir.setWatDepth(aux);
+			envir.setWatDepth(string2num<double>(getData(strInput)));
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "AirDens"))
 		{
-			double aux{0};
-			readDataFromString(getData(strInput), aux);			
-			envir.setAirDens(aux);
+			envir.setAirDens(string2num<double>(getData(strInput)));
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WindVel"))
 		{
-			double aux{0};
-			readDataFromString(getData(strInput), aux);			
-			envir.setWindRefVel(aux);
-			continue;			
+			envir.setWindRefVel(string2num<double>(getData(strInput)));
+			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WindHeight"))
 		{
-			double aux{0};
-			readDataFromString(getData(strInput), aux);			
-			envir.setWindRefHeight(aux);
-			continue;			
+			envir.setWindRefHeight(string2num<double>(getData(strInput)));
+			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WindExp"))
 		{
-			double aux{0};
-			readDataFromString(getData(strInput), aux);			
-			envir.setWindExp(aux);
-			continue;	
+			envir.setWindExp(string2num<double>(getData(strInput)));
+			continue;
 		}
 
-
-		else if (caseInsCompare(getKeyword(strInput), "Wave")) // A list of Waves is supposed to follow the "Wave" keyword
+		// Waves, nodes and other inputs, are special because they have
+		// several lines to specify their characteristics.
+		// In theses cases, we need to loop all the lines and read the inputs
+		// line by line.
+		else if (caseInsCompare(getKeyword(strInput), "Wave"))
 		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
-
-			// Aux variables
-			std::vector<std::string> aux_input; // For tokenizing the different information contained in the input line			
-			double aux_height, aux_freqORperiod, aux_direction, aux_phase; // For regular waves
-			double aux_Hs, aux_Tp, aux_gamma, aux_dir, aux_wlow, aux_whigh; // For JONSWAP
+			// Read next line, since current line is just the main keyword
+			IO::readLineInputFile(strInput);
 
 			// Loop the lines in the Wave section of the input file and add the waves to envir
 			while (!caseInsCompare(getKeyword(strInput), "END")) // The END keyword indicates the end of the list of waves
@@ -163,23 +142,21 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				// Check if the keyword is related to regular waves
+				// Check if this line is a regular wave
 				if (caseInsCompare(getKeyword(strInput), "TRWave") || caseInsCompare(getKeyword(strInput), "FRWave") || caseInsCompare(getKeyword(strInput), "WRWave"))
 				{
-					// Wave characteristics are divided by a space or a tab.
-					aux_input = stringTokenize(getData(strInput), " \t");
-
-					// Check if there are exactly four inputs (Wave height, period or frequency orangular frequency, direction of propagation, and phase)
-					if (aux_input.size() != 4)
+					// Need 4 inputs separated by a space or a tab:
+					// wave height, period or frequency or angular frequency, direction of propagation, and phase
+					std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
+					if (input.size() != 4)
 					{
 						throw std::runtime_error("Unable to read the wave in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 					}
 
-					// Read wave characteristics to aux variables
-					readDataFromString(aux_input.at(0), aux_height);
-					readDataFromString(aux_input.at(1), aux_freqORperiod);
-					readDataFromString(aux_input.at(2), aux_direction);
-					readDataFromString(aux_input.at(3), aux_phase);
+					double aux_height = string2num<double>(input.at(0));
+					double aux_freqORperiod = string2num<double>(input.at(1));
+					double aux_direction = string2num<double>(input.at(2));
+					double aux_phase = string2num<double>(input.at(3));
 
 					envir.addRegularWave(getKeyword(strInput), aux_height, aux_freqORperiod, aux_direction, aux_phase);
 				}
@@ -187,29 +164,29 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				// Check if it is a JONSWAP spectrum
 				else if (caseInsCompare(getKeyword(strInput), "JONSW"))
 				{
+					// Need 6 inputs, separated by a space or a tab for defining the JONSWAP spectrum:
+					// significant height, peak period, gamma, direction of propagation (at present, unidirectional seas are implemented)
+					// lowest frequency limit (rad/s), and highest frequency limit (rad/s) (beyond this limits, the spectrum is set to zero)
 					std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
-
-					// Check if there are exactly six outputs
 					if (input.size() != 6)
 					{
 						throw std::runtime_error("Unable to read JONSWAP spectrum in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 					}
 
-					// Read wave characteristics to aux variables
-					readDataFromString(input.at(0), aux_Hs);
-					readDataFromString(input.at(1), aux_Tp);
-					readDataFromString(input.at(2), aux_gamma);
-					readDataFromString(input.at(3), aux_dir);
-					readDataFromString(input.at(4), aux_wlow);
-					readDataFromString(input.at(5), aux_whigh);
+					double aux_Hs = string2num<double>(input.at(0));
+					double aux_Tp = string2num<double>(input.at(1));
+					double aux_gamma = string2num<double>(input.at(2));
+					double aux_dir = string2num<double>(input.at(3));
+					double aux_wlow = string2num<double>(input.at(4));
+					double aux_whigh = string2num<double>(input.at(5));
 
 					envir.addJonswap(aux_Hs, aux_Tp, aux_gamma, aux_dir, aux_wlow, aux_whigh);
 				}
 
-				// Otherwise, there could be a typo or something of the kind. Warn the user, but continue anyway.
+				// Otherwise, there could be a typo or something of the kind.
 				else
 				{
-					print2log("WARNING: Unknown wave type '" + getKeyword(strInput) + "' in line " + std::to_string(IO::getInLineNumber()) + ".");
+					throw std::runtime_error("Unknown wave type '" + getKeyword(strInput) + "' in line " + std::to_string(IO::getInLineNumber()) + ".");
 				}
 
 				IO::readLineInputFile(strInput);
@@ -217,10 +194,11 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			continue;
 		}
 
-
-		else if (caseInsCompare(getKeyword(strInput), "Nodes")) // A list of Nodes is supposed to follow the "Nodes" keyword
+		// Just like for the waves, a list of nodes is supposed to follow the "Nodes" keyword
+		else if (caseInsCompare(getKeyword(strInput), "Nodes"))
 		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+			// Read next line, since current line is just the main keyword
+			IO::readLineInputFile(strInput);
 
 			while (!caseInsCompare(getKeyword(strInput), "END"))
 			{
@@ -228,26 +206,21 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				{
 					throw std::runtime_error("End of file reached before END keyword in NODES specification.");
 					return;
-				}				
+				}
 
-				// Nodes are specified by a vec with four components: ID, X coord, Y coord, and Z coord. 
+				// Nodes are specified by a vec with four components: ID, X coord, Y coord, and Z coord.
 				// They are separated by commas in the input string.
 				std::vector<std::string> input = stringTokenize(strInput, ",");
 				if (input.size() != 4)
 				{
 					throw std::runtime_error("Unable to read the node in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 					return;
-				}	
+				}
 
-				// Read data to auxiliary temporary variables
-				unsigned int aux_nodeID{0};
-				double aux_nodeCoordX{0}, aux_nodeCoordY{0}, aux_nodeCoordZ{0};
-				readDataFromString(input.at(0), aux_nodeID);
-				readDataFromString(input.at(1), aux_nodeCoordX);
-				readDataFromString(input.at(2), aux_nodeCoordY);
-				readDataFromString(input.at(3), aux_nodeCoordZ);
-
-				// Add node
+				unsigned int aux_nodeID = string2num<unsigned int>(input.at(0));
+				double aux_nodeCoordX = string2num<double>(input.at(1));
+				double aux_nodeCoordY = string2num<double>(input.at(2));
+				double aux_nodeCoordZ = string2num<double>(input.at(3));
 				envir.addNode(aux_nodeID, aux_nodeCoordX, aux_nodeCoordY, aux_nodeCoordZ);
 
 				// Done with this line. Read next one.
@@ -263,25 +236,19 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		*/
 		if (caseInsCompare(getKeyword(strInput), "Hydro"))
 		{
-			int aux{ 0 };
-			readDataFromString(getData(strInput), aux);
-			fowt.setHydroMode(aux);
+			fowt.setHydroMode(string2num<int>(getData(strInput)));
 			continue;
 		}
 
 		if (caseInsCompare(getKeyword(strInput), "Aero"))
 		{
-			int aux{ 0 };
-			readDataFromString(getData(strInput), aux);
-			fowt.setAeroMode(aux);
+			fowt.setAeroMode(string2num<int>(getData(strInput)));
 			continue;
 		}
 
 		if (caseInsCompare(getKeyword(strInput), "Moor"))
 		{
-			int aux{ 0 };
-			readDataFromString(getData(strInput), aux);
-			fowt.setMoorMode(aux);
+			fowt.setMoorMode(string2num<int>(getData(strInput)));
 			continue;
 		}
 
@@ -294,11 +261,11 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				throw std::runtime_error("Unable to read the DoFs in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 			}
 
-			// Read to an auxiliar array before passing to fowt			
+			// Read to an auxiliar array before passing to fowt
 			std::array<bool, 6> aux_activeDoFs;
 			for (int ii = 0; ii < aux_activeDoFs.size(); ++ii)
 			{
-				readDataFromString(input.at(ii), aux_activeDoFs.at(ii));
+				aux_activeDoFs.at(ii) = string2num<bool>(input.at(ii));
 			}
 
 			fowt.setDoFs(aux_activeDoFs);
@@ -314,12 +281,11 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				throw std::runtime_error("Unable to read linear stiffness in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 			}
 
-			// Read data to an auxiliary temporary variable
+			// Read to an auxiliar array before passing to fowt
 			vec::fixed<3> aux;
-		
 			for (int ii = 0; ii < aux.size(); ++ii)
 			{
-				readDataFromString(input.at(ii), aux(ii));
+				aux.at(ii) = string2num<double>(input.at(ii));
 			}
 
 			fowt.setExtLinStiff(aux);
@@ -339,7 +305,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			vec::fixed<6> aux;
 			for (int ii = 0; ii < aux.size(); ++ii)
 			{
-				readDataFromString(input.at(ii), aux(ii));
+				aux.at(ii) = string2num<double>(input.at(ii));
 			}
 
 			fowt.setExtConstForce(aux);
@@ -349,9 +315,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		// Read data to floater - which is a part of FOWT
 		else if (caseInsCompare(getKeyword(strInput), "FloaterMass"))
 		{
-			double aux{ 0 };
-			readDataFromString(getData(strInput), aux);
-			floater.setMass(aux);
+			floater.setMass(string2num<double>(getData(strInput)));
 			continue;
 		}
 
@@ -367,9 +331,9 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			vec::fixed<6> aux;
 			for (int ii = 0; ii < aux.size(); ++ii)
 			{
-				readDataFromString(input.at(ii), aux(ii));
+				aux(ii) = string2num<double>(input.at(ii));
 			}
-			
+
 			floater.setInertia(aux);
 			continue;
 		}
@@ -386,7 +350,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			vec::fixed<3> aux;
 			for (int ii = 0; ii < aux.size(); ++ii)
 			{
-				readDataFromString(input.at(ii), aux(ii));
+				aux(ii) = string2num<double>(input.at(ii));
 			}
 
 			floater.setCoG(aux);
@@ -441,7 +405,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				// Get coordinates of nodes based on their ID
 				vec::fixed<3> aux_node1_coord = envir.getNode(aux_node1_ID);
 				vec::fixed<3> aux_node2_coord = envir.getNode(aux_node2_ID);
-							   
+
 				// Add this morison element to the floater
 				floater.addMorisonCirc(aux_node1_coord, aux_node2_coord, aux_diam, aux_CD, aux_CM, aux_numIntPoints, aux_botDiam, aux_topDiam, aux_axialCD, aux_axialCa, aux_botPressFlag);
 
@@ -466,7 +430,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				// Aux variables to handle the data read from the input file
 				unsigned int aux_node1_ID{ 0 }, aux_node2_ID{ 0 }, aux_node3_ID{ 0 }, aux_numIntPoints{ 0 };
 				double aux_diam_X{ 0 }, aux_diam_Y{ 0 }, aux_CD_X{ 0 }, aux_CD_Y{ 0 }, aux_CM_X{ 0 }, aux_CM_Y{ 0 }, aux_botArea{ 0 }, aux_topArea{ 0 }, aux_axialCD{ 0 }, aux_axialCa{ 0 };
-				bool aux_botPressFlag = false;			
+				bool aux_botPressFlag = false;
 
 				// The eleven properties of a circular cylinder Morison's Element are separated by white spaces in the input string.
 				std::vector<std::string> input = stringTokenize(strInput, " \t");
@@ -506,7 +470,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				vec::fixed<3> aux_node3_coord = envir.getNode(aux_node3_ID);
 
 				// Add this morison element to the floater
-				floater.addMorisonRect(aux_node1_coord, aux_node2_coord, aux_node3_coord, aux_diam_X, aux_diam_Y, aux_CD_X, aux_CD_Y, 
+				floater.addMorisonRect(aux_node1_coord, aux_node2_coord, aux_node3_coord, aux_diam_X, aux_diam_Y, aux_CD_X, aux_CD_Y,
 					aux_CM_X, aux_CM_Y, aux_numIntPoints, aux_botArea, aux_topArea, aux_axialCD, aux_axialCa, aux_botPressFlag);
 
 				IO::readLineInputFile(strInput);
@@ -774,13 +738,13 @@ void IO::setFiles(const std::string &inFlPath)
 	m_outFilePath = folderPath + filesep + inFlName + "_out.txt";
 
 	int index = 1; // This is the part where we verify if the file exists and append numbers as needed
-	while (stat(m_logFilePath.c_str(), &info) == 0 || stat(m_sumFilePath.c_str(), &info) == 0 || stat(m_outFilePath.c_str(), &info) == 0) 
+	while (stat(m_logFilePath.c_str(), &info) == 0 || stat(m_sumFilePath.c_str(), &info) == 0 || stat(m_outFilePath.c_str(), &info) == 0)
 	{
 		m_logFilePath = folderPath + filesep + inFlName + "_log_" + std::to_string(index) + ".txt";
 		m_sumFilePath = folderPath + filesep + inFlName + "_sum_" + std::to_string(index) + ".txt";
 		m_outFilePath = folderPath + filesep + inFlName + "_out_" + std::to_string(index) + ".txt";
 		++index;
-	}	
+	}
 
 	// Open the output files
 	m_logFl.open(m_logFilePath); // Check if we can open it
@@ -845,7 +809,7 @@ unsigned int IO::getInLineNumber()
 }
 
 
-// Set the flags specifying which variables must be output 
+// Set the flags specifying which variables must be output
 // and other necessary information (like the IDs of the points where the wave elevation will be output)
 void IO::setResults2Output(std::string strInput, ENVIR &envir)
 {
@@ -865,7 +829,7 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_ACC) = true;
 	}
-	
+
 	if (caseInsCompare(keyword, "hd_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE) = true;
@@ -879,7 +843,7 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	if (caseInsCompare(keyword, "total_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_TOTAL_FORCE) = true;
-	}	
+	}
 
 	if (caseInsCompare(keyword, "hd_inertia_force"))
 	{
@@ -900,27 +864,27 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_AD_HUB_FORCE) = true;
 	}
-	
+
 	// Add wave probes for wave elev, velocity, acceleration or pressure
 	bool addWaveProbe{ false };
 	if (caseInsCompare(keyword, "wave_elev"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ELEV) = true;
-		addWaveProbe = true;			
+		addWaveProbe = true;
 	}
 
 	if (caseInsCompare(keyword, "wave_vel"))
-	{		
+	{
 		m_whichResult2Output.at(IO::OUTFLAG_WAVE_VEL) = true;
 		addWaveProbe = true;
 	}
 
-	if (caseInsCompare(keyword, "wave_acc"))		
+	if (caseInsCompare(keyword, "wave_acc"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ACC) = true;
 		addWaveProbe = true;
 	}
-	
+
 	if (caseInsCompare(keyword, "wave_pres"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_WAVE_PRES) = true;
@@ -928,10 +892,10 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	}
 
 	if (addWaveProbe)
-	{		
+	{
 		if (!getData(strInput).empty())
-		{			
-			// The wave locations are specified by node IDs separated by tabs or white-spaces	
+		{
+			// The wave locations are specified by node IDs separated by tabs or white-spaces
 			std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
 
 			// Check whether input is not empty
@@ -949,7 +913,7 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 			}
 		}
 	}
-	
+
 
 
 }
@@ -1033,7 +997,7 @@ void IO::print2outLineHeader_turnOff()
 void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 {
 	// Check whether the specified flag is indeed one that requires a vector with six components
-	if ((flag != OUTFLAG_FOWT_DISP) && (flag != OUTFLAG_FOWT_VEL) && (flag != OUTFLAG_FOWT_ACC) && 
+	if ((flag != OUTFLAG_FOWT_DISP) && (flag != OUTFLAG_FOWT_VEL) && (flag != OUTFLAG_FOWT_ACC) &&
 		(flag != OUTFLAG_HD_FORCE) && (flag != OUTFLAG_HS_FORCE) && (flag != OUTFLAG_TOTAL_FORCE) &&
 		(flag != OUTFLAG_HD_INERTIA_FORCE) && (flag != OUTFLAG_HD_DRAG_FORCE) && (flag != OUTFLAG_HD_FK_FORCE) &&
 		(flag != OUTFLAG_AD_HUB_FORCE)
@@ -1043,7 +1007,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 	}
 
 	// If the print header flag is true and if this is one of the requested output variables,
-	// then print the header based on the output flag	
+	// then print the header based on the output flag
 	if (m_shouldWriteOutLineHeader && m_whichResult2Output.at(flag))
 	{
 		if (flag == OUTFLAG_HD_FORCE)
@@ -1068,7 +1032,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			{
 				print2outLineHeader("TOTAL_Force_" + std::to_string(ii));
 			}
-		}		
+		}
 
 		if (flag == OUTFLAG_HD_INERTIA_FORCE)
 		{
@@ -1100,7 +1064,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			{
 				print2outLineHeader("AD_HUB_Force_" + std::to_string(ii));
 			}
-		}		
+		}
 
 		if (flag == OUTFLAG_FOWT_DISP)
 		{
@@ -1147,7 +1111,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 
 
 // This one is useful for wave velocity and acceleration, which need the ID of the node where they are calculated
-// and the value itself, which three component vector. Other future outputs may profit from this function as well. 
+// and the value itself, which three component vector. Other future outputs may profit from this function as well.
 void IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed<3> &vector_3)
 {
 
@@ -1157,7 +1121,7 @@ void IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed
 	}
 
 	// If the print header flag is true and if this is one of the requested output variables,
-	// then print the header based on the output flag	
+	// then print the header based on the output flag
 	if (m_shouldWriteOutLineHeader && m_whichResult2Output.at(flag))
 	{
 		if (flag == OUTFLAG_WAVE_VEL)
@@ -1198,7 +1162,7 @@ void IO::print2outLine(const OutFlag &flag, const int ID, const double num)
 	}
 
 	// If the print header flag is true and if this is one of the requested output variables,
-	// then print the header based on the output flag	
+	// then print the header based on the output flag
 	if (m_shouldWriteOutLineHeader && m_whichResult2Output.at(flag))
 	{
 		if (flag == OUTFLAG_WAVE_ELEV)
@@ -1211,7 +1175,7 @@ void IO::print2outLine(const OutFlag &flag, const int ID, const double num)
 			print2outLineHeader("WAVE_PRES_" + std::to_string(ID));
 		}
 	}
-	
+
 	// If the printing flag is true and if this is one of the requested output variables,
 	// then print it to the output line
 	if (m_shouldWriteOutLine && m_whichResult2Output.at(flag))
@@ -1290,8 +1254,8 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 
 	m_sumFl << IO::METiS_Header();
 	m_sumFl << "\n\n";
-	
-	m_sumFl << "ENVIR:\n";	
+
+	m_sumFl << "ENVIR:\n";
 	m_sumFl << "Time Step:\t" << envir.timeStep() << '\n';
 	m_sumFl << "Total Time:\t" << envir.timeTotal() << '\n';
 	m_sumFl << "Time Ramp:\t" << envir.printTimeRamp() << '\n';
@@ -1312,7 +1276,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Aero Mode:\t" << fowt.printAeroMode() << "\n";
 	m_sumFl << "Moor Mode:\t" << fowt.printMoorMode() << "\n";
 	m_sumFl << "DOFs:\t" << fowt.printDoF() << '\n';
-	
+
 	if (fowt.moorMode() == 0)
 	{
 		m_sumFl << "No stiffness considered because Moor Mode = 0\n";
@@ -1338,7 +1302,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	}
 	else
 	{
-		m_sumFl << "RNA:\n" << fowt.printRNA();		
+		m_sumFl << "RNA:\n" << fowt.printRNA();
 	}
 
 	m_sumFl << "\n\n";
@@ -1388,7 +1352,7 @@ std::string IO::printOutVar()
 
 		case IO::OUTFLAG_HS_FORCE:
 		    output += "Hydrostatic force: ";
-			break;		
+			break;
 
 		case IO::OUTFLAG_HD_INERTIA_FORCE:
 			output += "Hydrodynamic inertial force: ";
