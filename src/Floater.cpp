@@ -61,95 +61,28 @@ Floater& Floater::operator= (const Floater &floater)
 /*****************************************************
 	Setters
 *****************************************************/
-void Floater::readMass(const std::string &data)
+void Floater::setMass(const double mass)
 {
-	readDataFromString(data, m_mass);
+	m_mass = mass;
 }
 
-void Floater::readInertia(const std::string &data)
+void Floater::setInertia(const vec::fixed<6> &inertia)
 {
-	// The different components of the inertia matrix are separated by commas in the input string
-	std::vector<std::string> input = stringTokenize(data, ",");
-
-	if (input.size() != 6)
-	{
-		throw std::runtime_error("Unable to read the floater inertia matrix in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}
-
-	for (int ii = 0; ii < input.size(); ++ii)
-	{
-		readDataFromString(input.at(ii), m_inertia(ii));
-	}
+	m_inertia = inertia;
 }
 
-void Floater::readCoG(const std::string &data)
+void Floater::setCoG(const vec::fixed<3> &cog)
 {
-	// The coordinates of the center of gravity are separated by commas in the input string
-	std::vector<std::string> input = stringTokenize(data, ",");
-
-	if (input.size() != 3)
-	{
-		throw std::runtime_error("Unable to read the CoG in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}
-
-	for (int ii = 0; ii < input.size(); ++ii)
-	{
-		readDataFromString(input.at(ii), m_CoG(ii));
-	}
+	m_CoG = cog;
 }
-
 
 
 /*
 	Add circular cylinder Morison Element to m_MorisonElements
 */
-void Floater::addMorisonCirc(const std::string &data, const ENVIR &envir)
+void Floater::addMorisonCirc(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_coord, const double diam, const double CD, const double CM, const unsigned int numIntPoints,
+	const double botDiam, const double topDiam, const double axialCD, const double axialCa, const bool botPressFlag)
 {
-	// Variables to handle the data read from the input file in a more user friendly way
-	unsigned int node1_ID = 0;
-	unsigned int node2_ID = 0;
-	double diam = 0;
-	double CD = 0;
-	double CM = 0;
-	int numIntPoints = 0;
-	double botDiam = 0;
-	double topDiam = 0;
-	double axialCD = 0;
-	double axialCa = 0;
-	bool botPressFlag = false;
-
-	// The eleven properties of a circular cylinder Morison's Element are separated by white spaces in the input string.
-	std::vector<std::string> input = stringTokenize(data, " \t");
-
-	// Check number of inputs
-	if (input.size() != 11)
-	{
-		throw std::runtime_error("Unable to read the circular cylinder in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}
-
-	// Check whether nodes were specified
-	if (envir.isNodeEmpty())
-	{
-		throw std::runtime_error( "Nodes should be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()) );
-	}
-
-	// Read data
-	readDataFromString(input.at(0), node1_ID);
-	readDataFromString(input.at(1), node2_ID);
-	readDataFromString(input.at(2), diam);
-	readDataFromString(input.at(3), CD);
-	readDataFromString(input.at(4), CM);
-	readDataFromString(input.at(5), numIntPoints);
-	readDataFromString(input.at(6), botDiam);
-	readDataFromString(input.at(7), topDiam);
-	readDataFromString(input.at(8), axialCD);
-	readDataFromString(input.at(9), axialCa);
-	readDataFromString(input.at(10), botPressFlag);
-	
-	// Get coordinates of nodes based on their ID
-	vec::fixed<3> node1_coord = envir.getNode(node1_ID);
-	vec::fixed<3> node2_coord = envir.getNode(node2_ID);
-
 	// Since many times we need node1 to be below node2, it is better to swap them here in order to have less swaps in the future
 	if (node1_coord[2] > node2_coord[2])
 	{
@@ -160,86 +93,31 @@ void Floater::addMorisonCirc(const std::string &data, const ENVIR &envir)
 	// to define their relative position in the rigid body
 	if (CoG().has_nan()) // If this is true, then the CoG of the floater wasn't read yet
 	{
-		throw std::runtime_error("Floater CoG must be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()));
+		throw std::runtime_error("Floater CoG must be specified before Morison Elements.");
 	}
 
-	 // Create a circular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
-	 m_MorisonElements.push_back( std::make_unique<MorisonCirc>(node1_coord, node2_coord, CoG(), numIntPoints, 
-	 							  botPressFlag, axialCD, axialCa, diam, CD, CM, botDiam, topDiam) );
+	// Create a circular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
+	m_MorisonElements.push_back(std::make_unique<MorisonCirc>(node1_coord, node2_coord, CoG(), numIntPoints,
+		botPressFlag, axialCD, axialCa, diam, CD, CM, botDiam, topDiam));
 }
-
-
 
 /*
 	Add rectangular cylinder Morison Element to m_MorisonElements
 */
-void Floater::addMorisonRect(const std::string &data, const ENVIR &envir)
+void Floater::addMorisonRect(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_coord, vec::fixed<3> &node3_coord, const double diam_X, const double diam_Y, 
+	const double CD_X, const double CD_Y, const double CM_X, const double CM_Y, const unsigned int numIntPoints,
+	const double botArea, const double topArea, const double axialCD, const double axialCa, const bool botPressFlag)
 {
-	// Variables to handle the data read from the input file in a more user friendly way
-	unsigned int node1_ID = 0;
-	unsigned int node2_ID = 0;
-	unsigned int node3_ID = 0;
-	double diam_X = 0;
-	double diam_Y = 0;
-	double CD_X = 0;
-	double CD_Y = 0;
-	double CM_X = 0;
-	double CM_Y = 0;
-	int numIntPoints = 0;
-	double botArea = 0;
-	double topArea = 0;
-	double axialCD = 0;
-	double axialCa = 0;
-	bool botPressFlag = false;
-
-	// The eleven properties of a circular cylinder Morison's Element are separated by white spaces in the input string.
-	std::vector<std::string> input = stringTokenize(data, " \t");
-
-	// Check number of inputs
-	if (input.size() != 15)
-	{
-		throw std::runtime_error("Unable to read the rectangular cylinder in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}
-
-	// Check whether nodes were specified
-	if (envir.isNodeEmpty())
-	{
-		throw std::runtime_error( "Nodes should be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()) );
-	}
-
-	// Read data
-	readDataFromString(input.at(0), node1_ID);
-	readDataFromString(input.at(1), node2_ID);
-	readDataFromString(input.at(2), node3_ID);
-	readDataFromString(input.at(3), diam_X);
-	readDataFromString(input.at(4), CD_X);
-	readDataFromString(input.at(5), CM_X);
-	readDataFromString(input.at(6), diam_Y);
-	readDataFromString(input.at(7), CD_Y);
-	readDataFromString(input.at(8), CM_Y);
-	readDataFromString(input.at(9), numIntPoints);
-	readDataFromString(input.at(10), botArea);
-	readDataFromString(input.at(11), topArea);
-	readDataFromString(input.at(12), axialCD);
-	readDataFromString(input.at(13), axialCa);
-	readDataFromString(input.at(14), botPressFlag);
-	
-	// Get coordinates of nodes based on their ID
-	vec::fixed<3> node1_coord = envir.getNode(node1_ID);
-	vec::fixed<3> node2_coord = envir.getNode(node2_ID);
-	vec::fixed<3> node3_coord = envir.getNode(node3_ID);
-
-
 	// Morison Elements need the position of the floater CoG
 	// to define their relative position in the rigid body
-	if ( CoG().has_nan() ) // If this is true, then the CoG of the floater wasn't read yet
+	if (CoG().has_nan()) // If this is true, then the CoG of the floater wasn't read yet
 	{
-		throw std::runtime_error( "Floater CoG must be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()) );
+		throw std::runtime_error("Floater CoG must be specified before Morison Elements.");
 	}
-			
+
 	// Create a rectangular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
-	m_MorisonElements.push_back( std::make_unique<MorisonRect>(node1_coord, node2_coord, node3_coord, CoG(), numIntPoints,
-	  							  botPressFlag, axialCD, axialCa, diam_X, CD_X, CM_X, diam_Y, CD_Y, CM_Y, botArea, topArea) );
+	m_MorisonElements.push_back(std::make_unique<MorisonRect>(node1_coord, node2_coord, node3_coord, CoG(), numIntPoints,
+		botPressFlag, axialCD, axialCa, diam_X, CD_X, CM_X, diam_Y, CD_Y, CM_Y, botArea, topArea));
 }
 
 

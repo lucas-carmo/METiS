@@ -144,34 +144,18 @@ void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, con
 	}
 }
 
-void ENVIR::addWaveLocation(const std::string &data)
-{
-	// The wave locations are specified by node IDs separated by tabs or white-spaces	
-	std::vector<std::string> input = stringTokenize(data, " \t");	
-	
-	// Check whether input is not empty
-	if (input.empty())
-	{
-		throw std::runtime_error("You should specify at least one node ID for defining a wave location. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
-	}
 
+void ENVIR::addWaveProbe(const unsigned int ID)
+{
 	// Check whether nodes were specified
 	if (this->isNodeEmpty())
-	{		
-		throw std::runtime_error("Nodes should be specified before adding wave locations. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
-	}
-
-	// For each of the node IDs:
-	for (int ii = 0; ii < input.size(); ++ii)
 	{
-		unsigned int nodeID(0); // Initialize a variable to read the node ID
-		readDataFromString(input.at(ii), nodeID); // Read the node ID specified as a string to the nodeID variable
-		m_waveLocation.push_back( this->getNode(nodeID) ); // Get the node coordinate and add it to m_waveLocation
-		m_waveLocation.back().at(2) = 0; // Set z=0
-		m_waveLocationID.push_back(nodeID);
+		throw std::runtime_error("Nodes should be specified before adding wave locations. In: ENVIR::addWaveProbe");
 	}
-}
 
+	m_waveProbe.push_back(this->getNode(ID)); // Get the node coordinate and add it to m_waveProbe
+	m_waveProbeID.push_back(ID);
+}
 
 
 /*****************************************************
@@ -289,13 +273,13 @@ std::string ENVIR::printWave() const
 	return output;
 }
 
-std::string ENVIR::printWaveLocation() const
+std::string ENVIR::printWaveProbe() const
 {
 	std::string output = "";
-	for (int ii = 0; ii < m_waveLocation.size(); ++ii)
+	for (int ii = 0; ii < m_waveProbe.size(); ++ii)
 	{
-		output = output + "Location #" + std::to_string(ii) + ": (" + std::to_string(m_waveLocation.at(ii).at(0)) 
-						+ "," + std::to_string(m_waveLocation.at(ii).at(1)) + "," + std::to_string(m_waveLocation.at(ii).at(2)) + ")\n";
+		output = output + "Location #" + std::to_string(ii) + ": (" + std::to_string(m_waveProbe.at(ii).at(0)) 
+						+ "," + std::to_string(m_waveProbe.at(ii).at(1)) + "," + std::to_string(m_waveProbe.at(ii).at(2)) + ")\n";
 	}
 	return output;
 }
@@ -303,12 +287,12 @@ std::string ENVIR::printWaveLocation() const
 
 void ENVIR::printWaveCharact() const
 {
-	for (int ii = 0; ii < m_waveLocation.size(); ++ii)
+	for (int ii = 0; ii < m_waveProbe.size(); ++ii)
 	{
-		IO::print2outLine(IO::OUTFLAG_WAVE_ELEV, m_waveLocationID[ii], waveElev(m_waveLocation[ii][0], m_waveLocation[ii][1]));
-		IO::print2outLine(IO::OUTFLAG_WAVE_VEL, m_waveLocationID[ii], u1(m_waveLocation[ii]));
-		IO::print2outLine(IO::OUTFLAG_WAVE_ACC, m_waveLocationID[ii], du1dt(m_waveLocation[ii]));
-		IO::print2outLine(IO::OUTFLAG_WAVE_PRES, m_waveLocationID[ii], wavePressure(m_waveLocation[ii]));
+		IO::print2outLine(IO::OUTFLAG_WAVE_ELEV, m_waveProbeID[ii], waveElev(m_waveProbe[ii][0], m_waveProbe[ii][1]));
+		IO::print2outLine(IO::OUTFLAG_WAVE_VEL, m_waveProbeID[ii], u1(m_waveProbe[ii]));
+		IO::print2outLine(IO::OUTFLAG_WAVE_ACC, m_waveProbeID[ii], du1dt(m_waveProbe[ii]));
+		IO::print2outLine(IO::OUTFLAG_WAVE_PRES, m_waveProbeID[ii], wavePressure(m_waveProbe[ii]));
 	}
 }
 
@@ -340,9 +324,9 @@ bool ENVIR::isNodeEmpty() const
 	return m_nodesID.empty();
 }
 
-bool ENVIR::isWaveLocationEmpty() const
+bool ENVIR::isWaveProbeEmpty() const
 {
-	return m_waveLocation.empty();
+	return m_waveProbe.empty();
 }
 
 void ENVIR::stepTime()
