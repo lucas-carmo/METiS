@@ -230,7 +230,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		}
 
 
-
 		/*
 			Read data to fowt
 		*/
@@ -369,44 +368,33 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				// Aux variables to handle the data read from the input file
-				unsigned int aux_node1_ID{ 0 }, aux_node2_ID{ 0 }, aux_numIntPoints{ 0 };
-				double aux_diam{ 0 }, aux_CD{ 0 }, aux_CM{ 0 }, aux_botDiam{ 0 }, aux_topDiam{ 0 }, aux_axialCD{ 0 }, aux_axialCa{ 0 };
-				bool aux_botPressFlag = false;
-
 				// The eleven properties of a circular cylinder Morison's Element are separated by white spaces in the input string.
 				std::vector<std::string> input = stringTokenize(strInput, " \t");
-
-				// Check number of inputs
 				if (input.size() != 11)
 				{
 					throw std::runtime_error("Unable to read the circular cylinder in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 				}
 
-				// Check whether nodes were specified
+				// In order to specify the nodes corresponding to the extremities of the cylinder, it is
+				// necessary to have read the nodes from the input file.
 				if (envir.isNodeEmpty())
 				{
 					throw std::runtime_error("Nodes should be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()));
 				}
 
-				// Read data
-				readDataFromString(input.at(0), aux_node1_ID);
-				readDataFromString(input.at(1), aux_node2_ID);
-				readDataFromString(input.at(2), aux_diam);
-				readDataFromString(input.at(3), aux_CD);
-				readDataFromString(input.at(4), aux_CM);
-				readDataFromString(input.at(5), aux_numIntPoints);
-				readDataFromString(input.at(6), aux_botDiam);
-				readDataFromString(input.at(7), aux_topDiam);
-				readDataFromString(input.at(8), aux_axialCD);
-				readDataFromString(input.at(9), aux_axialCa);
-				readDataFromString(input.at(10), aux_botPressFlag);
+				// Aux variables to handle the data read from the input file
+				vec::fixed<3> aux_node1_coord = envir.getNode(string2num<unsigned int>(input.at(0)));
+				vec::fixed<3> aux_node2_coord = envir.getNode(string2num<unsigned int>(input.at(1)));
+				double aux_diam = string2num<double>(input.at(2));
+				double aux_CD = string2num<double>(input.at(3));
+				double aux_CM = string2num<double>(input.at(4));
+				unsigned int aux_numIntPoints = string2num<unsigned int>(input.at(5));
+				double  aux_botDiam = string2num<double>(input.at(6));
+				double aux_topDiam = string2num<double>(input.at(7));
+				double aux_axialCD = string2num<double>(input.at(8));
+				double aux_axialCa = string2num<double>(input.at(9));
+				bool aux_botPressFlag = string2num<bool>(input.at(9));
 
-				// Get coordinates of nodes based on their ID
-				vec::fixed<3> aux_node1_coord = envir.getNode(aux_node1_ID);
-				vec::fixed<3> aux_node2_coord = envir.getNode(aux_node2_ID);
-
-				// Add this morison element to the floater
 				floater.addMorisonCirc(aux_node1_coord, aux_node2_coord, aux_diam, aux_CD, aux_CM, aux_numIntPoints, aux_botDiam, aux_topDiam, aux_axialCD, aux_axialCa, aux_botPressFlag);
 
 				// Go to next line
@@ -427,15 +415,8 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				// Aux variables to handle the data read from the input file
-				unsigned int aux_node1_ID{ 0 }, aux_node2_ID{ 0 }, aux_node3_ID{ 0 }, aux_numIntPoints{ 0 };
-				double aux_diam_X{ 0 }, aux_diam_Y{ 0 }, aux_CD_X{ 0 }, aux_CD_Y{ 0 }, aux_CM_X{ 0 }, aux_CM_Y{ 0 }, aux_botArea{ 0 }, aux_topArea{ 0 }, aux_axialCD{ 0 }, aux_axialCa{ 0 };
-				bool aux_botPressFlag = false;
-
-				// The eleven properties of a circular cylinder Morison's Element are separated by white spaces in the input string.
+				// The fifteen properties of a circular cylinder Morison's Element are separated by white spaces in the input string.
 				std::vector<std::string> input = stringTokenize(strInput, " \t");
-
-				// Check number of inputs
 				if (input.size() != 15)
 				{
 					throw std::runtime_error("Unable to read the rectangular cylinder in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
@@ -447,29 +428,23 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					throw std::runtime_error("Nodes should be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()));
 				}
 
-				// Read data
-				readDataFromString(input.at(0), aux_node1_ID);
-				readDataFromString(input.at(1), aux_node2_ID);
-				readDataFromString(input.at(2), aux_node3_ID);
-				readDataFromString(input.at(3), aux_diam_X);
-				readDataFromString(input.at(4), aux_CD_X);
-				readDataFromString(input.at(5), aux_CM_X);
-				readDataFromString(input.at(6), aux_diam_Y);
-				readDataFromString(input.at(7), aux_CD_Y);
-				readDataFromString(input.at(8), aux_CM_Y);
-				readDataFromString(input.at(9), aux_numIntPoints);
-				readDataFromString(input.at(10), aux_botArea);
-				readDataFromString(input.at(11), aux_topArea);
-				readDataFromString(input.at(12), aux_axialCD);
-				readDataFromString(input.at(13), aux_axialCa);
-				readDataFromString(input.at(14), aux_botPressFlag);
+				// Aux variables to handle the data read from the input file
+				vec::fixed<3> aux_node1_coord = envir.getNode(string2num<unsigned int>(input.at(0)));
+				vec::fixed<3> aux_node2_coord = envir.getNode(string2num<unsigned int>(input.at(1)));
+				vec::fixed<3> aux_node3_coord = envir.getNode(string2num<unsigned int>(input.at(2)));
+				double aux_diam_X = string2num<double>(input.at(3));
+				double aux_CD_X = string2num<double>(input.at(4));
+				double aux_CM_X = string2num<double>(input.at(5));
+				double aux_diam_Y = string2num<double>(input.at(6));
+				double aux_CD_Y = string2num<double>(input.at(7));
+				double aux_CM_Y = string2num<double>(input.at(8));
+				unsigned int aux_numIntPoints = string2num<unsigned int>(input.at(9));
+				double aux_botArea = string2num<double>(input.at(10));
+				double aux_topArea = string2num<double>(input.at(11));
+				double aux_axialCD = string2num<double>(input.at(12));
+				double aux_axialCa = string2num<double>(input.at(13));
+				bool aux_botPressFlag = string2num<bool>(input.at(14));
 
-				// Get coordinates of nodes based on their ID
-				vec::fixed<3> aux_node1_coord = envir.getNode(aux_node1_ID);
-				vec::fixed<3> aux_node2_coord = envir.getNode(aux_node2_ID);
-				vec::fixed<3> aux_node3_coord = envir.getNode(aux_node3_ID);
-
-				// Add this morison element to the floater
 				floater.addMorisonRect(aux_node1_coord, aux_node2_coord, aux_node3_coord, aux_diam_X, aux_diam_Y, aux_CD_X, aux_CD_Y,
 					aux_CM_X, aux_CM_Y, aux_numIntPoints, aux_botArea, aux_topArea, aux_axialCD, aux_axialCa, aux_botPressFlag);
 
@@ -482,69 +457,57 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		// Read data to rna - which is a part of FOWT
 		else if (caseInsCompare(getKeyword(strInput), "UseTipLoss"))
 		{
-			bool aux{ 0 };
-			readDataFromString(getData(strInput), aux);
-			rna.setUseTipLoss(aux);
-		continue;
+			rna.setUseTipLoss(string2num<bool>(getData(strInput)));
+			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "UseHubLoss"))
 		{
-			bool aux{ 0 };
-			readDataFromString(getData(strInput), aux);
-			rna.setUseHubLoss(aux);
+			rna.setUseHubLoss(string2num<bool>(getData(strInput)));
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "UseSkewCorr"))
 		{
-			bool aux{ 0 };
-			readDataFromString(getData(strInput), aux);
-			rna.setUseSkewCorr(aux);
+			rna.setUseSkewCorr(string2num<bool>(getData(strInput)));
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "RotSpeed"))
 		{
-			rna.readRotorSpeed(getData(strInput));
+			rna.setRotorSpeed(string2num<double>(getData(strInput)));
 			continue;
 		}
-
 
 		else if (caseInsCompare(getKeyword(strInput), "RotTilt"))
 		{
-			rna.readRotorTilt(getData(strInput));
+			rna.setRotorTilt(string2num<double>(getData(strInput)));
 			continue;
 		}
-
 
 		else if (caseInsCompare(getKeyword(strInput), "RotYaw"))
 		{
-			rna.readRotorYaw(getData(strInput));
+			rna.setRotorYaw(string2num<double>(getData(strInput)));
 			continue;
 		}
-
 
 		else if (caseInsCompare(getKeyword(strInput), "BldPitch"))
 		{
-			rna.readBladePitch(getData(strInput));
+			rna.setBladePitch(string2num<double>(getData(strInput)));
 			continue;
 		}
-
 
 		else if (caseInsCompare(getKeyword(strInput), "BldPrecone"))
 		{
-			rna.readBladePrecone(getData(strInput));
+			rna.setBladePrecone(string2num<double>(getData(strInput)));
 			continue;
 		}
-
 
 		else if (caseInsCompare(getKeyword(strInput), "NumBlades"))
 		{
-			rna.readNumBlades(getData(strInput));
+			rna.setNumBlades(string2num<unsigned int>(getData(strInput)));
 			continue;
 		}
-
 
 		else if (caseInsCompare(getKeyword(strInput), "HubRadius"))
 		{
@@ -552,20 +515,17 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			continue;
 		}
 
-
 		else if (caseInsCompare(getKeyword(strInput), "HubHeight"))
 		{
 			rna.readHubHeight(getData(strInput));
 			continue;
 		}
 
-
 		else if (caseInsCompare(getKeyword(strInput), "Overhang"))
 		{
 			rna.readOverhang(getData(strInput));
 			continue;
 		}
-
 
 		else if (caseInsCompare(getKeyword(strInput), "Blades_aero"))
 		{
@@ -646,7 +606,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			continue;
 		}
 
-
 		else if (caseInsCompare(getKeyword(strInput), "Tower_Elasto"))
 		{
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
@@ -665,7 +624,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			}
 			continue;
 		}
-
 
 		else if (caseInsCompare(getKeyword(strInput), "Output")) // List of parameters that will be output
 		{
@@ -772,9 +730,6 @@ void IO::setFiles(const std::string &inFlPath)
 }
 
 
-
-
-
 // Read line from input file to string "strInput".
 // The function deals with empty lines and comments using functions "hasContent" and
 // "thereIsCommentInString". Besides, it updates the line number counter inLineNumber
@@ -783,7 +738,7 @@ void IO::readLineInputFile(std::string &strInput)
 	std::getline(m_inFl, strInput); // Read next file line to string strInput
 	++m_inLineNumber; // Update line number counter
 
-					  // Repeat this process until the line has some content or end of file is achieved
+  // Repeat this process until the line has some content or end of file is achieved
 	while (!hasContent(strInput) && m_inFl)
 	{
 		std::getline(m_inFl, strInput);
@@ -913,9 +868,6 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 			}
 		}
 	}
-
-
-
 }
 
 
@@ -924,11 +876,6 @@ void IO::checkInputs(const FOWT &fowt, const ENVIR &envir)
 {
 
 }
-
-
-
-
-
 
 
 

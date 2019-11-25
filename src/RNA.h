@@ -14,7 +14,7 @@ private:
     std::vector< Airfoil > m_airfoils;
     double m_hubRadius;
     double m_hubHeight;
-	double m_hubHeight2CoG; // z coordinate of the hub in the FOWT coordinate system. It is equal to the relative height in t=0.
+	  double m_hubHeight2CoG; // z coordinate of the hub in the FOWT coordinate system. It is equal to the relative height in t=0.
     double m_overhang;
 
     bool m_useTipLoss;
@@ -31,14 +31,14 @@ public:
 	void setUseHubLoss(const bool useHubLoss);
 	void setUseSkewCorr(const bool useSkewCorr);
 
+  void setRotorSpeed(const double rotorSpeed);
+  void setRotorTilt(const double rotorTilt);
+  void setRotorYaw(const double rotorYaw);
 
-	void readRotorSpeed(const std::string &data);
-	void readRotorTilt(const std::string &data);
-	void readRotorYaw(const std::string &data);
+  void setNumBlades(const unsigned int numBlades);
+  void setBladePrecone(const double precone);
+  void setBladePitch(const double pitch);
 
-	void readNumBlades(const std::string &data);
-	void readBladePrecone(const std::string &data);
-	void readBladePitch(const std::string &data);
 	void readBladeAeroLine(const std::string &data);
 	void addAirfoil();
 	void readAirfoilLine(const std::string &data);
@@ -70,9 +70,9 @@ public:
 
 	/*****************************************************
 		Caculation functions
-	*****************************************************/	
+	*****************************************************/
 	double dAzimuth(const double time) const;
-	
+
 	vec::fixed<6> aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel);
 
 	// Functions for the BEMT method

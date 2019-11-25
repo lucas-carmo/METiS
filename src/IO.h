@@ -56,7 +56,7 @@ private:
 	// Members related to log file
 	static std::string m_logFilePath;
 	static std::ofstream m_logFl;
-	
+
 	// Members related to summary file
 	static std::string m_sumFilePath;
 	static std::ofstream m_sumFl;
@@ -71,17 +71,17 @@ private:
 	static std::stringstream m_outLineHeader; // String stream with the header identifying each column of the formatted output file
 	static std::stringstream m_outLine; // String stream with the data that is output at each time step (FOWT displacement, hydro force components, anything that is a function of time)
 	static bool m_shouldWriteOutLineHeader;
-	static bool m_shouldWriteOutLine;	
+	static bool m_shouldWriteOutLine;
 
 
 public:
 	// Set input file and output files based on the input file path
 	static void setFiles(const std::string &inFlPath);
 
-	// Functions related to Input	
+	// Functions related to Input
 	static void readLineInputFile(std::string &strInput);
 	static unsigned int getInLineNumber();
-	static void readInputFile(FOWT &fowt, ENVIR &envir);	
+	static void readInputFile(FOWT &fowt, ENVIR &envir);
 	static void setResults2Output(std::string strInput, ENVIR &envir);
 	static void checkInputs(const FOWT &fowt, const ENVIR &envir);
 
@@ -93,12 +93,12 @@ public:
 
 	// To summary file
 	static void printSumFile(const FOWT &fowt, const ENVIR &envir);
-	
+
 	// To formatted output file
-	static void print2outLineHeader_turnOn(); 
-	static void print2outLineHeader_turnOff();		
-	static void print2outLine_turnOn(); 
-	static void print2outLine_turnOff();	
+	static void print2outLineHeader_turnOn();
+	static void print2outLineHeader_turnOff();
+	static void print2outLine_turnOn();
+	static void print2outLine_turnOff();
 
 	// Functions that write to the stringstreams m_outLineHeader and m_outLine
 	static void print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6);
@@ -122,7 +122,7 @@ public:
 
 
 /*****************************************************
-    Additional functions and templates related to input/output 
+    Additional functions and templates related to input/output
 *****************************************************/
 std::string getKeyword(const std::string &str);
 
@@ -147,5 +147,5 @@ inline void readDataFromString(const std::string& inString, T &tX)
 	{
         // Throw an exception if the conversion fails
 		throw std::runtime_error( "Conversion from string failed. Bad data type in line " + std::to_string(IO::getInLineNumber()) + ". [function readDataFromString(const std::string& inString, T &tX) in IO.h]");
-	}		
+	}
 }

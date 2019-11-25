@@ -27,64 +27,56 @@ void RNA::setUseSkewCorr(const bool useSkewCorr)
 	m_useSkewCorr = useSkewCorr;
 }
 
-void RNA::readRotorSpeed(const std::string &data)
+void RNA::setRotorSpeed(const double rotorSpeed)
 {
-	readDataFromString(data, m_rotorSpeed);
+	m_rotorSpeed = rotorSpeed;
 }
 
-void RNA::readRotorTilt(const std::string &data)
+void RNA::setRotorTilt(const double rotorTilt)
 {
-	readDataFromString(data, m_rotorTilt);
+	m_rotorTilt = rotorTilt;
 }
 
-void RNA::readRotorYaw(const std::string &data)
+void RNA::setRotorYaw(const double rotorYaw)
 {
-	readDataFromString(data, m_rotorYaw);
+	m_rotorYaw = rotorYaw;
 }
 
-void RNA::readNumBlades(const std::string &data)
+void RNA::setNumBlades(const unsigned int numBlades)
 {
-	unsigned int numBlades;
-	readDataFromString(data, numBlades);
 	m_blades.resize(numBlades);
 
 	double dAzimuth = 360 / numBlades;
 	for (unsigned int ii = 0; ii < numBlades; ++ii)
-	{		
+	{
 		m_blades.at(ii).setInitialAzimuth(ii * dAzimuth);
 	}
 }
 
-void RNA::readBladePrecone(const std::string &data)
+void RNA::setBladePrecone(const double precone)
 {
-	double precone;
-	readDataFromString(data, precone);
-
 	if (numBlades() == 0)
 	{
 		throw std::runtime_error("Need to specify number of blades before their properties. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
 
 	for (unsigned int ii = 0; ii < numBlades(); ++ii)
-	{		
+	{
 		m_blades.at(ii).setPrecone(precone);
-	}	
+	}
 }
 
-void RNA::readBladePitch(const std::string &data)
+void RNA::setBladePitch(const double pitch)
 {
-	double pitch;
-	readDataFromString(data, pitch);
-
 	if (numBlades() == 0)
 	{
 		throw std::runtime_error("Need to specify number of blades before their properties. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
 
 	for (unsigned int ii = 0; ii < numBlades(); ++ii)
-	{		
+	{
 		m_blades.at(ii).setPitch(pitch);
-	}		
+	}
 }
 
 void RNA::readBladeAeroLine(const std::string &data)
@@ -122,9 +114,9 @@ void RNA::readBladeAeroLine(const std::string &data)
 
 	// Add the data read in the current line to each blade element
 	for (unsigned int ii = 0; ii < numBlades(); ++ii)
-	{		
+	{
 		m_blades.at(ii).addBladeAeroNode(span, crvAC, swpAC, crvAng, twist, chord, airfoilID, hubRadius());
-	}	
+	}
 }
 
 // Add a new empty airfoil to m_airfoils
@@ -214,7 +206,7 @@ bool RNA::useSkewCorr() const
 }
 
 double RNA::rotorSpeed() const
-{	
+{
 	// In rpm
 	return m_rotorSpeed;
 }
@@ -260,13 +252,13 @@ std::string RNA::printBladeAero() const
 
 std::string RNA::printAirfoils() const
 {
-	std::string output = "";	
+	std::string output = "";
 
 	for (unsigned int ii = 0; ii < m_airfoils.size(); ++ii)
 	{
 		output = output + "\nAirfoil #" + std::to_string(ii) + '\n';
 		output = output + "\t\tAngle (deg)\t" + "CL\t" + "CD\t" + "CM\n";
-		for (unsigned int jj = 0; jj < m_airfoils.at(ii).size(); ++jj) 
+		for (unsigned int jj = 0; jj < m_airfoils.at(ii).size(); ++jj)
 		{
 			output = output + "\t\t" + std::to_string(m_airfoils.at(ii).angle(jj)) + "\t" + std::to_string(m_airfoils.at(ii).getCL(jj)) + "\t" + std::to_string(m_airfoils.at(ii).getCD(jj)) + "\t" + std::to_string(m_airfoils.at(ii).getCM(jj)) + "\n";
 		}
@@ -295,7 +287,7 @@ double RNA::hubHeight2CoG() const
 {
 	if (!arma::is_finite(m_hubHeight2CoG))
 	{
-		throw std::runtime_error("Need to call Blade::setHubHeight2CoG(const double hubHeight) at least once before calling RNA::hubHeight2CoG().");	
+		throw std::runtime_error("Need to call Blade::setHubHeight2CoG(const double hubHeight) at least once before calling RNA::hubHeight2CoG().");
 	}
 	return m_hubHeight2CoG;
 }
@@ -303,7 +295,7 @@ double RNA::hubHeight2CoG() const
 
 /*****************************************************
 	Caculation functions
-*****************************************************/	
+*****************************************************/
 double RNA::dAzimuth(const double time) const
 {
 	//time*(param.rt.Spd / 60) * 360
@@ -337,7 +329,7 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	vec::fixed<3> nodeCoord_shaft{ 0,0,0 };
 	vec::fixed<3> nodeCoord_fowt{ 0,0,0 };
 	vec::fixed<3> nodeCoord_earth{ 0,0,0 };
-	
+
 	// Initialize some variables that are needed for the wind calculation
 	vec::fixed<3> windVel{ 0,0,0 }; // Wind velocity. In the end of the for below, it is written in the blade node coordinate system
 	vec::fixed<3> nodeVel{ 0,0,0 }; // Blade node structural velocity, written in the blade node coordinate system
@@ -350,14 +342,14 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	double totalAzimuth{ 0 };
 
 	// Initialize the flow angles and parameters needed for the BEMT method.
-	// The values of a, ap and phi are actually stored as members of the Blade class, but calling 
+	// The values of a, ap and phi are actually stored as members of the Blade class, but calling
 	// m_blades.at(iiBlades).phi() all the time in the loop below is cumbersome and inefficient.
 	// The value of alpha is calculated by a method of the Blade class.
 	double a{ 0 }; // Axial induction factor
 	double ap{ 0 }; // Tangential induction factor
 	double phi{ 0 }; // Local inflow angle
-	double localSolidity{ 0 }; 
-	double F{ 0 }; // Tip + hub loss factor	
+	double localSolidity{ 0 };
+	double F{ 0 }; // Tip + hub loss factor
 
 	// At first, the wind velocity is calculated in the earth coordinate system.
 	// For the calculations, it needs to be written in the blade node coordinate system.
@@ -367,7 +359,7 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	// rotor configuration (i.e. tilt, yaw, current azimuth and blade precone)
 	mat::fixed<3, 3> rigidBodyRotation = rotatMatrix(-FOWTpos.rows(0, 2));
 	mat::fixed<3, 3> rotorRotation{ 0,0,0 };
-	
+
 	// Variables that provide the brackets for Brent method
 	double phi_min;
 	double phi_max;
@@ -378,32 +370,32 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 		totalAzimuth = deltaAzimuth + m_blades.at(iiBlades).initialAzimuth();
 		rotorRotation = rotatMatrix_deg(0, -m_blades.at(iiBlades).precone(), 0) * rotatMatrix_deg(-totalAzimuth, -rotorTilt(), -rotorYaw());
 
-		bladeForce.zeros();		
+		bladeForce.zeros();
 		for (unsigned int iiNodes = 0; iiNodes < m_blades.at(iiBlades).size(); ++iiNodes)
 		{
 			nodeCoord_hub = m_blades.at(iiBlades).nodeCoord_hub(iiNodes);
 			nodeCoord_shaft = m_blades.at(iiBlades).nodeCoord_shaft(iiNodes, deltaAzimuth);
 			nodeCoord_fowt = m_blades.at(iiBlades).nodeCoord_fowt(nodeCoord_shaft, rotorTilt(), rotorYaw(), overhang(), hubHeight2CoG());
 			nodeCoord_earth = m_blades.at(iiBlades).nodeCoord_earth(FOWTpos, nodeCoord_fowt);
-			
-			// windVel is first calculated in the global coordinate system. 
+
+			// windVel is first calculated in the global coordinate system.
 			// We need to convert it to the node coordinate system, in which:
 			// - windVel[0] is the component that is normal to the rotation plan
 			// - windVel[1] is the component that is in the rotation plan and in the tangential direction
 			// - windVel[2] is the component that is in the rotation plan and in the radial direction
 			windVel.zeros();
-			windVel[0] = envir.windVel_X(nodeCoord_earth);			
-			windVel = rotorRotation * (rigidBodyRotation * windVel);			
+			windVel[0] = envir.windVel_X(nodeCoord_earth);
+			windVel = rotorRotation * (rigidBodyRotation * windVel);
 
 			// Structural velocity of the nodes. Need to be written in the node coordinate system
 			cog2node = rotatMatrix(FOWTpos.rows(0, 2)) * nodeCoord_fowt;
-			nodeVel = FOWTvel.rows(0,2) + arma::cross(FOWTvel.rows(3,5), cog2node);  // nodeVel = linearVel + angVel ^ r ; this is written in the earth coordinate system			
+			nodeVel = FOWTvel.rows(0,2) + arma::cross(FOWTvel.rows(3,5), cog2node);  // nodeVel = linearVel + angVel ^ r ; this is written in the earth coordinate system
 			nodeVel = rotorRotation * (rigidBodyRotation * nodeVel); // Need to pass to the node coordinate system
 			nodeVel += rotatMatrix_deg(-totalAzimuth, 0, 0) * arma::cross(vec::fixed<3> {rotorSpeed()*2*datum::pi/60, 0, 0}, nodeCoord_shaft); // Need to add the velocity due to the rotor rotation, written in the node coordinate system
 
 			// Normal and tangential componentes of the relative wind velocity
 			windRel_nVel = windVel[0] - nodeVel[0];
-			windRel_tVel = windVel[1] - nodeVel[1];	
+			windRel_tVel = windVel[1] - nodeVel[1];
 
 			// Local tip speed ratio
 			localTipSpeed = std::abs(windRel_tVel/windRel_nVel);
@@ -485,7 +477,7 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			bladeForce[1] += -nodeForce_t * dr;
 			bladeForce[2] += 0;
 			bladeForce.rows(3, 5) += arma::cross(vec::fixed<3>{0, 0, rm}, vec::fixed<3>{nodeForce_n, -nodeForce_t, 0}) * dr; // Moment generated by the aerodynamic forces
-			bladeForce[5] += nodeForce_m * dr; // Need to add the moment due to Cm 
+			bladeForce[5] += nodeForce_m * dr; // Need to add the moment due to Cm
 		}
 
 		/****
@@ -643,7 +635,7 @@ double RNA::calcRes(const double phi, const unsigned int bladeIndex, const unsig
 	{
 		return 0;
 	}
-    
+
 	double k = calcK(phi, localSolidity, Cn(phi, bladeIndex, nodeIndex), F);
 	double kp = calcKp(phi, localSolidity, Ct(phi, bladeIndex, nodeIndex), F);
 
@@ -680,7 +672,7 @@ double RNA::Ct(const double phi, const unsigned int bladeIndex, const unsigned i
 {
 	double alpha = m_blades.at(bladeIndex).alpha(nodeIndex, phi);
 	double Cl = m_airfoils.at(m_blades.at(bladeIndex).airoilID(nodeIndex)-1).CL(alpha);
-	double Cd = m_airfoils.at(m_blades.at(bladeIndex).airoilID(nodeIndex)-1).CD(alpha);	
+	double Cd = m_airfoils.at(m_blades.at(bladeIndex).airoilID(nodeIndex)-1).CD(alpha);
 
 	return Cl * sin(deg2rad(phi)) - Cd * cos(deg2rad(phi));
 }
@@ -751,9 +743,9 @@ double RNA::calcKp(const double phi, const double localSolidity, const double Ct
 
 double RNA::calcAxialIndFactor(const double k, const double phi, const double F) const
 {
-	// The method proposed by Ning, 2013 uses Buhl's derivation for the region where momentum theory can not be applied. 
+	// The method proposed by Ning, 2013 uses Buhl's derivation for the region where momentum theory can not be applied.
 	// That region corresponds to 0.4 < a < 1.0, which is the same as k >= 2/3. The variables g1, g2, and g3 are used in that condition.
-	double g1, g2, g3; 
+	double g1, g2, g3;
 
 	if (F == 0)
 	{
@@ -765,7 +757,7 @@ double RNA::calcAxialIndFactor(const double k, const double phi, const double F)
 		if (k < 2 / 3.) // This one corresponds to the momentum region
 		{
 			// Deal with the case where the denominator is zero.
-			if (abs(k+1) < 1e-6) 
+			if (abs(k+1) < 1e-6)
 			{
 				// Since we are in the momentum region, if we say that the singularity yields a value of 'a' larger than 1, which corresponds to the
 				// propeller brake region, we do not introduce any artificial solutions to the BEMT equations.
@@ -809,5 +801,3 @@ double RNA::calcTangIndFactor(const double kp, const double F) const
     else
         return kp/(1.0-kp);
 }
-
-
