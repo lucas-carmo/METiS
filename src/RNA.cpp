@@ -2,6 +2,8 @@
 #include "RNA.h"
 #include "auxFunctions.h"
 
+using namespace std;
+
 RNA::RNA()
 {
 	m_hubRadius = arma::datum::nan; // Initialize with NaN in order to know whether it was already calculated or not, since it is needed for calling Blade::setNodeCoord_hub()

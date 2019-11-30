@@ -2,6 +2,8 @@
 #include <cctype> // This header declares a set of functions to classify and transform individual characters, like toupper
 #include <cwctype> // Same thing for wide characters
 
+using namespace std;
+
 /*****************************************************
     Useful math/geometric operations
 *****************************************************/
@@ -9,7 +11,7 @@ mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, const dou
 {
 	/* Rotation matrix is RotatMat = RotatX * RotatY * RotatZ, i.e. a rotation around the Z axis,
 	  followed by a rotation around the new y axis, and a rotation around the new x axis. Each rotation matrix is given by:
-	
+
 	  rotatX = { 	{ 1 ,        0        ,         0        },
 			     			{ 0 , cos(rotation(3)) , -sin(rotation(3)) },
 			     			{ 0 , sin(rotation(3)) ,  cos(rotation(3)) }
@@ -20,18 +22,18 @@ mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, const dou
 			     			{ -sin(rotation(4)) , 0 , cos(rotation(4)) }
 			   			};
 
-	  rotatZ = {	{ cos(rotation(5)) , -sin(rotation(5)) , 0 },			     
+	  rotatZ = {	{ cos(rotation(5)) , -sin(rotation(5)) , 0 },
 				 				{ sin(rotation(5)) ,  cos(rotation(5)) , 0 },
 			     			{        0        ,         0        , 1 },
 			   			};
 
 	  And the resulting matrix is the one below
 	*/
-	mat::fixed<3, 3> rotatMatrix = { 
+	mat::fixed<3, 3> rotatMatrix = {
 									{                          cos(rotatY) * cos(rotatZ)                               ,                          -cos(rotatY) * sin(rotatZ)                               ,            sin(rotatY)          },
 									{ cos(rotatX) * sin(rotatZ) + sin(rotatX) * sin(rotatY) * cos(rotatZ)  ,  cos(rotatX) * cos(rotatZ) - sin(rotatX) * sin(rotatY) * sin(rotatZ)  ,  -sin(rotatX) * cos(rotatY) },
 									{ sin(rotatX) * sin(rotatZ) - cos(rotatX) * sin(rotatY) * cos(rotatZ)  ,  sin(rotatX) * cos(rotatZ) + cos(rotatX) * sin(rotatY) * sin(rotatZ)  ,   cos(rotatX) * cos(rotatY) }
-								   };	
+								   };
 
 	return rotatMatrix;
 }
@@ -54,7 +56,7 @@ mat::fixed<3, 3> rotatMatrix_deg(const vec::fixed<3> &rotation)
 
 double deg2rad(const double degree)
 {
-	return degree * datum::pi / 180;
+	return degree * arma::datum::pi / 180;
 }
 
 double minimum(const double x, const double y)
@@ -64,7 +66,7 @@ double minimum(const double x, const double y)
 
 bool almostEqual(const double x, const double y, double eps)
 {
-	return (abs(x - y) < eps);
+	return (std::abs(x - y) < eps);
 }
 
 /*****************************************************
@@ -191,7 +193,7 @@ std::string getFileName(const std::string& path)
 	std::vector<std::string> str_tokenized = stringTokenize(path, filesep);
 	std::string flNm = str_tokenized.back();
 
-	// We need to exclude the file extension. We get everything until the last dot and say that 
+	// We need to exclude the file extension. We get everything until the last dot and say that
 	if (flNm.find_last_not_of(".") != std::string::npos)
 	{
 		flNm = flNm.substr(0, flNm.find_last_of("."));
