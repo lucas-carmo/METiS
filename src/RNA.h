@@ -38,15 +38,15 @@ public:
   void setNumBlades(const unsigned int numBlades);
   void setBladePrecone(const double precone);
   void setBladePitch(const double pitch);
-
-	void readBladeAeroLine(const std::string &data);
-	void addAirfoil();
-	void readAirfoilLine(const std::string &data);
-
-	void readHubRadius(const std::string &data);
-	void readHubHeight(const std::string &data);
-	void readOverhang(const std::string &data);
+  
+  void setHubRadius(const double hubRadius);
+  void setHubHeight(const double hubHeight);
+  void setOverhang(const double overhang);
 	void setHubHeight2CoG(const double zCoG);
+
+  void addBladeAeroNode(const double span, const double crvAC, const double swpAC, const double crvAng, const double twist, const double chord, const int airfoilID);
+	void addEmptyAirfoil();
+	void addAirfoilData(const double angle, const double CL, const double CD, const double CM);
 
 	/*****************************************************
 		Getters

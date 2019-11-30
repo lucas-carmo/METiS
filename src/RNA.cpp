@@ -79,40 +79,15 @@ void RNA::setBladePitch(const double pitch)
 	}
 }
 
-void RNA::readBladeAeroLine(const std::string &data)
+void RNA::addBladeAeroNode(const double span, const double crvAC, const double swpAC, const double crvAng,
+	                         const double twist, const double chord, const int airfoilID)
 {
-	double span = 0;
-	double crvAC = 0;
-	double swpAC = 0;
-	double crvAng = 0;
-	double twist = 0;
-	double chord = 0;
-	int airfoilID = 0;
-
-	// The seven properties provided by each line are separated by white spaces in the input string (whitespace or tab)
-	std::vector<std::string> input = stringTokenize(data, " \t");
-
-	// Check number of inputs
-	if (input.size() != 7)
-	{
-		throw std::runtime_error("Unable to read the blade aerodynamic properties in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}
-
-	// Read data
-	readDataFromString(input.at(0), span);
-	readDataFromString(input.at(1), crvAC);
-	readDataFromString(input.at(2), swpAC);
-	readDataFromString(input.at(3), crvAng);
-	readDataFromString(input.at(4), twist);
-	readDataFromString(input.at(5), chord);
-	readDataFromString(input.at(6), airfoilID);
-
 	if (numBlades() == 0)
 	{
-		throw std::runtime_error("Need to specify number of blades before their properties. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+		throw std::runtime_error("Need to specify number of blades before their properties. Error in RNA::setBladeAeroLine");
 	}
 
-	// Add the data read in the current line to each blade element
+	// Set the data read for each blade element
 	for (unsigned int ii = 0; ii < numBlades(); ++ii)
 	{
 		m_blades.at(ii).addBladeAeroNode(span, crvAC, swpAC, crvAng, twist, chord, airfoilID, hubRadius());
@@ -120,65 +95,36 @@ void RNA::readBladeAeroLine(const std::string &data)
 }
 
 // Add a new empty airfoil to m_airfoils
-void RNA::addAirfoil()
+void RNA::addEmptyAirfoil()
 {
 	m_airfoils.push_back(Airfoil());
 }
 
-// Read line of the input file whith the airfoil properties. These properties are appended
-// to the last airfoil in m_airfoils
-void RNA::readAirfoilLine(const std::string &data)
+// Read airfoil properties corresponding to a given angle of attack.
+// These properties are appended to the last airfoil in m_airfoils.
+void RNA::addAirfoilData(const double angle, const double CL, const double CD, const double CM)
 {
-	double angle;
-	double CL;
-	double CD;
-	double CM;
-
-	// The four properties provided by each line are separated by white spaces in the input string (whitespace or tab)
-	std::vector<std::string> input = stringTokenize(data, " \t");
-
-	// Check number of inputs
-	if (input.size() != 4)
-	{
-		throw std::runtime_error("Unable to read the airfoil properties in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}
-
-	// Read data
-	readDataFromString(input.at(0), angle);
-	readDataFromString(input.at(1), CL);
-	readDataFromString(input.at(2), CD);
-	readDataFromString(input.at(3), CM);
-
-	// Check if there is any airfoil for appending the data read from the input file
 	if (m_airfoils.empty())
 	{
-		addAirfoil();
+		throw std::runtime_error("m_airfoils can not be empty when calling RNA::addAirfoilLines(double angle, double CL, double CD, double CM).");
 	}
 
-	// Add the data read in the current line to the last airfoil in m_airfoils
-	try
-	{
-		m_airfoils.back().addAirfoilLine(angle, CL, CD, CM);
-	}
-	catch (std::exception &exception)
-	{
-		throw std::runtime_error(std::string(exception.what()) + " Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
-	}
+	m_airfoils.back().addAirfoilData(angle, CL, CD, CM);
 }
 
-void RNA::readHubRadius(const std::string &data)
+void RNA::setHubRadius(const double hubRadius)
 {
-	readDataFromString(data, m_hubRadius);
+	m_hubRadius = hubRadius;
 }
 
-void RNA::readHubHeight(const std::string &data)
+void RNA::setHubHeight(const double hubHeight)
 {
-	readDataFromString(data, m_hubHeight);
+	m_hubHeight = hubHeight;
 }
 
-void RNA::readOverhang(const std::string &data)
+void RNA::setOverhang(const double overhang)
 {
-	readDataFromString(data, m_overhang);
+	m_overhang = overhang;
 }
 
 // Should be called when setting the RNA in FOWT::setRNA
@@ -270,6 +216,10 @@ std::string RNA::printAirfoils() const
 
 double RNA::hubRadius() const
 {
+	if (!arma::is_finite(m_hubRadius))
+	{
+		throw std::runtime_error("Need to call RNA::setHubRadius(const double hubRadius) before calling RNA::hubRadius().");
+	}
 	return m_hubRadius;
 }
 
@@ -298,7 +248,6 @@ double RNA::hubHeight2CoG() const
 *****************************************************/
 double RNA::dAzimuth(const double time) const
 {
-	//time*(param.rt.Spd / 60) * 360
 	return (360 * time * rotorSpeed() / 60.);
 }
 

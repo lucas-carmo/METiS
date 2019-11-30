@@ -389,7 +389,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				double aux_CD = string2num<double>(input.at(3));
 				double aux_CM = string2num<double>(input.at(4));
 				unsigned int aux_numIntPoints = string2num<unsigned int>(input.at(5));
-				double  aux_botDiam = string2num<double>(input.at(6));
+				double aux_botDiam = string2num<double>(input.at(6));
 				double aux_topDiam = string2num<double>(input.at(7));
 				double aux_axialCD = string2num<double>(input.at(8));
 				double aux_axialCa = string2num<double>(input.at(9));
@@ -511,19 +511,19 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		else if (caseInsCompare(getKeyword(strInput), "HubRadius"))
 		{
-			rna.readHubRadius(getData(strInput));
+			rna.setHubRadius(string2num<double>(getData(strInput)));
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "HubHeight"))
 		{
-			rna.readHubHeight(getData(strInput));
+			rna.setHubHeight(string2num<double>(getData(strInput)));
 			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Overhang"))
 		{
-			rna.readOverhang(getData(strInput));
+			rna.setOverhang(string2num<double>(getData(strInput)));
 			continue;
 		}
 
@@ -539,7 +539,23 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				rna.readBladeAeroLine(strInput);
+				// The seven properties provided by each line are separated by white spaces in the input string (whitespace or tab)
+				std::vector<std::string> input = stringTokenize(strInput, " \t");
+				if (input.size() != 7)
+				{
+					throw std::runtime_error("Unable to read the blade aerodynamic properties in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+				}
+
+				// Aux variables to handle the data read from the input file
+				double aux_span = string2num<double>(input.at(0));
+				double aux_crvAC = string2num<double>(input.at(1));
+				double aux_swpAC = string2num<double>(input.at(2));
+				double aux_crvAng = string2num<double>(input.at(3));
+				double aux_twist = string2num<double>(input.at(4));
+				double aux_chord = string2num<double>(input.at(5));
+				double aux_airfoilID = string2num<int>(input.at(6));
+
+				rna.addBladeAeroNode(aux_span, aux_crvAC, aux_swpAC, aux_crvAng, aux_twist, aux_chord, aux_airfoilID);
 
 				IO::readLineInputFile(strInput);
 			}
@@ -549,9 +565,9 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		else if (caseInsCompare(getKeyword(strInput), "Airfoil_data"))
 		{
-			rna.addAirfoil(); // Add new airfoil to rna
 			IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
 
+			rna.addEmptyAirfoil();
 			while (!caseInsCompare(getKeyword(strInput), "END"))
 			{
 				if (!m_inFl) // Signal if the end of file is reached before the end keyword
@@ -560,7 +576,20 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					return;
 				}
 
-				rna.readAirfoilLine(strInput);
+				// The four properties provided by each line are separated by white spaces in the input string (whitespace or tab)
+				std::vector<std::string> input = stringTokenize(strInput, " \t");
+				if (input.size() != 4)
+				{
+					throw std::runtime_error("Unable to read the airfoil properties in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+				}
+
+				// Aux variables to handle the data read from the input file
+				double aux_angle = string2num<double>(input.at(0));
+				double aux_CL = string2num<double>(input.at(1));
+				double aux_CD = string2num<double>(input.at(2));
+				double aux_CM = string2num<double>(input.at(3));
+
+				rna.addAirfoilData(aux_angle, aux_CL, aux_CD, aux_CM);
 
 				IO::readLineInputFile(strInput);
 			}
