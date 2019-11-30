@@ -25,7 +25,7 @@ public:
 	/*****************************************************
 		Setters
 	*****************************************************/
-	void addAirfoilLine(double angle, double CL, double CD, double CM);
+	void addAirfoilData(double angle, double CL, double CD, double CM);
 
 	/*****************************************************
 		Getters
@@ -37,7 +37,7 @@ public:
 	double getCM(unsigned int index) const;
 
 	/*****************************************************
-		Getters based on the angle of attack (in degrees), using 
+		Getters based on the angle of attack (in degrees), using
 		cubic spline interpolation
 	*****************************************************/
 	double CL(double angle) const;
