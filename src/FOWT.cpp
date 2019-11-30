@@ -1,14 +1,16 @@
 #include "FOWT.h"
 #include "IO.h"
 
+#include <algorithm> // For std::find
+
 
 /*****************************************************
 	Constructors
 *****************************************************/
-FOWT::FOWT() : m_extLinStiff(fill::zeros), m_mass(datum::nan), 
+FOWT::FOWT() : m_extLinStiff(fill::zeros), m_mass(datum::nan),
 			   m_disp(fill::zeros), m_vel(fill::zeros), m_acc(fill::zeros)
 {
-	m_CoG.fill(datum::nan);	
+	m_CoG.fill(datum::nan);
 }
 
 /*****************************************************
@@ -91,7 +93,7 @@ vec::fixed<3> FOWT::CoG()
 	{
 		m_CoG = m_floater.CoG();
 	}
-	
+
 	return m_CoG;
 }
 
@@ -100,9 +102,9 @@ double FOWT::mass()
 	// If m_mass was not calculated yet, calculate it
 	if (!arma::is_finite(m_mass))
 	{
-		m_mass = m_floater.mass(); 
+		m_mass = m_floater.mass();
 	}
-	
+
 	return m_mass;
 }
 
@@ -127,7 +129,7 @@ vec::fixed<6> FOWT::constForce() const
 }
 
 std::string FOWT::printLinStiff() const
-{	
+{
 	std::string output = "(" + std::to_string( m_extLinStiff(0) );
 	for ( int ii = 1; ii < m_extLinStiff.n_elem; ++ii )
 	{
@@ -155,9 +157,9 @@ std::string FOWT::printFloater() const
 		{
 			output = output + std::to_string(A(ii, jj));
 
-			(jj == 5) ? (output = output + '\n') : (output = output + " \t\t ; \t\t");			
+			(jj == 5) ? (output = output + '\n') : (output = output + " \t\t ; \t\t");
 		}
-	}	
+	}
 
 	output = output + '\n';
 
@@ -234,39 +236,44 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 
 	vec::fixed<6> acc(fill::zeros);
 
-	// Inertia matrix including added matrix
-	mat::fixed<6, 6> inertiaMatrix = m_floater.addedMass(envir.watDensity(), m_hydroMode) + m_floater.inertiaMatrix();
-
 	// Calculate the total force acting on the FOWT
 	vec::fixed<6> force = totalForce(envir);
 	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE, force);
 
-	// Avoid coupling effects when a DoF is disabled and the others are not.
-	// For doing so, set the calculated force to zero if the dof is deactivated.
-	// Please note that the force was printed BEFORE this is done, in such a way
-	// that the full 6 component force vector is printed, even if the DoF is not active.
-	for (int ii = 0; ii < 6; ++ii)
+	// Calculate the acceleration only if at least one dofs is deactivated
+	// (i.e. if at least one element of m_dofs is equal to 'true')
+	if (std::find(m_dofs.begin(), m_dofs.end(), true) != m_dofs.end())
 	{
-		if (!m_dofs[ii])
+		// Inertia matrix including added matrix
+		mat::fixed<6, 6> inertiaMatrix = m_floater.addedMass(envir.watDensity(), m_hydroMode) + m_floater.inertiaMatrix();
+
+		// Avoid coupling effects when a DoF is disabled and the others are not.
+		// For doing so, set the calculated force to zero if the dof is deactivated.
+		// Please note that the force was printed BEFORE this is done, in such a way
+		// that the full 6 component force vector is printed, even if the DoF is not active.
+		for (int ii = 0; ii < 6; ++ii)
 		{
-			force[ii] = 0;
+			if (!m_dofs[ii])
+			{
+				force[ii] = 0;
+			}
 		}
-	}
 
-	// Solve inertiaMatrix * acc = force
-	acc = arma::solve(inertiaMatrix, force);
+		// Solve inertiaMatrix * acc = force
+		// Armadillo will throw its own exception if this computation fails.
+		acc = arma::solve(inertiaMatrix, force);
 
-	// Due to the coupling effects, it is necessary to set the accelerations of the inactive DoFs to 0
-	for (int ii = 0; ii < 6; ++ii)
-	{
-		if (!m_dofs[ii])
+		// Due to the coupling effects, it is necessary to set the accelerations of the inactive DoFs to 0
+		for (int ii = 0; ii < 6; ++ii)
 		{
-			acc[ii] = 0;
+			if (!m_dofs[ii])
+			{
+				acc[ii] = 0;
+			}
 		}
 	}
 
 	IO::print2outLine(IO::OUTFLAG_FOWT_ACC, m_acc);
-
 	return acc;
 }
 
@@ -292,7 +299,7 @@ vec::fixed<6> FOWT::hydrostaticForce(const ENVIR &envir)
 
 vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)
 {
-	if (m_aeroMode == 1) 
+	if (m_aeroMode == 1)
 	{
 		return m_rna.aeroForce(envir, m_disp + join_cols(CoG(), vec::fixed<3> {0, 0, 0}), m_vel);
 	}
@@ -301,7 +308,7 @@ vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)
 }
 
 vec::fixed<6> FOWT::mooringForce()
-{	
+{
 	if (m_moorMode == 1)
 	{
 		return (vec::fixed<6> {-m_extLinStiff(0)*m_disp(0), -m_extLinStiff(1)*m_disp(1), 0, 0, 0, -m_extLinStiff(2)*m_disp(5)} + m_extConstForce);
@@ -316,6 +323,6 @@ vec::fixed<6> FOWT::weightForce(const double gravity)
 }
 
 vec::fixed<6> FOWT::totalForce(const ENVIR &envir)
-{		
+{
 	return (hydrodynamicForce(envir) + hydrostaticForce(envir) + mooringForce() + weightForce(envir.gravity()) + aeroForce(envir));
 }
