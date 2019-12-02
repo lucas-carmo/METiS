@@ -18,13 +18,6 @@ private:
     std::vector<int> m_airfoilID; // Airfoil data the local blade node is associated with	
 	std::vector< double > m_localSolidity;
 
-	// Properties related to the BEMT method AND belong to each node
-	// They are part of the Blade class to make the value calculated in the time step 'i' available to
-	// the force calculation in the time step 'i+1'. So, to make it clear, the values stored in the members below
-	// are the ones calculated in the last call of RNA::aeroForce, where the BEMT method is used.
-	std::vector<double> m_a; // Axial induction factor (for each node)
-	std::vector<double> m_ap; // Tangential induction factor (for each node)
-	std::vector<double> m_phi; // Local inflow angle (for each node)
 
 	// Radial distance of the node & coordinates of the nodes written in the hub coordinate system.
 	// Since this needs to be calculated only in the first time step, I thought it better to keep them as members.
@@ -50,10 +43,7 @@ public:
 	void setPitch(const double pitch);
 	void setInitialAzimuth(const double initialAzimuth);
 	void setNodeRadius(const int index, const double hubRadius);
-
-	void setAxialIndFactor(const unsigned int index, const double a);
-	void setTangIndFactor(const unsigned int index, const double ap);
-	void setPhi(const unsigned int index, const double phi);
+	
 
 	/*****************************************************
 		Getters
@@ -72,10 +62,6 @@ public:
 	double precone() const;
 	double pitch() const;
 	double initialAzimuth() const;
-
-	double axialIndFactor(const unsigned int index) const;
-	double tangIndFactor(const unsigned int index) const;
-	double phi(const unsigned int index) const; 		
 
 	/*****************************************************
 		Calculate node position in different coordinate systems

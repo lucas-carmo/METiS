@@ -37,9 +37,7 @@ int main(int argc, char *argv[])
 		IO::printSumFile(fowt, envir);	// Print the summary file for later verification of the input by the user
 
 		// All the time domain calculation is done inside this function
-		timeDomainAnalysis(fowt, envir);
-	
-
+		timeDomainAnalysis(fowt, envir);	
 	}
 
 	catch(std::exception &exception)

@@ -1,17 +1,14 @@
 %>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
-%>-<> OC4 Platform - Fixed
+%>-<> OC4 Platform - Fixed - Aero Only
 %>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
 
 
 %%-----------------------------------------------------------------------------%%
-%%----------------------------- ACTIVE ANALYSES -------------------------------%%
+%%----------------------------- ACTIVE FORCES ---------------------------------%%
 %%-----------------------------------------------------------------------------%%
-% The analysis can be of three different types, specified by the following strings:
-% *) FOWT -> For Floating Offshore Wind Turbines
-% *) FixedOffshore -> For offshore wind turbines that are fixed
-% *) Onshore -> For onshore wind turbines
-% Each of the analyses requires different inputs
-TYPE Onshore
+Hydro   0 % 1: HD in initial position + HS matrix; 2: HD in instantaneous position with linear wave kinematics + HS in instantaneous position; 3: HD in instantaneous position with non-linear wave kinematics + HS in instantaneous position
+Aero    1
+Moor    0
 DOFS 0 0 0 0 0 0
 
 
@@ -48,11 +45,11 @@ FloaterCoG		0,0,0
 %%---------------------------- RNA DESCRIPTION --------------------------------%%
 %%-----------------------------------------------------------------------------%%
 RotSpeed    12  % Rotor speed in rpm (constant)
-RotTilt     5   % Rotor tilt angle (degrees)
-RotYaw      3   % Rotor yaw angle (degrees)
+RotTilt     0   % Rotor tilt angle (degrees)
+RotYaw      0   % Rotor yaw angle (degrees)
 NumBlades   3   % Number of blades
 BldPitch    3   % Blade pitch angle (degrees)
-BldPrecone  -2.5   % Blade coning angle (degrees)
+BldPrecone  0   % Blade coning angle (degrees)
 
 HubRadius   1.5
 HubHeight   90

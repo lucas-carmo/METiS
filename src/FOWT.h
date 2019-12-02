@@ -12,7 +12,9 @@ using namespace arma; // For armadillo classes
 class FOWT
 {
 private:
-	//Physical members of the FOWT (floater, rotor nacelle assembly (RNA), tower, mooring lines, ...)
+	/*
+	Physical members of the FOWT (floater, rotor nacelle assembly (RNA), tower, mooring lines, ...)
+	*/
 	Floater m_floater;
 	//Tower m_tower;
 	RNA m_rna;
@@ -20,25 +22,26 @@ private:
 	vec::fixed<6> m_extConstForce;
 
 	/*
-	Forces included in the analysis
+	Specification of the analysis
 	*/
+	// Forces included in the analysis
 	int m_hydroMode{ 0 };
 	int m_aeroMode{ 0 };
 	int m_moorMode{ 0 };
 
-	/*
-	Flags to specify the active degrees of freedom
-	*/
+	// Flags to specify the active degrees of freedom
 	std::array<bool, 6> m_dofs = { 1, 1, 1, 1, 1, 1 };
 
-	// Properties derived from the other ones
+	/* 
+	FOWT properties derived from its subsystems
+	*/
 	double m_mass;
 	vec::fixed<3> m_CoG;
 
-	// FOWT condition
-	// m_disp(0:2) = Position with respect to the initial CoG (i.e. CoG(t) - CoG(0))
-	// m_disp(3:5) = Rotation with respect to initial configuration. For now, we are considering small rotations.
-	vec::fixed<6> m_disp;
+	/*
+	FOWT condition
+	*/
+	vec::fixed<6> m_disp; // m_disp(0:2) = Position with respect to the initial CoG (i.e. CoG(t) - CoG(0)) --- m_disp(3:5) = Rotation with respect to initial configuration. For now, we are considering small rotations
 	vec::fixed<6> m_vel;
 	vec::fixed<6> m_acc;
 
@@ -49,13 +52,13 @@ public:
 	/*****************************************************
 		Setters
 	*****************************************************/
-	void readHydroMode(const std::string &data);
-	void readAeroMode(const std::string &data);
-	void readMoorMode(const std::string &data);
-	void readDOFs(const std::string &data);
+	void setHydroMode(const int hydroMode);
+	void setAeroMode(const int aeroMode);
+	void setMoorMode(const int moorMode);
+	void setDoFs(std::array<bool, 6> &dofs);
 
-	void readExtLinStiff(const std::string &data);
-	void readExtConstForce(const std::string &data);
+	void setExtLinStiff(const vec::fixed<3> &extLinStiff);
+	void setExtConstForce(const vec::fixed<6> &extConstForce);
 
 	void setFloater(Floater &floater);
 	void setRNA(RNA &rna);
@@ -74,6 +77,7 @@ public:
 	vec::fixed<6> vel() const;
 	vec::fixed<6> acc() const;
  
+	vec::fixed<6> constForce() const;
 	std::string printLinStiff() const;
 	std::string printFloater() const;
 	std::string printRNA() const;

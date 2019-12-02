@@ -21,13 +21,14 @@ private:
     double m_gravity;
     double m_watDens;
     double m_watDepth;
-    std::vector<Wave> m_wave;
-	std::vector<unsigned int> m_waveLocationID;
-    std::vector<vec::fixed<3>> m_waveLocation; // Coordinates of the points where the wave characteristics (elevation, velocity, etc) are calculated for output
+    std::vector<Wave> m_wave; // The sea is specified by a vector with regular wave components. You can add a wave component using the method addRegularWave(), or many components using addJonswap().
     double m_airDens;
     double m_windRefVel;
 	double m_windRefHeight;
     double m_windExp;
+
+	std::vector<unsigned int> m_waveProbeID;
+	std::vector<vec::fixed<3>> m_waveProbe; // Coordinates of the points where the wave characteristics (elevation, velocity, etc) are calculated for output
 
     /*
     Data to specify the numerical analysis
@@ -37,40 +38,28 @@ private:
     double m_timeRamp;
     double m_time = 0;
 
-    bool m_useTipLoss;
-    bool m_useHubLoss;
-    // bool m_IncTIFac;
-    // bool m_IncDragAIFac;
-    // bool m_IncDragTIFac;
-    bool m_useSkewCorr;
-    bool m_TwrLoads;
-
 public:
 	ENVIR();
 
 	/*****************************************************
 		Setters
-	*****************************************************/   
-    void readTimeStep(const std::string &data);
-    void readTimeTotal(const std::string &data);
-    void readTimeRamp(const std::string &data);
-	void readUseTipLoss(const std::string &data);
-	void readUseHubLoss(const std::string &data);
-	void readUseSkewCorr(const std::string &data);
-	void addNode(const std::string &data);
+	*****************************************************/
+	void setTimeStep(const double timeStep);
+	void setTimeTotal(const double timeTotal);
+	void setTimeRamp(const double timeRamp);
+	void setGravity(const double gravity);
+	void setWatDens(const double watDens);
+	void setWatDepth(const double watDepth);
+	void setAirDens(const double airDens);	
+	void setWindRefVel(const double windRefVel);
+	void setWindRefHeight(const double windRefHeight);
+	void setWindExp(const double windExp);
 
-    void readGrav(const std::string &data);
-    void readWatDens(const std::string &data);
-    void readWatDepth(const std::string &data);
-	void readAirDens(const std::string &data);
-	void readWindRefVel(const std::string &data);
-	void readWindRefHeight(const std::string &data);
-	void readWindExp(const std::string &data);
-	
-	void addWave(const std::string &wholeWaveLine);
-	void jonswap(const std::string &wholeWaveLine);
+	void addNode(const unsigned int nodeID, const double nodeCoordX, const double nodeCoordY, const double nodeCoordZ);
+	void addRegularWave(const std::string &waveType, const double height, const double freqORperiod, const double direction, const double phase);
+	void addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh);
 
-	void addWaveLocation(const std::string &data);
+	void addWaveProbe(const unsigned int ID);
 
 	/*****************************************************
 		Getters
@@ -78,9 +67,6 @@ public:
     double timeStep() const;
     double timeTotal() const;
     double time() const;
-	bool useTipLoss() const;
-	bool useHubLoss() const;
-	bool useSkewCorr() const;
 
     double gravity() const;
 	double watDensity() const;
@@ -102,7 +88,7 @@ public:
 	std::string printWatDens() const;
 	std::string printWatDepth() const;
 	std::string printWave() const;
-	std::string printWaveLocation() const;
+	std::string printWaveProbe() const;
 
 	void printWaveCharact() const; // Print the wave characteristics (elevation, velocity, etc) specified for output in the locations given by m_waveLocation
 
@@ -110,7 +96,7 @@ public:
 		Other functions
 	*****************************************************/
     bool isNodeEmpty() const;
-    bool isWaveLocationEmpty() const;
+    bool isWaveProbeEmpty() const;
     arma::vec::fixed<3> getNode(unsigned int ID) const;
 
     void stepTime();

@@ -22,72 +22,72 @@ ENVIR::ENVIR()
 /*****************************************************
 	Setters
 *****************************************************/
-void ENVIR::readTimeStep(const std::string &data)
+void ENVIR::setTimeStep(const double timeStep)
 {
-    readDataFromString(data, m_timeStep);
+	m_timeStep = timeStep;
 }
 
-void ENVIR::readTimeTotal(const std::string &data)
+void ENVIR::setTimeTotal(const double timeTotal)
 {
-    readDataFromString(data, m_timeTotal);
+	m_timeTotal = timeTotal;
 }
 
-void ENVIR::readTimeRamp(const std::string &data)
+void ENVIR::setTimeRamp(const double timeRamp)
 {
-    readDataFromString(data, m_timeRamp);
+    m_timeRamp = timeRamp;
 }
 
-void ENVIR::readUseTipLoss(const std::string &data)
+void ENVIR::setGravity(const double gravity)
 {
-	readDataFromString(data, m_useTipLoss);
+	m_gravity = gravity;
 }
 
-void ENVIR::readUseHubLoss(const std::string &data)
+void ENVIR::setWatDens(const double watDens)
 {
-	readDataFromString(data, m_useHubLoss);
+	m_watDens = watDens;
 }
 
-void ENVIR::readUseSkewCorr(const std::string &data)
+void ENVIR::setWatDepth(const double watDepth)
 {
-	readDataFromString(data, m_useSkewCorr);
+	m_watDepth = watDepth;
 }
 
-void ENVIR::readGrav(const std::string &data)
+void ENVIR::setAirDens(const double airDens)
 {
-	readDataFromString(data, m_gravity);
+	m_airDens = airDens;
 }
 
-void ENVIR::readWatDens(const std::string &data)
+void ENVIR::setWindRefVel(const double windRefVel)
 {
-	readDataFromString(data, m_watDens);
+	m_windRefVel = windRefVel;
 }
 
-void ENVIR::readAirDens(const std::string &data)
+void ENVIR::setWindRefHeight(const double windRefHeight)
 {
-	readDataFromString(data, m_airDens);
+	m_windRefHeight = windRefHeight;
 }
 
-void ENVIR::readWindRefVel(const std::string &data)
+void ENVIR::setWindExp(const double windExp)
 {
-	readDataFromString(data, m_windRefVel);
+	m_windExp = windExp;
 }
 
-void ENVIR::readWindRefHeight(const std::string &data)
+void ENVIR::addNode(const unsigned int nodeID, const double nodeCoordX, const double nodeCoordY, const double nodeCoordZ)
 {
-	readDataFromString(data, m_windRefHeight);
+	if (m_nodesID.size() != 0) // If this is not the first node that will be added to m_nodesID
+	{
+		if (nodeID <= m_nodesID.back()) // Then verify if its ID is larger than the previous one, thus garanteeing that m_nodesID is in ascending order (this is needed to use binary search to find nodes IDs)
+		{
+			throw std::runtime_error( "Nodes must be organized in ascending order. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+		}
+	}
+
+	m_nodesID.push_back( nodeID );	
+	m_nodesCoord.push_back(vec::fixed<3> {nodeCoordX, nodeCoordY, nodeCoordZ});
 }
 
-void ENVIR::readWindExp(const std::string &data)
-{
-	readDataFromString(data, m_windExp);
-}
 
-void ENVIR::readWatDepth(const std::string &data)
-{
-	readDataFromString(data, m_watDepth);
-}
-
-void ENVIR::addWave(const std::string &wholeWaveLine)
+void ENVIR::addRegularWave(const std::string &waveType, const double height, const double freqORperiod, const double direction, const double phase)
 {
 	// Check whether the water depth was defined
 	if (!is_finite(m_watDepth))
@@ -101,62 +101,14 @@ void ENVIR::addWave(const std::string &wholeWaveLine)
 		throw std::runtime_error("You should specify the gravity before the waves. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
 
-	// Test if the keyword is related to regular waves
-	if (caseInsCompare(getKeyword(wholeWaveLine), "TRWave")
-		|| caseInsCompare(getKeyword(wholeWaveLine), "FRWave")
-		|| caseInsCompare(getKeyword(wholeWaveLine), "WRWave"))
-	{
-		Wave tempWave(wholeWaveLine);
-		m_wave.push_back(Wave(tempWave.height(), tempWave.period(), tempWave.direction(), tempWave.phase(), m_watDepth, m_gravity));
-	}
-
-	// Check if it is a JONSWAP spectrum
-	else if (caseInsCompare(getKeyword(wholeWaveLine), "JONSW"))
-	{
-		jonswap(wholeWaveLine);
-	}
-
-	else
-	{
-		throw std::runtime_error("Unknown keyword '" + getKeyword(wholeWaveLine) + "' in input line " + std::to_string(IO::getInLineNumber()) + ".");
-	}
+	m_wave.push_back(Wave(waveType, height, freqORperiod, direction, phase, m_watDepth, m_gravity));
 }
 
-void ENVIR::jonswap(const std::string &wholeWaveLine)
+
+void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh)
 {
-	// JONSWAP characteristics are divided by a space or a tab.
-	// The characteristics are 
-	// 1) Wave significant height
-	// 2) Wave peark period
-	// 3) Gamma
-	// 4) Direction (in degrees)
-	// 5) Lowest frequency for the spectrum (rad/s)
-	// 6) Highest frequency for the spectrum (rad/s)
-	std::vector<std::string> input = stringTokenize(getData(wholeWaveLine), " \t");
-
-	// Check if there are exactly six outputs
-	if (input.size() != 6)
-	{
-		throw std::runtime_error("Unable to read JONSWAP spectrum in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}
-	
-	double Hs;
-	double Tp;
-	double gamma;
-	double dir;
-	double wlow;
-	double whigh;
-
-	// Finally, read data
-	readDataFromString(input.at(0), Hs);
-	readDataFromString(input.at(1), Tp);
-	readDataFromString(input.at(2), gamma);
-	readDataFromString(input.at(3), dir);
-	readDataFromString(input.at(4), wlow);
-	readDataFromString(input.at(5), whigh);
-
 	// Frequency resolution and maximum possible frequency are determined by the total time simulation and time step
-	// See Mérigaud, A. and Ringwood, John V. - Free-Surface Time-Series Generation for Wave Energy Applications - IEEE J. of Oceanic Eng. - 2018
+	// See Merigaud, A. and Ringwood, John V. - Free-Surface Time-Series Generation for Wave Energy Applications - IEEE J. of Oceanic Eng. - 2018
 	double dw = 2 * arma::datum::pi / m_timeTotal;
 	double wmax = arma::datum::pi / m_timeStep;
 
@@ -165,7 +117,7 @@ void ENVIR::jonswap(const std::string &wholeWaveLine)
 	double phase(0);
 
 	// JONSWAP parameters
-	double wp = 2* arma::datum::pi /Tp;
+	double wp = 2 * arma::datum::pi / Tp;
 	double sigma(0);
 	double A(0);
 	double Sw(0);
@@ -188,73 +140,21 @@ void ENVIR::jonswap(const std::string &wholeWaveLine)
 
 		height = 2 * std::sqrt(2 * Sw * dw);
 		phase = -360 + (360 + 360) * randu(1, 1).at(0, 0);
-		m_wave.push_back(Wave(height, 2*arma::datum::pi/w, dir, phase, m_watDepth, m_gravity));
+		m_wave.push_back(Wave("TRWave", height, 2 * arma::datum::pi / w, direction, phase, m_watDepth, m_gravity));
 	}
 }
 
-void ENVIR::addWaveLocation(const std::string &data)
-{
-	// The wave locations are specified by node IDs separated by tabs or white-spaces	
-	std::vector<std::string> input = stringTokenize(data, " \t");	
-	
-	// Check whether input is not empty
-	if (input.empty())
-	{
-		throw std::runtime_error("You should specify at least one node ID for defining a wave location. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
-	}
 
+void ENVIR::addWaveProbe(const unsigned int ID)
+{
 	// Check whether nodes were specified
 	if (this->isNodeEmpty())
-	{		
-		throw std::runtime_error("Nodes should be specified before adding wave locations. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
-	}
-
-	// For each of the node IDs:
-	for (int ii = 0; ii < input.size(); ++ii)
 	{
-		unsigned int nodeID(0); // Initialize a variable to read the node ID
-		readDataFromString(input.at(ii), nodeID); // Read the node ID specified as a string to the nodeID variable
-		m_waveLocation.push_back( this->getNode(nodeID) ); // Get the node coordinate and add it to m_waveLocation
-		m_waveLocation.back().at(2) = 0; // Set z=0
-		m_waveLocationID.push_back(nodeID);
-	}
-}
-
-void ENVIR::addNode(const std::string &data)
-{
-	// Nodes are specified by a vec with four components: ID, X coord, Y coord, and Z coord. 
-	// They are separated by commas in the input string.
-	std::vector<std::string> input = stringTokenize(data, ",");
-
-	if (input.size() != 4)
-	{
-		throw std::runtime_error("Unable to read the node in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-		return;
+		throw std::runtime_error("Nodes should be specified before adding wave locations. In: ENVIR::addWaveProbe");
 	}
 
-	// Read node ID
-	unsigned int nodeID{0};
-	readDataFromString( input.at(0), nodeID );
-
-	if (m_nodesID.size() != 0) // If this is not the first node that will be added to m_nodesID
-	{
-		if (nodeID <= m_nodesID.back()) // Then verify if its ID is larger than the previous one, thus garanteeing that m_nodesID is in ascending order (this is needed to use binary search to find nodes IDs)
-		{
-			throw std::runtime_error( "Nodes must be organized in ascending order. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
-		}
-	}
-
-	m_nodesID.push_back( nodeID );
-
-
-	// Read node coord
-	vec::fixed<3> nodeCoord(fill::zeros);
-	for (int ii = 0; ii < nodeCoord.n_elem; ++ii)
-	{
-		readDataFromString( input.at(ii+1), nodeCoord(ii) );
-	}
-
-	m_nodesCoord.push_back( nodeCoord );
+	m_waveProbe.push_back(this->getNode(ID)); // Get the node coordinate and add it to m_waveProbe
+	m_waveProbeID.push_back(ID);
 }
 
 
@@ -274,21 +174,6 @@ double ENVIR::timeTotal() const
 double ENVIR::time() const
 {
 	return m_time;
-}
-
-bool ENVIR::useTipLoss() const
-{
-	return m_useTipLoss;
-}
-
-bool ENVIR::useHubLoss() const
-{
-	return m_useHubLoss;
-}
-
-bool ENVIR::useSkewCorr() const
-{
-	return m_useSkewCorr;
 }
 
 double ENVIR::gravity() const
@@ -388,13 +273,13 @@ std::string ENVIR::printWave() const
 	return output;
 }
 
-std::string ENVIR::printWaveLocation() const
+std::string ENVIR::printWaveProbe() const
 {
 	std::string output = "";
-	for (int ii = 0; ii < m_waveLocation.size(); ++ii)
+	for (int ii = 0; ii < m_waveProbe.size(); ++ii)
 	{
-		output = output + "Location #" + std::to_string(ii) + ": (" + std::to_string(m_waveLocation.at(ii).at(0)) 
-						+ "," + std::to_string(m_waveLocation.at(ii).at(1)) + "," + std::to_string(m_waveLocation.at(ii).at(2)) + ")\n";
+		output = output + "Location #" + std::to_string(ii) + ": (" + std::to_string(m_waveProbe.at(ii).at(0)) 
+						+ "," + std::to_string(m_waveProbe.at(ii).at(1)) + "," + std::to_string(m_waveProbe.at(ii).at(2)) + ")\n";
 	}
 	return output;
 }
@@ -402,12 +287,12 @@ std::string ENVIR::printWaveLocation() const
 
 void ENVIR::printWaveCharact() const
 {
-	for (int ii = 0; ii < m_waveLocation.size(); ++ii)
+	for (int ii = 0; ii < m_waveProbe.size(); ++ii)
 	{
-		IO::print2outLine(IO::OUTFLAG_WAVE_ELEV, m_waveLocationID[ii], waveElev(m_waveLocation[ii][0], m_waveLocation[ii][1]));
-		IO::print2outLine(IO::OUTFLAG_WAVE_VEL, m_waveLocationID[ii], u1(m_waveLocation[ii]));
-		IO::print2outLine(IO::OUTFLAG_WAVE_ACC, m_waveLocationID[ii], du1dt(m_waveLocation[ii]));
-		IO::print2outLine(IO::OUTFLAG_WAVE_PRES, m_waveLocationID[ii], wavePressure(m_waveLocation[ii]));
+		IO::print2outLine(IO::OUTFLAG_WAVE_ELEV, m_waveProbeID[ii], waveElev(m_waveProbe[ii][0], m_waveProbe[ii][1]));
+		IO::print2outLine(IO::OUTFLAG_WAVE_VEL, m_waveProbeID[ii], u1(m_waveProbe[ii]));
+		IO::print2outLine(IO::OUTFLAG_WAVE_ACC, m_waveProbeID[ii], du1dt(m_waveProbe[ii]));
+		IO::print2outLine(IO::OUTFLAG_WAVE_PRES, m_waveProbeID[ii], wavePressure(m_waveProbe[ii]));
 	}
 }
 
@@ -439,9 +324,9 @@ bool ENVIR::isNodeEmpty() const
 	return m_nodesID.empty();
 }
 
-bool ENVIR::isWaveLocationEmpty() const
+bool ENVIR::isWaveProbeEmpty() const
 {
-	return m_waveLocation.empty();
+	return m_waveProbe.empty();
 }
 
 void ENVIR::stepTime()

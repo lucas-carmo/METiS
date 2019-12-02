@@ -1,5 +1,6 @@
 #include "Airfoil.h"
 #include "IO.h"
+#include <string>
 
 Airfoil::Airfoil()
 {}
@@ -8,13 +9,14 @@ Airfoil::Airfoil()
 /*****************************************************
 	Setters
 *****************************************************/
-void Airfoil::addAirfoilLine(double angle, double CL, double CD, double CM)
+void Airfoil::addAirfoilData(double angle, double CL, double CD, double CM)
 {
 	if (m_angle.size() != 0) // If this is not the first angle that will be added to m_angle
 	{
 		if (angle <= m_angle.back()) // Then verify if the angle is larger than the previous one, thus garanteeing that m_angle is in ascending order. This is needed to use the spline interpolation implemented in auxFunctions.h
 		{
-			throw std::runtime_error("Airfoil angles must be organized in ascending order.");
+			throw std::runtime_error("Airfoil angles must be organized in ascending order, but tried to input "
+                               + std::to_string(angle) + "deg after " + std::to_string(m_angle.back()) + "deg.");
 		}
 	}
 

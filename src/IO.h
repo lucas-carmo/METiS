@@ -27,22 +27,22 @@ public:
 		OUTFLAG_FOWT_DISP,
 		OUTFLAG_FOWT_VEL,
 		OUTFLAG_FOWT_ACC,
-//		
+//
 		OUTFLAG_WAVE_ELEV,
 		OUTFLAG_WAVE_VEL,
 		OUTFLAG_WAVE_ACC,
 		OUTFLAG_WAVE_PRES,
-//		
+//
 		OUTFLAG_HD_INERTIA_FORCE,
 		OUTFLAG_HD_DRAG_FORCE,
 		OUTFLAG_HD_FK_FORCE,
 		OUTFLAG_HD_FORCE,
-//		
-		OUTFLAG_HS_FORCE,	
+//
+		OUTFLAG_HS_FORCE,
 //
 		OUTFLAG_AD_HUB_FORCE,
 //
-		OUTFLAG_TOTAL_FORCE,		
+		OUTFLAG_TOTAL_FORCE,
 //
 		OUTFLAG_SIZE
 	};
@@ -56,7 +56,7 @@ private:
 	// Members related to log file
 	static std::string m_logFilePath;
 	static std::ofstream m_logFl;
-	
+
 	// Members related to summary file
 	static std::string m_sumFilePath;
 	static std::ofstream m_sumFl;
@@ -71,17 +71,17 @@ private:
 	static std::stringstream m_outLineHeader; // String stream with the header identifying each column of the formatted output file
 	static std::stringstream m_outLine; // String stream with the data that is output at each time step (FOWT displacement, hydro force components, anything that is a function of time)
 	static bool m_shouldWriteOutLineHeader;
-	static bool m_shouldWriteOutLine;	
+	static bool m_shouldWriteOutLine;
 
 
 public:
 	// Set input file and output files based on the input file path
 	static void setFiles(const std::string &inFlPath);
 
-	// Functions related to Input	
+	// Functions related to Input
 	static void readLineInputFile(std::string &strInput);
 	static unsigned int getInLineNumber();
-	static void readInputFile(FOWT &fowt, ENVIR &envir);	
+	static void readInputFile(FOWT &fowt, ENVIR &envir);
 	static void setResults2Output(std::string strInput, ENVIR &envir);
 	static void checkInputs(const FOWT &fowt, const ENVIR &envir);
 
@@ -93,12 +93,12 @@ public:
 
 	// To summary file
 	static void printSumFile(const FOWT &fowt, const ENVIR &envir);
-	
+
 	// To formatted output file
-	static void print2outLineHeader_turnOn(); 
-	static void print2outLineHeader_turnOff();		
-	static void print2outLine_turnOn(); 
-	static void print2outLine_turnOff();	
+	static void print2outLineHeader_turnOn();
+	static void print2outLineHeader_turnOff();
+	static void print2outLine_turnOn();
+	static void print2outLine_turnOff();
 
 	// Functions that write to the stringstreams m_outLineHeader and m_outLine
 	static void print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6);
@@ -122,30 +122,9 @@ public:
 
 
 /*****************************************************
-    Additional functions and templates related to input/output 
+    Additional functions and templates related to input/output
 *****************************************************/
 std::string getKeyword(const std::string &str);
 
 // Get the part of the string after the keyword, excluding the '\t' or white-space
 std::string getData(const std::string &str);
-
-// readDataFromString: used to read data from the string 'inString' into the variable 'tX'
-// Returns True if the conversion is succesful and False if it is not
-template <typename T>
-inline void readDataFromString(const std::string& inString, T &tX)
-{
-	std::vector<std::string> input = stringTokenize(inString, " \t");
-
-	// 1) Verify if input contains exactly 1 element
-    if ( input.size() != 1 )
-	{
-		throw std::runtime_error( "Unable to read data from string. More than one entry in line " + std::to_string(IO::getInLineNumber()) + ". [function readDataFromString(const std::string& inString, T &tX) in IO.h]");
-	}
-
-    // 2) Convert input from string to its corresponding numeric format (double, float, ...)
-	if ( !string2num(input.at(0), tX) )
-	{
-        // Throw an exception if the conversion fails
-		throw std::runtime_error( "Conversion from string failed. Bad data type in line " + std::to_string(IO::getInLineNumber()) + ". [function readDataFromString(const std::string& inString, T &tX) in IO.h]");
-	}		
-}

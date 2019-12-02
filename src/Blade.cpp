@@ -9,13 +9,6 @@ Blade::Blade()
 	m_precone = datum::nan;
 	m_pitch = datum::nan;
 	m_initialAzimuth = datum::nan;
-
-	for (int ii = 0; ii < m_phi.size(); ++ii)
-	{
-		m_phi.at(ii) = 0;
-		m_a.at(ii) = 0;
-		m_ap.at(ii) = 0;
-	}
 }
 
 /*****************************************************
@@ -32,10 +25,6 @@ void Blade::addBladeAeroNode(const double span, const double crvAC, const double
 	m_twist.push_back(twist);
 	m_chord.push_back(chord);
 	m_airfoilID.push_back(airfoilID);
-
-	m_a.push_back(0);
-	m_ap.push_back(0);
-	m_phi.push_back(0);
 
 	// Set node radial distance to the hub and its coordinates in the hub coordinate system
 	m_radius.push_back(0);
@@ -67,36 +56,6 @@ void Blade::setInitialAzimuth(const double initialAzimuth)
 	m_initialAzimuth = initialAzimuth;
 }
 
-
-void Blade::setAxialIndFactor(const unsigned int index, const double a)
-{
-	if (index < 0 || static_cast<unsigned int> (index) >= m_a.size())
-	{
-		throw std::runtime_error("Index out of range in Blade::setAxialIndFactor(const unsigned int index, const double a).");
-	}
-
-	m_a[index] = a;
-}
-
-void Blade::setTangIndFactor(const unsigned int index, const double ap)
-{
-	if (index < 0 || static_cast<unsigned int> (index) >= m_ap.size())
-	{
-		throw std::runtime_error("Index out of range in Blade::setTangIndFactor(const unsigned int index, const double ap).");
-	}
-
-	m_ap[index] = ap;
-}
-
-void Blade::setPhi(const unsigned int index, const double phi)
-{
-	if (index < 0 || static_cast<unsigned int> (index) >= m_phi.size())
-	{
-		throw std::runtime_error("Index out of range in Blade::setPhi(const unsigned int index, const double phi).");
-	}
-
-	m_phi[index] = phi;
-}
 
 /*****************************************************
 	Getters
@@ -186,35 +145,6 @@ double Blade::radius(const unsigned int index) const
 	return m_radius[index];
 }
 
-double Blade::axialIndFactor(const unsigned int index) const
-{
-	if (index < 0 || static_cast<unsigned int> (index) >= m_a.size())
-	{
-		throw std::runtime_error("Index out of range in Blade::axialIndFactor(const unsigned int index).");
-	}
-
-	return m_a[index];
-}
-
-double Blade::tangIndFactor(const unsigned int index) const
-{
-	if (index < 0 || static_cast<unsigned int> (index) >= m_ap.size())
-	{
-		throw std::runtime_error("Index out of range in Blade::tangIndFactor(const unsigned int index).");
-	}
-
-	return m_ap[index];
-}
-
-double Blade::phi(const unsigned int index) const
-{
-	if (index < 0 || static_cast<unsigned int> (index) >= m_phi.size())
-	{
-		throw std::runtime_error("Index out of range in Blade::phi(const unsigned int index).");
-	}
-
-	return m_phi[index];
-}
 
 double Blade::localSolidity(const unsigned int index) const
 {
