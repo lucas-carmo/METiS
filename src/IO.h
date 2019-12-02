@@ -128,24 +128,3 @@ std::string getKeyword(const std::string &str);
 
 // Get the part of the string after the keyword, excluding the '\t' or white-space
 std::string getData(const std::string &str);
-
-// readDataFromString: used to read data from the string 'inString' into the variable 'tX'
-// Returns True if the conversion is succesful and False if it is not
-template <typename T>
-inline void readDataFromString(const std::string& inString, T &tX)
-{
-	std::vector<std::string> input = stringTokenize(inString, " \t");
-
-	// 1) Verify if input contains exactly 1 element
-    if ( input.size() != 1 )
-	{
-		throw std::runtime_error( "Unable to read data from string. More than one entry in line " + std::to_string(IO::getInLineNumber()) + ". [function readDataFromString(const std::string& inString, T &tX) in IO.h]");
-	}
-
-    // 2) Convert input from string to its corresponding numeric format (double, float, ...)
-	if ( !string2num(input.at(0), tX) )
-	{
-        // Throw an exception if the conversion fails
-		throw std::runtime_error( "Conversion from string failed. Bad data type in line " + std::to_string(IO::getInLineNumber()) + ". [function readDataFromString(const std::string& inString, T &tX) in IO.h]");
-	}
-}

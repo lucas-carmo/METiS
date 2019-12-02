@@ -882,18 +882,14 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 			// The wave locations are specified by node IDs separated by tabs or white-spaces
 			std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
 
-			// Check whether input is not empty
 			if (input.empty())
 			{
 				throw std::runtime_error("You should specify at least one node ID for defining a wave location. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
 			}
 
-			// For each of the node IDs:
-			unsigned int nodeID(0); // Initialize a variable to read the node ID
 			for (int ii = 0; ii < input.size(); ++ii)
 			{
-				readDataFromString(input.at(ii), nodeID); // Read the node ID specified as a string to the nodeID variable
-				envir.addWaveProbe(nodeID);
+				envir.addWaveProbe(string2num<unsigned int>(input.at(ii)));
 			}
 		}
 	}
