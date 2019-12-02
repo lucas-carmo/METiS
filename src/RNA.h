@@ -14,7 +14,7 @@ private:
     std::vector< Airfoil > m_airfoils;
     double m_hubRadius;
     double m_hubHeight;
-	  double m_hubHeight2CoG; // z coordinate of the hub in the FOWT coordinate system. It is equal to the relative height in t=0.
+	double m_hubHeight2CoG; // z coordinate of the hub in the FOWT coordinate system. It is equal to the relative height in t=0.
     double m_overhang;
 
     bool m_useTipLoss;
@@ -31,20 +31,20 @@ public:
 	void setUseHubLoss(const bool useHubLoss);
 	void setUseSkewCorr(const bool useSkewCorr);
 
-  void setRotorSpeed(const double rotorSpeed);
-  void setRotorTilt(const double rotorTilt);
-  void setRotorYaw(const double rotorYaw);
+	void setRotorSpeed(const double rotorSpeed);
+	void setRotorTilt(const double rotorTilt);
+	void setRotorYaw(const double rotorYaw);
 
-  void setNumBlades(const unsigned int numBlades);
-  void setBladePrecone(const double precone);
-  void setBladePitch(const double pitch);
+	void setNumBlades(const unsigned int numBlades);
+	void setBladePrecone(const double precone);
+	void setBladePitch(const double pitch);
   
-  void setHubRadius(const double hubRadius);
-  void setHubHeight(const double hubHeight);
-  void setOverhang(const double overhang);
+	void setHubRadius(const double hubRadius);
+	void setHubHeight(const double hubHeight);
+	void setOverhang(const double overhang);
 	void setHubHeight2CoG(const double zCoG);
 
-  void addBladeAeroNode(const double span, const double crvAC, const double swpAC, const double crvAng, const double twist, const double chord, const int airfoilID);
+	void addBladeAeroNode(const double span, const double crvAC, const double swpAC, const double crvAng, const double twist, const double chord, const int airfoilID);
 	void addEmptyAirfoil();
 	void addAirfoilData(const double angle, const double CL, const double CD, const double CM);
 
