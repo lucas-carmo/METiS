@@ -67,61 +67,51 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		if (caseInsCompare(getKeyword(strInput), "TimeStep"))
 		{
 			envir.setTimeStep(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "TimeTotal"))
 		{
 			envir.setTimeTotal(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "TimeRamp"))
 		{
 			envir.setTimeRamp(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Grav"))
 		{
 			envir.setGravity(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WatDens"))
 		{
 			envir.setWatDens(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WatDepth"))
 		{
-			envir.setWatDepth(string2num<double>(getData(strInput)));
-			continue;
+			envir.setWatDepth(string2num<double>(getData(strInput)));			
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "AirDens"))
 		{
 			envir.setAirDens(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WindVel"))
 		{
 			envir.setWindRefVel(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WindHeight"))
 		{
 			envir.setWindRefHeight(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WindExp"))
 		{
 			envir.setWindExp(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		// Waves, nodes and other inputs, are special because they have
@@ -191,7 +181,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 				IO::readLineInputFile(strInput);
 			}
-			continue;
 		}
 
 		// Just like for the waves, a list of nodes is supposed to follow the "Nodes" keyword
@@ -226,7 +215,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				// Done with this line. Read next one.
 				IO::readLineInputFile(strInput);
 			}
-			continue;
 		}
 
 
@@ -236,19 +224,16 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		if (caseInsCompare(getKeyword(strInput), "Hydro"))
 		{
 			fowt.setHydroMode(string2num<int>(getData(strInput)));
-			continue;
 		}
 
 		if (caseInsCompare(getKeyword(strInput), "Aero"))
 		{
 			fowt.setAeroMode(string2num<int>(getData(strInput)));
-			continue;
 		}
 
 		if (caseInsCompare(getKeyword(strInput), "Moor"))
 		{
 			fowt.setMoorMode(string2num<int>(getData(strInput)));
-			continue;
 		}
 
 		if (caseInsCompare(getKeyword(strInput), "DOFS"))
@@ -268,7 +253,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			}
 
 			fowt.setDoFs(aux_activeDoFs);
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "ExtLinStiff"))
@@ -288,7 +272,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			}
 
 			fowt.setExtLinStiff(aux);
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "ExtConstForce"))
@@ -308,14 +291,12 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			}
 
 			fowt.setExtConstForce(aux);
-			continue;
 		}
 
 		// Read data to floater - which is a part of FOWT
 		else if (caseInsCompare(getKeyword(strInput), "FloaterMass"))
 		{
 			floater.setMass(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "FloaterInertia"))
@@ -334,7 +315,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			}
 
 			floater.setInertia(aux);
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "FloaterCoG"))
@@ -353,7 +333,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			}
 
 			floater.setCoG(aux);
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Morison_circ")) // A list of circular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
@@ -400,7 +379,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				// Go to next line
 				IO::readLineInputFile(strInput);
 			}
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Morison_rect")) // A list of rectangular cylinder Morison Elements is supposed to follow the "Morison_rect" keyword
@@ -450,81 +428,67 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 				IO::readLineInputFile(strInput);
 			}
-			continue;
 		}
-
 
 		// Read data to rna - which is a part of FOWT
 		else if (caseInsCompare(getKeyword(strInput), "UseTipLoss"))
 		{
 			rna.setUseTipLoss(string2num<bool>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "UseHubLoss"))
 		{
 			rna.setUseHubLoss(string2num<bool>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "UseSkewCorr"))
 		{
 			rna.setUseSkewCorr(string2num<bool>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "RotSpeed"))
 		{
 			rna.setRotorSpeed(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "RotTilt"))
 		{
 			rna.setRotorTilt(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "RotYaw"))
 		{
 			rna.setRotorYaw(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "BldPitch"))
 		{
 			rna.setBladePitch(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "BldPrecone"))
 		{
 			rna.setBladePrecone(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "NumBlades"))
 		{
 			rna.setNumBlades(string2num<unsigned int>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "HubRadius"))
 		{
 			rna.setHubRadius(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "HubHeight"))
 		{
 			rna.setHubHeight(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Overhang"))
 		{
 			rna.setOverhang(string2num<double>(getData(strInput)));
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Blades_aero"))
@@ -559,7 +523,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 				IO::readLineInputFile(strInput);
 			}
-			continue;
 		}
 
 
@@ -593,7 +556,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 				IO::readLineInputFile(strInput);
 			}
-			continue;
 		}
 
 
@@ -613,7 +575,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		 		IO::readLineInputFile(strInput);
 			}
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Tower_Aero"))
@@ -632,7 +593,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		 		IO::readLineInputFile(strInput);
 			}
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Tower_Elasto"))
@@ -651,7 +611,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		 		IO::readLineInputFile(strInput);
 			}
-			continue;
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Output")) // List of parameters that will be output
@@ -670,7 +629,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 				IO::readLineInputFile(strInput);
 			}
-			continue;
 		}
 
 		else if (!caseInsCompare(getKeyword(strInput), "END_OF_INPUT_FILE"))
