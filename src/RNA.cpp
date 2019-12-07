@@ -2,8 +2,6 @@
 #include "RNA.h"
 #include "auxFunctions.h"
 
-using namespace std;
-
 RNA::RNA()
 {
 	m_hubRadius = arma::datum::nan; // Initialize with NaN in order to know whether it was already calculated or not, since it is needed for calling Blade::setNodeCoord_hub()
@@ -255,10 +253,10 @@ double RNA::dAzimuth(const double time) const
 
 // FOWTpos is the position of the center of the FOWT coordinate system with respect to the earth fixed system, written in the earth fixed system.
 // In other words, it is {m_FOWT.CoG(),0,0,0} + FOWT.m_disp, i.e. the initial position of the FOWT CoG + its displacement
-vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, const vec::fixed<6> &FOWTvel)
+arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6> &FOWTpos, const arma::vec::fixed<6> &FOWTvel)
 {
 	// Total aerodynamic force/moments acting on the hub
-	vec::fixed<6> aeroForce{ 0,0,0,0,0,0 };
+	arma::vec::fixed<6> aeroForce{ 0,0,0,0,0,0 };
 
 	// Forces at each node
 	double nodeForce_n{ 0 };
@@ -268,7 +266,7 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	// Force acting on each blade (integration of the forces at each node)
 	double dr{ 0 }; // Integration step between nodes
 	double rm{0}; // Center of the integration step
-	vec::fixed<6> bladeForce;
+	arma::vec::fixed<6> bladeForce;
 
 	// Initialize the aerodynamic coefficients: normal direction, tangential directions and moment
 	double Cn{ 0 };
@@ -276,15 +274,15 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	double Cm{ 0 };
 
 	// Node position written in the different coordinate systems
-	vec::fixed<3> nodeCoord_hub{ 0,0,0 };
-	vec::fixed<3> nodeCoord_shaft{ 0,0,0 };
-	vec::fixed<3> nodeCoord_fowt{ 0,0,0 };
-	vec::fixed<3> nodeCoord_earth{ 0,0,0 };
+	arma::vec::fixed<3> nodeCoord_hub{ 0,0,0 };
+	arma::vec::fixed<3> nodeCoord_shaft{ 0,0,0 };
+	arma::vec::fixed<3> nodeCoord_fowt{ 0,0,0 };
+	arma::vec::fixed<3> nodeCoord_earth{ 0,0,0 };
 
 	// Initialize some variables that are needed for the wind calculation
-	vec::fixed<3> windVel{ 0,0,0 }; // Wind velocity. In the end of the for below, it is written in the blade node coordinate system
-	vec::fixed<3> nodeVel{ 0,0,0 }; // Blade node structural velocity, written in the blade node coordinate system
-	vec::fixed<3> cog2node{ 0,0,0}; // Vector given by the difference between the position of the blade node and the origin of the fowt coordinate system (around which the body rotation is provided). Written in the earth coordinate system.
+	arma::vec::fixed<3> windVel{ 0,0,0 }; // Wind velocity. In the end of the for below, it is written in the blade node coordinate system
+	arma::vec::fixed<3> nodeVel{ 0,0,0 }; // Blade node structural velocity, written in the blade node coordinate system
+	arma::vec::fixed<3> cog2node{ 0,0,0}; // Vector given by the difference between the position of the blade node and the origin of the fowt coordinate system (around which the body rotation is provided). Written in the earth coordinate system.
 	double windRel_nVel{ 0 }; // Relative wind speed in the x direction of the node coordinate system (normal to the plane of rotation)
 	double windRel_tVel{ 0 }; // Relative wind speed in the y direction of the node coordinate system (in the plane of rotation)
 	double windRelVel{ 0 }; // Total wind relative velocity. It is the one that includes the correction due to the axial and tangential induction factors
@@ -308,8 +306,8 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	// from the earth cordinate system to the one attached to the body,
 	// and then rotorRotation, which is different for each blade and depends on the
 	// rotor configuration (i.e. tilt, yaw, current azimuth and blade precone)
-	mat::fixed<3, 3> rigidBodyRotation = rotatMatrix(-FOWTpos.rows(0, 2));
-	mat::fixed<3, 3> rotorRotation{ 0,0,0 };
+	arma::mat::fixed<3, 3> rigidBodyRotation = rotatMatrix(-FOWTpos.rows(0, 2));
+	arma::mat::fixed<3, 3> rotorRotation{ 0,0,0 };
 
 	// Variables that provide the brackets for Brent method
 	double phi_min;
@@ -342,7 +340,7 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			cog2node = rotatMatrix(FOWTpos.rows(0, 2)) * nodeCoord_fowt;
 			nodeVel = FOWTvel.rows(0,2) + arma::cross(FOWTvel.rows(3,5), cog2node);  // nodeVel = linearVel + angVel ^ r ; this is written in the earth coordinate system
 			nodeVel = rotorRotation * (rigidBodyRotation * nodeVel); // Need to pass to the node coordinate system
-			nodeVel += rotatMatrix_deg(-totalAzimuth, 0, 0) * arma::cross(vec::fixed<3> {rotorSpeed()*2*datum::pi/60, 0, 0}, nodeCoord_shaft); // Need to add the velocity due to the rotor rotation, written in the node coordinate system
+			nodeVel += rotatMatrix_deg(-totalAzimuth, 0, 0) * arma::cross(arma::vec::fixed<3> {rotorSpeed()*2*datum::pi/60, 0, 0}, nodeCoord_shaft); // Need to add the velocity due to the rotor rotation, written in the node coordinate system
 
 			// Normal and tangential componentes of the relative wind velocity
 			windRel_nVel = windVel[0] - nodeVel[0];
@@ -392,14 +390,14 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 
 
 			// Wind relative velocity, including axial and tangential induction factors
-			windRelVel = sqrt(pow(windRel_tVel * (1.0 + ap), 2) + pow(windRel_nVel * (1 - a), 2));
+			windRelVel = std::sqrt(std::pow(windRel_tVel * (1.0 + ap), 2) + std::pow(windRel_nVel * (1 - a), 2));
 
 			/****
 			Calculate nodal forces
 			****/
-			nodeForce_m = 0.5 * Cm * pow(m_blades.at(iiBlades).chord(iiNodes), 2) * envir.airDensity() * pow(windRelVel, 2);
-			nodeForce_n = 0.5 * Cn * m_blades.at(iiBlades).chord(iiNodes) * envir.airDensity() * pow(windRelVel, 2);
-			nodeForce_t = 0.5 * Ct * m_blades.at(iiBlades).chord(iiNodes) * envir.airDensity() * pow(windRelVel, 2);
+			nodeForce_m = 0.5 * Cm * std::pow(m_blades.at(iiBlades).chord(iiNodes), 2) * envir.airDensity() * std::pow(windRelVel, 2);
+			nodeForce_n = 0.5 * Cn * m_blades.at(iiBlades).chord(iiNodes) * envir.airDensity() * std::pow(windRelVel, 2);
+			nodeForce_t = 0.5 * Ct * m_blades.at(iiBlades).chord(iiNodes) * envir.airDensity() * std::pow(windRelVel, 2);
 
 			/****
 			Calculate blade forces
@@ -427,7 +425,7 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 			bladeForce[0] += nodeForce_n * dr;
 			bladeForce[1] += -nodeForce_t * dr;
 			bladeForce[2] += 0;
-			bladeForce.rows(3, 5) += arma::cross(vec::fixed<3>{0, 0, rm}, vec::fixed<3>{nodeForce_n, -nodeForce_t, 0}) * dr; // Moment generated by the aerodynamic forces
+			bladeForce.rows(3, 5) += arma::cross(arma::vec::fixed<3>{0, 0, rm}, arma::vec::fixed<3>{nodeForce_n, -nodeForce_t, 0}) * dr; // Moment generated by the aerodynamic forces
 			bladeForce[5] += nodeForce_m * dr; // Need to add the moment due to Cm
 		}
 
@@ -445,14 +443,14 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 	aeroForce.rows(3, 5) = rotatMatrix_deg(deltaAzimuth, 0, 0) * aeroForce.rows(3, 5);
 
 	// 2) Write aeroForce in the fowt coordinate system
-	mat::fixed<3, 3> rotatShaft2FOWT = rotatMatrix_deg(0, 0, -rotorYaw()) * rotatMatrix_deg(0, rotorTilt(), 0);
+	arma::mat::fixed<3, 3> rotatShaft2FOWT = rotatMatrix_deg(0, 0, -rotorYaw()) * rotatMatrix_deg(0, rotorTilt(), 0);
 	aeroForce.rows(0, 2) = rotatShaft2FOWT * aeroForce.rows(0, 2);
 	aeroForce.rows(3, 5) = rotatShaft2FOWT * aeroForce.rows(3, 5);
 
 	// 3) Change the fulcrum to the CoG of the FOWT. Distance is hubHeight2CoG() along the tower and overhang() along the shaft
-	vec::fixed<3> leverHub2CoG{ 0,0,0 };
-	leverHub2CoG = vec::fixed<3>{ 0,0,hubHeight2CoG() } + rotatShaft2FOWT * vec::fixed<3> {overhang(), 0, 0};
-	aeroForce.rows(3, 5) += cross(leverHub2CoG, aeroForce.rows(0, 2));
+	arma::vec::fixed<3> leverHub2CoG{ 0,0,0 };
+	leverHub2CoG = arma::vec::fixed<3>{ 0,0,hubHeight2CoG() } + rotatShaft2FOWT * arma::vec::fixed<3> {overhang(), 0, 0};
+	aeroForce.rows(3, 5) += arma::cross(leverHub2CoG, aeroForce.rows(0, 2));
 
 	// 4) Write aeroForce in the global coordinate system
 	aeroForce.rows(0, 2) = rotatMatrix(FOWTpos.rows(3, 5)) * aeroForce.rows(0, 2);
@@ -463,13 +461,13 @@ vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const vec::fixed<6> &FOWTpos, c
 
 double RNA::Brent(const double phi_min, const double phi_max, const unsigned int bladeIndex, const unsigned int nodeIndex, const double localSolidity, const double localTipSpeed) const
 {
-    double FPP{pow(10,-11)};
-    double nearzero{pow(10,-20)};
+	double FPP{std::pow(10,-11)};
+	double nearzero{std::pow(10,-20)};
 	double error{0};
-    double tolerance{pow(10,-5)};
+	double tolerance{std::pow(10,-5)};
 
-    double AA = phi_min;
-    double BB = phi_max;
+	double AA = phi_min;
+	double BB = phi_max;
 	double FA = calcRes(AA, bladeIndex, nodeIndex, localSolidity, localTipSpeed);
 	double FB = calcRes(BB, bladeIndex, nodeIndex, localSolidity, localTipSpeed);
 
@@ -490,24 +488,24 @@ double RNA::Brent(const double phi_min, const double phi_max, const unsigned int
                 DD = BB - AA;
                 EE = DD;
             }
-            if (abs(FC) < abs(FB))
+            if (std::abs(FC) < std::abs(FB))
             {
                 AA = BB; BB = CC; CC = AA;
                 FA = FB; FB = FC; FC = FA;
             }
-            tol1 = 2.0*FPP*abs(BB) + 0.5*tolerance;
+            tol1 = 2.0*FPP*std::abs(BB) + 0.5*tolerance;
             xm = 0.5*(CC-BB);
-            if ((abs(xm) <= tol1) || (abs(FA) < nearzero))
+            if ((std::abs(xm) <= tol1) || (std::abs(FA) < nearzero))
             {
                 phi = BB;
                 not_done = false;
             }
             else
             {
-                if ((abs(EE) >= tol1) && (abs(FA) > abs(FB)))
+                if ((std::abs(EE) >= tol1) && (std::abs(FA) > std::abs(FB)))
                 {
                     SS = FB/FA;
-                    if (abs(AA-CC) < nearzero)
+                    if (std::abs(AA-CC) < nearzero)
                     {
                         PP = 2.0*xm*SS;
                         QQ = 1.0 - SS;
@@ -523,10 +521,10 @@ double RNA::Brent(const double phi_min, const double phi_max, const unsigned int
                     {
                         QQ = - QQ;
                     }
-                    PP = abs(PP);
+                    PP = std::abs(PP);
 
 
-                    if ((2.0*PP) < minimum(3.0*xm*QQ-abs(tol1*QQ),abs(EE*QQ)))
+                    if ((2.0*PP) < minimum(3.0*xm*QQ-std::abs(tol1*QQ),std::abs(EE*QQ)))
                     {EE = DD;   DD = PP/QQ;}
                     else
                     {
@@ -541,7 +539,7 @@ double RNA::Brent(const double phi_min, const double phi_max, const unsigned int
                 }
                 AA = BB;
                 FA = FB;
-                if (abs(DD) > tol1)
+                if (std::abs(DD) > tol1)
                 {
                     BB = BB + DD;
                 }
@@ -549,11 +547,11 @@ double RNA::Brent(const double phi_min, const double phi_max, const unsigned int
                 {
                     if (xm>0)
                     {
-                        BB = BB + abs(tol1);
+                        BB = BB + std::abs(tol1);
                     }
                     else
                     {
-                        BB = BB - abs(tol1);
+                        BB = BB - std::abs(tol1);
                     }
                 }
                 FB = calcRes(BB, bladeIndex, nodeIndex, localSolidity, localTipSpeed);
@@ -595,15 +593,15 @@ double RNA::calcRes(const double phi, const unsigned int bladeIndex, const unsig
     {
         a = calcAxialIndFactor(k, phi, F);
 
-        if (abs(a-1) < 1e-5)
-            return -cos(deg2rad(phi))*(1-kp)/localTipSpeed;
+        if (std::abs(a-1) < 1e-5)
+            return -std::cos(deg2rad(phi))*(1-kp)/localTipSpeed;
         else
         {
-            return sin(deg2rad(phi))/(1-a) - cos(deg2rad(phi))*(1-kp)/localTipSpeed;
+            return std::sin(deg2rad(phi))/(1-a) - std::cos(deg2rad(phi))*(1-kp)/localTipSpeed;
         }
     }
     else // Propeler brake-region
-        return sin(deg2rad(phi))*(1-k) - cos(deg2rad(phi))*(1-kp)/localTipSpeed;
+        return std::sin(deg2rad(phi))*(1-k) - std::cos(deg2rad(phi))*(1-kp)/localTipSpeed;
 }
 
 
@@ -615,7 +613,7 @@ double RNA::Cn(const double phi, const unsigned int bladeIndex, const unsigned i
 	double Cl = m_airfoils.at(m_blades.at(bladeIndex).airoilID(nodeIndex)-1).CL(alpha);
 	double Cd = m_airfoils.at(m_blades.at(bladeIndex).airoilID(nodeIndex)-1).CD(alpha);
 
-	return Cl * cos(deg2rad(phi)) + Cd * sin(deg2rad(phi));
+	return Cl * std::cos(deg2rad(phi)) + Cd * std::sin(deg2rad(phi));
 }
 
 
@@ -625,7 +623,7 @@ double RNA::Ct(const double phi, const unsigned int bladeIndex, const unsigned i
 	double Cl = m_airfoils.at(m_blades.at(bladeIndex).airoilID(nodeIndex)-1).CL(alpha);
 	double Cd = m_airfoils.at(m_blades.at(bladeIndex).airoilID(nodeIndex)-1).CD(alpha);
 
-	return Cl * sin(deg2rad(phi)) - Cd * cos(deg2rad(phi));
+	return Cl * std::sin(deg2rad(phi)) - Cd * std::cos(deg2rad(phi));
 }
 
 
@@ -652,12 +650,12 @@ double RNA::calcF(const double phi, const int nodeIndex) const
 
 	if (m_useTipLoss)
 	{
-		Ftip = (2.0 / datum::pi) * acos(exp(-(numBlades() / 2.0) * (R - r) / (r * sin(deg2rad(phi)))) );
+		Ftip = (2.0 / datum::pi) * std::acos(std::exp(-(numBlades() / 2.0) * (R - r) / (r * std::sin(deg2rad(phi)))) );
 	}
 
 	if (m_useHubLoss)
 	{
-		Fhub = (2.0 / datum::pi) * acos(exp(-(numBlades() / 2.0) * (r - m_hubRadius) / (m_hubRadius * abs(sin(deg2rad(phi))))) );
+		Fhub = (2.0 / datum::pi) * std::acos(std::exp(-(numBlades() / 2.0) * (r - m_hubRadius) / (m_hubRadius * std::abs(std::sin(deg2rad(phi))))) );
 	}
 
 	return Ftip * Fhub;
@@ -673,7 +671,7 @@ double RNA::calcK(const double phi, const double localSolidity, const double Cn,
 	}
 	else
 	{
-		return localSolidity * Cn / (4 * F * pow(sin(deg2rad(phi)), 2));
+		return localSolidity * Cn / (4 * F * std::pow(std::sin(deg2rad(phi)), 2));
 	}
 }
 
@@ -687,7 +685,7 @@ double RNA::calcKp(const double phi, const double localSolidity, const double Ct
 	}
 	else
 	{
-		return localSolidity * Ct / (4 * F * sin(deg2rad(phi)) * cos(deg2rad(phi)) );
+		return localSolidity * Ct / (4 * F * std::sin(deg2rad(phi)) * std::cos(deg2rad(phi)) );
 	}
 }
 
@@ -708,7 +706,7 @@ double RNA::calcAxialIndFactor(const double k, const double phi, const double F)
 		if (k < 2 / 3.) // This one corresponds to the momentum region
 		{
 			// Deal with the case where the denominator is zero.
-			if (abs(k+1) < 1e-6)
+			if (std::abs(k+1) < 1e-6)
 			{
 				// Since we are in the momentum region, if we say that the singularity yields a value of 'a' larger than 1, which corresponds to the
 				// propeller brake region, we do not introduce any artificial solutions to the BEMT equations.
@@ -725,13 +723,13 @@ double RNA::calcAxialIndFactor(const double k, const double phi, const double F)
 			g2 = 2.0 * F * k - F * (4 / 3. - F);
 			g3 = 2 * F * k - (25 / 9. - 2 * F);
 
-            if (abs(g3) < 1e-6)
+            if (std::abs(g3) < 1e-6)
 			{
-				return (1.0 - 1.0/(2.0*sqrt(g2)));
+				return (1.0 - 1.0/(2.0*std::sqrt(g2)));
 			}
 			else
 			{
-				return (g1 - sqrt(g2))/g3;
+				return (g1 - std::sqrt(g2))/g3;
 			}
 		}
 	}
