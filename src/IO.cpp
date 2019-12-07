@@ -91,7 +91,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		else if (caseInsCompare(getKeyword(strInput), "WatDepth"))
 		{
-			envir.setWatDepth(string2num<double>(getData(strInput)));			
+			envir.setWatDepth(string2num<double>(getData(strInput)));
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "AirDens"))
@@ -221,22 +221,22 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		/*
 			Read data to fowt
 		*/
-		if (caseInsCompare(getKeyword(strInput), "Hydro"))
+		else if (caseInsCompare(getKeyword(strInput), "Hydro"))
 		{
 			fowt.setHydroMode(string2num<int>(getData(strInput)));
 		}
 
-		if (caseInsCompare(getKeyword(strInput), "Aero"))
+		else if (caseInsCompare(getKeyword(strInput), "Aero"))
 		{
 			fowt.setAeroMode(string2num<int>(getData(strInput)));
 		}
 
-		if (caseInsCompare(getKeyword(strInput), "Moor"))
+		else if (caseInsCompare(getKeyword(strInput), "Moor"))
 		{
 			fowt.setMoorMode(string2num<int>(getData(strInput)));
 		}
 
-		if (caseInsCompare(getKeyword(strInput), "DOFS"))
+		else if (caseInsCompare(getKeyword(strInput), "DOFS"))
 		{
 			// The flags for each of the six degrees of freedom are separated by white spaces in the input string (whitespace or tab)
 			std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
