@@ -29,7 +29,7 @@ arma::mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, con
 	*/
 	arma::mat::fixed<3, 3> rotatMatrix = {
 									{                          std::cos(rotatY) * std::cos(rotatZ)                                  ,                          -std::cos(rotatY) * std::sin(rotatZ)                                  ,            std::sin(rotatY)           },
-									{ std::cos(rotatX) * sin(rotatZ) + std::sin(rotatX) * std::sin(rotatY) * std::cos(rotatZ)       ,  std::cos(rotatX) * std::cos(rotatZ) - std::sin(rotatX) * std::sin(rotatY) * std::sin(rotatZ)  ,  -std::sin(rotatX) * std::cos(rotatY) },
+									{ std::cos(rotatX) * std::sin(rotatZ) + std::sin(rotatX) * std::sin(rotatY) * std::cos(rotatZ)       ,  std::cos(rotatX) * std::cos(rotatZ) - std::sin(rotatX) * std::sin(rotatY) * std::sin(rotatZ)  ,  -std::sin(rotatX) * std::cos(rotatY) },
 									{ std::sin(rotatX) * std::sin(rotatZ) - std::cos(rotatX) * std::sin(rotatY) * std::cos(rotatZ)  ,  std::sin(rotatX) * std::cos(rotatZ) + std::cos(rotatX) * std::sin(rotatY) * std::sin(rotatZ)  ,   std::cos(rotatX) * std::cos(rotatY) }
 								  										 };
 
