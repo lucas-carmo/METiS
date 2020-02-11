@@ -17,7 +17,7 @@ DOFS 1 1 1 1 1 1
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
 %%-----------------------------------------------------------------------------%%
 TimeStep    0.25        % Time step, in seconds
-TimeTotal  	1800        % Total simulation time, in secods
+TimeTotal  	2000        % Total simulation time, in secods
 TimeRamp	180         % Numerical ramp, in seconds
 
 
@@ -49,7 +49,7 @@ ExtConstForce       0,0,-1.8901e+06,0,0,0 % Constant external force (due to line
 %%-------------------------- FLOATER DESCRIPTION ------------------------------%%
 %%-----------------------------------------------------------------------------%%
 FloaterMass		1.4072e7
-FloaterCoG		-0.006,0,-9.89
+FloaterCoG		0.006,0,-9.89
 FloaterInertia	1.132e10,1.130e10,1.228e10,0,0,0
 
 

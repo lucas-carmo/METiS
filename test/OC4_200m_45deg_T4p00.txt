@@ -1,0 +1,161 @@
+%>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
+%>-<> OC4 Platform
+%>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
+
+
+%%-----------------------------------------------------------------------------%%
+%%----------------------------- ACTIVE Forces -------------------------------%%
+%%-----------------------------------------------------------------------------%%
+Hydro    2
+Aero     0
+Moor     1
+DOFS 1 1 1 1 1 1
+
+%%-----------------------------------------------------------------------------%%
+%%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
+%%-----------------------------------------------------------------------------%%
+TimeStep	0.05 % Time step, in seconds
+TimeTotal	400 % Total simulation time, in secods
+TimeRamp	24 % Numerical ramp, in seconds
+
+
+%%-----------------------------------------------------------------------------%%
+%%------------------------------- ENVIRONMENT ---------------------------------%%
+%%-----------------------------------------------------------------------------%%
+Grav		9.81
+WatDens		1025
+WatDepth	200
+
+
+Wave
+% WRWAVE \t Height \t Angular frequency \t Direction (in degrees) \t Phase (in degrees)
+% FRWAVE \t Height \t Frequency         \t Direction (in degrees) \t Phase (in degrees)
+% TRWAVE \t Height \t Period            \t Direction (in degrees) \t Phase (in degrees)
+TRWAVE	4	4.00	45	0
+END
+
+
+%%-----------------------------------------------------------------------------%%
+%%----------------------------- EXTERNA FORCES --------------------------------%%
+%%-----------------------------------------------------------------------------%%
+ExtLinStiff        7.08e+04,7.08e+04,1.17e+08 % Linear mooring stiffness in surge, sway, yaw
+ExtConstForce       0,0,-1.8901e+06,0,0,0 % Constant external force (due to lines pre-tension)
+
+
+%%-----------------------------------------------------------------------------%%
+%%-------------------------- FLOATER DESCRIPTION ------------------------------%%
+%%-----------------------------------------------------------------------------%%
+FloaterMass		1.4072e7
+FloaterCoG		0.006,0,-9.89
+FloaterInertia	1.132e10,1.130e10,1.228e10,0,0,0
+
+
+% Nodes ID must be unique and in ascending order
+Nodes                     % Node ID, X coord, Y coord, Z coord
+1,0,0,-20                 % Nodes for main column
+2,0,0,10
+
+11,14.43,25,-14           % Nodes for first upper column
+12,14.43,25,12
+
+13,-28.86,0,-14           % Nodes for second upper column
+14,-28.86,0,12
+
+15,14.43,-25,-14          % Nodes for third upper column
+16,14.43,-25,12
+
+21,14.43,25,-20           % Nodes for first base column
+22,14.43,25,-14
+
+23,-28.86,0,-20           % Nodes for second base column
+24,-28.86,0,-14
+
+25,14.43,-25,-20          % Nodes for third base column
+26,14.43,-25,-14
+
+31,9.20,22,10             % Delta pontoon, upper 1
+32,-23.67,3,10
+
+33,-23.67,-3,10           % Delta pontoon, upper 2
+34,9.20,-22,10
+
+35,14.43,-19,10           % Delta pontoon, upper 3
+36,14.43,19,10
+
+41,4,19,-17               % Delta pontoon, lower 1
+42,-18.47,6,-17
+
+43,-18.47,-6,-17          % Delta pontoon, lower 2
+44,4,-19,-17
+
+45,14.43,-13,-17          % Delta pontoon, lower 3
+46,14.43,13,-17
+
+51,1.625,2.815,10         % Y pontoon, upper 1
+52,11.43,19.81,10
+
+53,-3.25,0,10             % Y pontoon, upper 2
+54,-22.87,0,10
+
+55,1.625,-2.815,10         % Y pontoon, upper 3
+56,11.43,-19.81,10
+
+61,1.625,2.815,-17        % Y pontoon, lower 1
+62,8.4,14.6,-17
+
+63,-3.25,0,-17            % Y pontoon, lower 2
+64,-16.87,0,-17
+
+65,1.625,-2.815,-17       % Y pontoon, lower 3
+66,8.4,-14.6,-17
+
+71,1.625,2.815,-16.2      % Cross brace 1
+72,11.43,19.81,9.13
+
+73,-3.25,0,-16.2          % Cross brace 2
+74,-22.87,0,9.13
+
+75,1.625,-2.815,-16.2     % Cross brace 3
+76,11.43,-19.81,9.13
+
+% Nodes to test rectangular elements
+111,-35.700,0.000,-12.250
+112,-25.668,0.000,-12.250
+113,-35.700,1.000,-12.250
+END
+
+
+Morison_circ
+% First node ID \t Second node ID \t Diameter \t Drag coefficient \t Inertia coefficient \t Number of integration points ...
+% ... \t Bottom diameter \t Top diameter \t Axial drag coefficient \t Axial added mass coefficient \t 1 or 0 for calculating dynamic pressure or not
+% The second part of the data above (the ones in the second line) is only required for heave plates. Input 0 for everything if only forces perpendicular to the % axis of the cylinder will be considered
+1	2	6.5	0.56	1.63	50	6.5	6.5	0	0	1	
+11	12	12	0.61	1.63	50	0	0	0	0	0
+13	14	12	0.61	1.63	50	0	0	0	0	0
+15	16	12	0.61	1.63	50	0	0	0	0	0
+21	22	24	0.68	1.63	20	24	12	4.8	0.67	1
+23	24	24	0.68	1.63	20	24	12	4.8	0.67	1
+25	26	24	0.68	1.63	20	24	12	4.8	0.67	1
+%31	32	1.6	0.68	1.63	15	0	0	0	0	0
+%33	34	1.6	0.63	1.63	15	0	0	0	0	0
+%35	36	1.6	0.63	1.63	15	0	0	0	0	0
+41	42	1.6	0.63	1.63	15	0	0	0	0	0
+43	44	1.6	0.63	1.63	15	0	0	0	0	0
+45	46	1.6	0.63	1.63	15	0	0	0	0	0
+%51	52	1.6	0.63	1.63	15	0	0	0	0	0
+%53	54	1.6	0.63	1.63	15	0	0	0	0	0
+%55	56	1.6	0.63	1.63	15	0	0	0	0	0
+61	62	1.6	0.63	1.63	15	0	0	0	0	0
+63	64	1.6	0.63	1.63	15	0	0	0	0	0
+65	66	1.6	0.63	1.63	15	0	0	0	0	0
+71	72	1.6	0.63	1.63	15	0	0	0	0	0
+73	74	1.6	0.63	1.63	15	0	0	0	0	0
+75	76	1.6	0.63	1.63	15	0	0	0	0	0
+END
+
+OUTPUT
+fowt_disp
+hd_force
+total_force
+wave_elev 1
+END
