@@ -2,12 +2,10 @@
 #include <cctype> // This header declares a set of functions to classify and transform individual characters, like toupper
 #include <cwctype> // Same thing for wide characters
 
-using namespace std;
-
 /*****************************************************
     Useful math/geometric operations
 *****************************************************/
-mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, const double rotatZ)
+arma::mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, const double rotatZ)
 {
 	/* Rotation matrix is RotatMat = RotatX * RotatY * RotatZ, i.e. a rotation around the Z axis,
 	  followed by a rotation around the new y axis, and a rotation around the new x axis. Each rotation matrix is given by:
@@ -29,27 +27,27 @@ mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, const dou
 
 	  And the resulting matrix is the one below
 	*/
-	mat::fixed<3, 3> rotatMatrix = {
-									{                          cos(rotatY) * cos(rotatZ)                               ,                          -cos(rotatY) * sin(rotatZ)                               ,            sin(rotatY)          },
-									{ cos(rotatX) * sin(rotatZ) + sin(rotatX) * sin(rotatY) * cos(rotatZ)  ,  cos(rotatX) * cos(rotatZ) - sin(rotatX) * sin(rotatY) * sin(rotatZ)  ,  -sin(rotatX) * cos(rotatY) },
-									{ sin(rotatX) * sin(rotatZ) - cos(rotatX) * sin(rotatY) * cos(rotatZ)  ,  sin(rotatX) * cos(rotatZ) + cos(rotatX) * sin(rotatY) * sin(rotatZ)  ,   cos(rotatX) * cos(rotatY) }
-								   };
+	arma::mat::fixed<3, 3> rotatMatrix = {
+									{                          std::cos(rotatY) * std::cos(rotatZ)                                  ,                          -std::cos(rotatY) * std::sin(rotatZ)                                  ,            std::sin(rotatY)           },
+									{ std::cos(rotatX) * sin(rotatZ) + std::sin(rotatX) * std::sin(rotatY) * std::cos(rotatZ)       ,  std::cos(rotatX) * std::cos(rotatZ) - std::sin(rotatX) * std::sin(rotatY) * std::sin(rotatZ)  ,  -std::sin(rotatX) * std::cos(rotatY) },
+									{ std::sin(rotatX) * std::sin(rotatZ) - std::cos(rotatX) * std::sin(rotatY) * std::cos(rotatZ)  ,  std::sin(rotatX) * std::cos(rotatZ) + std::cos(rotatX) * std::sin(rotatY) * std::sin(rotatZ)  ,   std::cos(rotatX) * std::cos(rotatY) }
+								  										 };
 
 	return rotatMatrix;
 }
 
-mat::fixed<3, 3> rotatMatrix_deg(const double rotatX, const double rotatY, const double rotatZ)
+arma::mat::fixed<3, 3> rotatMatrix_deg(const double rotatX, const double rotatY, const double rotatZ)
 {
 	return rotatMatrix(deg2rad(rotatX), deg2rad(rotatY), deg2rad(rotatZ));
 }
 
 
-mat::fixed<3, 3> rotatMatrix(const vec::fixed<3> &rotation)
+arma::mat::fixed<3, 3> rotatMatrix(const arma::vec::fixed<3> &rotation)
 {
 	return rotatMatrix(rotation(0),rotation(1), rotation(2));
 }
 
-mat::fixed<3, 3> rotatMatrix_deg(const vec::fixed<3> &rotation)
+arma::mat::fixed<3, 3> rotatMatrix_deg(const arma::vec::fixed<3> &rotation)
 {
 	return rotatMatrix_deg(rotation(0), rotation(1), rotation(2));
 }

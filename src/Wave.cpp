@@ -28,7 +28,7 @@ Wave::Wave(const std::string &waveType, const double height, const double freqOR
 	// Neither the wave frequency nor the period can be zero
 	if (freqORperiod == 0)
 	{
-		throw std::runtime_error("Wave period or frequency must be different from zero. Input line " + std::to_string(IO::getInLineNumber()));
+		throw std::runtime_error("Wave period or frequency must be different from zero.");
 	}
 
 	double period;
@@ -42,7 +42,7 @@ Wave::Wave(const std::string &waveType, const double height, const double freqOR
 	}
 	else if (caseInsCompare(waveType, "WRWave"))
 	{
-		period = 2 * datum::pi / freqORperiod;	
+		period = 2 * datum::pi / freqORperiod;
 	}
 	else
 	{
@@ -118,10 +118,10 @@ double Wave::waveNumber() const
 	if (is_finite(m_waveNumber))
 	{
 		return m_waveNumber;
-	}	
+	}
 	else
 	{
-		throw std::runtime_error("Tried to call Wave::waveNumber(), but wave number was not calculated yet. Try calling Wave::waveNumber(const double watDepth, const double gravity).");	
+		throw std::runtime_error("Tried to call Wave::waveNumber(), but wave number was not calculated yet. Try calling Wave::waveNumber(const double watDepth, const double gravity).");
 	}
 }
 
@@ -131,10 +131,10 @@ double Wave::length() const
 	if (is_finite(m_length))
 	{
 		return m_length;
-	}	
+	}
 	else
 	{
-		throw std::runtime_error("Tried to call Wave::length(), but length was not calculated yet. Try calling Wave::length(const double watDepth, const double gravity).");	
+		throw std::runtime_error("Tried to call Wave::length(), but length was not calculated yet. Try calling Wave::length(const double watDepth, const double gravity).");
 	}
 }
 
@@ -171,7 +171,7 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 	while ( (pow(w,2)/g - a*tanh(a*h)) * (pow(w,2)/g - b*tanh(b*h)) > 0 )
 	{
 		a = b;
-		b = alpha*b;		
+		b = alpha*b;
 	}
 
 	// x_i is the guess in the previous step and x_j in the current
@@ -179,7 +179,7 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 	double x_j(0);
 
 	while ( std::abs(pow(w, 2) / g - x_j * tanh(x_j*h)) > m_epsWave)
-	{								
+	{
 		x_i = x_j;
 
 		if ( (pow(w,2)/g - a*tanh(a*h)) * (pow(w,2)/g - x_i*tanh(x_i*h)) < 0 ) // Test with limit a
@@ -197,8 +197,8 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 		else // It is very unlikely that x_i will be zero, but this possibility will be covered anyway
 		{
 			return x_i;
-		}	
-	}		
+		}
+	}
 
 	if (x_j == 0)
 	{
@@ -211,6 +211,6 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 
 double Wave::length(const double watDepth, const double gravity) const
 {
-	// The function Wave::waveNumber never outputs 0	
+	// The function Wave::waveNumber never outputs 0
 	return 2*arma::datum::pi / this->waveNumber(watDepth, gravity);
 }

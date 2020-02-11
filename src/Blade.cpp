@@ -14,8 +14,8 @@ Blade::Blade()
 /*****************************************************
 	Setters
 *****************************************************/
-void Blade::addBladeAeroNode(const double span, const double crvAC, const double swpAC, 
-							 const double crvAng, const double twist, const double chord, 
+void Blade::addBladeAeroNode(const double span, const double crvAC, const double swpAC,
+							 const double crvAng, const double twist, const double chord,
 							 const int airfoilID, const double hubRadius)
 {
 	m_span.push_back(span);
@@ -31,7 +31,7 @@ void Blade::addBladeAeroNode(const double span, const double crvAC, const double
 	setNodeRadius(size() - 1, hubRadius); // update node radial distance
 
 	m_nodeCoord_hub.push_back(vec::fixed<3> {0, 0, 0});
-	setNodeCoord_hub(size() - 1); // update node position of the current blade node	
+	setNodeCoord_hub(size() - 1); // update node position of the current blade node
 
 	// Need the blades precone angle for calculating local solidity
 	if (!is_finite(m_precone))
@@ -173,7 +173,7 @@ double Blade::initialAzimuth() const
 
 /*****************************************************
 	Calculate node position in different coordinate systems
-*****************************************************/	
+*****************************************************/
 void Blade::setNodeRadius(const int index, const double hubRadius)
 {
 	if (index < 0 || static_cast<unsigned int> (index) >= m_radius.size())
@@ -219,7 +219,7 @@ vec::fixed<3> Blade::nodeCoord_hub(const int index) const
 // Coordinates of a blade node written in the shaft coordinate system.
 // dAzimuth must be given in degrees
 vec::fixed<3> Blade::nodeCoord_shaft(const int index, const double dAzimuth) const
-{	
+{
 	// Do not need to check if index is out of range, since nodeCoord_hub already does that
 	return nodeCoord_shaft(nodeCoord_hub(index), dAzimuth);
 }
@@ -234,7 +234,7 @@ vec::fixed<3> Blade::nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const d
 // Coordinates of a blade node written in the fowt coordinate system.
 // tilt and yaw must be given in degrees
 vec::fixed<3> Blade::nodeCoord_fowt(const vec::fixed<3> &nodeCoord_shaft, const double tilt, const double yaw, const double overhang, const double hubHeight2CoG) const
-{	
+{
 	mat::fixed<3,3> rotat = rotatMatrix_deg(0,0,-yaw) * rotatMatrix_deg(0, tilt, 0);
 	return (vec::fixed<3> {0,0,hubHeight2CoG} + rotat * (nodeCoord_shaft + vec::fixed<3> {overhang,0,0}) );
 }

@@ -78,7 +78,7 @@ void ENVIR::addNode(const unsigned int nodeID, const double nodeCoordX, const do
 	{
 		if (nodeID <= m_nodesID.back()) // Then verify if its ID is larger than the previous one, thus garanteeing that m_nodesID is in ascending order (this is needed to use binary search to find nodes IDs)
 		{
-			throw std::runtime_error( "Nodes must be organized in ascending order. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+			throw std::runtime_error( "Nodes must be provided in ascending order, but node " + std::to_string(nodeID) + " was specified after node " + std::to_string(m_nodesID.back())+ ". In ENVIR::addNode");
 		}
 	}
 
@@ -92,13 +92,13 @@ void ENVIR::addRegularWave(const std::string &waveType, const double height, con
 	// Check whether the water depth was defined
 	if (!is_finite(m_watDepth))
 	{
-		throw std::runtime_error("You should specify the water depth before the waves. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+		throw std::runtime_error("The water depth must be specified before the waves. In ENVIR::addRegularWave.");
 	}
 
 	// Check whether the acceleration of gravity was defined
 	if (!is_finite(m_gravity))
 	{
-		throw std::runtime_error("You should specify the gravity before the waves. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+		throw std::runtime_error("The acceleration of gravity must be specified before the waves. In ENVIR::addRegularWave.");
 	}
 
 	m_wave.push_back(Wave(waveType, height, freqORperiod, direction, phase, m_watDepth, m_gravity));
@@ -140,7 +140,7 @@ void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, con
 
 		height = 2 * std::sqrt(2 * Sw * dw);
 		phase = -360 + (360 + 360) * randu(1, 1).at(0, 0);
-		m_wave.push_back(Wave("TRWave", height, 2 * arma::datum::pi / w, direction, phase, m_watDepth, m_gravity));
+		addRegularWave("TRWave", height, 2 * arma::datum::pi / w, direction, phase);
 	}
 }
 
@@ -260,6 +260,7 @@ std::string ENVIR::printWatDepth() const
 std::string ENVIR::printWave() const
 {
 	std::string output = "";
+	output = output + "Number of waves: " + std::to_string(m_wave.size()) + "\n";
 	for (int ii = 0; ii < m_wave.size(); ++ii)
 	{
 		output = output + "Wave #" + std::to_string(ii) + "\n";
