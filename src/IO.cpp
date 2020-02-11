@@ -372,7 +372,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				double aux_topDiam = string2num<double>(input.at(7));
 				double aux_axialCD = string2num<double>(input.at(8));
 				double aux_axialCa = string2num<double>(input.at(9));
-				bool aux_botPressFlag = string2num<bool>(input.at(9));
+				bool aux_botPressFlag = string2num<bool>(input.at(10));
 
 				floater.addMorisonCirc(aux_node1_coord, aux_node2_coord, aux_diam, aux_CD, aux_CM, aux_numIntPoints, aux_botDiam, aux_topDiam, aux_axialCD, aux_axialCa, aux_botPressFlag);
 
