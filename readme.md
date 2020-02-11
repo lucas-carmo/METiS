@@ -1,6 +1,6 @@
 # **Installing, compiling and running**
 
-## **Linux** 
+## **Linux**
 ### **Installing dependencies/third party tools:**
 - Ensure a C++ compiler is installed. Otherwise, a suggestion is to install g++: `sudo apt-get install g++`
 
@@ -8,7 +8,7 @@
 
 - OpenBLAS: `sudo apt-get install libopenblas-dev`    *(see the readme file provided with Armadillo for the other options, like MKL)*
 
-- Armadillo (details in the readme file provided with Armadillo): 
+- Armadillo (details in the readme file provided with Armadillo):
     1. Download at http://arma.sourceforge.net;
     2. Extract files;
     3. In a terminal window, change into the directory that was created by unpacking Armadillo, and type `cmake .` (the full stop separated from "cmake" by a space is important);
@@ -16,7 +16,7 @@
     5. Type `sudo make install`
 
 - I have run into a problem when Anaconda is installed. Armadillo could not found **libhdf5.so.101**, so I had to do one of the following:
-    1. Add this line to **~/.bashrc**: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/lib` (in my case, that was `/home/user/anaconda3/lib`). Then, I needed to reload the .bashrc by running `source ~\.bashrc`. After that, METiS compiled and linked just fine. However, this solution may affect other application, so I don't recommend it.
+    1. Add this line to **~/.bashrc**: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/lib` (in my case, that was `/home/user/anaconda3/lib`). Then, I needed to reload the .bashrc by running `source ~\.bashrc`. After that, METiS compiled and linked just fine. However, this solution may affect other applications, so I don't recommend it.
 
     OR
 
@@ -25,12 +25,12 @@
     LD_LIBRARY_PATH=/path/to/lib
     export LD_LIBRARY_PATH
 ```    
-        
 
-    
+
+
 
 ### **Compiling and running**
-After installing all the previous dependencies/third party tools listed above, METiS can be compiled, linked and run using the following commands (see the previous section in case you run in problems concerning **libhdf5.so.101**): 
+After installing all the previous dependencies/third party tools listed above, METiS can be compiled, linked and run using the following commands (see the previous section in case you run in problems concerning **libhdf5.so.101**):
 ```
     g++ -c src/*.cpp                        # Compile the source files
     g++ -o METiS -O2 *.o -larmadillo        # Link the resulting object files and Armadillo
