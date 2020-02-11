@@ -16,7 +16,7 @@ private:
     Data to specify the environment
     */
 	std::vector< unsigned int > m_nodesID; // Nodes provide a spatial description of the environment
-	std::vector< vec::fixed<3> > m_nodesCoord;   
+	std::vector< vec::fixed<3> > m_nodesCoord;
 
     double m_gravity;
     double m_watDens;
@@ -50,7 +50,7 @@ public:
 	void setGravity(const double gravity);
 	void setWatDens(const double watDens);
 	void setWatDepth(const double watDepth);
-	void setAirDens(const double airDens);	
+	void setAirDens(const double airDens);
 	void setWindRefVel(const double windRefVel);
 	void setWindRefHeight(const double windRefHeight);
 	void setWindExp(const double windExp);
@@ -63,19 +63,19 @@ public:
 
 	/*****************************************************
 		Getters
-	*****************************************************/    
-    double timeStep() const;
-    double timeTotal() const;
-    double time() const;
+	*****************************************************/
+	double timeStep() const;
+	double timeTotal() const;
+	double time() const;
 
-    double gravity() const;
+	double gravity() const;
 	double watDensity() const;
-    double watDepth() const;
+	double watDepth() const;
 	double airDensity() const;
 	double windRefVel() const;
 	double windRefHeight() const;
 	double windExp() const;
-    
+
 
 	/*****************************************************
 		Printing
@@ -83,7 +83,7 @@ public:
 	std::string printTimeStep() const;
 	std::string printTimeTotal() const;
 	std::string printTimeRamp() const;
-    std::string printNodes() const;    
+	std::string printNodes() const;
 	std::string printGrav() const;
 	std::string printWatDens() const;
 	std::string printWatDepth() const;
@@ -93,21 +93,24 @@ public:
 	void printWaveCharact() const; // Print the wave characteristics (elevation, velocity, etc) specified for output in the locations given by m_waveLocation
 
 	/*****************************************************
-		Other functions
+		Main functions for calculation
 	*****************************************************/
-    bool isNodeEmpty() const;
-    bool isWaveProbeEmpty() const;
-    arma::vec::fixed<3> getNode(unsigned int ID) const;
+	bool isNodeEmpty() const;
+  bool isWaveProbeEmpty() const;
+  arma::vec::fixed<3> getNode(unsigned int ID) const;
 
-    void stepTime();
-    void stepTime(double const step);
+	void stepTime();
+	void stepTime(double const step);
 
-    double ramp() const;
+  double ramp() const;
+	double waveElev(const double x, const double y, const unsigned int waveIndex) const;
 	double waveElev(const double x, const double y) const;
+	vec::fixed<3> u1(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 	vec::fixed<3> u1(const vec::fixed<3> &coord) const;
+	vec::fixed<3> du1dt(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 	vec::fixed<3> du1dt(const vec::fixed<3> &coord) const;
+	double wavePressure(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 	double wavePressure(const vec::fixed<3> &coord) const;
 
 	double windVel_X(const vec::fixed<3> &coord) const;
 };
-
