@@ -362,7 +362,7 @@ double ENVIR::waveElev(const double x, const double y, const unsigned int waveIn
 	double A = m_wave.at(waveIndex).amp();
 	double k = m_wave.at(waveIndex).waveNumber();
 	double beta = m_wave.at(waveIndex).direction() * arma::datum::pi / 180.;
-	double phase = m_wave.at(waveIndex).phase();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
 
 	return A * cos(k*cos(beta)*x + k * sin(beta)*y - w * m_time + phase);
 }
@@ -380,6 +380,61 @@ double ENVIR::waveElev(const double x, const double y) const
 }
 
 
+double ENVIR::wavePressure(const vec::fixed<3> &coord, const unsigned int waveIndex) const
+{
+	double p(0);
+
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+	double rho = m_watDens;
+	double g = m_gravity;
+	double w = m_wave.at(waveIndex).angFreq();
+	double A = m_wave.at(waveIndex).amp();
+	double k = m_wave.at(waveIndex).waveNumber();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
+
+	// This formulation is valid only below the mean water level, i.e. z <= 0
+	if (z <= 0)
+	{
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		double khz(0);
+		if (k*h >= 10)
+		{
+			khz = exp(k*z);
+		}
+		else
+		{
+			khz = cosh(k * (z + h)) / cosh(k*h);
+		}
+
+		return ramp() * rho * g * A * khz * cos(k*cosBeta*x + k*sinBeta*y - w * t + phase);
+	}
+
+	else
+	{
+		return 0;
+	}
+}
+
+double ENVIR::wavePressure(const vec::fixed<3> &coord) const
+{
+	double p(0);
+
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		p += ENVIR::wavePressure(coord, ii);
+	}
+
+	return p;
+}
+
+
 vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord, const unsigned int waveIndex) const
 {
 	arma::vec::fixed<3> vel = {0,0,0};
@@ -393,29 +448,30 @@ vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord, const unsigned int waveIndex
 	double w = m_wave.at(waveIndex).angFreq();
 	double A = m_wave.at(waveIndex).amp();
 	double k = m_wave.at(waveIndex).waveNumber();
-	double beta = m_wave.at(waveIndex).direction() * arma::datum::pi / 180.;
-	double phase = m_wave.at(waveIndex).phase();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
 	double khz_xy(0), khz_z(0);
 
 	// This formulation is valid only below the mean water level, i.e. z <= 0
 	if (z <= 0)
 	{
-			// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
-			// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
-			if (k*h >= 10)
-			{
-				khz_xy = exp(k*z);
-				khz_z = khz_xy;
-			}
-			else
-			{
-				khz_xy = cosh(k * (z + h)) / sinh(k*h);
-				khz_z = sinh(k * (z + h)) / sinh(k*h);
-			}
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
+		}
 
-			vel[0] = w * A * khz_xy * cos(beta) * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
-			vel[1] = w * A * khz_xy * sin(beta) * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
-			vel[2] = w * A * khz_z * sin(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
+		vel[0] = w * A * cosBeta * khz_xy * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		vel[1] = w * A * sinBeta * khz_xy * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		vel[2] = w * A * khz_z * sin(k*cosBeta*x + k*sinBeta*y - w * t + phase);
 	}
 
 	return vel * ramp();
@@ -446,30 +502,30 @@ vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord, const unsigned int waveIn
 	double w = m_wave.at(waveIndex).angFreq();
 	double A = m_wave.at(waveIndex).amp();
 	double k = m_wave.at(waveIndex).waveNumber();
-	double beta = m_wave.at(waveIndex).direction() * arma::datum::pi / 180.;
-	double phase = m_wave.at(waveIndex).phase();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
 	double khz_xy(0), khz_z(0);
 
 	// This formulation is valid only below the mean water level, i.e. z <= 0
 	if (z <= 0)
 	{
-			// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
-			// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
-			if (k*h >= 10)
-			{
-				khz_xy = exp(k*z);
-				khz_z = khz_xy;
-			}
-			else
-			{
-				khz_xy = cosh(k * (z + h)) / sinh(k*h);
-				khz_z = sinh(k * (z + h)) / sinh(k*h);
-			}
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
+		}
 
-			acc[0] = pow(w, 2) * A * khz_xy * cos(beta) * sin(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
-			acc[1] = pow(w, 2) * A * khz_xy * sin(beta) * sin(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
-			acc[2] = -pow(w, 2) * A * khz_z * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
-
+		acc[0] = w*w * A * khz_xy * cosBeta * sin(k*cosBeta*x + k*sinBeta*y - w * t + phase);
+		acc[1] = w*w * A * khz_xy * sinBeta * sin(k*cosBeta*x + k*sinBeta*y - w * t + phase);
+		acc[2] = -w*w * A * khz_z * cos(k*cosBeta*x + k*sinBeta*y - w * t + phase);
 	}
 
 	return acc * ramp();
@@ -487,60 +543,54 @@ vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord) const
 }
 
 
-double ENVIR::wavePressure(const vec::fixed<3> &coord, const unsigned int waveIndex) const
+vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const
 {
-	double p(0);
+	arma::vec::fixed<3> acc = { 0,0,0 };
 
-	double x = coord[0];
-	double y = coord[1];
+	// More friendly notation
 	double z = coord[2];
 	double h = m_watDepth;
 	double t = m_time;
-	double rho = m_watDens;
 	double g = m_gravity;
-	double w = m_wave.at(waveIndex).angFreq();
-	double A = m_wave.at(waveIndex).amp();
-	double k = m_wave.at(waveIndex).waveNumber();
-	double beta = m_wave.at(waveIndex).direction() * arma::datum::pi / 180.;
-	double phase = m_wave.at(waveIndex).phase();
+
+	double w1 = m_wave.at(waveIndex1).angFreq();
+	double A1 = m_wave.at(waveIndex1).amp();
+	double k1 = m_wave.at(waveIndex1).waveNumber();
+	double b1 = m_wave.at(waveIndex1).direction() * arma::datum::pi / 180.;
+	double p1 = m_wave.at(waveIndex1).phase() * arma::datum::pi / 180.;
+
+	double A2 = m_wave.at(waveIndex2).amp();
+	double w2 = m_wave.at(waveIndex2).angFreq();
+	double k2 = m_wave.at(waveIndex2).waveNumber();	
+	double b2 = m_wave.at(waveIndex2).direction() * arma::datum::pi / 180.;	
+	double p2 = m_wave.at(waveIndex2).phase() * arma::datum::pi / 180.;
 
 	// This formulation is valid only below the mean water level, i.e. z <= 0
 	if (z <= 0)
 	{
-			// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
-			// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
-			double khz(0);
-			if (k*h >= 10)
-			{
-				khz = exp(k*z);
-			}
-			else
-			{
-				khz = cosh(k * (z + h)) / cosh(k*h);
-			}
+		arma::vec::fixed<3> k1_k2 = { k1 * std::cos(b1) - k2 * std::cos(b2), k1 * std::sin(b1) - k2 * std::sin(b2), 0 };
+		double norm_k1_k2 = arma::norm(k1_k2);
 
-			return ramp() * rho * g * A * khz * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
+		// Isso aqui soh depende das propriedades das ondas e da profundidades. Da pra calcular previamente uma vez soh.
+		double aux = (w1 - w2) / (w1 * w2) * k1 * k2 * ( std::cos(b1-b2) + std::tanh(k1*h) * std::tanh(k2*h))
+			         - 0.5 * ( k1*k1 / (w1 * pow(std::cosh(k1*h),2)) - k2*k2 / (w2 * pow(std::cosh(k2*h), 2)));
+		aux = aux / ( g * norm_k1_k2 * std::tanh(norm_k1_k2) * h - (w1 - w2)*(w1 - w2) );
+		
+		double khz_xy = std::cosh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h);
+		double khz_z = std::sinh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h);
+		
+		acc[0] = 0.5 * A1 * A2 * (w1 - w2) * (k1 * std::cos(b1) - k2 * std::cos(b2) ) * g*g * aux * khz_xy
+			     * std::sin( dot(k1_k2, coord) - (w1 - w2) * t + p1 - p2);
+
+		acc[1] = 0.5 * A1 * A2 * (w1 - w2) * (k1 * std::sin(b1) - k2 * std::sin(b2)) * g*g * aux * khz_xy
+			     * std::sin(dot(k1_k2, coord) - (w1 - w2) * t + p1 - p2);
+
+		acc[2] = - 0.5 * A1 * A2 * (w1 - w2) * g*g * aux * norm_k1_k2 * khz_z
+			     * std::cos(dot(k1_k2, coord) - (w1 - w2) * t + p1 - p2);
 	}
 
-	else
-	{
-		return 0;
-	}
+	return acc * ramp();
 }
-
-double ENVIR::wavePressure(const vec::fixed<3> &coord) const
-{
-	double p(0);
-
-	for (int ii = 0; ii < m_wave.size(); ++ii)
-	{
-		p += ENVIR::wavePressure(coord, ii);
-	}
-
-	return p;
-}
-
-
 
 double ENVIR::windVel_X(const vec::fixed<3> &coord) const
 {

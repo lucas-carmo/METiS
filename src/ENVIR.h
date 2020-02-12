@@ -96,21 +96,22 @@ public:
 		Main functions for calculation
 	*****************************************************/
 	bool isNodeEmpty() const;
-  bool isWaveProbeEmpty() const;
-  arma::vec::fixed<3> getNode(unsigned int ID) const;
+	bool isWaveProbeEmpty() const;
+	arma::vec::fixed<3> getNode(unsigned int ID) const;
 
 	void stepTime();
 	void stepTime(double const step);
 
-  double ramp() const;
+	double ramp() const;
 	double waveElev(const double x, const double y, const unsigned int waveIndex) const;
 	double waveElev(const double x, const double y) const;
+	double wavePressure(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	double wavePressure(const vec::fixed<3> &coord) const;
 	vec::fixed<3> u1(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 	vec::fixed<3> u1(const vec::fixed<3> &coord) const;
 	vec::fixed<3> du1dt(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 	vec::fixed<3> du1dt(const vec::fixed<3> &coord) const;
-	double wavePressure(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
-	double wavePressure(const vec::fixed<3> &coord) const;
+	vec::fixed<3> du2dt(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
 
 	double windVel_X(const vec::fixed<3> &coord) const;
 };
