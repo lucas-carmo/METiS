@@ -592,6 +592,19 @@ vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord, const unsigned int waveIn
 	return acc * ramp();
 }
 
+vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		for (int jj = 0; jj < m_wave.size(); ++jj)
+		{
+			acc += ENVIR::du2dt(coord, ii, jj);
+		}
+	}
+	return acc;
+}
+
 double ENVIR::windVel_X(const vec::fixed<3> &coord) const
 {
 	return ( windRefVel() * pow(coord[2] / windRefHeight(), windExp()) );

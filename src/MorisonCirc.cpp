@@ -549,7 +549,7 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 }
 
 
-// The three vectors passed as reference are used to return the different components of the hydrodynamic force acting on the cylinder,
+// The vectors passed as reference are used to return the different components of the hydrodynamic force acting on the cylinder,
 // without the need of calling three different methods for each component of the hydrodynamic force
 vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydroMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const
 {
@@ -621,6 +621,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> acc_ii(fill::zeros); // Acceleration of the integration point
 	vec::fixed<3> u1(fill::zeros); // Fluid velocity at the integration point
 	vec::fixed<3> du1dt(fill::zeros); // Fluid acceleration at the integration point
+	vec::fixed<3> du2dt(fill::zeros);
 
 	// Forces acting at the integration point and moment (with relation to n1) due to the force acting at the integration point
 	vec::fixed<3> force_inertia_ii(fill::zeros); // Inertial component
@@ -629,8 +630,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> force_drag_ii(fill::zeros); // Drag component
 	vec::fixed<3> moment_drag_ii(fill::zeros);
 
-	vec::fixed<3> force_ii(fill::zeros); // Total force
-	vec::fixed<3> moment_ii(fill::zeros);
+	vec::fixed<3> force_inertia_ii_2nd_part1(fill::zeros); // Inertial component - Second order - Part that is due to the second-order difference-frequency potential
+	vec::fixed<3> moment_inertia_ii_2nd_part1(fill::zeros);
 
 	for (int ii = 1; ii <= ncyl; ++ii)
 	{
@@ -655,7 +656,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		vel_ii = dot(vel_ii, xvec) * xvec + dot(vel_ii, yvec) * yvec;
 		acc_ii = dot(acc_ii, xvec) * xvec + dot(acc_ii, yvec) * yvec;
 
-
 		/*******
 			Fluid velocity/acceleration
 		******/
@@ -667,38 +667,40 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		u1 = dot(u1, xvec) * xvec + dot(u1, yvec) * yvec;
 		du1dt = dot(du1dt, xvec) * xvec + dot(du1dt, yvec) * yvec;
 
-		// Calculation of the forces in the integration node using Morison's equation
-		force_inertia_ii = (datum::pi * pow(D,2)/4) * rho * Cm * du1dt - (datum::pi * pow(D,2)/4) * rho * (Cm-1) * du1dt;
-		force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - vel_ii, 2) * (u1 - vel_ii);
-		force_ii = force_inertia_ii + force_drag_ii;
+		// Components from Morison's Equation - Calculation of the forces and moments in the integration node.
+		// The moments are given with respect to node 1.
+		force_inertia_ii = (datum::pi * D*D)/4 * rho * Cm * du1dt - (datum::pi * D*D/4) * rho * (Cm-1) * acc_ii;
+		force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - vel_ii, 2) * (u1 - vel_ii);		
 
-		// Calculation of the moment (with respect to node 1) at the integration node using the force calculated above
 		moment_inertia_ii = cross(R_ii * zvec, force_inertia_ii);
 		moment_drag_ii = cross(R_ii * zvec, force_drag_ii);
-		moment_ii = moment_inertia_ii + moment_drag_ii;
+
+		// If required, calculate the second-order part (inertial forces)
+		if (hydroMode == 3)
+		{					
+			du2dt = envir.du2dt(n_ii);
+			du2dt = dot(du2dt, xvec) * xvec + dot(du2dt, yvec) * yvec;
+			force_inertia_ii_2nd_part1 = (datum::pi * D*D / 4) * rho * Cm * du2dt;
+		}
 
 
 		// Integrate the forces along the cylinder using Simpson's Rule
 		if (ii == 1 || ii == ncyl)
-		{
-			force += (dL/3.0) * join_cols(force_ii, moment_ii);
+		{			
 			force_inertia += (dL/3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
 			force_drag += (dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
 		}
 		else if (ii % 2 == 0)
 		{
-			force += (4*dL/3.0) * join_cols(force_ii, moment_ii);
 			force_inertia += (4*dL/3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
 			force_drag += (4*dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
 		}
 		else
 		{
-			force += (2*dL/3.0) * join_cols(force_ii, moment_ii);
 			force_inertia += (2*dL/3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
 			force_drag += (2*dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
 		}
-	}
-
+	}	
 
 	/*
 		Second part: forces on the bottom of the cylinder
@@ -711,23 +713,17 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> v_axial = dot(v1, zvec) * zvec;
 	vec::fixed<3> a_axial = dot(a1, zvec) * zvec;
 
-	// Calculate the force acting on the bottom of the cylinder
-	force.rows(0,2) += 0.5 * rho * Cd_V * datum::pi * pow(D/2, 2) * norm(u1 - v_axial, 2) * (u1 - v_axial)
-					 + rho * Ca_V * (4/3.) * datum::pi * pow(D/2, 3) * (du1dt - a_axial);
-
-	// These two are used to output the force components. They include the components from all the different
-	// cylinders (note that they are passed by reference as an input).
-	force_inertia.rows(0,2) += rho * Ca_V * (4 / 3.) * datum::pi * pow(D / 2, 3) * (du1dt - a_axial);
-	force_drag.rows(0, 2) += 0.5 * rho * Cd_V * datum::pi * pow(D / 2, 2) * norm(u1 - v_axial, 2) * (u1 - v_axial);
+	// Calculate the force acting on the bottom of the cylinder	
+	force_inertia.rows(0,2) += rho * Ca_V * (4/3.) * datum::pi * (D*D*D/8.) * (du1dt - a_axial);
+	force_drag.rows(0, 2) += 0.5 * rho * Cd_V * datum::pi * (D*D/4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
 
 	if (m_botPressFlag)
-	{
-		force.rows(0, 2) += datum::pi * ( pow(botDiam/2, 2) * envir.wavePressure(n1)
-							- (pow(botDiam/2, 2) - pow(topDiam/2, 2)) * envir.wavePressure(n2) ) * zvec;
-
-		force_froudeKrylov.rows(0, 2) += datum::pi * (pow(botDiam / 2, 2) * envir.wavePressure(n1)
-										- (pow(botDiam / 2, 2) - pow(topDiam / 2, 2)) * envir.wavePressure(n2) ) * zvec;
+	{		
+		force_froudeKrylov.rows(0, 2) += datum::pi * (botDiam*botDiam/4. * envir.wavePressure(n1)
+										- ( botDiam*botDiam/4. - topDiam*topDiam/4.) * envir.wavePressure(n2) ) * zvec;
 	}
+
+	force = force_inertia + force_drag + force_froudeKrylov;
 
 	// The moment was calculated with relation to n1, which may be different from node1.
 	// We need to change the fulcrum to node1
