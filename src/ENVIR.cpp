@@ -547,6 +547,12 @@ vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord, const unsigned int waveIn
 {
 	arma::vec::fixed<3> acc = { 0,0,0 };
 
+	// In this case, the calculation below would lead to 0/0, but the limit is actually 0. This is fine, as the second order potential should not contribute to the mean drift. 
+	if (waveIndex1 == waveIndex2)
+	{
+		return acc;
+	}
+
 	// More friendly notation
 	double z = coord[2];
 	double h = m_watDepth;
