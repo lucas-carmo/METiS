@@ -659,7 +659,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		/*******
 			Fluid velocity/acceleration
 		******/
-		// Fluid velocity and acceleration at the integration point
+		// Fluid velocity and acceleration at the integration point		
 		u1 = envir.u1(n_ii);
 		du1dt = envir.du1dt(n_ii);
 
@@ -669,7 +669,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 
 		// Components from Morison's Equation - Calculation of the forces and moments in the integration node.
 		// The moments are given with respect to node 1.
-		force_inertia_ii = (datum::pi * D*D)/4 * rho * Cm * du1dt - (datum::pi * D*D/4) * rho * (Cm-1) * acc_ii;
+		force_inertia_ii = datum::pi * D*D/4. * rho * Cm * du1dt - datum::pi * D*D/4. * rho * (Cm-1) * acc_ii;
 		force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - vel_ii, 2) * (u1 - vel_ii);		
 
 		moment_inertia_ii = cross(R_ii * zvec, force_inertia_ii);
@@ -680,7 +680,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		{					
 			du2dt = envir.du2dt(n_ii);
 			du2dt = dot(du2dt, xvec) * xvec + dot(du2dt, yvec) * yvec;
-			force_inertia_2nd_part1_ii = (datum::pi * D*D / 4) * rho * Cm * du2dt;
+			force_inertia_2nd_part1_ii = (datum::pi * D*D/4.) * rho * Cm * du2dt;
 		}
 
 		// Integrate the forces along the cylinder using Simpson's Rule
@@ -727,7 +727,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 
 
 	/*
-	Total force
+		Total force
 	*/
 	force = force_inertia + force_drag + force_froudeKrylov + force_inertia_2nd_part1;
 

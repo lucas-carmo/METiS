@@ -240,7 +240,7 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 	vec::fixed<6> force = totalForce(envir);
 	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE, force);
 
-	// Calculate the acceleration only if at least one dofs is deactivated
+	// Calculate the acceleration only if at least one dof is activated
 	// (i.e. if at least one element of m_dofs is equal to 'true')
 	if (std::find(m_dofs.begin(), m_dofs.end(), true) != m_dofs.end())
 	{
