@@ -517,7 +517,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				double aux_crvAng = string2num<double>(input.at(3));
 				double aux_twist = string2num<double>(input.at(4));
 				double aux_chord = string2num<double>(input.at(5));
-				double aux_airfoilID = string2num<int>(input.at(6));
+				int aux_airfoilID = string2num<int>(input.at(6));
 
 				rna.addBladeAeroNode(aux_span, aux_crvAC, aux_swpAC, aux_crvAng, aux_twist, aux_chord, aux_airfoilID);
 
