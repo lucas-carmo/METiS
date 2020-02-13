@@ -35,6 +35,7 @@ public:
 		Forces acting on the Morison Element and functions for node position/velocity/acceleration)
 	*****************************************************/
 	virtual void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const override;
+	virtual void make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const override;
 	virtual mat::fixed<6, 6> addedMass_perp(const double rho, const int hydroMode) const override;
 	virtual mat::fixed<6, 6> addedMass_paral(const double rho, const int hydroMode) const override;
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const override;

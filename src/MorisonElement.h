@@ -49,6 +49,7 @@ public:
 	vec::fixed<3> node1AccCentrip() const;
 	vec::fixed<3> node2AccCentrip() const;
 	virtual void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
+	virtual void make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
 
 	// Contribution to the added mass
 	virtual mat::fixed<6, 6> addedMass_perp(const double rho, const int hydroMode) const = 0;

@@ -26,8 +26,8 @@ void MorisonCirc::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3>
 	zvec = (m_node2Pos - m_node1Pos) / arma::norm(m_node2Pos - m_node1Pos, 2);
 
 	// if Zlocal == Zglobal, REFlocal = REFglobal
-	vec::fixed<3> z_global = { 0,0,1 };
-	if (approx_equal(zvec, z_global, "absdiff", datum::eps))
+	arma::vec::fixed<3> z_global = { 0,0,1 };
+	if (arma::approx_equal(zvec, z_global, "absdiff", arma::datum::eps))
 	{
 		xvec = { 1, 0, 0 };
 		yvec = { 0, 1, 0 };
@@ -35,12 +35,34 @@ void MorisonCirc::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3>
 	else
 	{
 		yvec = arma::cross(z_global, zvec);
-		yvec = yvec / norm(yvec, 2);
+		yvec = yvec / arma::norm(yvec, 2);
 
-		xvec = cross(yvec, zvec);
-		xvec = xvec / norm(xvec, 2);
+		xvec = arma::cross(yvec, zvec);
+		xvec = xvec / arma::norm(xvec, 2);
 	}
+}
 
+void MorisonCirc::make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const
+{
+	xvec.zeros();
+	yvec.zeros();
+	zvec = (m_node2Pos_t0 - m_node1Pos_t0) / arma::norm(m_node2Pos_t0 - m_node1Pos_t0, 2);
+
+	// if Zlocal == Zglobal, REFlocal = REFglobal
+	arma::vec::fixed<3> z_global = { 0,0,1 };
+	if (arma::approx_equal(zvec, z_global, "absdiff", arma::datum::eps))
+	{
+		xvec = { 1, 0, 0 };
+		yvec = { 0, 1, 0 };
+	}
+	else
+	{
+		yvec = arma::cross(z_global, zvec);
+		yvec = yvec / arma::norm(yvec, 2);
+
+		xvec = arma::cross(yvec, zvec);
+		xvec = xvec / arma::norm(xvec, 2);
+	}
 }
 
 
@@ -53,26 +75,27 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const int hydroMo
 	double Lambda = datum::pi * pow(m_diam / 2., 2) * rho * (m_CM - 1);
 	double ncyl = m_numIntPoints;
 
-	// Nodes position
+	// Nodes position and vectors of the local coordinate system vectors
 	vec::fixed<3> n1 = node1Pos();
 	vec::fixed<3> n2 = node2Pos();
+	vec::fixed<3> xvec(fill::zeros);
+	vec::fixed<3> yvec(fill::zeros);
+	vec::fixed<3> zvec(fill::zeros);
 	if (hydroMode == 1) // Check if the hydrodynamic force should be calculated considering the initial position of the floater
 	{
 		n1 = m_node1Pos_t0;
 		n2 = m_node2Pos_t0;
+		MorisonCirc::make_local_base_t0(xvec, yvec, zvec);
+	}
+	else
+	{
+		MorisonCirc::make_local_base(xvec, yvec, zvec);
 	}
 
 	// Center of Gravity
 	double xG = n1[0] - m_cog2node1[0];
 	double yG = n1[1] - m_cog2node1[1];
-	double zG = n1[2] - m_cog2node1[2];
-
-	// Vectors of the local coordinate system vectors
-	vec::fixed<3> xvec(fill::zeros);
-	vec::fixed<3> yvec(fill::zeros);
-	vec::fixed<3> zvec(fill::zeros);
-	MorisonCirc::make_local_base(xvec, yvec, zvec);
-
+	double zG = n1[2] - m_cog2node1[2];		
 
 	// Make sure that node1 is below node2 (or at the same height, at least).
 	// Otherwise, need to swap them.
@@ -277,25 +300,27 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const int hydroM
 	double Lambda = rho * m_axialCa * (4 / 3.) * datum::pi * pow(m_diam / 2, 3);
 	double ncyl = m_numIntPoints;
 
-	// Nodes position
+	// Nodes position and vectors of the local coordinate system vectors
 	vec::fixed<3> n1 = node1Pos();
 	vec::fixed<3> n2 = node2Pos();
+	vec::fixed<3> xvec(fill::zeros);
+	vec::fixed<3> yvec(fill::zeros);
+	vec::fixed<3> zvec(fill::zeros);
 	if (hydroMode == 1) // Check if the hydrodynamic force should be calculated considering the initial position of the floater
 	{
 		n1 = m_node1Pos_t0;
 		n2 = m_node2Pos_t0;
+		MorisonCirc::make_local_base_t0(xvec, yvec, zvec);
+	}
+	else
+	{
+		MorisonCirc::make_local_base(xvec, yvec, zvec);
 	}
 
 	// Center of Gravity
 	double xG = n1[0] - m_cog2node1[0];
 	double yG = n1[1] - m_cog2node1[1];
 	double zG = n1[2] - m_cog2node1[2];
-
-	// Vectors of the local coordinate system vectors
-	vec::fixed<3> xvec(fill::zeros);
-	vec::fixed<3> yvec(fill::zeros);
-	vec::fixed<3> zvec(fill::zeros);
-	MorisonCirc::make_local_base(xvec, yvec, zvec);
 
 	// Make sure that node1 is below node2 (or at the same height, at least).
 	// Otherwise, need to swap them.
@@ -549,6 +574,8 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 }
 
 
+
+
 // The vectors passed as reference are used to return the different components of the hydrodynamic force acting on the cylinder,
 // without the need of calling three different methods for each component of the hydrodynamic force
 vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydroMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov, vec::fixed<6> &force_inertia_2nd_part1) const
@@ -567,25 +594,28 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	double botDiam = m_botDiam;
 	double topDiam = m_topDiam;
 
-
-	// Nodes position, velocity and acceleration
+	// Nodes position and vectors of the local coordinate system vectors
 	vec::fixed<3> n1 = node1Pos();
 	vec::fixed<3> n2 = node2Pos();
+	vec::fixed<3> xvec(fill::zeros);
+	vec::fixed<3> yvec(fill::zeros);
+	vec::fixed<3> zvec(fill::zeros);
 	if (hydroMode == 1) // Check if the hydrodynamic force should be calculated considering the initial position of the floater
 	{
 		n1 = m_node1Pos_t0;
 		n2 = m_node2Pos_t0;
+		MorisonCirc::make_local_base_t0(xvec, yvec, zvec);
 	}
+	else
+	{
+		MorisonCirc::make_local_base(xvec, yvec, zvec);
+	}
+
+	// Velocity and acceleration of the cylinder nodes
 	vec::fixed<3> v1 = node1Vel();
 	vec::fixed<3> v2 = node2Vel();
 	vec::fixed<3> a1 = node1AccCentrip();
 	vec::fixed<3> a2 = node2AccCentrip();
-
-	// Vectors of the local coordinate system vectors
-	vec::fixed<3> xvec(fill::zeros);
-	vec::fixed<3> yvec(fill::zeros);
-	vec::fixed<3> zvec(fill::zeros);
-	MorisonCirc::make_local_base(xvec, yvec, zvec);
 
 	// Bottom and top diameter
 	botDiam = m_botDiam;
