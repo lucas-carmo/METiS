@@ -578,9 +578,9 @@ vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord, const unsigned int waveIn
 		double norm_k1_k2 = arma::norm(k1_k2);
 
 		// Isso aqui soh depende das propriedades das ondas e da profundidades. Da pra calcular previamente uma vez soh.
-		double aux = (w1 - w2) / (w1 * w2) * k1 * k2 * ( std::cos(b1-b2) + std::tanh(k1*h) * std::tanh(k2*h))
+		double aux = (w2 - w1) / (w1 * w2) * k1 * k2 * ( std::cos(b1-b2) + std::tanh(k1*h) * std::tanh(k2*h))
 			         - 0.5 * ( k1*k1 / (w1 * pow(std::cosh(k1*h),2)) - k2*k2 / (w2 * pow(std::cosh(k2*h), 2)));
-		aux = aux / ( g * norm_k1_k2 * std::tanh(norm_k1_k2) * h - (w1 - w2)*(w1 - w2) );
+		aux = aux / ( g * norm_k1_k2 * std::tanh(norm_k1_k2 * h) - (w1 - w2)*(w1 - w2) );
 		
 		double khz_xy = std::cosh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h);
 		double khz_z = std::sinh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h);
