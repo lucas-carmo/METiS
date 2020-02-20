@@ -16,9 +16,14 @@ FOWT::FOWT() : m_extLinStiff(fill::zeros), m_mass(datum::nan),
 /*****************************************************
 	Setters
 *****************************************************/
-void FOWT::setHydroMode(const int hydroMode)
+void FOWT::setHydroMode(const int hydroKinMode)
 {
-	m_hydroMode = hydroMode;
+	m_hydroMode = hydroKinMode;
+}
+
+void FOWT::setHydroPosMode(const int hydroPosMode)
+{
+	m_hydroPosMode = hydroPosMode;
 }
 
 void FOWT::setAeroMode(const int aeroMode)
@@ -74,6 +79,11 @@ void FOWT::setRNA(RNA &rna)
 int FOWT::hydroMode() const
 {
 	return m_hydroMode;
+}
+
+int FOWT::hydroPosMode() const
+{
+	return m_hydroPosMode;
 }
 
 int FOWT::aeroMode() const
@@ -194,6 +204,11 @@ std::string FOWT::printHydroMode() const
 	return std::to_string(m_hydroMode);
 }
 
+std::string FOWT::printHydroPosMode() const
+{
+	return std::to_string(m_hydroPosMode);
+}
+
 std::string FOWT::printAeroMode() const
 {
 	return std::to_string(m_aeroMode);
@@ -245,7 +260,7 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 	if (std::find(m_dofs.begin(), m_dofs.end(), true) != m_dofs.end())
 	{
 		// Inertia matrix including added matrix
-		mat::fixed<6, 6> inertiaMatrix = m_floater.addedMass(envir.watDensity(), m_hydroMode) + m_floater.inertiaMatrix();
+		mat::fixed<6, 6> inertiaMatrix = m_floater.addedMass(envir.watDensity(), m_hydroPosMode) + m_floater.inertiaMatrix();
 
 		// Avoid coupling effects when a DoF is disabled and the others are not.
 		// For doing so, set the calculated force to zero if the dof is deactivated.
@@ -284,7 +299,7 @@ vec::fixed<6> FOWT::hydrodynamicForce(const ENVIR &envir)
 		return vec::fixed<6> {0, 0, 0, 0, 0, 0};
 	}
 
-	return m_floater.hydrodynamicForce(envir, m_hydroMode);
+	return m_floater.hydrodynamicForce(envir, m_hydroMode, m_hydroPosMode);
 }
 
 vec::fixed<6> FOWT::hydrostaticForce(const ENVIR &envir)
@@ -294,7 +309,7 @@ vec::fixed<6> FOWT::hydrostaticForce(const ENVIR &envir)
 		return vec::fixed<6> {0, 0, 0, 0, 0, 0};
 	}
 
-	return m_floater.hydrostaticForce(envir, m_hydroMode);
+	return m_floater.hydrostaticForce(envir);
 }
 
 vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)

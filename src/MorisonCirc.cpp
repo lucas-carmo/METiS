@@ -42,6 +42,7 @@ void MorisonCirc::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3>
 	}
 }
 
+// Same as make_local_base, but considering the initial position of the cylinder
 void MorisonCirc::make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const
 {
 	xvec.zeros();
@@ -67,7 +68,7 @@ void MorisonCirc::make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed
 
 
 // TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
-mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const int hydroMode) const
+mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const int hydroPosMode) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
@@ -81,7 +82,7 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const int hydroMo
 	vec::fixed<3> xvec(fill::zeros);
 	vec::fixed<3> yvec(fill::zeros);
 	vec::fixed<3> zvec(fill::zeros);
-	if (hydroMode == 1) // Check if the hydrodynamic force should be calculated considering the initial position of the floater
+	if (hydroPosMode == 1) // Check if the hydrodynamic force should be calculated considering the initial position of the floater
 	{
 		n1 = m_node1Pos_t0;
 		n2 = m_node2Pos_t0;
@@ -292,7 +293,7 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const int hydroMo
 
 
 // TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
-mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const int hydroMode) const
+mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const int hydroPosMode) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
@@ -306,7 +307,7 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const int hydroM
 	vec::fixed<3> xvec(fill::zeros);
 	vec::fixed<3> yvec(fill::zeros);
 	vec::fixed<3> zvec(fill::zeros);
-	if (hydroMode == 1) // Check if the hydrodynamic force should be calculated considering the initial position of the floater
+	if (hydroPosMode == 1) // Check if the hydrodynamic force should be calculated considering the initial position of the floater
 	{
 		n1 = m_node1Pos_t0;
 		n2 = m_node2Pos_t0;
@@ -578,7 +579,7 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 
 // The vectors passed as reference are used to return the different components of the hydrodynamic force acting on the cylinder,
 // without the need of calling three different methods for each component of the hydrodynamic force
-vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydroMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov, vec::fixed<6> &force_inertia_2nd_part1) const
+vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydroMode, const int hydroPosMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov, vec::fixed<6> &force_inertia_2nd_part1) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
@@ -600,7 +601,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> xvec(fill::zeros);
 	vec::fixed<3> yvec(fill::zeros);
 	vec::fixed<3> zvec(fill::zeros);
-	if (hydroMode == 1) // Check if the hydrodynamic force should be calculated considering the initial position of the floater
+	if (hydroPosMode == 1) // Check if the hydrodynamic force should be calculated considering the initial position of the floater
 	{
 		n1 = m_node1Pos_t0;
 		n2 = m_node2Pos_t0;
@@ -706,7 +707,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		moment_drag_ii = cross(R_ii * zvec, force_drag_ii);
 
 		// If required, calculate the second-order part (inertial forces)
-		if (hydroMode == 3)
+		if (hydroMode == 2)
 		{					
 			du2dt = envir.du2dt(n_ii);
 			du2dt = dot(du2dt, xvec) * xvec + dot(du2dt, yvec) * yvec;

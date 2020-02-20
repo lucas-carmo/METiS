@@ -226,6 +226,11 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			fowt.setHydroMode(string2num<int>(getData(strInput)));
 		}
 
+		else if (caseInsCompare(getKeyword(strInput), "HydroPos"))
+		{
+		fowt.setHydroPosMode(string2num<int>(getData(strInput)));
+		}
+
 		else if (caseInsCompare(getKeyword(strInput), "Aero"))
 		{
 			fowt.setAeroMode(string2num<int>(getData(strInput)));
@@ -1203,6 +1208,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "\n\n";
 	m_sumFl << "FOWT:\n";
 	m_sumFl << "Hydro Mode:\t" << fowt.printHydroMode() << "\n";
+	m_sumFl << "Hydro Position Mode:\t" << fowt.printHydroPosMode() << "\n";
 	m_sumFl << "Aero Mode:\t" << fowt.printAeroMode() << "\n";
 	m_sumFl << "Moor Mode:\t" << fowt.printMoorMode() << "\n";
 	m_sumFl << "DOFs:\t" << fowt.printDoF() << '\n';

@@ -6,10 +6,10 @@
 %%-----------------------------------------------------------------------------%%
 %%----------------------------- ACTIVE Forces -------------------------------%%
 %%-----------------------------------------------------------------------------%%
-Hydro    2
-Aero     0
-Moor     1
-DOFS 1 1 1 1 1 1
+Hydro       1 % 0: No waves; 1: Linear wave kinematics; 2: Non-linear wave kinematics
+HydroPos    2 % 1: Hydrodynamics calculated considering the initial position of the floater (forces and added mass); 2: Hydrodynamics considering instantaneous body position 
+Aero        0
+Moor        1
 
 %%-----------------------------------------------------------------------------%%
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
@@ -31,7 +31,7 @@ Wave
 % WRWAVE \t Height \t Angular frequency \t Direction (in degrees) \t Phase (in degrees)
 % FRWAVE \t Height \t Frequency         \t Direction (in degrees) \t Phase (in degrees)
 % TRWAVE \t Height \t Period            \t Direction (in degrees) \t Phase (in degrees)
-TRWAVE	4	4.00	45	0
+TRWAVE	2	4.00	45	0
 END
 
 

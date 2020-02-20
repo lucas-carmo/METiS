@@ -24,8 +24,8 @@ private:
 	/*
 	Specification of the analysis
 	*/
-	// Forces included in the analysis
 	int m_hydroMode{ 0 };
+	int m_hydroPosMode{ 0 };
 	int m_aeroMode{ 0 };
 	int m_moorMode{ 0 };
 
@@ -52,7 +52,8 @@ public:
 	/*****************************************************
 		Setters
 	*****************************************************/
-	void setHydroMode(const int hydroMode);
+	void setHydroMode(const int hydroKinMode);
+	void setHydroPosMode(const int hydroPosMode);
 	void setAeroMode(const int aeroMode);
 	void setMoorMode(const int moorMode);
 	void setDoFs(std::array<bool, 6> &dofs);
@@ -67,6 +68,7 @@ public:
 		Getters
 	*****************************************************/
 	int hydroMode() const;
+	int hydroPosMode() const;
 	int aeroMode() const;
 	int moorMode() const;
 
@@ -82,6 +84,7 @@ public:
 	std::string printFloater() const;
 	std::string printRNA() const;
 	std::string printHydroMode() const;
+	std::string printHydroPosMode() const;
 	std::string printAeroMode() const;
 	std::string printMoorMode() const;
 	std::string printDoF() const;
