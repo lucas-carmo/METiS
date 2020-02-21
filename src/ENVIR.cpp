@@ -564,31 +564,35 @@ vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord, const unsigned int waveIn
 	double k1 = m_wave.at(waveIndex1).waveNumber();
 	double b1 = m_wave.at(waveIndex1).direction() * arma::datum::pi / 180.;
 	double p1 = m_wave.at(waveIndex1).phase() * arma::datum::pi / 180.;
+	double cosB1 = m_wave.at(waveIndex1).cosBeta();
+	double sinB1 = m_wave.at(waveIndex1).sinBeta();
 
 	double A2 = m_wave.at(waveIndex2).amp();
 	double w2 = m_wave.at(waveIndex2).angFreq();
 	double k2 = m_wave.at(waveIndex2).waveNumber();	
 	double b2 = m_wave.at(waveIndex2).direction() * arma::datum::pi / 180.;	
 	double p2 = m_wave.at(waveIndex2).phase() * arma::datum::pi / 180.;
+	double cosB2 = m_wave.at(waveIndex2).cosBeta();
+	double sinB2 = m_wave.at(waveIndex2).sinBeta();
 
 	// This formulation is valid only below the mean water level, i.e. z <= 0
 	if (z <= 0)
 	{
-		arma::vec::fixed<3> k1_k2 = { k1 * std::cos(b1) - k2 * std::cos(b2), k1 * std::sin(b1) - k2 * std::sin(b2), 0 };
+		arma::vec::fixed<3> k1_k2 = { k1 * cosB1 - k2 * cosB2, k1 * sinB1 - k2 * sinB2, 0 };
 		double norm_k1_k2 = arma::norm(k1_k2);
 
 		// Isso aqui soh depende das propriedades das ondas e da profundidades. Da pra calcular previamente uma vez soh.
-		double aux = (w2 - w1) / (w1 * w2) * k1 * k2 * ( std::cos(b1-b2) + std::tanh(k1*h) * std::tanh(k2*h))
+		double aux = ((w2 - w1) / (w1 * w2)) * k1 * k2 * ( std::cos(b1-b2) + std::tanh(k1*h) * std::tanh(k2*h))
 			         - 0.5 * ( k1*k1 / (w1 * pow(std::cosh(k1*h),2)) - k2*k2 / (w2 * pow(std::cosh(k2*h), 2)));
 		aux = aux / ( g * norm_k1_k2 * std::tanh(norm_k1_k2 * h) - (w1 - w2)*(w1 - w2) );
 		
 		double khz_xy = std::cosh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h);
 		double khz_z = std::sinh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h);
 		
-		acc[0] = 0.5 * A1 * A2 * (w1 - w2) * (k1 * std::cos(b1) - k2 * std::cos(b2) ) * g*g * aux * khz_xy
+		acc[0] = 0.5 * A1 * A2 * (w1 - w2) * (k1 * cosB1 - k2 * cosB2 ) * g*g * aux * khz_xy
 			     * std::sin( dot(k1_k2, coord) - (w1 - w2) * t + p1 - p2);
 
-		acc[1] = 0.5 * A1 * A2 * (w1 - w2) * (k1 * std::sin(b1) - k2 * std::sin(b2)) * g*g * aux * khz_xy
+		acc[1] = 0.5 * A1 * A2 * (w1 - w2) * (k1 * sinB1 - k2 * sinB2) * g*g * aux * khz_xy
 			     * std::sin(dot(k1_k2, coord) - (w1 - w2) * t + p1 - p2);
 
 		acc[2] = - 0.5 * A1 * A2 * (w1 - w2) * g*g * aux * norm_k1_k2 * khz_z
@@ -601,11 +605,15 @@ vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord, const unsigned int waveIn
 vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord) const
 {
 	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	// When i == j, du2dt = {0,0,0}, so it is safe to skip this part of the loop.
+	// Besides, as only the real part of the second-order difference-frequency potential is used,
+	// the acceleration due to a pair ij is equal to ji.
 	for (int ii = 0; ii < m_wave.size(); ++ii)
 	{
-		for (int jj = 0; jj < m_wave.size(); ++jj)
+		for (int jj = ii+1; jj < m_wave.size(); ++jj)
 		{
-			acc += ENVIR::du2dt(coord, ii, jj);
+			acc += 2*ENVIR::du2dt(coord, ii, jj);
 		}
 	}
 	return acc;
