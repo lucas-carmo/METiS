@@ -260,6 +260,7 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 	IO::print2outLine(IO::OUTFLAG_HD_INERTIA_FORCE, force_inertia);
 	IO::print2outLine(IO::OUTFLAG_HD_DRAG_FORCE, force_drag);
 	IO::print2outLine(IO::OUTFLAG_HD_FK_FORCE, force_froudeKrylov);
+	IO::print2outLine(IO::OUTFLAG_HD_2ND_FORCE_PART1, force_inertia_2nd_part1);
 	
 	return force;
 }
