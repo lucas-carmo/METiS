@@ -843,6 +843,12 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		addWaveProbe = true;
 	}
 
+	if (caseInsCompare(keyword, "wave_acc_2nd"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ACC_2ND) = true;
+		addWaveProbe = true;
+	}
+
 	if (addWaveProbe)
 	{
 		if (!getData(strInput).empty())
@@ -1062,8 +1068,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 // and the value itself, which three component vector. Other future outputs may profit from this function as well.
 void IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed<3> &vector_3)
 {
-
-	if ((flag != OUTFLAG_WAVE_VEL) && (flag != OUTFLAG_WAVE_ACC))
+	if ((flag != OUTFLAG_WAVE_VEL) && (flag != OUTFLAG_WAVE_ACC) && (flag != OUTFLAG_WAVE_ACC_2ND))
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed<3> &vector_3).");
 	}
@@ -1084,6 +1089,13 @@ void IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed
 			print2outLineHeader("wave_acc_" + std::to_string(ID) + "_x");
 			print2outLineHeader("wave_acc_" + std::to_string(ID) + "_y");
 			print2outLineHeader("wave_acc_" + std::to_string(ID) + "_z");
+		}
+
+		if (flag == OUTFLAG_WAVE_ACC_2ND)
+		{
+			print2outLineHeader("wave_acc_2nd_" + std::to_string(ID) + "_x");
+			print2outLineHeader("wave_acc_2nd_" + std::to_string(ID) + "_y");
+			print2outLineHeader("wave_acc_2nd_" + std::to_string(ID) + "_z");
 		}
 	}
 
@@ -1289,6 +1301,10 @@ std::string IO::printOutVar()
 
 		case IO::OUTFLAG_WAVE_ACC:
 			output += "Wave Acceleration: ";
+			break;
+
+		case IO::OUTFLAG_WAVE_ACC_2ND:
+			output += "Wave Acceleration - 2nd order: ";
 			break;
 
 		case IO::OUTFLAG_WAVE_PRES:
