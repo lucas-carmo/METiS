@@ -711,27 +711,27 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		{					
 			du2dt = envir.du2dt(n_ii);
 			du2dt = dot(du2dt, xvec) * xvec + dot(du2dt, yvec) * yvec;
-			force_inertia_2nd_part1_ii = (datum::pi * D*D/4.) * rho * Cm * du2dt;
+			force_inertia_2nd_part1_ii = (datum::pi * D*D/4.) * rho * Cm * du2dt;			
 		}
-
+		
 		// Integrate the forces along the cylinder using Simpson's Rule
 		if (ii == 1 || ii == ncyl)
 		{			
 			force_inertia += (dL/3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
 			force_drag += (dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
-			force_inertia_2nd_part1 += (dL / 3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
+			force_inertia_2nd_part1 += (dL/3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
 		}
 		else if (ii % 2 == 0)
 		{
 			force_inertia += (4*dL/3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
 			force_drag += (4*dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
-			force_inertia_2nd_part1 += (4 * dL / 3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
+			force_inertia_2nd_part1 += (4*dL/3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
 		}
 		else
 		{
 			force_inertia += (2*dL/3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
 			force_drag += (2*dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
-			force_inertia_2nd_part1 += (2 * dL / 3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
+			force_inertia_2nd_part1 += (2*dL/3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
 		}
 	}	
 
