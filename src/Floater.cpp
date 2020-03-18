@@ -217,13 +217,13 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 	vec::fixed<6> force(fill::zeros); // Total hydrodynamic force acting on the floater
 	vec::fixed<6> df(fill::zeros); // Total hydrodynamic force acting on each cylinder
 
-	// These forces below are only used to output the different components to the output files.	
+	// These forces below are used to output the different components to the output files and internally in MorisonElement.hydrodynamicForce().
 	vec::fixed<6> force_inertia(fill::zeros); // Total force acting on the floater
 	vec::fixed<6> force_drag(fill::zeros);
 	vec::fixed<6> force_froudeKrylov(fill::zeros);
 	vec::fixed<6> force_inertia_2nd_part1(fill::zeros);
 
-	vec::fixed<6> df_inertia(fill::zeros); // Forces acting on each Morison Element
+	vec::fixed<6> df_inertia(fill::zeros); // Forces acting on each Morison Element. They are set to zero inside MorisonElement.hydrodynamicForce().
 	vec::fixed<6> df_drag(fill::zeros);
 	vec::fixed<6> df_froudeKrylov(fill::zeros);
 	vec::fixed<6> df_inertia_2nd_part1(fill::zeros);
@@ -231,11 +231,6 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		// Make sure that the force components acting on each Morison Element were set to zero
-		df_inertia.zeros();
-		df_drag.zeros();
-		df_froudeKrylov.zeros();
-
 		df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, hydroPosMode, df_inertia, df_drag, df_froudeKrylov, df_inertia_2nd_part1);
 		
 		// The moments acting on the cylinders were calculated with respect to the first node

@@ -584,6 +584,12 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
 
+	// Make sure that the force components that are passed as reference are set to zero
+	force_inertia.zeros();
+	force_drag.zeros();
+	force_froudeKrylov.zeros();
+	force_inertia_2nd_part1.zeros();
+
 	// Use a more friendly notation
 	double D = m_diam;
 	double Cd = m_CD;
@@ -711,7 +717,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		{					
 			du2dt = envir.du2dt(n_ii);
 			du2dt = dot(du2dt, xvec) * xvec + dot(du2dt, yvec) * yvec;
-			force_inertia_2nd_part1_ii = (datum::pi * D*D/4.) * rho * Cm * du2dt;			
+			force_inertia_2nd_part1_ii = (datum::pi * D*D/4.) * rho * Cm * du2dt;
+			moment_inertia_2nd_part1_ii = cross(R_ii * zvec, force_inertia_2nd_part1_ii);
 		}
 		
 		// Integrate the forces along the cylinder using Simpson's Rule
