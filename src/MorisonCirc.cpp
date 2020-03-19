@@ -644,7 +644,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	topDiam = m_topDiam;
 
 	// Make sure that node1 is below node2 (or at the same height, at least).
-	// Otherwise, need to swap them.
+	// Otherwise, need to swap them. This is useful for a check below that speeds up the calculation
+	// by ignoring the nodes above the free surface.
+	//
+	// There are some (rare) cases where this procedure causes n2_t0 to be BELOW n1_t0, while n1 is 
+	// guaranteed to be below n2, but this is OK because it is taken in account when this check is done.
 	if (n1[2] > n2[2])
 	{
 		n1.swap(n2);
@@ -695,7 +699,12 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	{
 		n_ii = (n2 - n1) * (ii - 1) / (ncyl - 1) + n1; // Coordinates of the integration point
 		n_ii_t0 = (n2_t0 - n1_t0) * (ii - 1) / (ncyl - 1) + n1_t0;
-		if (n_ii[2] > 0 && n_ii_t0[2] > 0)
+
+		// Since n2 is above n1, if both n_ii[2] and n_ii_t0[2] are above the waterline, the next n_ii and n_ii_t0 are also above the waterline.
+		// This check is not necessary, but makes the calculation faster by neglecting useless points.
+		//
+		// Need to check if n2[2] and n2_t0[2] are above the waterline because of the cases where n2_t0 is below n1_t0.
+		if (n_ii[2] > 0 && n_ii_t0[2] > 0 && n2[2] > 0 && n2_t0[2] > 0)
 		{
 			break;
 		}		
