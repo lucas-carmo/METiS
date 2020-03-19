@@ -50,7 +50,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	while ( envir.time() <= envir.timeTotal() )
 	{
 		IO::print2outLine_turnOn();
-		IO::print2outLine(envir.time());
+		IO::print2outLine_decimal(envir.time()); // Time has to be printed as decimal to avoid problems with large numbers
 
 		// FOWT state at the beginning of the time step
 		disp0 = fowt.disp();

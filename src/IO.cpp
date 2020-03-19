@@ -1158,6 +1158,11 @@ void IO::print2outLine(const double num)
 	m_outLine << std::setw(IO::m_outColumnWidth) << std::scientific << std::setprecision(IO::m_outNumPrecision) << num;
 }
 
+void IO::print2outLine_decimal(const double num)
+{
+	m_outLine << std::setw(IO::m_outColumnWidth) << std::fixed << std::setprecision(IO::m_outNumPrecision) << num;
+}
+
 void IO::print2outLine(const int num)
 {
 	m_outLine << std::setw(IO::m_outColumnWidth) << num;

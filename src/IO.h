@@ -109,6 +109,7 @@ public:
 
 	static void print2outLine(const std::string &str);
 	static void print2outLine(const double num);
+	static void print2outLine_decimal(const double num);
 	static void print2outLine(const int num);
 	static void print2outLineHeader(const std::string &str);
 
