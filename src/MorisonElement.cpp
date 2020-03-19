@@ -51,6 +51,17 @@ void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, co
 	m_node2Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R2) + m_node2AccCentrip;
 }
 
+vec::fixed<3> MorisonElement::node1Pos_t0() const
+{
+	return m_node1Pos_t0;
+}
+
+vec::fixed<3> MorisonElement::node2Pos_t0() const
+{
+	return m_node2Pos_t0;
+}
+
+
 vec::fixed<3> MorisonElement::node1Pos() const
 {
 	return m_node1Pos;

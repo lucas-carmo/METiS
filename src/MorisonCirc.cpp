@@ -603,15 +603,30 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 
 	// Nodes position and vectors of the local coordinate system vectors
 	vec::fixed<3> n1 = node1Pos();
-	vec::fixed<3> n2 = node2Pos();
+	vec::fixed<3> n2 = node2Pos();	
 	vec::fixed<3> xvec(fill::zeros);
 	vec::fixed<3> yvec(fill::zeros);
 	vec::fixed<3> zvec(fill::zeros);
-	if (hydroPosMode == 1) // Check if the hydrodynamic force should be calculated considering the initial position of the floater
+
+	// Same thing, but considering the initial position of the floater. These ones are 
+	// used to evaluate forces due to second order quantities (second order potential, 
+	// quadratic drag, etc)
+	vec::fixed<3> n1_t0 = node1Pos_t0();
+	vec::fixed<3> n2_t0 = node2Pos_t0();
+	vec::fixed<3> xvec_t0(fill::zeros);
+	vec::fixed<3> yvec_t0(fill::zeros);
+	vec::fixed<3> zvec_t0(fill::zeros);
+	MorisonCirc::make_local_base_t0(xvec_t0, yvec_t0, zvec_t0);
+
+	// Check if hydrodynamic forces due to first order quantities should also be calculated 
+	// considering the initial position of the floater
+	if (hydroPosMode == 1)
 	{
-		n1 = m_node1Pos_t0;
-		n2 = m_node2Pos_t0;
-		MorisonCirc::make_local_base_t0(xvec, yvec, zvec);
+		n1 = n1_t0;
+		n2 = n2_t0;
+		xvec = xvec_t0;
+		yvec = yvec_t0;
+		zvec = zvec_t0;
 	}
 	else
 	{
@@ -633,6 +648,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	if (n1[2] > n2[2])
 	{
 		n1.swap(n2);
+		n1_t0.swap(n2_t0);
 		v1.swap(v2);
 		a1.swap(a2);
 
@@ -641,19 +657,24 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		yvec = -yvec;
 		zvec = -zvec;
 
+		xvec_t0 = -xvec_t0;
+		yvec_t0 = -yvec_t0;
+		zvec_t0 = -zvec_t0;
+
 		// Bottom diameter and top diameter must be swapped as well
 		botDiam = m_topDiam;
 		topDiam = m_botDiam;
 	}
 
 	// length of each interval between points
-	double dL = norm(n2 - n1, 2) / (ncyl - 1);
+	double dL = arma::norm(n2 - n1, 2) / (ncyl - 1);
 
 	/*
 		First part: forces on the length of the cylinder
 	*/
 	//  Loop to calculate the force/moment at each integration point
 	vec::fixed<3> n_ii(fill::zeros); // Coordinates of the integration point
+	vec::fixed<3> n_ii_t0(fill::zeros); // Coordinates of the integration point - considering the body fixed at the initial position
 	vec::fixed<3> vel_ii(fill::zeros); // Velocity of the integration point
 	vec::fixed<3> acc_ii(fill::zeros); // Acceleration of the integration point - Only centripetal part
 	vec::fixed<3> u1(fill::zeros); // Fluid velocity at the integration point
@@ -672,11 +693,12 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 
 	for (int ii = 1; ii <= ncyl; ++ii)
 	{
-		n_ii = (n2 - n1) * (ii-1)/(ncyl-1) + n1; // Coordinates of the integration point
-		if (n_ii[2] > 0)
+		n_ii = (n2 - n1) * (ii - 1) / (ncyl - 1) + n1; // Coordinates of the integration point
+		n_ii_t0 = (n2_t0 - n1_t0) * (ii - 1) / (ncyl - 1) + n1_t0;
+		if (n_ii[2] > 0 && n_ii_t0[2] > 0)
 		{
-			break; // Since n2 is above n1, if we reach n_ii[2] > 0, all the next n_ii are also above the waterline
-		}
+			break;
+		}		
 
 		/******
 			Body velocity/acceleration
@@ -696,30 +718,59 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		/*******
 			Fluid velocity/acceleration
 		******/
-		// Fluid velocity and acceleration at the integration point		
-		u1 = envir.u1(n_ii);
+		// Fluid acceleration at the integration point.
+		// Calculated in the instantaneous position.
 		du1dt = envir.du1dt(n_ii);
 
-		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder - written in the GLOBAL reference frame
-		u1 = dot(u1, xvec) * xvec + dot(u1, yvec) * yvec;
+		// Fluid acceleration at the integration point.
+		// Calculated considering the initial fixed position, as it is used
+		// only for the quadratic drag force
+		u1 = envir.u1(n_ii_t0);
+
+		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder,
+		// written in the GLOBAL reference frame.
+		// Note that du1dt uses the instantaneous local base, while u1 considers the initial fixed local base.
 		du1dt = dot(du1dt, xvec) * xvec + dot(du1dt, yvec) * yvec;
+		u1 = dot(u1, xvec_t0) * xvec_t0 + dot(u1, yvec_t0) * yvec_t0;		
 
 		// Components from Morison's Equation - Calculation of the forces and moments in the integration node.
-		// The moments are given with respect to node 1.
-		force_inertia_ii = datum::pi * D*D/4. * rho * Cm * du1dt - datum::pi * D*D/4. * rho * (Cm-1) * acc_ii;
-		force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - vel_ii, 2) * (u1 - vel_ii);		
+		// The moments are given with respect to node 1.				
+		if (n_ii[2] <= 0)
+		{
+			force_inertia_ii = datum::pi * D*D / 4. * rho * Cm * du1dt - datum::pi * D*D / 4. * rho * (Cm - 1) * acc_ii;
+		}
+		else
+		{
+			force_inertia_ii.zeros();
+		}		
+
+		if (n_ii_t0[2] <= 0)
+		{
+			force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - vel_ii, 2) * (u1 - vel_ii);
+		}
+		else
+		{
+			force_drag_ii.zeros();
+		}
 
 		moment_inertia_ii = cross(R_ii * zvec, force_inertia_ii);
-		moment_drag_ii = cross(R_ii * zvec, force_drag_ii);
+		moment_drag_ii = cross(R_ii * zvec_t0, force_drag_ii) + cross(n1_t0 - n1, force_drag_ii); // The moment has to be calculated with respect to n1
 
 		// If required, calculate the second-order part (inertial forces)
 		if (hydroMode == 2)
-		{					
-			du2dt = envir.du2dt(n_ii);
-			du2dt = dot(du2dt, xvec) * xvec + dot(du2dt, yvec) * yvec;
-			force_inertia_2nd_part1_ii = (datum::pi * D*D/4.) * rho * Cm * du2dt;
-			moment_inertia_2nd_part1_ii = cross(R_ii * zvec, force_inertia_2nd_part1_ii);
-		}
+		{
+			if (n_ii_t0[2] <= 0)
+			{
+				du2dt = envir.du2dt(n_ii_t0);
+				du2dt = dot(du2dt, xvec_t0) * xvec_t0 + dot(du2dt, yvec_t0) * yvec_t0;
+				force_inertia_2nd_part1_ii = (datum::pi * D*D / 4.) * rho * Cm * du2dt;
+			}
+			else
+			{
+				force_inertia_2nd_part1_ii.zeros();
+			}
+			moment_inertia_2nd_part1_ii = cross(R_ii * zvec_t0, force_inertia_2nd_part1_ii) + cross(n1_t0 - n1, force_inertia_2nd_part1_ii); // The moment has to be calculated with respect to n1
+		}		
 		
 		// Integrate the forces along the cylinder using Simpson's Rule
 		if (ii == 1 || ii == ncyl)
@@ -745,9 +796,9 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	/*
 		Second part: forces on the bottom of the cylinder
 	*/
-	// Component of the fluid velocity/acceleration at the bottom node that is parallel to the cylinder axis
-	u1 = dot(envir.u1(n1), zvec) * zvec;
+	// Component of the fluid velocity/acceleration at the bottom node that is parallel to the cylinder axis		
 	du1dt = dot(envir.du1dt(n1), zvec) * zvec;
+	u1 = dot(envir.u1(n1), zvec) * zvec; // Since the bottom contribution is not integrated along the length, it is OK to keep it at the instantaneous position
 
 	// Component of the velocity and acceleration of the bottom that is perpendicular to the axis of the cylinder
 	vec::fixed<3> v_axial = dot(v1, zvec) * zvec;
