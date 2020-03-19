@@ -727,20 +727,20 @@ void IO::setFiles(const std::string &inFlPath)
 // "thereIsCommentInString". Besides, it updates the line number counter inLineNumber
 void IO::readLineInputFile(std::string &strInput)
 {
-	std::getline(m_inFl, strInput); // Read next file line to string strInput
-	++m_inLineNumber; // Update line number counter
+	strInput = "";
 
-  // Repeat this process until the line has some content or end of file is achieved
+	// Read next file line to string strInput and update line number counter.
+    // Repeat this process until the line has some content or end of file is achieved.
 	while (!hasContent(strInput) && m_inFl)
 	{
 		std::getline(m_inFl, strInput);
 		++m_inLineNumber;
-	}
 
-	// Remove comments from line
-	if (thereIsCommentInString(strInput))
-	{
-		removeComments(strInput);
+		// Remove comments from line
+		if (thereIsCommentInString(strInput))
+		{
+			removeComments(strInput);
+		}
 	}
 
 	if (!m_inFl)
