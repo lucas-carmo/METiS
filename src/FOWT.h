@@ -25,7 +25,6 @@ private:
 	Specification of the analysis
 	*/
 	int m_hydroMode{ 0 };
-	int m_hydroPosMode{ 0 };
 	int m_aeroMode{ 0 };
 	int m_moorMode{ 0 };
 
@@ -45,6 +44,14 @@ private:
 	vec::fixed<6> m_vel;
 	vec::fixed<6> m_acc;
 
+	// Axis system that follows the mean and slow drift.
+	// They are evaluated by filtering the instantaneous position with the following parameters.
+	double m_filterSD_omega;
+	double m_filterSD_zeta;
+	vec::fixed<6> m_disp_sd;
+	vec::fixed<6> m_vel_sd;
+	vec::fixed<6> m_acc_sd;
+
 public:
 	FOWT();
 
@@ -53,13 +60,14 @@ public:
 		Setters
 	*****************************************************/
 	void setHydroMode(const int hydroKinMode);
-	void setHydroPosMode(const int hydroPosMode);
 	void setAeroMode(const int aeroMode);
 	void setMoorMode(const int moorMode);
 	void setDoFs(std::array<bool, 6> &dofs);
 
 	void setExtLinStiff(const vec::fixed<3> &extLinStiff);
 	void setExtConstForce(const vec::fixed<6> &extConstForce);
+
+	void setFilderSD(const double omega, const double zeta);
 
 	void setFloater(Floater &floater);
 	void setRNA(RNA &rna);
@@ -68,9 +76,11 @@ public:
 		Getters
 	*****************************************************/
 	int hydroMode() const;
-	int hydroPosMode() const;
 	int aeroMode() const;
 	int moorMode() const;
+
+	double filterSD_omega() const;
+	double filterSD_zeta() const;
 
 	vec::fixed<3> CoG();
 	double mass();
@@ -84,10 +94,14 @@ public:
 	std::string printFloater() const;
 	std::string printRNA() const;
 	std::string printHydroMode() const;
-	std::string printHydroPosMode() const;
 	std::string printAeroMode() const;
 	std::string printMoorMode() const;
 	std::string printDoF() const;
+
+	/*****************************************************
+		To add to the string line that is written to the output file at each time step
+	*****************************************************/
+	void print2outLine() const;
 
 	/*****************************************************
 		Forces, acceleration, displacement, etc

@@ -114,6 +114,15 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			envir.setWindExp(string2num<double>(getData(strInput)));
 		}
 
+		else if (caseInsCompare(getKeyword(strInput), "FiltSlowDrift"))
+		{
+			// Need 2 inputs separated by a space or a tab:
+			// angular frequency and damping levels (in % of critical damping)
+			std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
+			fowt.setFilderSD(string2num<double>(input.at(0)), string2num<double>(input.at(1)));
+		}
+
+
 		// Waves, nodes and other inputs, are special because they have
 		// several lines to specify their characteristics.
 		// In theses cases, we need to loop all the lines and read the inputs
@@ -224,11 +233,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		else if (caseInsCompare(getKeyword(strInput), "Hydro"))
 		{
 			fowt.setHydroMode(string2num<int>(getData(strInput)));
-		}
-
-		else if (caseInsCompare(getKeyword(strInput), "HydroPos"))
-		{
-		fowt.setHydroPosMode(string2num<int>(getData(strInput)));
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Aero"))
@@ -1238,9 +1242,9 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "\n\n";
 	m_sumFl << "FOWT:\n";
 	m_sumFl << "Hydro Mode:\t" << fowt.printHydroMode() << "\n";
-	m_sumFl << "Hydro Position Mode:\t" << fowt.printHydroPosMode() << "\n";
 	m_sumFl << "Aero Mode:\t" << fowt.printAeroMode() << "\n";
 	m_sumFl << "Moor Mode:\t" << fowt.printMoorMode() << "\n";
+	m_sumFl << "Filter SD:\t" << fowt.filterSD_omega() << "\t" << fowt.filterSD_zeta() << "\n";
 	m_sumFl << "DOFs:\t" << fowt.printDoF() << '\n';
 
 	if (fowt.moorMode() == 0)

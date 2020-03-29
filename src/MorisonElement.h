@@ -29,21 +29,28 @@ protected:
 	vec::fixed<3> m_node1AccCentrip;
 	vec::fixed<3> m_node2AccCentrip;
 
-	// Nodes position at the beginning of the simulation, which is useful for
-	// calculating the hydrodynamic forces considering only first order terms
+	// Nodes position at the beginning of the simulation
 	vec::fixed<3> m_node1Pos_t0;
 	vec::fixed<3> m_node2Pos_t0;
+
+	// Nodes position considering only the mean and slow drift of the FOWT.
+	// They are used in the calculation of the contribution of quadratic
+	// terms (including the quadratic drag) to the hydrodynamic force.
+	vec::fixed<3> m_node1Pos_sd;
+	vec::fixed<3> m_node2Pos_sd;
 
 public:
 	MorisonElement(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints, 
 				   const bool botPressFlag, const double axialCD, const double axialCa);
 	
 	// Functions related to position, velocity and acceleration
-	void updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc);	
+	void updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc, const vec::fixed<6> &floaterCoGpos_SD);
 	vec::fixed<3> node1Pos_t0() const;
 	vec::fixed<3> node2Pos_t0() const;
 	vec::fixed<3> node1Pos() const;
 	vec::fixed<3> node2Pos() const;
+	vec::fixed<3> node1Pos_sd() const;
+	vec::fixed<3> node2Pos_sd() const;
 	vec::fixed<3> node1Vel() const;
 	vec::fixed<3> node2Vel() const;
 	vec::fixed<3> node1Acc() const;
@@ -52,13 +59,14 @@ public:
 	vec::fixed<3> node2AccCentrip() const;
 	virtual void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
 	virtual void make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
+	virtual void make_local_base_sd(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
 
 	// Contribution to the added mass
-	virtual mat::fixed<6, 6> addedMass_perp(const double rho, const int hydroPosMode) const = 0;
-	virtual mat::fixed<6, 6> addedMass_paral(const double rho, const int hydroPosMode) const = 0;
+	virtual mat::fixed<6, 6> addedMass_perp(const double rho) const = 0;
+	virtual mat::fixed<6, 6> addedMass_paral(const double rho) const = 0;
 
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const = 0;
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, const int hydroPosMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov, vec::fixed<6> &force_inertia_2nd_part1) const = 0;
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov, vec::fixed<6> &force_inertia_2nd_part1) const = 0;
 
 	// Printers and getters
 	virtual std::string print() const = 0;

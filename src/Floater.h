@@ -58,9 +58,9 @@ public:
 	/*****************************************************
 		Forces, acceleration, displacement, etc
 	*****************************************************/
-	void update(const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc);
-	mat::fixed<6, 6> addedMass(const double density, const int hydroPosMode) const;
-	vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, const int hydroPosMode) const;
+	void update(const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc, const vec::fixed<6> &FOWTdisp_SD);
+	mat::fixed<6, 6> addedMass(const double density) const;
+	vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode) const;
 	vec::fixed<6> hydrostaticForce(const ENVIR &envir) const;
 };
 
