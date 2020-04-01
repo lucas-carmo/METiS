@@ -119,6 +119,10 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			// Need 2 inputs separated by a space or a tab:
 			// angular frequency and damping levels (in % of critical damping)
 			std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
+			if (input.size() != 2)
+			{
+				throw std::runtime_error("Unable to read slow drift filter in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+			}
 			fowt.setFilderSD(string2num<double>(input.at(0)), string2num<double>(input.at(1)));
 		}
 
@@ -781,6 +785,11 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_ACC) = true;
 	}
 
+	if (caseInsCompare(keyword, "fowt_disp_sd"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_DISP_SD) = true;
+	}
+
 	if (caseInsCompare(keyword, "hd_inertia_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_INERTIA_FORCE) = true;
@@ -947,7 +956,7 @@ void IO::print2outLineHeader_turnOff()
 void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 {
 	// Check whether the specified flag is indeed one that requires a vector with six components
-	if ((flag != OUTFLAG_FOWT_DISP) && (flag != OUTFLAG_FOWT_VEL) && (flag != OUTFLAG_FOWT_ACC) &&
+	if ((flag != OUTFLAG_FOWT_DISP) && (flag != OUTFLAG_FOWT_VEL) && (flag != OUTFLAG_FOWT_ACC) && (flag != OUTFLAG_FOWT_DISP_SD) &&
 		(flag != OUTFLAG_HD_FORCE) && (flag != IO::OUTFLAG_HD_2ND_FORCE_PART1) && (flag != OUTFLAG_HS_FORCE) && (flag != OUTFLAG_TOTAL_FORCE) &&
 		(flag != OUTFLAG_HD_INERTIA_FORCE) && (flag != OUTFLAG_HD_DRAG_FORCE) && (flag != OUTFLAG_HD_FK_FORCE) &&
 		(flag != OUTFLAG_AD_HUB_FORCE)
@@ -1053,8 +1062,17 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			print2outLineHeader("pitch_acc");
 			print2outLineHeader("yaw_acc");
 		}
-	}
 
+		if (flag == OUTFLAG_FOWT_DISP_SD)
+		{
+			print2outLineHeader("surge_sd");
+			print2outLineHeader("sway_sd");
+			print2outLineHeader("heave_sd");
+			print2outLineHeader("roll_sd");
+			print2outLineHeader("pitch_sd");
+			print2outLineHeader("yaw_sd");
+		}
+	}
 
 	// If the printing flag is true and if this is one of the requested output variables,
 	// then print it to the output line
@@ -1298,6 +1316,10 @@ std::string IO::printOutVar()
 
 		case IO::OUTFLAG_FOWT_ACC:
 			output += "FOWT rigid motion: ";
+			break;
+
+		case IO::OUTFLAG_FOWT_DISP_SD:
+			output += "FOWT rigid motion - Slow: ";
 			break;
 
 		case IO::OUTFLAG_WAVE_ELEV:

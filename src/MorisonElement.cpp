@@ -51,20 +51,12 @@ void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, co
 	m_node2Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R2) + m_node2AccCentrip;
 
 	// Node's positions considering only the mean and slow drift motions
-	// Only surge, sway and yaw
-	RotatMatrix = rotatMatrix(0,0,floaterCoGpos_SD.at(5));
+	RotatMatrix = rotatMatrix(floaterCoGpos_SD.rows(3,5));
 	R1 = RotatMatrix * m_cog2node1;
 	R2 = RotatMatrix * m_cog2node2;
 
-	vec::fixed<3> disp_sd = floaterCoGpos_SD.rows(0,2);
-	disp_sd.at(2) = 0;
-
-	m_node1Pos_sd = disp_sd + R1;
-	m_node2Pos_sd = disp_sd + R2;
-
-	m_node1Pos_sd.at(2) = m_node1Pos_t0.at(2);
-	m_node2Pos_sd.at(2) = m_node2Pos_t0.at(2);
-
+	m_node1Pos_sd = floaterCoGpos_SD.rows(0, 2) + R1;
+	m_node2Pos_sd = floaterCoGpos_SD.rows(0, 2) + R2;
 }
 
 vec::fixed<3> MorisonElement::node1Pos() const

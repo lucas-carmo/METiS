@@ -242,16 +242,17 @@ void FOWT::print2outLine() const
 {
 	IO::print2outLine(IO::OUTFLAG_FOWT_DISP, m_disp);
 	IO::print2outLine(IO::OUTFLAG_FOWT_VEL, m_vel);	
-	//IO::print2outLine(IO::OUTFLAG_FOWT_ACC, m_acc);
-	IO::print2outLine(IO::OUTFLAG_FOWT_ACC, m_disp_sd);
+	IO::print2outLine(IO::OUTFLAG_FOWT_ACC, m_acc);
+	IO::print2outLine(IO::OUTFLAG_FOWT_DISP_SD, m_disp_sd);
 }
 
 
 /*****************************************************
 	Forces, acceleration, displacement, etc
 *****************************************************/
-// Update FOWT displacement, velocity, acceleration and any other necessary state
-void FOWT::update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc)
+// Update FOWT displacement, velocity, acceleration and any other necessary state.
+// dt is used only for integrating the filter equation for the slow drift motions.
+void FOWT::update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc, const double dt)
 {
 	m_disp = disp;
 	m_vel = vel;
@@ -261,25 +262,35 @@ void FOWT::update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec
 	double wf = m_filterSD_omega;
 	double zeta = m_filterSD_zeta;
 
-	vec::fixed<6> acc_sd_k1 = -2 * wf*zeta*m_vel_sd - wf * wf * (m_disp_sd - m_disp);
-	vec::fixed<6> vel_sd_k1 = acc_sd_k1 * 0.25;
-	vec::fixed<6> disp_sd_k1 = m_vel_sd * 0.25;
+	if (wf >= 0)
+	{
 
-	vec::fixed<6> acc_sd_k2 = -2 * wf*zeta*(m_vel_sd + vel_sd_k1 / 2) - wf * wf * (m_disp_sd + disp_sd_k1 / 2 - m_disp);
-	vec::fixed<6> vel_sd_k2 = acc_sd_k2 * 0.25;
-	vec::fixed<6> disp_sd_k2 = (m_vel_sd + vel_sd_k1 / 2) * 0.25;
+		vec::fixed<6> acc_sd_k1 = -2 * wf*zeta*m_vel_sd - wf * wf * (m_disp_sd - m_disp);
+		vec::fixed<6> vel_sd_k1 = acc_sd_k1 * dt;
+		vec::fixed<6> disp_sd_k1 = m_vel_sd * dt;
 
-	vec::fixed<6> acc_sd_k3 = -2 * wf*zeta*(m_vel_sd + vel_sd_k2 / 2) - wf * wf * (m_disp_sd + disp_sd_k2 / 2 - m_disp);
-	vec::fixed<6> vel_sd_k3 = acc_sd_k3 * 0.25;
-	vec::fixed<6> disp_sd_k3 = (m_vel_sd + vel_sd_k2 / 2) * 0.25;
+		vec::fixed<6> acc_sd_k2 = -2 * wf*zeta*(m_vel_sd + vel_sd_k1 / 2) - wf * wf * (m_disp_sd + disp_sd_k1 / 2 - m_disp);
+		vec::fixed<6> vel_sd_k2 = acc_sd_k2 * dt;
+		vec::fixed<6> disp_sd_k2 = (m_vel_sd + vel_sd_k1 / 2) * dt;
 
-	vec::fixed<6> acc_sd_k4 = -2 * wf*zeta*(m_vel_sd + vel_sd_k3) - wf * wf * (m_disp_sd + disp_sd_k3 - m_disp);
-	vec::fixed<6> vel_sd_k4 = acc_sd_k3 * 0.25;
-	vec::fixed<6> disp_sd_k4 = (m_vel_sd + vel_sd_k3) * 0.25;
+		vec::fixed<6> acc_sd_k3 = -2 * wf*zeta*(m_vel_sd + vel_sd_k2 / 2) - wf * wf * (m_disp_sd + disp_sd_k2 / 2 - m_disp);
+		vec::fixed<6> vel_sd_k3 = acc_sd_k3 * dt;
+		vec::fixed<6> disp_sd_k3 = (m_vel_sd + vel_sd_k2 / 2) * dt;
 
-	m_acc_sd = (acc_sd_k1 + 2 * acc_sd_k2 + 2 * acc_sd_k3 + acc_sd_k4) / 6;
-	m_vel_sd += (vel_sd_k1 + 2 * vel_sd_k2 + 2 * vel_sd_k3 + vel_sd_k4) / 6;
-	m_disp_sd += (disp_sd_k1 + 2 * disp_sd_k2 + 2 * disp_sd_k3 + disp_sd_k4) / 6;
+		vec::fixed<6> acc_sd_k4 = -2 * wf*zeta*(m_vel_sd + vel_sd_k3) - wf * wf * (m_disp_sd + disp_sd_k3 - m_disp);
+		vec::fixed<6> vel_sd_k4 = acc_sd_k3 * dt;
+		vec::fixed<6> disp_sd_k4 = (m_vel_sd + vel_sd_k3) * dt;
+
+		m_acc_sd = (acc_sd_k1 + 2 * acc_sd_k2 + 2 * acc_sd_k3 + acc_sd_k4) / 6;
+		m_vel_sd += (vel_sd_k1 + 2 * vel_sd_k2 + 2 * vel_sd_k3 + vel_sd_k4) / 6;
+		m_disp_sd += (disp_sd_k1 + 2 * disp_sd_k2 + 2 * disp_sd_k3 + disp_sd_k4) / 6;
+	}
+	else
+	{
+		m_acc_sd = m_acc;
+		m_vel_sd = m_vel;
+		m_disp_sd = m_disp;
+	}
 
 	// Aqui tem que passar os deslocamentos com relacao ao CoG do floater. Calcular aqui mesmo baseado na posicao do centro de referencia de movimento
 	m_floater.update(m_disp, m_vel, m_acc, m_disp_sd); 
