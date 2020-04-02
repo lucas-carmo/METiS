@@ -701,7 +701,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		// This check is not necessary, but makes the calculation faster by neglecting useless points.
 		//
 		// Need to check if n2[2] and n2_sd[2] are above the waterline because of the cases where n2_sd is below n1_sd.
-		if (n_ii[2] > 0 && n_ii_sd[2] > 0 && n2[2] > 0 && n2_sd[2] > 0)
+		if (n_ii[2] > 0 && n_ii[2] > zwl && n_ii_sd[2] > 0 && n_ii_sd[2] > zwl &&
+			  n2[2] > 0 && n2[2] > zwl && n2_sd[2] > 0 && n2_sd[2] > zwl)
 		{
 			break;
 		}
@@ -726,12 +727,12 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		******/
 		// Fluid acceleration at the integration point.
 		// Calculated in the instantaneous position.
-		du1dt = envir.du1dt(n_ii);
+		du1dt = envir.du1dt(n_ii, 0);
 
 		// Fluid acceleration at the integration point.
 		// Calculated disconsidering the vertical displacement of the body, as it is used
 		// only for the quadratic drag force, which is a quadratic term.
-		u1 = envir.u1(n_ii_sd);
+		u1 = envir.u1(n_ii_sd, 0);
 
 		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder,
 		// written in the GLOBAL reference frame.
@@ -742,7 +743,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		// Calculation of the forces and moments in the integration node. The moments are given with respect to n1,
 		// but are output with respect to node 1.
 		// Components from Morison's Equation
-		if (n_ii[2] <= 0) // if ((n_ii[2] <= 0 && envir.waveStret() <= 1) || (n_ii[2] <= zwl && envir.waveStret() == 3))
+		if ((n_ii[2] <= 0 && envir.waveStret() <= 1) || (n_ii[2] <= zwl && envir.waveStret() == 3))
 		{
 			force_inertia_ii = datum::pi * D*D / 4. * rho * Cm * du1dt - datum::pi * D*D / 4. * rho * (Cm - 1) * acc_ii;
 		}
@@ -774,6 +775,9 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 				force_inertia_2nd_part1_ii = (datum::pi * D*D / 4.) * rho * Cm * du2dt;
 
 				// 2nd component: Force due to the wave elevation
+				// If waveStret == 0, it is not computed.
+				// If waveStret == 1, it is computed using vertical stretching
+				// If waveStre > 1, this force component is included in
 			}
 			else
 			{
@@ -807,8 +811,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		Second part: forces on the bottom of the cylinder
 	*/
 	// Component of the fluid velocity/acceleration at the bottom node that is parallel to the cylinder axis
-	du1dt = dot(envir.du1dt(n1), zvec) * zvec;
-	u1 = dot(envir.u1(n1), zvec) * zvec; // Since the bottom contribution is not integrated along the length, it is OK to keep it at the instantaneous position
+	du1dt = dot(envir.du1dt(n1, 0), zvec) * zvec;
+	u1 = dot(envir.u1(n1, 0), zvec) * zvec; // Since the bottom contribution is not integrated along the length, it is OK to keep it at the instantaneous position
 
 	// Component of the velocity and acceleration of the bottom that is perpendicular to the axis of the cylinder
 	vec::fixed<3> v_axial = dot(v1, zvec) * zvec;

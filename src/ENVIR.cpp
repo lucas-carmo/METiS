@@ -301,8 +301,8 @@ void ENVIR::printWaveCharact() const
 	for (int ii = 0; ii < m_waveProbe.size(); ++ii)
 	{
 		IO::print2outLine(IO::OUTFLAG_WAVE_ELEV, m_waveProbeID[ii], waveElev(m_waveProbe[ii][0], m_waveProbe[ii][1]));
-		IO::print2outLine(IO::OUTFLAG_WAVE_VEL, m_waveProbeID[ii], u1(m_waveProbe[ii]));
-		IO::print2outLine(IO::OUTFLAG_WAVE_ACC, m_waveProbeID[ii], du1dt(m_waveProbe[ii]));
+		IO::print2outLine(IO::OUTFLAG_WAVE_VEL, m_waveProbeID[ii], u1(m_waveProbe[ii], 0));
+		IO::print2outLine(IO::OUTFLAG_WAVE_ACC, m_waveProbeID[ii], du1dt(m_waveProbe[ii], 0));
 		IO::print2outLine(IO::OUTFLAG_WAVE_ACC_2ND, m_waveProbeID[ii], du2dt(m_waveProbe[ii]));
 		IO::print2outLine(IO::OUTFLAG_WAVE_PRES, m_waveProbeID[ii], wavePressure(m_waveProbe[ii]));
 	}
@@ -446,7 +446,7 @@ double ENVIR::wavePressure(const vec::fixed<3> &coord) const
 }
 
 
-vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord, const unsigned int waveIndex) const
+vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord, const double zwl, const unsigned int waveIndex) const
 {
 	arma::vec::fixed<3> vel = {0,0,0};
 
@@ -464,8 +464,7 @@ vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord, const unsigned int waveIndex
 	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
 	double khz_xy(0), khz_z(0);
 
-	// This formulation is valid only below the mean water level, i.e. z <= 0
-	if (z <= 0)
+	if (z <= zwl)
 	{
 		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
 		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
@@ -489,18 +488,31 @@ vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord, const unsigned int waveIndex
 }
 
 
-vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord) const
+vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord, const double zwl) const
 {
 	arma::vec::fixed<3> vel = {0,0,0};
+
+	if (m_waveStret <= 1 && zwl != 0)
+	{
+		throw std::runtime_error("zwl = " + std::to_string(zwl) + "is incompatible with wave streching mode " + std::to_string(m_waveStret));
+	}
+
+	double z = coord.at(2);
+	if (m_waveStret == 2)
+	{
+		double h = m_watDepth;
+		z = h * (h + z) / (h+zwl) - h;
+	}
+
 	for (int ii = 0; ii < m_wave.size(); ++ii)
 	{
-		vel += ENVIR::u1(coord, ii);
+		vel += ENVIR::u1(vec::fixed<3>({coord.at(0), coord.at(1), z}), zwl, ii);
 	}
 	return vel;
 }
 
 
-vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord, const unsigned int waveIndex) const
+vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord, const double zwl, const unsigned int waveIndex) const
 {
 	arma::vec::fixed<3> acc = {0,0,0};
 
@@ -518,8 +530,7 @@ vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord, const unsigned int waveIn
 	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
 	double khz_xy(0), khz_z(0);
 
-	// This formulation is valid only below the mean water level, i.e. z <= 0
-	if (z <= 0)
+	if (z <= zwl)
 	{
 		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
 		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
@@ -543,12 +554,25 @@ vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord, const unsigned int waveIn
 }
 
 
-vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord) const
+vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord, const double zwl) const
 {
 	arma::vec::fixed<3> acc = {0,0,0};
+
+	if (m_waveStret <= 1 && zwl != 0)
+	{
+		throw std::runtime_error("zwl = " + std::to_string(zwl) + "is incompatible with wave streching mode " + std::to_string(m_waveStret));
+	}
+
+	double z = coord.at(2);
+	if (m_waveStret == 2)
+	{
+		double h = m_watDepth;
+		z = h * (h + z) / (h+zwl) - h;
+	}
+
 	for (int ii = 0; ii < m_wave.size(); ++ii)
 	{
-		acc += ENVIR::du1dt(coord, ii);
+		acc += ENVIR::du1dt(vec::fixed<3>({coord.at(0), coord.at(1), z}), zwl, ii);
 	}
 	return acc;
 }
@@ -558,7 +582,7 @@ vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord, const unsigned int waveIn
 {
 	arma::vec::fixed<3> acc = { 0,0,0 };
 
-	// In this case, the calculation below would lead to 0/0, but the limit is actually 0. This is fine, as the second order potential should not contribute to the mean drift. 
+	// In this case, the calculation below would lead to 0/0, but the limit is actually 0. This is fine, as the second order potential should not contribute to the mean drift.
 	if (waveIndex1 == waveIndex2)
 	{
 		return acc;
@@ -580,8 +604,8 @@ vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord, const unsigned int waveIn
 
 	double A2 = m_wave.at(waveIndex2).amp();
 	double w2 = m_wave.at(waveIndex2).angFreq();
-	double k2 = m_wave.at(waveIndex2).waveNumber();	
-	double b2 = m_wave.at(waveIndex2).direction() * arma::datum::pi / 180.;	
+	double k2 = m_wave.at(waveIndex2).waveNumber();
+	double b2 = m_wave.at(waveIndex2).direction() * arma::datum::pi / 180.;
 	double p2 = m_wave.at(waveIndex2).phase() * arma::datum::pi / 180.;
 	double cosB2 = m_wave.at(waveIndex2).cosBeta();
 	double sinB2 = m_wave.at(waveIndex2).sinBeta();
@@ -596,10 +620,10 @@ vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord, const unsigned int waveIn
 		double aux = ((w2 - w1) / (w1 * w2)) * k1 * k2 * ( std::cos(b1-b2) + std::tanh(k1*h) * std::tanh(k2*h))
 			         - 0.5 * ( k1*k1 / (w1 * pow(std::cosh(k1*h),2)) - k2*k2 / (w2 * pow(std::cosh(k2*h), 2)));
 		aux = aux / ( g * norm_k1_k2 * std::tanh(norm_k1_k2 * h) - (w1 - w2)*(w1 - w2) );
-		
+
 		double khz_xy = std::cosh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h);
 		double khz_z = std::sinh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h);
-		
+
 		acc[0] = 0.5 * A1 * A2 * (w1 - w2) * (k1 * cosB1 - k2 * cosB2 ) * g*g * aux * khz_xy
 			     * std::sin( dot(k1_k2, coord) - (w1 - w2) * t + p1 - p2);
 
