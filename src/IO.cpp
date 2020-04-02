@@ -94,6 +94,11 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			envir.setWatDepth(string2num<double>(getData(strInput)));
 		}
 
+		else if (caseInsCompare(getKeyword(strInput), "WaveStret"))
+		{
+			envir.setWaveStret(string2num<unsigned int>(getData(strInput)));
+		}
+
 		else if (caseInsCompare(getKeyword(strInput), "AirDens"))
 		{
 			envir.setAirDens(string2num<double>(getData(strInput)));
@@ -113,19 +118,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		{
 			envir.setWindExp(string2num<double>(getData(strInput)));
 		}
-
-		else if (caseInsCompare(getKeyword(strInput), "FiltSlowDrift"))
-		{
-			// Need 2 inputs separated by a space or a tab:
-			// angular frequency and damping levels (in % of critical damping)
-			std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
-			if (input.size() != 2)
-			{
-				throw std::runtime_error("Unable to read slow drift filter in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-			}
-			fowt.setFilderSD(string2num<double>(input.at(0)), string2num<double>(input.at(1)));
-		}
-
 
 		// Waves, nodes and other inputs, are special because they have
 		// several lines to specify their characteristics.
@@ -304,6 +296,18 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			}
 
 			fowt.setExtConstForce(aux);
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "FiltSlowDrift"))
+		{
+		// Need 2 inputs separated by a space or a tab:
+		// angular frequency and damping levels (in % of critical damping)
+		std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
+		if (input.size() != 2)
+		{
+			throw std::runtime_error("Unable to read slow drift filter in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+		}
+		fowt.setFilderSD(string2num<double>(input.at(0)), string2num<double>(input.at(1)));
 		}
 
 		// Read data to floater - which is a part of FOWT
@@ -1249,6 +1253,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Gravity:\t" << envir.gravity() << '\n';
 	m_sumFl << "Water Density:\t" << envir.watDensity() << '\n';
 	m_sumFl << "Water Depth:\t" << envir.watDepth() << '\n';
+	m_sumFl << "Wave Stretching:\t" << envir.waveStret() << '\n';
 	m_sumFl << "Air density:\t" << envir.airDensity() << '\n';
 	m_sumFl << "Wind X velocity:\t" << envir.windRefVel() << '\n';
 	m_sumFl << "Wind Height:\t" << envir.windRefHeight() << '\n';

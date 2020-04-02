@@ -733,9 +733,10 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		du1dt = dot(du1dt, xvec) * xvec + dot(du1dt, yvec) * yvec;
 		u1 = dot(u1, xvec_sd) * xvec_sd + dot(u1, yvec_sd) * yvec_sd;		
 
-		// Components from Morison's Equation - Calculation of the forces and moments in the integration node.
-		// The moments are given with respect to node 1.				
-		if (n_ii[2] <= 0)
+		// Calculation of the forces and moments in the integration node. The moments are given with respect to n1,
+		// but are output with respect to node 1.
+		// Components from Morison's Equation
+		if (n_ii[2] <= 0) // if ((n_ii[2] <= 0 && envir.waveStret() <= 1) || (n_ii[2] <= zwl && envir.waveStret() == 3))
 		{
 			force_inertia_ii = datum::pi * D*D / 4. * rho * Cm * du1dt - datum::pi * D*D / 4. * rho * (Cm - 1) * acc_ii;
 		}
@@ -761,9 +762,12 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		{
 			if (n_ii_sd[2] <= 0)
 			{
+				// 1st component: Force due to the second-order potential
 				du2dt = envir.du2dt(n_ii_sd);
 				du2dt = dot(du2dt, xvec_sd) * xvec_sd + dot(du2dt, yvec_sd) * yvec_sd;
 				force_inertia_2nd_part1_ii = (datum::pi * D*D / 4.) * rho * Cm * du2dt;
+
+				// 2nd component: Force due to the wave elevation
 			}
 			else
 			{

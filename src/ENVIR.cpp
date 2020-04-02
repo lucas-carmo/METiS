@@ -52,6 +52,11 @@ void ENVIR::setWatDepth(const double watDepth)
 	m_watDepth = watDepth;
 }
 
+void ENVIR::setWaveStret(const unsigned int waveStret)
+{
+	m_waveStret = waveStret;
+}
+
 void ENVIR::setAirDens(const double airDens)
 {
 	m_airDens = airDens;
@@ -189,6 +194,11 @@ double ENVIR::watDensity() const
 double ENVIR::watDepth() const
 {
 	return m_watDepth;
+}
+
+unsigned int ENVIR::waveStret() const
+{
+	return m_waveStret;
 }
 
 double ENVIR::airDensity() const

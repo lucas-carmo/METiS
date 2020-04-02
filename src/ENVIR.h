@@ -22,6 +22,8 @@ private:
     double m_watDens;
     double m_watDepth;
     std::vector<Wave> m_wave; // The sea is specified by a vector with regular wave components. You can add a wave component using the method addRegularWave(), or many components using addJonswap().
+	unsigned int m_waveStret;
+
     double m_airDens;
     double m_windRefVel;
 	double m_windRefHeight;
@@ -50,6 +52,7 @@ public:
 	void setGravity(const double gravity);
 	void setWatDens(const double watDens);
 	void setWatDepth(const double watDepth);
+	void setWaveStret(const unsigned int waveStret);
 	void setAirDens(const double airDens);
 	void setWindRefVel(const double windRefVel);
 	void setWindRefHeight(const double windRefHeight);
@@ -71,6 +74,7 @@ public:
 	double gravity() const;
 	double watDensity() const;
 	double watDepth() const;
+	unsigned int waveStret() const;
 	double airDensity() const;
 	double windRefVel() const;
 	double windRefHeight() const;
