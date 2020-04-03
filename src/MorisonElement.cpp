@@ -123,7 +123,7 @@ vec::fixed<3> MorisonElement::node2AccCentrip() const
 
 // Calculate the intersection between the cylinder and waterline, considering the wave elevation.
 // Returns arma::datum::nan if no intersection is found.
-double MorisonElement::findIntersectWL(const ENVIR &envir) const
+vec::fixed<3> MorisonElement::findIntersectWL(const ENVIR &envir) const
 {
 	// Nodes position
 	vec::fixed<3> n1 = node1Pos();
@@ -140,7 +140,7 @@ double MorisonElement::findIntersectWL(const ENVIR &envir) const
 	// However, this would be a pathological case that we do not want to deal with (at least by now).
 	if ((n1[2] - envir.waveElev(n1[0], n1[1])) * (n2[2] - envir.waveElev(n2[0], n2[1])) >= 0)
 	{
-		return arma::datum::nan;
+		return vec::fixed<3> {datum::nan, datum::nan, datum::nan};
 	}
 
 	// Brackets for solving the equation using the coordinate along the cylinder length
@@ -171,9 +171,9 @@ double MorisonElement::findIntersectWL(const ENVIR &envir) const
 
 		else // It is very unlikely that s_i will be the zero, but this possibility will be covered anyway
 		{
-			return s_i[2];
+			return s_i;
 		}
 	}
 
-	return s_j[2];
+	return s_j;
 }

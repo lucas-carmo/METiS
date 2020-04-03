@@ -584,7 +584,9 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 
 // The vectors passed as reference are used to return the different components of the hydrodynamic force acting on the cylinder,
 // without the need of calling three different methods for each component of the hydrodynamic force
-vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydroMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov, vec::fixed<6> &force_inertia_2nd_part1) const
+vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydroMode, 
+												vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov, 
+												vec::fixed<6> &force_inertia_2nd_part1, vec::fixed<6> &force_inertia_2nd_part2) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
@@ -625,9 +627,14 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	MorisonCirc::make_local_base_sd(xvec_sd, yvec_sd, zvec_sd);
 
 	double zwl = 0;
-	if (envir.waveStret() == 2)
+	vec::fixed<3> intersectWL(fill::zeros);
+	if (envir.waveStret() == 1 || envir.waveStret() == 2)
 	{
-		zwl = findIntersectWL(envir);
+		intersectWL = findIntersectWL(envir);
+		if (envir.waveStret() == 2)
+		{
+			zwl = intersectWL.at(2);
+		}
 	}
 
 	// Velocity and acceleration of the cylinder nodes
@@ -727,7 +734,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		******/
 		// Fluid acceleration at the integration point.
 		// Calculated in the instantaneous position.
-		du1dt = envir.du1dt(n_ii, 0);
+		du1dt = envir.du1dt(n_ii, zwl);
 
 		// Fluid acceleration at the integration point.
 		// Calculated disconsidering the vertical displacement of the body, as it is used
@@ -743,7 +750,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		// Calculation of the forces and moments in the integration node. The moments are given with respect to n1,
 		// but are output with respect to node 1.
 		// Components from Morison's Equation
-		if ((n_ii[2] <= 0 && envir.waveStret() <= 1) || (n_ii[2] <= zwl && envir.waveStret() == 3))
+		if ((n_ii[2] <= 0 && envir.waveStret() <= 1) || (n_ii[2] <= zwl && envir.waveStret() == 2))
 		{
 			force_inertia_ii = datum::pi * D*D / 4. * rho * Cm * du1dt - datum::pi * D*D / 4. * rho * (Cm - 1) * acc_ii;
 		}
@@ -773,11 +780,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 				du2dt = envir.du2dt(n_ii_sd);
 				du2dt = dot(du2dt, xvec_sd) * xvec_sd + dot(du2dt, yvec_sd) * yvec_sd;
 				force_inertia_2nd_part1_ii = (datum::pi * D*D / 4.) * rho * Cm * du2dt;
-
-				// 2nd component: Force due to the wave elevation
-				// If waveStret == 0, it is not computed.
-				// If waveStret == 1, it is computed using vertical stretching
-				// If waveStre > 1, this force component is included in
 			}
 			else
 			{
@@ -807,6 +809,36 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		}
 	}
 
+	// 2nd component of the second order force: Force due to the wave elevation.
+	// It is computed here only if Taylor series for wave stretching was chosen.
+	// If waveStret == 0, this effect is not included in the analysis, 
+	// and if waveStre > 1, this force component is included in force_inertia.
+	if (hydroMode == 2 && envir.waveStret() == 1)
+	{		
+		// Calculation of the inclination of the cylinder (with respect to the
+		// vertical), which is used to calculate the integration area, i.e. the 
+		// length of the cylinder inside the wave elevation.
+		double alpha = acos(dot(zvec_sd, arma::vec::fixed<3> {0, 0, 1})); // zvec and {0, 0, 1} are both unit vectors
+		double cosAlpha{ 0 };
+
+		// Check if the angle is 90 degrees
+		if (std::abs(alpha - arma::datum::pi / 2) > datum::eps)
+		{
+			cosAlpha = cos(alpha);
+		}
+		else
+		{
+			cosAlpha = 0;
+		}
+
+		n_ii_sd = (n2_sd - n1_sd) * (0-n1_sd.at(2))/(n2_sd.at(2)-n1_sd.at(2)) + n1_sd; // Coordinates of the intersction with the still water line;
+
+		du1dt = envir.du1dt(n_ii_sd, 0);
+		du1dt = dot(du1dt, xvec) * xvec + dot(du1dt, yvec) * yvec;		
+		force_inertia_2nd_part2.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * intersectWL.at(2) / cosAlpha;
+		force_inertia_2nd_part2.rows(3, 5) = force_inertia_2nd_part2.rows(0, 2) * intersectWL.at(2) / cosAlpha / 2;
+	}
+
 	/*
 		Second part: forces on the bottom of the cylinder
 	*/
@@ -832,7 +864,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	/*
 		Total force
 	*/
-	force = force_inertia + force_drag + force_froudeKrylov + force_inertia_2nd_part1;
+	force = force_inertia + force_drag + force_froudeKrylov + force_inertia_2nd_part1 + force_inertia_2nd_part2;
 
 	// The moment was calculated with relation to n1, which may be different from node1.
 	// We need to change the fulcrum to node1

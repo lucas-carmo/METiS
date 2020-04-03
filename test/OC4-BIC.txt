@@ -26,6 +26,10 @@ Grav		9.81
 WatDens		1025
 WatDepth	200
 
+% Only the wave acceleration is stretched
+% If HydroMode != 2 and WaveStret == 1, the latter is ignored
+WaveStret   1 % 0: No stretching; 1: Taylor serie's from Kim and Chen, 1994, to evaluate force due to wave elevation; 2: Wheeler's stretching
+
 % Filter for slow drift motions. Angular frequency \t Damping (in % of critical). Default values are 0.025 and 0.20.
 % To neglect it, provide a negative value to the angular frequency. In this case, the total instantaneous is used 
 % to evaluate second order terms

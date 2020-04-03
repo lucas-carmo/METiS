@@ -814,6 +814,11 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART1) = true;
 	}
 
+	if (caseInsCompare(keyword, "hd_2nd_force_part2"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART2) = true;
+	}
+
 	if (caseInsCompare(keyword, "hd_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE) = true;
@@ -961,8 +966,9 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 {
 	// Check whether the specified flag is indeed one that requires a vector with six components
 	if ((flag != OUTFLAG_FOWT_DISP) && (flag != OUTFLAG_FOWT_VEL) && (flag != OUTFLAG_FOWT_ACC) && (flag != OUTFLAG_FOWT_DISP_SD) &&
-		(flag != OUTFLAG_HD_FORCE) && (flag != IO::OUTFLAG_HD_2ND_FORCE_PART1) && (flag != OUTFLAG_HS_FORCE) && (flag != OUTFLAG_TOTAL_FORCE) &&
+		(flag != OUTFLAG_TOTAL_FORCE) && (flag != OUTFLAG_HD_FORCE)  && (flag != OUTFLAG_HS_FORCE) &&
 		(flag != OUTFLAG_HD_INERTIA_FORCE) && (flag != OUTFLAG_HD_DRAG_FORCE) && (flag != OUTFLAG_HD_FK_FORCE) &&
+		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART1) && (flag != IO::OUTFLAG_HD_2ND_FORCE_PART2) &&
 		(flag != OUTFLAG_AD_HUB_FORCE)
 	   )
 	{
@@ -1003,7 +1009,15 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			{
 				print2outLineHeader("hd_2nd_force_P1_" + std::to_string(ii));
 			}
-		}		
+		}
+
+		if (flag == OUTFLAG_HD_2ND_FORCE_PART2)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_2nd_force_P2_" + std::to_string(ii));
+			}
+		}
 
 		if (flag == OUTFLAG_HD_FORCE)
 		{
@@ -1357,6 +1371,10 @@ std::string IO::printOutVar()
 
 		case IO::OUTFLAG_HD_2ND_FORCE_PART1:
 			output += "Hydrodynamic 2nd force - Part 1: ";
+			break;
+
+		case IO::OUTFLAG_HD_2ND_FORCE_PART2:
+			output += "Hydrodynamic 2nd force - Part 2: ";
 			break;
 
 		case IO::OUTFLAG_HD_FK_FORCE:

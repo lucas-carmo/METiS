@@ -66,13 +66,13 @@ public:
 	virtual mat::fixed<6, 6> addedMass_paral(const double rho) const = 0;
 
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const = 0;
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov, vec::fixed<6> &force_inertia_2nd_part1) const = 0;
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov, vec::fixed<6> &force_inertia_2nd_part1, vec::fixed<6> &force_inertia_2nd_part2) const = 0;
 
 	// Printers and getters
 	virtual std::string print() const = 0;
 
 	// Others
-	virtual double findIntersectWL(const ENVIR &envir) const;
+	virtual vec::fixed<3> findIntersectWL(const ENVIR &envir) const;
 
 	/*****************************************************
 		Clone for creating copies of the Morison Element
