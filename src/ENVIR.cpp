@@ -500,8 +500,7 @@ vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord, const double zwl) const
 	double z = coord.at(2);
 	if (m_waveStret == 2)
 	{
-		double h = m_watDepth;
-		z = h * (h + z) / (h+zwl) - h;
+		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
 	}
 
 	for (int ii = 0; ii < m_wave.size(); ++ii)
@@ -566,8 +565,7 @@ vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord, const double zwl) const
 	double z = coord.at(2);
 	if (m_waveStret == 2)
 	{
-		double h = m_watDepth;
-		z = h * (h + z) / (h+zwl) - h;
+		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
 	}
 
 	for (int ii = 0; ii < m_wave.size(); ++ii)
