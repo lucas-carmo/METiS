@@ -628,13 +628,10 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 
 	double zwl = 0;
 	vec::fixed<3> intersectWL(fill::zeros);
-	if (envir.waveStret() == 1 || envir.waveStret() == 2)
+	if (envir.waveStret() == 2)
 	{
 		intersectWL = findIntersectWL(envir);
-		if (envir.waveStret() == 2)
-		{
-			zwl = intersectWL.at(2);
-		}
+		zwl = intersectWL.at(2);
 	}
 
 	// Velocity and acceleration of the cylinder nodes
@@ -834,9 +831,10 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		n_ii_sd = (n2_sd - n1_sd) * (0-n1_sd.at(2))/(n2_sd.at(2)-n1_sd.at(2)) + n1_sd; // Coordinates of the intersction with the still water line;
 
 		du1dt = envir.du1dt(n_ii_sd, 0);
-		du1dt = dot(du1dt, xvec) * xvec + dot(du1dt, yvec) * yvec;		
-		force_inertia_2nd_part2.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * intersectWL.at(2) / cosAlpha;
-		force_inertia_2nd_part2.rows(3, 5) = force_inertia_2nd_part2.rows(0, 2) * intersectWL.at(2) / cosAlpha / 2;
+		du1dt = dot(du1dt, xvec) * xvec + dot(du1dt, yvec) * yvec;
+		double eta = envir.waveElev(n_ii_sd.at(0), n_ii_sd.at(1));
+		force_inertia_2nd_part2.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta / cosAlpha;
+		force_inertia_2nd_part2.rows(3, 5) = force_inertia_2nd_part2.rows(0, 2) * eta / cosAlpha / 2;
 	}
 
 	/*
