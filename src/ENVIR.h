@@ -40,6 +40,9 @@ private:
 	double m_timeRamp;
 	double m_time = 0;
 
+	vec::fixed<3> u1_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> du1dt_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+
 public:
 	ENVIR();
 
@@ -110,10 +113,8 @@ public:
 	double waveElev(const double x, const double y, const unsigned int waveIndex) const;
 	double waveElev(const double x, const double y) const;
 	double wavePressure(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
-	double wavePressure(const vec::fixed<3> &coord) const;
-	vec::fixed<3> u1(const vec::fixed<3> &coord, const double zwl, const unsigned int waveIndex) const;
+	double wavePressure(const vec::fixed<3> &coord) const;	
 	vec::fixed<3> u1(const vec::fixed<3> &coord, const double zwl) const;
-	vec::fixed<3> du1dt(const vec::fixed<3> &coord, const double zwl, const unsigned int waveIndex) const;
 	vec::fixed<3> du1dt(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> du2dt(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
 	vec::fixed<3> du2dt(const vec::fixed<3> &coord) const;

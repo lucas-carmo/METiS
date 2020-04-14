@@ -446,7 +446,7 @@ double ENVIR::wavePressure(const vec::fixed<3> &coord) const
 }
 
 
-vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord, const double zwl, const unsigned int waveIndex) const
+vec::fixed<3> ENVIR::u1_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const
 {
 	arma::vec::fixed<3> vel = {0,0,0};
 
@@ -464,7 +464,7 @@ vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord, const double zwl, const unsi
 	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
 	double khz_xy(0), khz_z(0);
 
-	if (z <= zwl)
+	if (z <= 0)
 	{
 		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
 		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
@@ -498,6 +498,11 @@ vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord, const double zwl) const
 	}
 
 	double z = coord.at(2);
+	if (z > zwl)
+	{
+		return vel;
+	}
+
 	if (m_waveStret == 2)
 	{
 		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
@@ -505,13 +510,13 @@ vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord, const double zwl) const
 
 	for (int ii = 0; ii < m_wave.size(); ++ii)
 	{
-		vel += ENVIR::u1(vec::fixed<3>({coord.at(0), coord.at(1), z}), zwl, ii);
+		vel += ENVIR::u1_eachWave(vec::fixed<3>({coord.at(0), coord.at(1), z}), ii);
 	}
 	return vel;
 }
 
 
-vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord, const double zwl, const unsigned int waveIndex) const
+vec::fixed<3> ENVIR::du1dt_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const
 {
 	arma::vec::fixed<3> acc = {0,0,0};
 
@@ -529,7 +534,7 @@ vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord, const double zwl, const u
 	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
 	double khz_xy(0), khz_z(0);
 
-	if (z <= zwl)
+	if (z <= 0)
 	{
 		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
 		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
@@ -563,6 +568,11 @@ vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord, const double zwl) const
 	}
 
 	double z = coord.at(2);
+	if (z > zwl)
+	{
+		return acc;
+	}
+
 	if (m_waveStret == 2)
 	{
 		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
@@ -570,7 +580,7 @@ vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord, const double zwl) const
 
 	for (int ii = 0; ii < m_wave.size(); ++ii)
 	{
-		acc += ENVIR::du1dt(vec::fixed<3>({coord.at(0), coord.at(1), z}), zwl, ii);
+		acc += ENVIR::du1dt_eachWave(vec::fixed<3>({coord.at(0), coord.at(1), z}), ii);
 	}
 	return acc;
 }
