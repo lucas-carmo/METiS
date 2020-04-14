@@ -833,8 +833,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		du1dt = envir.du1dt(n_ii_sd, 0);
 		du1dt = dot(du1dt, xvec) * xvec + dot(du1dt, yvec) * yvec;
 		double eta = envir.waveElev(n_ii_sd.at(0), n_ii_sd.at(1));
-		force_inertia_2nd_part2.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta / cosAlpha;
-		force_inertia_2nd_part2.rows(3, 5) = force_inertia_2nd_part2.rows(0, 2) * eta / cosAlpha / 2;
+		force_inertia_2nd_part2.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta;
+		force_inertia_2nd_part2.rows(3, 5) = force_inertia_2nd_part2.rows(0, 2) * eta / 2;
 	}
 
 	/*
