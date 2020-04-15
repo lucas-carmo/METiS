@@ -766,7 +766,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		}
 
 		moment_inertia_ii = cross(R_ii * zvec, force_inertia_ii);
-		moment_drag_ii = cross(R_ii * zvec_sd, force_drag_ii) + cross(n1_sd - n1, force_drag_ii); // The moment has to be calculated with respect to n1
+		moment_drag_ii = cross(R_ii * zvec_sd, force_drag_ii);
 
 		// If required, calculate the second-order part (inertial forces)
 		if (hydroMode == 2)
@@ -782,7 +782,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			{
 				force_inertia_2nd_part1_ii.zeros();
 			}
-			moment_inertia_2nd_part1_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part1_ii) + cross(n1_sd - n1, force_inertia_2nd_part1_ii); // The moment has to be calculated with respect to n1
+			moment_inertia_2nd_part1_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part1_ii);
 		}
 
 		// Integrate the forces along the cylinder using Simpson's Rule
@@ -809,32 +809,17 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	// 2nd component of the second order force: Force due to the wave elevation.
 	// It is computed here only if Taylor series for wave stretching was chosen.
 	// If waveStret == 0, this effect is not included in the analysis, 
-	// and if waveStre > 1, this force component is included in force_inertia.
+	// and if waveStret > 1, this force component is included in force_inertia.
 	if (hydroMode == 2 && envir.waveStret() == 1)
-	{		
-		// Calculation of the inclination of the cylinder (with respect to the
-		// vertical), which is used to calculate the integration area, i.e. the 
-		// length of the cylinder inside the wave elevation.
-		double alpha = acos(dot(zvec_sd, arma::vec::fixed<3> {0, 0, 1})); // zvec and {0, 0, 1} are both unit vectors
-		double cosAlpha{ 0 };
-
-		// Check if the angle is 90 degrees
-		if (std::abs(alpha - arma::datum::pi / 2) > datum::eps)
-		{
-			cosAlpha = cos(alpha);
-		}
-		else
-		{
-			cosAlpha = 0;
-		}
-
-		n_ii_sd = (n2_sd - n1_sd) * (0-n1_sd.at(2))/(n2_sd.at(2)-n1_sd.at(2)) + n1_sd; // Coordinates of the intersction with the still water line;
-
+	{	
+		n_ii_sd = (n2_sd - n1_sd) * (0-n1_sd.at(2))/(n2_sd.at(2)-n1_sd.at(2)) + n1_sd; // Coordinates of the intersction with the still water line;		
+		n_ii_sd.at(2) = 0; // Since envir.du1dt returns 0 for z > 0, this line is necessary to make sure that the z coordinate of n_ii_sd is exactly 0, and not slightly above due to roundoff error.
 		du1dt = envir.du1dt(n_ii_sd, 0);
-		du1dt = dot(du1dt, xvec) * xvec + dot(du1dt, yvec) * yvec;
+		du1dt = dot(du1dt, xvec_sd) * xvec_sd + dot(du1dt, yvec_sd) * yvec_sd;
 		double eta = envir.waveElev(n_ii_sd.at(0), n_ii_sd.at(1));
 		force_inertia_2nd_part2.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta;
-		force_inertia_2nd_part2.rows(3, 5) = force_inertia_2nd_part2.rows(0, 2) * eta / 2;
+		double R_ii = norm(n_ii_sd - n1_sd, 2) + eta / 2;		
+		force_inertia_2nd_part2.rows(3, 5) = cross(R_ii * zvec_sd, force_inertia_2nd_part2.rows(0, 2));
 	}
 
 	/*
