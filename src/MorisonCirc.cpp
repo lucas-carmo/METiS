@@ -631,7 +631,12 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	if (envir.waveStret() == 2)
 	{
 		intersectWL = findIntersectWL(envir);
-		zwl = intersectWL.at(2);
+
+		// If no intersection with the WL is found, continue considering zwl == 0
+		if (intersectWL.is_finite())
+		{
+			zwl = intersectWL.at(2); // Se nao tiver interseccao, eh porque zwl eh zero
+	}
 	}
 
 	// Velocity and acceleration of the cylinder nodes
@@ -716,11 +721,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		******/
 		// Absolute (R_ii) and relative (lambda) distance between the integration point and the bottom node
 		double R_ii = norm(n_ii - n1, 2);
-		double lambda = R_ii/norm(n2 - n1, 2);
+		double lambda = R_ii / norm(n2 - n1, 2);
 
 		// Velocity and acceleration of the integration point
-		vel_ii = v1 + lambda * ( v2 - v1 );
-		acc_ii = a1 + lambda * ( a2 - a1 );
+		vel_ii = v1 + lambda * (v2 - v1);
+		acc_ii = a1 + lambda * (a2 - a1);
 
 		// Component of the velocity and acceleration of the integration point that is perpendicular to the axis of the cylinder
 		vel_ii = dot(vel_ii, xvec) * xvec + dot(vel_ii, yvec) * yvec;
@@ -807,10 +812,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	}
 
 	// 2nd component of the second order force: Force due to the wave elevation.
-	// It is computed here only if Taylor series for wave stretching was chosen.
+	// It is computed here only if Taylor series for wave stretching was chosen and
+	// if the cylinder intersects the water line.
 	// If waveStret == 0, this effect is not included in the analysis, 
 	// and if waveStret > 1, this force component is included in force_inertia.
-	if (hydroMode == 2 && envir.waveStret() == 1)
+	if (hydroMode == 2 && envir.waveStret() == 1 && (n2_sd.at(2)*n1_sd.at(2) < 0))
 	{	
 		n_ii_sd = (n2_sd - n1_sd) * (0-n1_sd.at(2))/(n2_sd.at(2)-n1_sd.at(2)) + n1_sd; // Coordinates of the intersction with the still water line;		
 		n_ii_sd.at(2) = 0; // Since envir.du1dt returns 0 for z > 0, this line is necessary to make sure that the z coordinate of n_ii_sd is exactly 0, and not slightly above due to roundoff error.
