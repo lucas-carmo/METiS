@@ -636,7 +636,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		if (intersectWL.is_finite())
 		{
 			zwl = intersectWL.at(2); // Se nao tiver interseccao, eh porque zwl eh zero
-	}
+		}
 	}
 
 	// Velocity and acceleration of the cylinder nodes
@@ -711,7 +711,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		//
 		// Need to check if n2[2] and n2_sd[2] are above the waterline because of the cases where n2_sd is below n1_sd.
 		if (n_ii[2] > 0 && n_ii[2] > zwl && n_ii_sd[2] > 0 && n_ii_sd[2] > zwl &&
-			  n2[2] > 0 && n2[2] > zwl && n2_sd[2] > 0 && n2_sd[2] > zwl)
+			n2[2] > 0 && n2[2] > zwl && n2_sd[2] > 0 && n2_sd[2] > zwl)
 		{
 			break;
 		}
@@ -736,11 +736,18 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		******/
 		// Fluid acceleration at the integration point.
 		// Calculated in the instantaneous position.
-		du1dt = envir.du1dt(n_ii, zwl);
+		if (envir.waveStret() == 2)
+		{
+			du1dt = envir.du1dt(n_ii, envir.waveElev(n_ii.at(0), n_ii.at(1)));
+		}
+		else
+		{
+			du1dt = envir.du1dt(n_ii, 0);
+		}
 
 		// Fluid acceleration at the integration point.
 		// Calculated disconsidering the vertical displacement of the body, as it is used
-		// only for the quadratic drag force, which is a quadratic term.
+		// only for the quadratic drag force, which is a quadratic term.		
 		u1 = envir.u1(n_ii_sd, 0);
 
 		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder,
