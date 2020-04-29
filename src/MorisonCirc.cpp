@@ -596,6 +596,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	force_drag.zeros();
 	force_froudeKrylov.zeros();
 	force_inertia_2nd_part1.zeros();
+	force_inertia_2nd_part2.zeros();
 
 	// Use a more friendly notation
 	double D = m_diam;
@@ -635,7 +636,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		// If no intersection with the WL is found, continue considering zwl == 0
 		if (intersectWL.is_finite())
 		{
-			zwl = intersectWL.at(2); // Se nao tiver interseccao, eh porque zwl eh zero
+			zwl = intersectWL.at(2);
 		}
 	}
 
@@ -826,7 +827,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	if (hydroMode == 2 && envir.waveStret() == 1 && (n2_sd.at(2)*n1_sd.at(2) < 0))
 	{	
 		n_ii_sd = (n2_sd - n1_sd) * (0-n1_sd.at(2))/(n2_sd.at(2)-n1_sd.at(2)) + n1_sd; // Coordinates of the intersction with the still water line;		
-		n_ii_sd.at(2) = 0; // Since envir.du1dt returns 0 for z > 0, this line is necessary to make sure that the z coordinate of n_ii_sd is exactly 0, and not slightly above due to roundoff error.
+		n_ii_sd.at(2) = 0; // Since envir.du1dt returns 0 for z > 0, this line is necessary to make sure that the z coordinate of n_ii_sd is exactly 0, and not slightly above due to roundoff errors.
 		du1dt = envir.du1dt(n_ii_sd, 0);
 		du1dt = dot(du1dt, xvec_sd) * xvec_sd + dot(du1dt, yvec_sd) * yvec_sd;
 		double eta = envir.waveElev(n_ii_sd.at(0), n_ii_sd.at(1));
