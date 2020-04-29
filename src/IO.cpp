@@ -819,6 +819,11 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART2) = true;
 	}
 
+	if (caseInsCompare(keyword, "hd_2nd_force_part3"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART3) = true;
+	}
+
 	if (caseInsCompare(keyword, "hd_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE) = true;
@@ -965,11 +970,11 @@ void IO::print2outLineHeader_turnOff()
 void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 {
 	// Check whether the specified flag is indeed one that requires a vector with six components
-	if ((flag != OUTFLAG_FOWT_DISP) && (flag != OUTFLAG_FOWT_VEL) && (flag != OUTFLAG_FOWT_ACC) && (flag != OUTFLAG_FOWT_DISP_SD) &&
-		(flag != OUTFLAG_TOTAL_FORCE) && (flag != OUTFLAG_HD_FORCE)  && (flag != OUTFLAG_HS_FORCE) &&
-		(flag != OUTFLAG_HD_INERTIA_FORCE) && (flag != OUTFLAG_HD_DRAG_FORCE) && (flag != OUTFLAG_HD_FK_FORCE) &&
+	if ((flag != IO::OUTFLAG_FOWT_DISP) && (flag != IO::OUTFLAG_FOWT_VEL) && (flag != IO::OUTFLAG_FOWT_ACC) && (flag != IO::OUTFLAG_FOWT_DISP_SD) &&
+		(flag != IO::OUTFLAG_TOTAL_FORCE) && (flag != IO::OUTFLAG_HD_FORCE)  && (flag != IO::OUTFLAG_HS_FORCE) &&
+		(flag != IO::OUTFLAG_HD_INERTIA_FORCE) && (flag != IO::OUTFLAG_HD_DRAG_FORCE) && (flag != IO::OUTFLAG_HD_FK_FORCE) &&
 		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART1) && (flag != IO::OUTFLAG_HD_2ND_FORCE_PART2) &&
-		(flag != OUTFLAG_AD_HUB_FORCE)
+		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART3) && (flag != IO::OUTFLAG_AD_HUB_FORCE)
 	   )
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &force).");
@@ -1016,6 +1021,14 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			for (int ii = 1; ii <= 6; ++ii)
 			{
 				print2outLineHeader("hd_2nd_force_P2_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_2ND_FORCE_PART3)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_2nd_force_P3_" + std::to_string(ii));
 			}
 		}
 
@@ -1374,6 +1387,10 @@ std::string IO::printOutVar()
 			break;
 
 		case IO::OUTFLAG_HD_2ND_FORCE_PART2:
+			output += "Hydrodynamic 2nd force - Part 2: ";
+			break;
+
+		case IO::OUTFLAG_HD_2ND_FORCE_PART3:
 			output += "Hydrodynamic 2nd force - Part 2: ";
 			break;
 

@@ -40,7 +40,7 @@ public:
 	virtual mat::fixed<6, 6> addedMass_perp(const double rho) const override;
 	virtual mat::fixed<6, 6> addedMass_paral(const double rho) const override;
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const override;
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov, vec::fixed<6> &force_inertia_2nd_part1, vec::fixed<6> &force_inertia_2nd_part2) const override;
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov, vec::fixed<6> &force_inertia_2nd_part1, vec::fixed<6> &force_inertia_2nd_part2, vec::fixed<6> &force_inertia_2nd_part3) const override;
 
 	/*****************************************************
 		Printing

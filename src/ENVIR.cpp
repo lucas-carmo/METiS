@@ -582,8 +582,215 @@ vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord, const double zwl) const
 	{
 		acc += ENVIR::du1dt_eachWave(vec::fixed<3>({coord.at(0), coord.at(1), z}), ii);
 	}
+
 	return acc;
 }
+
+vec::fixed<3> ENVIR::du1dx_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	// More friendly notation
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+	double w = m_wave.at(waveIndex).angFreq();
+	double A = m_wave.at(waveIndex).amp();
+	double k = m_wave.at(waveIndex).waveNumber();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
+	double khz_xy(0), khz_z(0);
+
+	if (z <= 0)
+	{
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
+		}
+		
+		acc[0] = - w * A * k * khz_xy * cosBeta * cosBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[1] = - w * A * k * khz_xy * sinBeta * cosBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[2] = w * A * k * khz_z * cosBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+	}
+
+	return acc * ramp();
+}
+
+vec::fixed<3> ENVIR::du1dx(const vec::fixed<3> &coord, const double zwl) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	if (m_waveStret <= 1 && zwl != 0)
+	{
+		throw std::runtime_error("zwl = " + std::to_string(zwl) + "is incompatible with wave streching mode " + std::to_string(m_waveStret));
+	}
+
+	double z = coord.at(2);
+	if (z > zwl)
+	{
+		return acc;
+	}
+
+	if (m_waveStret == 2)
+	{
+		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
+	}
+
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		acc += ENVIR::du1dx_eachWave(vec::fixed<3>({ coord.at(0), coord.at(1), z }), ii);
+	}
+	return acc;
+}
+
+vec::fixed<3> ENVIR::du1dy_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	// More friendly notation
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+	double w = m_wave.at(waveIndex).angFreq();
+	double A = m_wave.at(waveIndex).amp();
+	double k = m_wave.at(waveIndex).waveNumber();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
+	double khz_xy(0), khz_z(0);
+
+	if (z <= 0)
+	{
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
+		}
+
+		acc[0] = -w * A * k * khz_xy * cosBeta * sinBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[1] = -w * A * k * khz_xy * sinBeta * sinBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[2] = w * A * k * khz_z * sinBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+	}
+
+	return acc * ramp();
+}
+
+vec::fixed<3> ENVIR::du1dy(const vec::fixed<3> &coord, const double zwl) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	if (m_waveStret <= 1 && zwl != 0)
+	{
+		throw std::runtime_error("zwl = " + std::to_string(zwl) + "is incompatible with wave streching mode " + std::to_string(m_waveStret));
+	}
+
+	double z = coord.at(2);
+	if (z > zwl)
+	{
+		return acc;
+	}
+
+	if (m_waveStret == 2)
+	{
+		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
+	}
+
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		acc += ENVIR::du1dy_eachWave(vec::fixed<3>({ coord.at(0), coord.at(1), z }), ii);
+	}
+	return acc;
+}
+
+vec::fixed<3> ENVIR::du1dz_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	// More friendly notation
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+	double w = m_wave.at(waveIndex).angFreq();
+	double A = m_wave.at(waveIndex).amp();
+	double k = m_wave.at(waveIndex).waveNumber();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
+	double khz_xy(0), khz_z(0);
+
+	if (z <= 0)
+	{
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
+		}
+
+		acc[0] = w * A * k * khz_z * cosBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[1] = w * A * k * khz_z * sinBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[2] = w * A * k * khz_xy * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+	}
+
+	return acc * ramp();
+}
+
+vec::fixed<3> ENVIR::du1dz(const vec::fixed<3> &coord, const double zwl) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	if (m_waveStret <= 1 && zwl != 0)
+	{
+		throw std::runtime_error("zwl = " + std::to_string(zwl) + "is incompatible with wave streching mode " + std::to_string(m_waveStret));
+	}
+
+	double z = coord.at(2);
+	if (z > zwl)
+	{
+		return acc;
+	}
+
+	if (m_waveStret == 2)
+	{
+		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
+	}
+
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		acc += ENVIR::du1dz_eachWave(vec::fixed<3>({ coord.at(0), coord.at(1), z }), ii);
+	}
+	return acc;
+}
+
+
 
 
 vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const

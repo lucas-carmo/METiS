@@ -42,6 +42,9 @@ private:
 
 	vec::fixed<3> u1_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 	vec::fixed<3> du1dt_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> du1dx_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> du1dy_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> du1dz_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 
 public:
 	ENVIR();
@@ -116,6 +119,9 @@ public:
 	double wavePressure(const vec::fixed<3> &coord) const;	
 	vec::fixed<3> u1(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> du1dt(const vec::fixed<3> &coord, const double zwl) const;
+	vec::fixed<3> du1dx(const vec::fixed<3> &coord, const double zwl) const;
+	vec::fixed<3> du1dy(const vec::fixed<3> &coord, const double zwl) const;
+	vec::fixed<3> du1dz(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> du2dt(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
 	vec::fixed<3> du2dt(const vec::fixed<3> &coord) const;
 
