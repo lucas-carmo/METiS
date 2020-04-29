@@ -627,6 +627,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> zvec_sd(fill::zeros);
 	MorisonCirc::make_local_base_sd(xvec_sd, yvec_sd, zvec_sd);
 
+	double eta = 0; // Wave elevation above each integration node. Useful for Wheeler stretching method.
 	double zwl = 0;
 	vec::fixed<3> intersectWL(fill::zeros);
 	if (envir.waveStret() == 2)
@@ -717,6 +718,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			break;
 		}
 
+		if (envir.waveStret() == 2)
+		{
+			eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
+		}
+
 		/******
 			Body velocity/acceleration
 		******/
@@ -737,15 +743,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		******/
 		// Fluid acceleration at the integration point.
 		// Calculated in the instantaneous position.
-		if (envir.waveStret() == 2)
-		{
-			du1dt = envir.du1dt(n_ii, envir.waveElev(n_ii.at(0), n_ii.at(1)));
-		}
-		else
-		{
-			du1dt = envir.du1dt(n_ii, 0);
-		}
-
+		du1dt = envir.du1dt(n_ii, eta); // Wheeler stretching method requires 'eta' as input
+		
 		// Fluid acceleration at the integration point.
 		// Calculated disconsidering the vertical displacement of the body, as it is used
 		// only for the quadratic drag force, which is a quadratic term.		
@@ -830,7 +829,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		n_ii_sd.at(2) = 0; // Since envir.du1dt returns 0 for z > 0, this line is necessary to make sure that the z coordinate of n_ii_sd is exactly 0, and not slightly above due to roundoff errors.
 		du1dt = envir.du1dt(n_ii_sd, 0);
 		du1dt = dot(du1dt, xvec_sd) * xvec_sd + dot(du1dt, yvec_sd) * yvec_sd;
-		double eta = envir.waveElev(n_ii_sd.at(0), n_ii_sd.at(1));
+		eta = envir.waveElev(n_ii_sd.at(0), n_ii_sd.at(1));
 		force_inertia_2nd_part2.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta;
 		double R_ii = norm(n_ii_sd - n1_sd, 2) + eta / 2;		
 		force_inertia_2nd_part2.rows(3, 5) = cross(R_ii * zvec_sd, force_inertia_2nd_part2.rows(0, 2));
