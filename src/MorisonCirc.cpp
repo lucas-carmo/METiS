@@ -755,8 +755,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		du1dt = envir.du1dt(n_ii, eta); // Wheeler stretching method requires 'eta' as input
 		
 		// Fluid acceleration at the integration point.
-		// Calculated disconsidering the vertical displacement of the body, as it is used
-		// only for the quadratic drag force, which is a quadratic term.		
 		u1 = envir.u1(n_ii_sd, 0);
 
 		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder,
@@ -861,16 +859,16 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	// if the cylinder intersects the water line.
 	// If waveStret == 0, this effect is not included in the analysis, 
 	// and if waveStret > 1, this force component is included in force_inertia.
-	if (hydroMode == 2 && envir.waveStret() == 1 && (n2_sd.at(2)*n1_sd.at(2) < 0))
+	if (hydroMode == 2 && envir.waveStret() == 1 && (n2.at(2)*n1.at(2) < 0))
 	{	
-		n_ii_sd = (n2_sd - n1_sd) * (0-n1_sd.at(2))/(n2_sd.at(2)-n1_sd.at(2)) + n1_sd; // Coordinates of the intersction with the still water line;		
-		n_ii_sd.at(2) = 0; // Since envir.du1dt returns 0 for z > 0, this line is necessary to make sure that the z coordinate of n_ii_sd is exactly 0, and not slightly above due to roundoff errors.
-		du1dt = envir.du1dt(n_ii_sd, 0);
-		du1dt = dot(du1dt, xvec_sd) * xvec_sd + dot(du1dt, yvec_sd) * yvec_sd;
-		eta = envir.waveElev(n_ii_sd.at(0), n_ii_sd.at(1));
+		n_ii = (n2 - n1) * (0-n1.at(2))/(n2.at(2)-n1.at(2)) + n1; // Coordinates of the intersction with the still water line;				
+		n_ii.at(2) = 0; // Since envir.du1dt returns 0 for z > 0, this line is necessary to make sure that the z coordinate of n_ii is exactly 0, and not slightly above due to roundoff errors.
+		du1dt = envir.du1dt(n_ii, 0);
+		du1dt = dot(du1dt, xvec) * xvec_sd + dot(du1dt, yvec) * yvec;
+		eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
 		force_inertia_2nd_part2.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta;
-		double R_ii = norm(n_ii_sd - n1_sd, 2) + eta / 2;		
-		force_inertia_2nd_part2.rows(3, 5) = cross(R_ii * zvec_sd, force_inertia_2nd_part2.rows(0, 2));
+		double R_ii = norm(n_ii - n1, 2) + eta / 2;
+		force_inertia_2nd_part2.rows(3, 5) = cross(R_ii * zvec, force_inertia_2nd_part2.rows(0, 2));
 	}
 
 	/*
