@@ -761,16 +761,24 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 
 		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder,
 		// written in the GLOBAL reference frame.
-		// Note that du1dt uses the instantaneous local base, while u1 considers the initial fixed local base.
+		// Note that du1dt uses the instantaneous local position, while u1 considers the slow drift position.
 		du1dt = dot(du1dt, xvec) * xvec + dot(du1dt, yvec) * yvec;
 		u1 = dot(u1, xvec_sd) * xvec_sd + dot(u1, yvec_sd) * yvec_sd;
 
 		// Calculation of the forces and moments in the integration node. The moments are given with respect to n1,
 		// but are output with respect to node 1.
 		// Components from Morison's Equation
-		if ((n_ii[2] <= 0 && envir.waveStret() <= 1) || (n_ii[2] <= zwl && envir.waveStret() == 2))
+		if (n_ii[2] <= 0 && envir.waveStret() <= 1)
 		{
 			force_inertia_ii = datum::pi * D*D / 4. * rho * Cm * du1dt - datum::pi * D*D / 4. * rho * (Cm - 1) * acc_ii;
+		}
+		else if (n_ii[2] <= zwl && envir.waveStret() == 2)
+		{
+			force_inertia_ii = datum::pi * D*D / 4. * rho * Cm * du1dt;
+			if (n_ii[2] <= 0)
+			{
+				force_inertia_ii += -datum::pi * D*D / 4. * rho * (Cm - 1) * acc_ii;
+			}
 		}
 		else
 		{
