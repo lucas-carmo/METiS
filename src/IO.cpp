@@ -1391,7 +1391,7 @@ std::string IO::printOutVar()
 			break;
 
 		case IO::OUTFLAG_HD_2ND_FORCE_PART3:
-			output += "Hydrodynamic 2nd force - Part 2: ";
+			output += "Hydrodynamic 2nd force - Part 3: ";
 			break;
 
 		case IO::OUTFLAG_HD_FK_FORCE:
