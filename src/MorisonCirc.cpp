@@ -755,7 +755,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		du1dt = envir.du1dt(n_ii, eta); // Wheeler stretching method requires 'eta' as input
 		
 		// Fluid acceleration at the integration point.
-		u1 = envir.u1(n_ii_sd, 0);
+		u1 = envir.u1(n_ii_sd, eta);
 
 		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder,
 		// written in the GLOBAL reference frame.
@@ -809,10 +809,10 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 				// Otherwise, this component is zero and its effects are included in the integration of the forces due to the first-order fluid acceleration.
 
 				// 3rd component: Force due to convective acceleration
-				u1 = envir.u1(n_ii_sd, 0);
-				du1dx = envir.du1dx(n_ii_sd, 0);
-				du1dy = envir.du1dy(n_ii_sd, 0);
-				du1dz = envir.du1dz(n_ii_sd, 0);
+				u1 = envir.u1(n_ii_sd, eta);
+				du1dx = envir.du1dx(n_ii_sd, eta);
+				du1dy = envir.du1dy(n_ii_sd, eta);
+				du1dz = envir.du1dz(n_ii_sd, eta);
 
 				a_c.at(0) = u1.at(0) * du1dx.at(0) + u1.at(1) * du1dy.at(0) + u1.at(2) * du1dz.at(0);
 				a_c.at(1) = u1.at(0) * du1dx.at(1) + u1.at(1) * du1dy.at(1) + u1.at(2) * du1dz.at(1);
