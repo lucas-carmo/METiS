@@ -824,6 +824,16 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART3) = true;
 	}
 
+	if (caseInsCompare(keyword, "hd_2nd_force_part4"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART4) = true;
+	}
+
+	if (caseInsCompare(keyword, "hd_2nd_force_part5"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART5) = true;
+	}
+
 	if (caseInsCompare(keyword, "hd_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE) = true;
@@ -974,7 +984,8 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 		(flag != IO::OUTFLAG_TOTAL_FORCE) && (flag != IO::OUTFLAG_HD_FORCE)  && (flag != IO::OUTFLAG_HS_FORCE) &&
 		(flag != IO::OUTFLAG_HD_INERTIA_FORCE) && (flag != IO::OUTFLAG_HD_DRAG_FORCE) && (flag != IO::OUTFLAG_HD_FK_FORCE) &&
 		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART1) && (flag != IO::OUTFLAG_HD_2ND_FORCE_PART2) &&
-		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART3) && (flag != IO::OUTFLAG_AD_HUB_FORCE)
+		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART3) && (flag != IO::OUTFLAG_HD_2ND_FORCE_PART4) &&
+		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART5) && (flag != IO::OUTFLAG_AD_HUB_FORCE)
 	   )
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &force).");
@@ -1029,6 +1040,22 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			for (int ii = 1; ii <= 6; ++ii)
 			{
 				print2outLineHeader("hd_2nd_force_P3_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_2ND_FORCE_PART4)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_2nd_force_P4_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_2ND_FORCE_PART5)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_2nd_force_P5_" + std::to_string(ii));
 			}
 		}
 
@@ -1392,6 +1419,14 @@ std::string IO::printOutVar()
 
 		case IO::OUTFLAG_HD_2ND_FORCE_PART3:
 			output += "Hydrodynamic 2nd force - Part 3: ";
+			break;
+
+		case IO::OUTFLAG_HD_2ND_FORCE_PART4:
+			output += "Hydrodynamic 2nd force - Part 4: ";
+			break;
+
+		case IO::OUTFLAG_HD_2ND_FORCE_PART5:
+			output += "Hydrodynamic 2nd force - Part 5: ";
 			break;
 
 		case IO::OUTFLAG_HD_FK_FORCE:

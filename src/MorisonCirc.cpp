@@ -587,7 +587,8 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydroMode, 
 												vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov, 
 												vec::fixed<6> &force_inertia_2nd_part1, vec::fixed<6> &force_inertia_2nd_part2,
-												vec::fixed<6> &force_inertia_2nd_part3) const
+												vec::fixed<6> &force_inertia_2nd_part3, vec::fixed<6> &force_inertia_2nd_part4, 
+												vec::fixed<6> &force_inertia_2nd_part5) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
@@ -599,6 +600,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	force_inertia_2nd_part1.zeros();
 	force_inertia_2nd_part2.zeros();
 	force_inertia_2nd_part3.zeros();
+	force_inertia_2nd_part4.zeros();
+	force_inertia_2nd_part5.zeros();
 
 	// Use a more friendly notation
 	double D = m_diam;
@@ -698,6 +701,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> du1dz(fill::zeros);
 	vec::fixed<3> du2dt(fill::zeros);
 	vec::fixed<3> a_c(fill::zeros); // Convective acceleration of the fluid
+	vec::fixed<3> a_a(fill::zeros); // Axial acceleration of the fluid
+	vec::fixed<3> a_r(fill::zeros); // Fluid acceleration associated with body rotation
 
 	// Forces acting at the integration point and moment (with relation to n1) due to the force acting at the integration point
 	vec::fixed<3> force_inertia_ii(fill::zeros); // Inertial component
@@ -710,6 +715,12 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> moment_inertia_2nd_part1_ii(fill::zeros);
 	vec::fixed<3> force_inertia_2nd_part3_ii(fill::zeros); // Inertial component - Second order - Part that is due to the convective acceleration
 	vec::fixed<3> moment_inertia_2nd_part3_ii(fill::zeros);
+	vec::fixed<3> force_inertia_2nd_part4_ii(fill::zeros); // Inertial component - Second order - Part that is due to the axial acceleration
+	vec::fixed<3> moment_inertia_2nd_part4_ii(fill::zeros);
+	vec::fixed<3> force_inertia_2nd_part5_ii(fill::zeros); // Inertial component - Second order - Part that is due to body rotation
+	vec::fixed<3> moment_inertia_2nd_part5_ii(fill::zeros);
+
+	double L = norm(n2 - n1, 2);
 
 	//  Loop to calculate the force/moment along the cylinder length
 	for (int ii = 1; ii <= ncyl; ++ii)
@@ -735,9 +746,9 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		/******
 			Body velocity/acceleration
 		******/
-		// Absolute (R_ii) and relative (lambda) distance between the integration point and the bottom node
+		// Absolute (R_ii) and relative (lambda) distance between the integration point and the bottom node		
 		double R_ii = norm(n_ii - n1, 2);
-		double lambda = R_ii / norm(n2 - n1, 2);
+		double lambda = R_ii / L;
 
 		// Velocity and acceleration of the integration point
 		vel_ii = v1 + lambda * (v2 - v1);
@@ -820,14 +831,27 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 				a_c = dot(a_c, xvec_sd) * xvec_sd + dot(a_c, yvec_sd) * yvec_sd;
 
 				force_inertia_2nd_part3_ii = (datum::pi * D*D / 4.) * rho * Cm * a_c;
+
+				// 4th component: Force due to axial acceleration
+				double dwdz = dot(du1dx, zvec_sd) * zvec_sd.at(0) + dot(du1dy, zvec_sd) * zvec_sd.at(1) + dot(du1dz, zvec_sd) * zvec_sd.at(2);				
+				a_a = dwdz * (dot(u1, xvec_sd)*xvec_sd + dot(u1, yvec_sd)*yvec_sd - vel_ii); // vel_ii was already projected in the direction perpendicular to the cylinder
+				force_inertia_2nd_part4_ii = (datum::pi * D*D / 4.) * rho * (Cm - 1) * a_a;
+
+				// 5th component: Force due to cylinder rotation
+				a_r = dot(u1, zvec_sd) * (1/L) * ( dot(v2 - v1, xvec_sd) * yvec_sd + dot(v2 - v1, yvec_sd) * xvec_sd );
+				force_inertia_2nd_part5_ii = -(datum::pi * D*D / 4.) * rho * (Cm - 1) * a_r;
 			}
 			else
 			{
 				force_inertia_2nd_part1_ii.zeros();
 				force_inertia_2nd_part3_ii.zeros();
+				force_inertia_2nd_part4_ii.zeros();
+				force_inertia_2nd_part5_ii.zeros();
 			}
 			moment_inertia_2nd_part1_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part1_ii);
 			moment_inertia_2nd_part3_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part3_ii);
+			moment_inertia_2nd_part4_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part4_ii);
+			moment_inertia_2nd_part5_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part5_ii);
 		}
 
 		// Integrate the forces along the cylinder using Simpson's Rule
@@ -837,6 +861,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			force_drag += (dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
 			force_inertia_2nd_part1 += (dL/3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
 			force_inertia_2nd_part3 += (dL / 3.0) * join_cols(force_inertia_2nd_part3_ii, moment_inertia_2nd_part3_ii);
+			force_inertia_2nd_part4 += (dL / 3.0) * join_cols(force_inertia_2nd_part4_ii, moment_inertia_2nd_part4_ii);
+			force_inertia_2nd_part5 += (dL / 3.0) * join_cols(force_inertia_2nd_part5_ii, moment_inertia_2nd_part5_ii);
 		}
 		else if (ii % 2 == 0)
 		{
@@ -844,6 +870,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			force_drag += (4*dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
 			force_inertia_2nd_part1 += (4*dL/3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
 			force_inertia_2nd_part3 += (4 * dL / 3.0) * join_cols(force_inertia_2nd_part3_ii, moment_inertia_2nd_part3_ii);
+			force_inertia_2nd_part4 += (4 * dL / 3.0) * join_cols(force_inertia_2nd_part4_ii, moment_inertia_2nd_part4_ii);
+			force_inertia_2nd_part5 += (4 * dL / 3.0) * join_cols(force_inertia_2nd_part5_ii, moment_inertia_2nd_part5_ii);
 		}
 		else
 		{
@@ -851,6 +879,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			force_drag += (2*dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
 			force_inertia_2nd_part1 += (2*dL/3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
 			force_inertia_2nd_part3 += (2 * dL / 3.0) * join_cols(force_inertia_2nd_part3_ii, moment_inertia_2nd_part3_ii);
+			force_inertia_2nd_part4 += (2 * dL / 3.0) * join_cols(force_inertia_2nd_part4_ii, moment_inertia_2nd_part4_ii);
+			force_inertia_2nd_part5 += (2 * dL / 3.0) * join_cols(force_inertia_2nd_part5_ii, moment_inertia_2nd_part5_ii);
 		}
 	}
 
@@ -896,7 +926,9 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	/*
 		Total force
 	*/
-	force = force_inertia + force_drag + force_froudeKrylov + force_inertia_2nd_part1 + force_inertia_2nd_part2 + force_inertia_2nd_part3;
+	force = force_inertia + force_drag + force_froudeKrylov + 
+		    force_inertia_2nd_part1 + force_inertia_2nd_part2 +
+			force_inertia_2nd_part3 + force_inertia_2nd_part4 + force_inertia_2nd_part5;
 
 	// The moment was calculated with relation to n1, which may be different from node1.
 	// We need to change the fulcrum to node1

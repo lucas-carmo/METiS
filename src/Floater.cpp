@@ -225,6 +225,8 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 	vec::fixed<6> force_inertia_2nd_part1(fill::zeros);
 	vec::fixed<6> force_inertia_2nd_part2(fill::zeros);
 	vec::fixed<6> force_inertia_2nd_part3(fill::zeros);
+	vec::fixed<6> force_inertia_2nd_part4(fill::zeros);
+	vec::fixed<6> force_inertia_2nd_part5(fill::zeros);
 
 	vec::fixed<6> df_inertia(fill::zeros); // Forces acting on each Morison Element. They are set to zero inside MorisonElement.hydrodynamicForce().
 	vec::fixed<6> df_drag(fill::zeros);
@@ -232,11 +234,13 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 	vec::fixed<6> df_inertia_2nd_part1(fill::zeros);
 	vec::fixed<6> df_inertia_2nd_part2(fill::zeros);
 	vec::fixed<6> df_inertia_2nd_part3(fill::zeros);
+	vec::fixed<6> df_inertia_2nd_part4(fill::zeros);
+	vec::fixed<6> df_inertia_2nd_part5(fill::zeros);
 
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, df_inertia, df_drag, df_froudeKrylov, df_inertia_2nd_part1, df_inertia_2nd_part2, df_inertia_2nd_part3);
+		df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, df_inertia, df_drag, df_froudeKrylov, df_inertia_2nd_part1, df_inertia_2nd_part2, df_inertia_2nd_part3, df_inertia_2nd_part4, df_inertia_2nd_part5);
 		
 		// The moments acting on the cylinders were calculated with respect to the first node
 		// We need to change the fulcrum to the CoG
@@ -248,6 +252,8 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 		df_inertia_2nd_part1.rows(3, 5) += cross(m_MorisonElements.at(ii)->node1Pos() - (m_disp.rows(0, 2) + CoG()), df_inertia_2nd_part1.rows(0, 2));
 		df_inertia_2nd_part2.rows(3, 5) += cross(m_MorisonElements.at(ii)->node1Pos() - (m_disp.rows(0, 2) + CoG()), df_inertia_2nd_part2.rows(0, 2));
 		df_inertia_2nd_part3.rows(3, 5) += cross(m_MorisonElements.at(ii)->node1Pos() - (m_disp.rows(0, 2) + CoG()), df_inertia_2nd_part3.rows(0, 2));
+		df_inertia_2nd_part4.rows(3, 5) += cross(m_MorisonElements.at(ii)->node1Pos() - (m_disp.rows(0, 2) + CoG()), df_inertia_2nd_part4.rows(0, 2));
+		df_inertia_2nd_part5.rows(3, 5) += cross(m_MorisonElements.at(ii)->node1Pos() - (m_disp.rows(0, 2) + CoG()), df_inertia_2nd_part5.rows(0, 2));
 
 		// Add to the forces acting on the whole floater
 		force += df;		
@@ -257,6 +263,8 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 		force_inertia_2nd_part1 += df_inertia_2nd_part1;
 		force_inertia_2nd_part2 += df_inertia_2nd_part2;
 		force_inertia_2nd_part3 += df_inertia_2nd_part3;
+		force_inertia_2nd_part4 += df_inertia_2nd_part4;
+		force_inertia_2nd_part5 += df_inertia_2nd_part5;
 	}
 	
 	IO::print2outLine(IO::OUTFLAG_HD_FORCE, force);
@@ -266,6 +274,8 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 	IO::print2outLine(IO::OUTFLAG_HD_2ND_FORCE_PART1, force_inertia_2nd_part1);
 	IO::print2outLine(IO::OUTFLAG_HD_2ND_FORCE_PART2, force_inertia_2nd_part2);
 	IO::print2outLine(IO::OUTFLAG_HD_2ND_FORCE_PART3, force_inertia_2nd_part3);
+	IO::print2outLine(IO::OUTFLAG_HD_2ND_FORCE_PART4, force_inertia_2nd_part4);
+	IO::print2outLine(IO::OUTFLAG_HD_2ND_FORCE_PART5, force_inertia_2nd_part5);
 	
 	return force;
 }
