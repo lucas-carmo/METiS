@@ -35,10 +35,15 @@ public:
 		Forces acting on the Morison Element and functions for node position/velocity/acceleration)
 	*****************************************************/
 	virtual void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const override;
-	virtual mat::fixed<6, 6> addedMass_perp(const double rho, const int hydroMode) const override;
-	virtual mat::fixed<6, 6> addedMass_paral(const double rho, const int hydroMode) const override;
+	virtual void make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const override;
+	virtual void make_local_base_sd(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const override;
+	virtual mat::fixed<6, 6> addedMass_perp(const double rho) const override;
+	virtual mat::fixed<6, 6> addedMass_paral(const double rho) const override;
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const override;
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov) const override;
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov,
+		vec::fixed<6> &force_inertia_2nd_part1, vec::fixed<6> &force_inertia_2nd_part2,
+		vec::fixed<6> &force_inertia_2nd_part3, vec::fixed<6> &force_inertia_2nd_part4,
+		vec::fixed<6> &force_inertia_2nd_part5) const override;
 
 	/*****************************************************
 		Printing

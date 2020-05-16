@@ -8,8 +8,9 @@ using namespace arma;
 
 void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 {
-	// The header of the formatted output file is written during the first time step
-	IO::print2outLineHeader_turnOn();
+	// Avoid printing to output files before the simulation begins
+	IO::print2outLine_turnOff();
+	IO::print2outLineHeader_turnOff();
 
 	/*
 		Variables for the RK4 method
@@ -45,20 +46,24 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	vec::fixed<6> acc_total(arma::fill::zeros);
 
 	// make sure that the members of FOWT are updated
-	fowt.update(disp0, vel0, acc0);
+	fowt.update(disp0, vel0, acc0, envir.timeStep());
+
+	// The header of the formatted output file is written during the first time step and is then turned off
+	IO::print2outLineHeader_turnOn();
 
 	while ( envir.time() <= envir.timeTotal() )
 	{
 		IO::print2outLine_turnOn();
-		IO::print2outLine(envir.time());
+		IO::print2outLine_decimal(envir.time()); // Time has to be printed as decimal to avoid problems with large numbers
 
 		// FOWT state at the beginning of the time step
 		disp0 = fowt.disp();
 		vel0 = fowt.vel();
 		acc0 = fowt.acc();
 
-		// Print wave characteristics that may have been requested in the input file
+		// Output wave and FOWT characteristics that may have been requested in the input file
 		envir.printWaveCharact();
+		fowt.print2outLine();
 
 		// RK4: first estimation
 		acc_k1 = fowt.calcAcceleration(envir);
@@ -70,8 +75,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		{
 			IO::print2outLineHeader_turnOff();
 			IO::printOutLineHeader2outFile();
-		}
-
+		}		
 		// Results are printed in the first estimation, since it is done with the state of the fowt and envir at the beginning of the time step
 		IO::print2outLine_turnOff();
 		IO::printOutLine2outFile();
@@ -82,7 +86,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 
 		// RK4: second estimation
 		// Update fowt and environment
-		fowt.update( disp0 + disp_k1/2 , vel0 + vel_k1/2 , acc_k1);
+		fowt.update(disp0 + disp_k1 / 2, vel0 + vel_k1 / 2, acc_k1, envir.timeStep());
 		envir.stepTime(envir.timeStep()/2);
 
 		acc_k2 = fowt.calcAcceleration(envir);
@@ -91,7 +95,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 
 		// RK4: third estimation
 		// Update only fowt. Environment is already at t+dt/2
-		fowt.update( disp0 + disp_k2/2 , vel0 + vel_k2/2 , acc_k2);
+		fowt.update( disp0 + disp_k2/2 , vel0 + vel_k2/2 , acc_k2, envir.timeStep());
 
 		acc_k3 = fowt.calcAcceleration(envir);
 		vel_k3 = acc_k3 * envir.timeStep();
@@ -99,7 +103,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 
 		// RK4: fourth estimation
 		// Update fowt and environment, which needs to be in t+dt (hence, just need to add dt/2)
-		fowt.update( disp0 + disp_k3 , vel0 + vel_k3 , acc_k3);
+		fowt.update( disp0 + disp_k3 , vel0 + vel_k3 , acc_k3, envir.timeStep());
 		envir.stepTime(envir.timeStep()/2);
 
 		acc_k4 = fowt.calcAcceleration(envir);
@@ -112,7 +116,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		disp_total = disp0 + (disp_k1 + 2*disp_k2 + 2*disp_k3 + disp_k4) / 6;
 
 		// We only need to update fowt, as envir was already updated during the RK4 steps
-		fowt.update(disp_total, vel_total, acc_total);
+		fowt.update(disp_total, vel_total, acc_total, envir.timeStep());
 
 		// Print progress to the screen only after integer seconds.
 		// The criterion is to verify if the current time is different

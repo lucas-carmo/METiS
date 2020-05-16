@@ -56,6 +56,10 @@ Wave::Wave(const std::string &waveType, const double height, const double freqOR
 
 	m_waveNumber = waveNumber(watDepth, gravity);
 	m_length = 2 * arma::datum::pi / m_waveNumber; // The function Wave::waveNumber never outputs 0, hence this division is safe
+
+	m_omega_x_A = angFreq() * amp();
+	m_cosBeta = std::cos(direction * arma::datum::pi / 180.);
+	m_sinBeta = std::sin(direction * arma::datum::pi / 180.);
 }
 
 /*****************************************************
@@ -213,4 +217,20 @@ double Wave::length(const double watDepth, const double gravity) const
 {
 	// The function Wave::waveNumber never outputs 0
 	return 2*arma::datum::pi / this->waveNumber(watDepth, gravity);
+}
+
+
+
+double Wave::omega_x_A() const
+{
+	return m_omega_x_A;
+}
+double Wave::cosBeta() const
+{
+	return m_cosBeta;
+}
+
+double Wave::sinBeta() const
+{
+	return m_sinBeta;
 }

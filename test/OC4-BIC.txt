@@ -4,19 +4,19 @@
 
 
 %%-----------------------------------------------------------------------------%%
-%%----------------------------- ACTIVE Forces -------------------------------%%
+%%------------------------------- ACTIVE Forces -------------------------------%%
 %%-----------------------------------------------------------------------------%%
-Hydro       1 % 0: No waves; 1: Linear wave kinematics; 2: Non-linear wave kinematics
-HydroPos    2 % 1: Hydrodynamics calculated considering the initial position of the floater (forces and added mass); 2: Hydrodynamics considering instantaneous body position 
+Hydro       2
 Aero        0
 Moor        1
+DOFS 1 1 1 1 1 1
 
 %%-----------------------------------------------------------------------------%%
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
 %%-----------------------------------------------------------------------------%%
-TimeStep	0.05 % Time step, in seconds
-TimeTotal	400 % Total simulation time, in secods
-TimeRamp	24 % Numerical ramp, in seconds
+TimeStep	0.25 % Time step, in seconds
+TimeTotal	10000 % Total simulation time, in secods
+TimeRamp	280 % Numerical ramp, in seconds
 
 
 %%-----------------------------------------------------------------------------%%
@@ -26,13 +26,27 @@ Grav		9.81
 WatDens		1025
 WatDepth	200
 
+% Only the wave acceleration is stretched
+% If HydroMode != 2 and WaveStret == 1, the latter is ignored
+WaveStret   1 % 0: No stretching; 1: Taylor serie's from Kim and Chen, 1994, to evaluate force due to wave elevation; 2: Wheeler's stretching
+
+% Filter for slow drift motions. Angular frequency \t Damping (in % of critical). Default values are 0.025 and 0.20.
+% To neglect it, provide a negative value to the angular frequency. In this case, the total instantaneous is used 
+% to evaluate second order terms
+% Angular frequency \t Damping (in % of critical).
+% FiltSlowDrift  0 0 % Is the same as using the fixed initial position for evaluating second-order terms
+FiltSlowDrift  0.025 0.20
+
 
 Wave
 % WRWAVE \t Height \t Angular frequency \t Direction (in degrees) \t Phase (in degrees)
 % FRWAVE \t Height \t Frequency         \t Direction (in degrees) \t Phase (in degrees)
 % TRWAVE \t Height \t Period            \t Direction (in degrees) \t Phase (in degrees)
-TRWAVE	2	4.00	45	0
+TRWAVE	4	15.7080	0	0
+TRWAVE	4	17.9520	0	0
 END
+
+ 
 
 
 %%-----------------------------------------------------------------------------%%
@@ -129,33 +143,41 @@ Morison_circ
 % First node ID \t Second node ID \t Diameter \t Drag coefficient \t Inertia coefficient \t Number of integration points ...
 % ... \t Bottom diameter \t Top diameter \t Axial drag coefficient \t Axial added mass coefficient \t 1 or 0 for calculating dynamic pressure or not
 % The second part of the data above (the ones in the second line) is only required for heave plates. Input 0 for everything if only forces perpendicular to the % axis of the cylinder will be considered
-1	2	6.5	0.56	1.63	50	6.5	6.5	0	0	1	
-11	12	12	0.61	1.63	50	0	0	0	0	0
-13	14	12	0.61	1.63	50	0	0	0	0	0
-15	16	12	0.61	1.63	50	0	0	0	0	0
-21	22	24	0.68	1.63	20	24	12	4.8	0.67	1
-23	24	24	0.68	1.63	20	24	12	4.8	0.67	1
-25	26	24	0.68	1.63	20	24	12	4.8	0.67	1
-%31	32	1.6	0.68	1.63	15	0	0	0	0	0
-%33	34	1.6	0.63	1.63	15	0	0	0	0	0
-%35	36	1.6	0.63	1.63	15	0	0	0	0	0
-41	42	1.6	0.63	1.63	15	0	0	0	0	0
-43	44	1.6	0.63	1.63	15	0	0	0	0	0
-45	46	1.6	0.63	1.63	15	0	0	0	0	0
-%51	52	1.6	0.63	1.63	15	0	0	0	0	0
-%53	54	1.6	0.63	1.63	15	0	0	0	0	0
-%55	56	1.6	0.63	1.63	15	0	0	0	0	0
-61	62	1.6	0.63	1.63	15	0	0	0	0	0
-63	64	1.6	0.63	1.63	15	0	0	0	0	0
-65	66	1.6	0.63	1.63	15	0	0	0	0	0
-71	72	1.6	0.63	1.63	15	0	0	0	0	0
-73	74	1.6	0.63	1.63	15	0	0	0	0	0
-75	76	1.6	0.63	1.63	15	0	0	0	0	0
+1	2	6.5	0.56	1.63	120	6.5	6.5	0	0	1	
+11	12	12	0.61	1.63	104	0	0	0	0	0
+13	14	12	0.61	1.63	104	0	0	0	0	0
+15	16	12	0.61	1.63	104	0	0	0	0	0
+21	22	24	0.68	1.63	18	24	12	4.8	0.67	1
+23	24	24	0.68	1.63	18	24	12	4.8	0.67	1
+25	26	24	0.68	1.63	18	24	12	4.8	0.67	1
+%31	32	1.6	0.68	1.63	30	0	0	0	0	0
+%33	34	1.6	0.63	1.63	30	0	0	0	0	0
+%35	36	1.6	0.63	1.63	30	0	0	0	0	0
+41	42	1.6	0.63	1.63	30	0	0	0	0	0
+43	44	1.6	0.63	1.63	30	0	0	0	0	0
+45	46	1.6	0.63	1.63	30	0	0	0	0	0
+%51	52	1.6	0.63	1.63	30	0	0	0	0	0
+%53	54	1.6	0.63	1.63	30	0	0	0	0	0
+%55	56	1.6	0.63	1.63	30	0	0	0	0	0
+61	62	1.6	0.63	1.63	30	0	0	0	0	0
+63	64	1.6	0.63	1.63	30	0	0	0	0	0
+65	66	1.6	0.63	1.63	30	0	0	0	0	0
+71	72	1.6	0.63	1.63	30	0	0	0	0	0
+73	74	1.6	0.63	1.63	30	0	0	0	0	0
+75	76	1.6	0.63	1.63	30	0	0	0	0	0
 END
 
 OUTPUT
 fowt_disp
+fowt_disp_sd
+fowt_vel
+fowt_acc
 hd_force
+hd_drag_force
+hd_inertia_force
 total_force
+hd_2nd_force_part1
+hd_force
 wave_elev 1
+wave_acc
 END

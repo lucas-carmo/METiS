@@ -12,31 +12,39 @@ using namespace arma;
 class ENVIR
 {
 private:
-    /*
-    Data to specify the environment
-    */
+	/*
+	Data to specify the environment
+	*/
 	std::vector< unsigned int > m_nodesID; // Nodes provide a spatial description of the environment
 	std::vector< vec::fixed<3> > m_nodesCoord;
 
-    double m_gravity;
-    double m_watDens;
-    double m_watDepth;
-    std::vector<Wave> m_wave; // The sea is specified by a vector with regular wave components. You can add a wave component using the method addRegularWave(), or many components using addJonswap().
-    double m_airDens;
-    double m_windRefVel;
+	double m_gravity;
+	double m_watDens;
+	double m_watDepth;
+	std::vector<Wave> m_wave; // The sea is specified by a vector with regular wave components. You can add a wave component using the method addRegularWave(), or many components using addJonswap().
+	unsigned int m_waveStret;
+
+	double m_airDens;
+	double m_windRefVel;
 	double m_windRefHeight;
-    double m_windExp;
+	double m_windExp;
 
 	std::vector<unsigned int> m_waveProbeID;
 	std::vector<vec::fixed<3>> m_waveProbe; // Coordinates of the points where the wave characteristics (elevation, velocity, etc) are calculated for output
 
-    /*
-    Data to specify the numerical analysis
-    */
-    double m_timeStep;
-    double m_timeTotal;
-    double m_timeRamp;
-    double m_time = 0;
+	/*
+	Data to specify the numerical analysis
+	*/
+	double m_timeStep;
+	double m_timeTotal;
+	double m_timeRamp;
+	double m_time = 0;
+
+	vec::fixed<3> u1_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> du1dt_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> du1dx_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> du1dy_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> du1dz_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 
 public:
 	ENVIR();
@@ -50,6 +58,7 @@ public:
 	void setGravity(const double gravity);
 	void setWatDens(const double watDens);
 	void setWatDepth(const double watDepth);
+	void setWaveStret(const unsigned int waveStret);
 	void setAirDens(const double airDens);
 	void setWindRefVel(const double windRefVel);
 	void setWindRefHeight(const double windRefHeight);
@@ -71,6 +80,7 @@ public:
 	double gravity() const;
 	double watDensity() const;
 	double watDepth() const;
+	unsigned int waveStret() const;
 	double airDensity() const;
 	double windRefVel() const;
 	double windRefHeight() const;
@@ -96,21 +106,24 @@ public:
 		Main functions for calculation
 	*****************************************************/
 	bool isNodeEmpty() const;
-  bool isWaveProbeEmpty() const;
-  arma::vec::fixed<3> getNode(unsigned int ID) const;
+	bool isWaveProbeEmpty() const;
+	arma::vec::fixed<3> getNode(unsigned int ID) const;
 
 	void stepTime();
 	void stepTime(double const step);
 
-  double ramp() const;
+	double ramp() const;
 	double waveElev(const double x, const double y, const unsigned int waveIndex) const;
 	double waveElev(const double x, const double y) const;
-	vec::fixed<3> u1(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
-	vec::fixed<3> u1(const vec::fixed<3> &coord) const;
-	vec::fixed<3> du1dt(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
-	vec::fixed<3> du1dt(const vec::fixed<3> &coord) const;
 	double wavePressure(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
-	double wavePressure(const vec::fixed<3> &coord) const;
+	double wavePressure(const vec::fixed<3> &coord) const;	
+	vec::fixed<3> u1(const vec::fixed<3> &coord, const double zwl) const;
+	vec::fixed<3> du1dt(const vec::fixed<3> &coord, const double zwl) const;
+	vec::fixed<3> du1dx(const vec::fixed<3> &coord, const double zwl) const;
+	vec::fixed<3> du1dy(const vec::fixed<3> &coord, const double zwl) const;
+	vec::fixed<3> du1dz(const vec::fixed<3> &coord, const double zwl) const;
+	vec::fixed<3> du2dt(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
+	vec::fixed<3> du2dt(const vec::fixed<3> &coord) const;
 
 	double windVel_X(const vec::fixed<3> &coord) const;
 };

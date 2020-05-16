@@ -4,57 +4,55 @@
 
 
 %%-----------------------------------------------------------------------------%%
-%%----------------------------- ACTIVE ANALYSES -------------------------------%%
+%%------------------------------- ACTIVE Forces -------------------------------%%
 %%-----------------------------------------------------------------------------%%
-% The analysis can be of three different types, specified by the following strings:
-% *) FOWT -> For Floating Offshore Wind Turbines
-% *) FixedOffshore -> For offshore wind turbines that are fixed
-% *) Onshore -> For onshore wind turbines
-% Each of the analyses requires different inputs
-TYPE FOWT
+Hydro       2
+Aero        0
+Moor        1
 DOFS 1 1 1 1 1 1
-
 
 %%-----------------------------------------------------------------------------%%
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
 %%-----------------------------------------------------------------------------%%
-TimeStep    0.1	                    % Time step
-TimeTotal  	280						% Total simulation time
-TimeRamp	6                       % Numerical ramp to be imposed to the waves. It is given as number of periods of the specified wave with the largest period.
+TimeStep 	0.25 % Time step, in seconds
+TimeTotal	15000 % Total simulation time, in secods
+TimeRamp	   280 % Numerical ramp, in seconds
 
-UseTipLoss  1
-UseHubLoss  1
-UseSkewCorr 1
-
-
+FiltSlowDrift  0.025 0.20 % Filter for slow drift motions. Angular frequency \t Damping (in % of critical). Default values are 0.025 and 0.20
 
 %%-----------------------------------------------------------------------------%%
 %%------------------------------- ENVIRONMENT ---------------------------------%%
 %%-----------------------------------------------------------------------------%%
 Grav		9.81
-
-WatDens		1025
+WatDens	1025
 WatDepth	200
 
-AirDens     1.225
-WindVel     10.0 % Measured at the reference height
-WindHeight  90
-WindExp     0.2
-
 Wave
-% WRWAVE \t Height \t Angular frequency \t Direction (in degrees) \t phase (in degrees)
-% FRWAVE \t Height \t Frequency         \t Direction (in degrees) \t phase (in degrees)
-% TRWAVE \t Height \t Period            \t Direction (in degrees) \t phase (in degrees)
-TRWAVE	2	10	45 45
-WRWAVE	1	1	60 630
-FRWAVE	1	10	60 60
+% WRWAVE \t Height \t Angular frequency \t Direction (in degrees) \t Phase (in degrees)
+% FRWAVE \t Height \t Frequency         \t Direction (in degrees) \t Phase (in degrees)
+% TRWAVE \t Height \t Period            \t Direction (in degrees) \t Phase (in degrees)
+TRWAVE	4	15.7080	0	0
+TRWAVE	4	17.9520	0	0
 END
 
+ 
 
 
 %%-----------------------------------------------------------------------------%%
-%%--------------------------------- NODES -------------------------------------%%
+%%----------------------------- EXTERNAL FORCES --------------------------------%%
 %%-----------------------------------------------------------------------------%%
+ExtLinStiff        7.08e+04,7.08e+04,1.17e+08 % Linear mooring stiffness in surge, sway, yaw
+ExtConstForce      0,0,-1.8901e+06,0,0,0 % Constant external force (due to lines pre-tension)
+
+
+%%-----------------------------------------------------------------------------%%
+%%-------------------------- FLOATER DESCRIPTION ------------------------------%%
+%%-----------------------------------------------------------------------------%%
+FloaterMass		1.4072e7
+FloaterCoG		0.006,0,-9.89
+FloaterInertia	1.132e10,1.130e10,1.228e10,0,0,0
+
+
 % Nodes ID must be unique and in ascending order
 Nodes                     % Node ID, X coord, Y coord, Z coord
 1,0,0,-20                 % Nodes for main column
@@ -130,48 +128,35 @@ Nodes                     % Node ID, X coord, Y coord, Z coord
 END
 
 
-
-
-%%-----------------------------------------------------------------------------%%
-%%-------------------------- FLOATER DESCRIPTION ------------------------------%%
-%%-----------------------------------------------------------------------------%%
-FloaterMass		1.4267e7
-FloaterCoG		1,2,-13.46
-FloaterInertia	6.827e9,6.827e9,1.226e10,0,0,0
-LinStiff		6.1e5,6.1e5,5.4e8        % Linear mooring stiffness in surge, sway, yaw
-
-
-
 Morison_circ
 % First node ID \t Second node ID \t Diameter \t Drag coefficient \t Inertia coefficient \t Number of integration points ...
 % ... \t Bottom diameter \t Top diameter \t Axial drag coefficient \t Axial added mass coefficient \t 1 or 0 for calculating dynamic pressure or not
 % The second part of the data above (the ones in the second line) is only required for heave plates. Input 0 for everything if only forces perpendicular to the % axis of the cylinder will be considered
-1	2	6.5	0.56	1.63	25	6.5	6.5	0	0	0	
-11	12	12	0.61	1.63	25	0	0	0	0	0
-13	14	12	0.61	1.63	25	0	0	0	0	0
-15	16	12	0.61	1.63	25	0	0	0	0	0
-21	22	24	0.68	1.63	25	24	12	4.8	0.67	1
-23	24	24	0.68	1.63	25	24	12	4.8	0.67	1
-25	26	24	0.68	1.63	25	24	12	4.8	0.67	1
-%31	32	1.6	0.63	1.63	15	0	0	0	0	0
-%33	34	1.6	0.63	1.63	15	0	0	0	0	0
-%35	36	1.6	0.63	1.63	15	0	0	0	0	0
-41	42	1.6	0.63	1.63	15	0	0	0	0	0
-43	44	1.6	0.63	1.63	15	0	0	0	0	0
-45	46	1.6	0.63	1.63	15	0	0	0	0	0
-%51	52	1.6	0.63	1.63	15	0	0	0	0	0
-%53	54	1.6	0.63	1.63	15	0	0	0	0	0
-%55	56	1.6	0.63	1.63	15	0	0	0	0	0
-61	62	1.6	0.63	1.63	15	0	0	0	0	0
-63	64	1.6	0.63	1.63	15	0	0	0	0	0
-65	66	1.6	0.63	1.63	15	0	0	0	0	0
-71	72	1.6	0.63	1.63	15	0	0	0	0	0
-73	74	1.6	0.63	1.63	15	0	0	0	0	0
-75	76	1.6	0.63	1.63	15	0	0	0	0	0
+1	2	6.5	0.56	1.63	120	6.5	6.5	0	0	1	
+11	12	12	0.61	1.63	104	0	0	0	0	0
+13	14	12	0.61	1.63	104	0	0	0	0	0
+15	16	12	0.61	1.63	104	0	0	0	0	0
+21	22	24	0.68	1.63	18	24	12	4.8	0.67	1
+23	24	24	0.68	1.63	18	24	12	4.8	0.67	1
+25	26	24	0.68	1.63	18	24	12	4.8	0.67	1
+%31	32	1.6	0.68	1.63	30	0	0	0	0	0
+%33	34	1.6	0.63	1.63	30	0	0	0	0	0
+%35	36	1.6	0.63	1.63	30	0	0	0	0	0
+41	42	1.6	0.63	1.63	30	0	0	0	0	0
+43	44	1.6	0.63	1.63	30	0	0	0	0	0
+45	46	1.6	0.63	1.63	30	0	0	0	0	0
+%51	52	1.6	0.63	1.63	30	0	0	0	0	0
+%53	54	1.6	0.63	1.63	30	0	0	0	0	0
+%55	56	1.6	0.63	1.63	30	0	0	0	0	0
+61	62	1.6	0.63	1.63	30	0	0	0	0	0
+63	64	1.6	0.63	1.63	30	0	0	0	0	0
+65	66	1.6	0.63	1.63	30	0	0	0	0	0
+71	72	1.6	0.63	1.63	30	0	0	0	0	0
+73	74	1.6	0.63	1.63	30	0	0	0	0	0
+75	76	1.6	0.63	1.63	30	0	0	0	0	0
 END
 
-
-Morison_rect
+%Morison_rect
 % Rectangular cylinders: RETP 
 % Requires properties (diameter, drag coeff, added mass coeff, etc) in two different directions, x and y
 % Directions are determined as follows: 	Zlocal is the longitudinal direction, given by (n2 - n1) / |n2-n1| (n1 = node 1, n2 = node 2)
@@ -181,7 +166,9 @@ Morison_rect
 % ... \t Bottom surface \t Top surface \t Axial drag coefficient \t Axial added mass coefficient \t 1 or 0 for calculating dynamic pressure or not
 % The second part of the data above (the ones in the second line) is only required for heave plates. Input 0 for everything if only forces perpendicular to the axis of the cylinder will be considered
 %111	112	113	7.10	4.0	1.65	5.45	5.0	2.20	17	1	2	3	4	1
-END
+%END
+
+
 
 
 %%-----------------------------------------------------------------------------%%
@@ -1202,12 +1189,15 @@ END
 
 OUTPUT
 fowt_disp
-hs_force
+fowt_vel
+fowt_acc
 hd_force
+hd_drag_force
+hd_inertia_force
 total_force
-wave_elev 11
-wave_vel
+hd_2nd_force_part1
+hd_force
+wave_elev 1
 wave_acc
+wave_acc_2nd
 END
-
-

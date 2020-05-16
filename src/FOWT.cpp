@@ -8,17 +8,22 @@
 	Constructors
 *****************************************************/
 FOWT::FOWT() : m_extLinStiff(fill::zeros), m_mass(datum::nan),
-			   m_disp(fill::zeros), m_vel(fill::zeros), m_acc(fill::zeros)
+			   m_disp(fill::zeros), m_vel(fill::zeros), m_acc(fill::zeros),
+			   m_disp_sd(fill::zeros), m_vel_sd(fill::zeros), m_acc_sd(fill::zeros)
 {
 	m_CoG.fill(datum::nan);
+
+	// Default values for the filter in case the user has not specified any.
+	m_filterSD_omega = 0.025;
+	m_filterSD_zeta = 0.20;
 }
 
 /*****************************************************
 	Setters
 *****************************************************/
-void FOWT::setHydroMode(const int hydroMode)
+void FOWT::setHydroMode(const int hydroKinMode)
 {
-	m_hydroMode = hydroMode;
+	m_hydroMode = hydroKinMode;
 }
 
 void FOWT::setAeroMode(const int aeroMode)
@@ -46,6 +51,13 @@ void FOWT::setExtConstForce(const vec::fixed<6> &extConstForce)
 {
 	m_extConstForce = extConstForce;
 }
+
+void FOWT::setFilderSD(const double omega, const double zeta)
+{
+	m_filterSD_omega = omega;
+	m_filterSD_zeta = zeta;
+}
+
 
 void FOWT::setFloater(Floater &floater)
 {
@@ -84,6 +96,16 @@ int FOWT::aeroMode() const
 int FOWT::moorMode() const
 {
 	return m_moorMode;
+}
+
+double FOWT::filterSD_omega() const
+{
+	return m_filterSD_omega;
+}
+
+double FOWT::filterSD_zeta() const
+{
+	return m_filterSD_zeta;
 }
 
 vec::fixed<3> FOWT::CoG()
@@ -148,7 +170,7 @@ std::string FOWT::printFloater() const
 	output = output + "\tInertia Matrix:\t" + m_floater.printInertia() + "\n";
 	output = output + "\tMorison Elements:\n" + m_floater.printMorisonElements() + "\n";
 
-	mat::fixed<6, 6> A = m_floater.addedMass(1, 1);
+	mat::fixed<6, 6> A = m_floater.addedMass(1);
 	output = output + "\tAdded Mass for unitary density:\n";
 	for (int ii = 0; ii < 6; ++ii)
 	{
@@ -216,36 +238,78 @@ std::string FOWT::printDoF() const
 	return output;
 }
 
+void FOWT::print2outLine() const
+{
+	IO::print2outLine(IO::OUTFLAG_FOWT_DISP, m_disp);
+	IO::print2outLine(IO::OUTFLAG_FOWT_VEL, m_vel);	
+	IO::print2outLine(IO::OUTFLAG_FOWT_ACC, m_acc);
+	IO::print2outLine(IO::OUTFLAG_FOWT_DISP_SD, m_disp_sd);
+}
+
 
 /*****************************************************
 	Forces, acceleration, displacement, etc
 *****************************************************/
-// Update FOWT displacement, velocity, acceleration and any other necessary state
-void FOWT::update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc)
+// Update FOWT displacement, velocity, acceleration and any other necessary state.
+// dt is used only for integrating the filter equation for the slow drift motions.
+void FOWT::update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc, const double dt)
 {
 	m_disp = disp;
 	m_vel = vel;
-	m_acc = acc;
-	m_floater.update(m_disp, m_vel, m_acc); // Aqui tem que passar os deslocamentos com relacao ao CoG do floater. Calcular aqui mesmo baseado na posicao do centro de referencia de movimento
+	m_acc = acc;	
+
+	// Evaluate (and update) the axis system that follows the slow position.
+	double wf = m_filterSD_omega;
+	double zeta = m_filterSD_zeta;
+
+	if (wf >= 0)
+	{
+
+		vec::fixed<6> acc_sd_k1 = -2 * wf*zeta*m_vel_sd - wf * wf * (m_disp_sd - m_disp);
+		vec::fixed<6> vel_sd_k1 = acc_sd_k1 * dt;
+		vec::fixed<6> disp_sd_k1 = m_vel_sd * dt;
+
+		vec::fixed<6> acc_sd_k2 = -2 * wf*zeta*(m_vel_sd + vel_sd_k1 / 2) - wf * wf * (m_disp_sd + disp_sd_k1 / 2 - m_disp);
+		vec::fixed<6> vel_sd_k2 = acc_sd_k2 * dt;
+		vec::fixed<6> disp_sd_k2 = (m_vel_sd + vel_sd_k1 / 2) * dt;
+
+		vec::fixed<6> acc_sd_k3 = -2 * wf*zeta*(m_vel_sd + vel_sd_k2 / 2) - wf * wf * (m_disp_sd + disp_sd_k2 / 2 - m_disp);
+		vec::fixed<6> vel_sd_k3 = acc_sd_k3 * dt;
+		vec::fixed<6> disp_sd_k3 = (m_vel_sd + vel_sd_k2 / 2) * dt;
+
+		vec::fixed<6> acc_sd_k4 = -2 * wf*zeta*(m_vel_sd + vel_sd_k3) - wf * wf * (m_disp_sd + disp_sd_k3 - m_disp);
+		vec::fixed<6> vel_sd_k4 = acc_sd_k3 * dt;
+		vec::fixed<6> disp_sd_k4 = (m_vel_sd + vel_sd_k3) * dt;
+
+		m_acc_sd = (acc_sd_k1 + 2 * acc_sd_k2 + 2 * acc_sd_k3 + acc_sd_k4) / 6;
+		m_vel_sd += (vel_sd_k1 + 2 * vel_sd_k2 + 2 * vel_sd_k3 + vel_sd_k4) / 6;
+		m_disp_sd += (disp_sd_k1 + 2 * disp_sd_k2 + 2 * disp_sd_k3 + disp_sd_k4) / 6;
+	}
+	else
+	{
+		m_acc_sd = m_acc;
+		m_vel_sd = m_vel;
+		m_disp_sd = m_disp;
+	}
+
+	// Aqui tem que passar os deslocamentos com relacao ao CoG do floater. Calcular aqui mesmo baseado na posicao do centro de referencia de movimento
+	m_floater.update(m_disp, m_vel, m_acc, m_disp_sd); 
 }
 
 vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 {
-	IO::print2outLine(IO::OUTFLAG_FOWT_DISP, m_disp);
-	IO::print2outLine(IO::OUTFLAG_FOWT_VEL, m_vel);
-
 	vec::fixed<6> acc(fill::zeros);
 
 	// Calculate the total force acting on the FOWT
 	vec::fixed<6> force = totalForce(envir);
 	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE, force);
 
-	// Calculate the acceleration only if at least one dofs is deactivated
+	// Calculate the acceleration only if at least one dof is activated
 	// (i.e. if at least one element of m_dofs is equal to 'true')
 	if (std::find(m_dofs.begin(), m_dofs.end(), true) != m_dofs.end())
 	{
 		// Inertia matrix including added matrix
-		mat::fixed<6, 6> inertiaMatrix = m_floater.addedMass(envir.watDensity(), m_hydroMode) + m_floater.inertiaMatrix();
+		mat::fixed<6, 6> inertiaMatrix = m_floater.addedMass(envir.watDensity()) + m_floater.inertiaMatrix();
 
 		// Avoid coupling effects when a DoF is disabled and the others are not.
 		// For doing so, set the calculated force to zero if the dof is deactivated.
@@ -272,8 +336,7 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 			}
 		}
 	}
-
-	IO::print2outLine(IO::OUTFLAG_FOWT_ACC, m_acc);
+	
 	return acc;
 }
 
@@ -294,7 +357,7 @@ vec::fixed<6> FOWT::hydrostaticForce(const ENVIR &envir)
 		return vec::fixed<6> {0, 0, 0, 0, 0, 0};
 	}
 
-	return m_floater.hydrostaticForce(envir, m_hydroMode);
+	return m_floater.hydrostaticForce(envir);
 }
 
 vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)

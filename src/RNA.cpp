@@ -306,7 +306,7 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 	// from the earth cordinate system to the one attached to the body,
 	// and then rotorRotation, which is different for each blade and depends on the
 	// rotor configuration (i.e. tilt, yaw, current azimuth and blade precone)
-	arma::mat::fixed<3, 3> rigidBodyRotation = rotatMatrix(-FOWTpos.rows(0, 2));
+	arma::mat::fixed<3, 3> rigidBodyRotation = rotatMatrix(-FOWTpos.rows(3, 5));
 	arma::mat::fixed<3, 3> rotorRotation{ 0,0,0 };
 
 	// Variables that provide the brackets for Brent method
@@ -337,7 +337,7 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 			windVel = rotorRotation * (rigidBodyRotation * windVel);
 
 			// Structural velocity of the nodes. Need to be written in the node coordinate system
-			cog2node = rotatMatrix(FOWTpos.rows(0, 2)) * nodeCoord_fowt;
+			cog2node = rotatMatrix(FOWTpos.rows(3, 5)) * nodeCoord_fowt;
 			nodeVel = FOWTvel.rows(0,2) + arma::cross(FOWTvel.rows(3,5), cog2node);  // nodeVel = linearVel + angVel ^ r ; this is written in the earth coordinate system
 			nodeVel = rotorRotation * (rigidBodyRotation * nodeVel); // Need to pass to the node coordinate system
 			nodeVel += rotatMatrix_deg(-totalAzimuth, 0, 0) * arma::cross(arma::vec::fixed<3> {rotorSpeed()*2*datum::pi/60, 0, 0}, nodeCoord_shaft); // Need to add the velocity due to the rotor rotation, written in the node coordinate system

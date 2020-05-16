@@ -29,7 +29,7 @@ std::ofstream IO::m_sumFl;
 
 std::string IO::m_outFilePath = "";
 std::ofstream IO::m_outFl;
-const unsigned int IO::m_outColumnWidth = 18;
+const unsigned int IO::m_outColumnWidth = 21;
 const unsigned int IO::m_outNumPrecision = 4;
 std::array<bool, IO::OUTFLAG_SIZE> IO::m_whichResult2Output;
 
@@ -92,6 +92,11 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		else if (caseInsCompare(getKeyword(strInput), "WatDepth"))
 		{
 			envir.setWatDepth(string2num<double>(getData(strInput)));
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "WaveStret"))
+		{
+			envir.setWaveStret(string2num<unsigned int>(getData(strInput)));
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "AirDens"))
@@ -291,6 +296,18 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			}
 
 			fowt.setExtConstForce(aux);
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "FiltSlowDrift"))
+		{
+		// Need 2 inputs separated by a space or a tab:
+		// angular frequency and damping levels (in % of critical damping)
+		std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
+		if (input.size() != 2)
+		{
+			throw std::runtime_error("Unable to read slow drift filter in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+		}
+		fowt.setFilderSD(string2num<double>(input.at(0)), string2num<double>(input.at(1)));
 		}
 
 		// Read data to floater - which is a part of FOWT
@@ -517,7 +534,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				double aux_crvAng = string2num<double>(input.at(3));
 				double aux_twist = string2num<double>(input.at(4));
 				double aux_chord = string2num<double>(input.at(5));
-				double aux_airfoilID = string2num<int>(input.at(6));
+				int aux_airfoilID = string2num<int>(input.at(6));
 
 				rna.addBladeAeroNode(aux_span, aux_crvAC, aux_swpAC, aux_crvAng, aux_twist, aux_chord, aux_airfoilID);
 
@@ -722,20 +739,20 @@ void IO::setFiles(const std::string &inFlPath)
 // "thereIsCommentInString". Besides, it updates the line number counter inLineNumber
 void IO::readLineInputFile(std::string &strInput)
 {
-	std::getline(m_inFl, strInput); // Read next file line to string strInput
-	++m_inLineNumber; // Update line number counter
+	strInput = "";
 
-  // Repeat this process until the line has some content or end of file is achieved
+	// Read next file line to string strInput and update line number counter.
+    // Repeat this process until the line has some content or end of file is achieved.
 	while (!hasContent(strInput) && m_inFl)
 	{
 		std::getline(m_inFl, strInput);
 		++m_inLineNumber;
-	}
 
-	// Remove comments from line
-	if (thereIsCommentInString(strInput))
-	{
-		removeComments(strInput);
+		// Remove comments from line
+		if (thereIsCommentInString(strInput))
+		{
+			removeComments(strInput);
+		}
 	}
 
 	if (!m_inFl)
@@ -772,19 +789,9 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_ACC) = true;
 	}
 
-	if (caseInsCompare(keyword, "hd_force"))
+	if (caseInsCompare(keyword, "fowt_disp_sd"))
 	{
-		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE) = true;
-	}
-
-	if (caseInsCompare(keyword, "hs_force"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_HS_FORCE) = true;
-	}
-
-	if (caseInsCompare(keyword, "total_force"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_TOTAL_FORCE) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_DISP_SD) = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_inertia_force"))
@@ -802,9 +809,49 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FK_FORCE) = true;
 	}
 
+	if (caseInsCompare(keyword, "hd_2nd_force_part1"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART1) = true;
+	}
+
+	if (caseInsCompare(keyword, "hd_2nd_force_part2"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART2) = true;
+	}
+
+	if (caseInsCompare(keyword, "hd_2nd_force_part3"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART3) = true;
+	}
+
+	if (caseInsCompare(keyword, "hd_2nd_force_part4"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART4) = true;
+	}
+
+	if (caseInsCompare(keyword, "hd_2nd_force_part5"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART5) = true;
+	}
+
+	if (caseInsCompare(keyword, "hd_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE) = true;
+	}
+
+	if (caseInsCompare(keyword, "hs_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HS_FORCE) = true;
+	}
+
 	if (caseInsCompare(keyword, "ad_hub_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_AD_HUB_FORCE) = true;
+	}
+
+	if (caseInsCompare(keyword, "total_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_TOTAL_FORCE) = true;
 	}
 
 	// Add wave probes for wave elev, velocity, acceleration or pressure
@@ -830,6 +877,12 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	if (caseInsCompare(keyword, "wave_pres"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_WAVE_PRES) = true;
+		addWaveProbe = true;
+	}
+
+	if (caseInsCompare(keyword, "wave_acc_2nd"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ACC_2ND) = true;
 		addWaveProbe = true;
 	}
 
@@ -927,10 +980,12 @@ void IO::print2outLineHeader_turnOff()
 void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 {
 	// Check whether the specified flag is indeed one that requires a vector with six components
-	if ((flag != OUTFLAG_FOWT_DISP) && (flag != OUTFLAG_FOWT_VEL) && (flag != OUTFLAG_FOWT_ACC) &&
-		(flag != OUTFLAG_HD_FORCE) && (flag != OUTFLAG_HS_FORCE) && (flag != OUTFLAG_TOTAL_FORCE) &&
-		(flag != OUTFLAG_HD_INERTIA_FORCE) && (flag != OUTFLAG_HD_DRAG_FORCE) && (flag != OUTFLAG_HD_FK_FORCE) &&
-		(flag != OUTFLAG_AD_HUB_FORCE)
+	if ((flag != IO::OUTFLAG_FOWT_DISP) && (flag != IO::OUTFLAG_FOWT_VEL) && (flag != IO::OUTFLAG_FOWT_ACC) && (flag != IO::OUTFLAG_FOWT_DISP_SD) &&
+		(flag != IO::OUTFLAG_TOTAL_FORCE) && (flag != IO::OUTFLAG_HD_FORCE)  && (flag != IO::OUTFLAG_HS_FORCE) &&
+		(flag != IO::OUTFLAG_HD_INERTIA_FORCE) && (flag != IO::OUTFLAG_HD_DRAG_FORCE) && (flag != IO::OUTFLAG_HD_FK_FORCE) &&
+		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART1) && (flag != IO::OUTFLAG_HD_2ND_FORCE_PART2) &&
+		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART3) && (flag != IO::OUTFLAG_HD_2ND_FORCE_PART4) &&
+		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART5) && (flag != IO::OUTFLAG_AD_HUB_FORCE)
 	   )
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &force).");
@@ -940,35 +995,11 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 	// then print the header based on the output flag
 	if (m_shouldWriteOutLineHeader && m_whichResult2Output.at(flag))
 	{
-		if (flag == OUTFLAG_HD_FORCE)
-		{
-			for (int ii = 1; ii <= 6; ++ii)
-			{
-				print2outLineHeader("HD_Force_" + std::to_string(ii));
-			}
-		}
-
-		if (flag == OUTFLAG_HS_FORCE)
-		{
-			for (int ii = 1; ii <= 6; ++ii)
-			{
-				print2outLineHeader("HS_Force_" + std::to_string(ii));
-			}
-		}
-
-		if (flag == OUTFLAG_TOTAL_FORCE)
-		{
-			for (int ii = 1; ii <= 6; ++ii)
-			{
-				print2outLineHeader("TOTAL_Force_" + std::to_string(ii));
-			}
-		}
-
 		if (flag == OUTFLAG_HD_INERTIA_FORCE)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
-				print2outLineHeader("HD_INRT_Force_" + std::to_string(ii));
+				print2outLineHeader("hd_inert_force_" + std::to_string(ii));
 			}
 		}
 
@@ -976,7 +1007,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
-				print2outLineHeader("HD_DRAG_Force_" + std::to_string(ii));
+				print2outLineHeader("hd_drag_force_" + std::to_string(ii));
 			}
 		}
 
@@ -984,7 +1015,63 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
-				print2outLineHeader("HD_FK_Force_" + std::to_string(ii));
+				print2outLineHeader("hd_fk_force_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_2ND_FORCE_PART1)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_2nd_force_P1_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_2ND_FORCE_PART2)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_2nd_force_P2_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_2ND_FORCE_PART3)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_2nd_force_P3_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_2ND_FORCE_PART4)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_2nd_force_P4_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_2ND_FORCE_PART5)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_2nd_force_P5_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_force_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HS_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hs_force_" + std::to_string(ii));
 			}
 		}
 
@@ -992,41 +1079,58 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
-				print2outLineHeader("AD_HUB_Force_" + std::to_string(ii));
+				print2outLineHeader("ad_hub_force_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_TOTAL_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("total_force_" + std::to_string(ii));
 			}
 		}
 
 		if (flag == OUTFLAG_FOWT_DISP)
 		{
-			print2outLineHeader("Surge");
-			print2outLineHeader("Sway");
-			print2outLineHeader("Heave");
-			print2outLineHeader("Roll");
-			print2outLineHeader("Pitch");
-			print2outLineHeader("Yaw");
+			print2outLineHeader("surge");
+			print2outLineHeader("sway");
+			print2outLineHeader("heave");
+			print2outLineHeader("roll");
+			print2outLineHeader("pitch");
+			print2outLineHeader("yaw");
 		}
 
 		if (flag == OUTFLAG_FOWT_VEL)
 		{
-			print2outLineHeader("Surge_Vel");
-			print2outLineHeader("Sway_Vel");
-			print2outLineHeader("Heave_Vel");
-			print2outLineHeader("Roll_Vel");
-			print2outLineHeader("Pitch_Vel");
-			print2outLineHeader("Yaw_Vel");
+			print2outLineHeader("surge_vel");
+			print2outLineHeader("sway_vel");
+			print2outLineHeader("heave_vel");
+			print2outLineHeader("roll_vel");
+			print2outLineHeader("pitch_vel");
+			print2outLineHeader("yaw_vel");
 		}
 
 		if (flag == OUTFLAG_FOWT_ACC)
 		{
-			print2outLineHeader("Surge_Acc");
-			print2outLineHeader("Sway_Acc");
-			print2outLineHeader("Heave_Acc");
-			print2outLineHeader("Roll_Acc");
-			print2outLineHeader("Pitch_Acc");
-			print2outLineHeader("Yaw_Acc");
+			print2outLineHeader("surge_acc");
+			print2outLineHeader("sway_acc");
+			print2outLineHeader("heave_acc");
+			print2outLineHeader("roll_acc");
+			print2outLineHeader("pitch_acc");
+			print2outLineHeader("yaw_acc");
+		}
+
+		if (flag == OUTFLAG_FOWT_DISP_SD)
+		{
+			print2outLineHeader("surge_sd");
+			print2outLineHeader("sway_sd");
+			print2outLineHeader("heave_sd");
+			print2outLineHeader("roll_sd");
+			print2outLineHeader("pitch_sd");
+			print2outLineHeader("yaw_sd");
 		}
 	}
-
 
 	// If the printing flag is true and if this is one of the requested output variables,
 	// then print it to the output line
@@ -1044,8 +1148,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 // and the value itself, which three component vector. Other future outputs may profit from this function as well.
 void IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed<3> &vector_3)
 {
-
-	if ((flag != OUTFLAG_WAVE_VEL) && (flag != OUTFLAG_WAVE_ACC))
+	if ((flag != OUTFLAG_WAVE_VEL) && (flag != OUTFLAG_WAVE_ACC) && (flag != OUTFLAG_WAVE_ACC_2ND))
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed<3> &vector_3).");
 	}
@@ -1056,16 +1159,23 @@ void IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed
 	{
 		if (flag == OUTFLAG_WAVE_VEL)
 		{
-			print2outLineHeader("WAVE_VEL_" + std::to_string(ID) + "_X");
-			print2outLineHeader("WAVE_VEL_" + std::to_string(ID) + "_Y");
-			print2outLineHeader("WAVE_VEL_" + std::to_string(ID) + "_Z");
+			print2outLineHeader("wave_vel_" + std::to_string(ID) + "_x");
+			print2outLineHeader("wave_vel_" + std::to_string(ID) + "_y");
+			print2outLineHeader("wave_vel_" + std::to_string(ID) + "_z");
 		}
 
 		if (flag == OUTFLAG_WAVE_ACC)
 		{
-			print2outLineHeader("WAVE_ACC_" + std::to_string(ID) + "_X");
-			print2outLineHeader("WAVE_ACC_" + std::to_string(ID) + "_Y");
-			print2outLineHeader("WAVE_ACC_" + std::to_string(ID) + "_Z");
+			print2outLineHeader("wave_acc_" + std::to_string(ID) + "_x");
+			print2outLineHeader("wave_acc_" + std::to_string(ID) + "_y");
+			print2outLineHeader("wave_acc_" + std::to_string(ID) + "_z");
+		}
+
+		if (flag == OUTFLAG_WAVE_ACC_2ND)
+		{
+			print2outLineHeader("wave_acc_2nd_" + std::to_string(ID) + "_x");
+			print2outLineHeader("wave_acc_2nd_" + std::to_string(ID) + "_y");
+			print2outLineHeader("wave_acc_2nd_" + std::to_string(ID) + "_z");
 		}
 	}
 
@@ -1097,12 +1207,12 @@ void IO::print2outLine(const OutFlag &flag, const int ID, const double num)
 	{
 		if (flag == OUTFLAG_WAVE_ELEV)
 		{
-			print2outLineHeader("WAVE_ELEV_" + std::to_string(ID));
+			print2outLineHeader("wave_elev_" + std::to_string(ID));
 		}
 
 		if (flag == OUTFLAG_WAVE_PRES)
 		{
-			print2outLineHeader("WAVE_PRES_" + std::to_string(ID));
+			print2outLineHeader("wave_pres_" + std::to_string(ID));
 		}
 	}
 
@@ -1126,6 +1236,11 @@ void IO::print2outLine(const std::string &str)
 void IO::print2outLine(const double num)
 {
 	m_outLine << std::setw(IO::m_outColumnWidth) << std::scientific << std::setprecision(IO::m_outNumPrecision) << num;
+}
+
+void IO::print2outLine_decimal(const double num)
+{
+	m_outLine << std::setw(IO::m_outColumnWidth) << std::fixed << std::setprecision(IO::m_outNumPrecision) << num;
 }
 
 void IO::print2outLine(const int num)
@@ -1192,6 +1307,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Gravity:\t" << envir.gravity() << '\n';
 	m_sumFl << "Water Density:\t" << envir.watDensity() << '\n';
 	m_sumFl << "Water Depth:\t" << envir.watDepth() << '\n';
+	m_sumFl << "Wave Stretching:\t" << envir.waveStret() << '\n';
 	m_sumFl << "Air density:\t" << envir.airDensity() << '\n';
 	m_sumFl << "Wind X velocity:\t" << envir.windRefVel() << '\n';
 	m_sumFl << "Wind Height:\t" << envir.windRefHeight() << '\n';
@@ -1205,6 +1321,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Hydro Mode:\t" << fowt.printHydroMode() << "\n";
 	m_sumFl << "Aero Mode:\t" << fowt.printAeroMode() << "\n";
 	m_sumFl << "Moor Mode:\t" << fowt.printMoorMode() << "\n";
+	m_sumFl << "Filter SD:\t" << fowt.filterSD_omega() << "\t" << fowt.filterSD_zeta() << "\n";
 	m_sumFl << "DOFs:\t" << fowt.printDoF() << '\n';
 
 	if (fowt.moorMode() == 0)
@@ -1260,6 +1377,10 @@ std::string IO::printOutVar()
 			output += "FOWT rigid motion: ";
 			break;
 
+		case IO::OUTFLAG_FOWT_DISP_SD:
+			output += "FOWT rigid motion - Slow: ";
+			break;
+
 		case IO::OUTFLAG_WAVE_ELEV:
 			output += "Wave Elevation: ";
 			break;
@@ -1272,16 +1393,12 @@ std::string IO::printOutVar()
 			output += "Wave Acceleration: ";
 			break;
 
+		case IO::OUTFLAG_WAVE_ACC_2ND:
+			output += "Wave Acceleration - 2nd order: ";
+			break;
+
 		case IO::OUTFLAG_WAVE_PRES:
 			output += "Wave Pressure: ";
-			break;
-
-		case IO::OUTFLAG_HD_FORCE:
-		    output += "Hydrodynamic force: ";
-			break;
-
-		case IO::OUTFLAG_HS_FORCE:
-		    output += "Hydrostatic force: ";
 			break;
 
 		case IO::OUTFLAG_HD_INERTIA_FORCE:
@@ -1292,8 +1409,36 @@ std::string IO::printOutVar()
 			output += "Hydrodynamic drag force: ";
 			break;
 
+		case IO::OUTFLAG_HD_2ND_FORCE_PART1:
+			output += "Hydrodynamic 2nd force - Part 1: ";
+			break;
+
+		case IO::OUTFLAG_HD_2ND_FORCE_PART2:
+			output += "Hydrodynamic 2nd force - Part 2: ";
+			break;
+
+		case IO::OUTFLAG_HD_2ND_FORCE_PART3:
+			output += "Hydrodynamic 2nd force - Part 3: ";
+			break;
+
+		case IO::OUTFLAG_HD_2ND_FORCE_PART4:
+			output += "Hydrodynamic 2nd force - Part 4: ";
+			break;
+
+		case IO::OUTFLAG_HD_2ND_FORCE_PART5:
+			output += "Hydrodynamic 2nd force - Part 5: ";
+			break;
+
 		case IO::OUTFLAG_HD_FK_FORCE:
 			output += "Hydrodynamic Froude-Krylov force: ";
+			break;
+
+		case IO::OUTFLAG_HD_FORCE:
+			output += "Hydrodynamic force: ";
+			break;
+
+		case IO::OUTFLAG_HS_FORCE:
+			output += "Hydrostatic force: ";
 			break;
 
 		case IO::OUTFLAG_AD_HUB_FORCE:

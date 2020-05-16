@@ -37,10 +37,10 @@ public:
 	void setCoG(const vec::fixed<3> &cog);
 
 	void addMorisonCirc(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_coord, const double diam, const double CD, const double CM, const unsigned int numIntPoints,
-		const double botDiam, const double topDiam, const double axialCD, const double axialCa, const bool botPressFlag);
+	const double botDiam, const double topDiam, const double axialCD, const double axialCa, const bool botPressFlag);
 	void addMorisonRect(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_coord, vec::fixed<3> &node3_coord, const double diam_X, const double diam_Y,
-		const double CD_X, const double CD_Y, const double CM_X, const double CM_Y, const unsigned int numIntPoints,
-		const double botArea, const double topArea, const double axialCD, const double axialCa, const bool botPressFlag);
+	const double CD_X, const double CD_Y, const double CM_X, const double CM_Y, const unsigned int numIntPoints,
+	const double botArea, const double topArea, const double axialCD, const double axialCa, const bool botPressFlag);
 
 	/*****************************************************
 		Getters
@@ -58,9 +58,9 @@ public:
 	/*****************************************************
 		Forces, acceleration, displacement, etc
 	*****************************************************/
-	void update(const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc);
-	mat::fixed<6, 6> addedMass(const double density, const int hydroMode) const;
+	void update(const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc, const vec::fixed<6> &FOWTdisp_SD);
+	mat::fixed<6, 6> addedMass(const double density) const;
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode) const;
-	vec::fixed<6> hydrostaticForce(const ENVIR &envir, const int hydroMode) const;
+	vec::fixed<6> hydrostaticForce(const ENVIR &envir) const;
 };
 

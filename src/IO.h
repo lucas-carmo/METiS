@@ -27,15 +27,22 @@ public:
 		OUTFLAG_FOWT_DISP,
 		OUTFLAG_FOWT_VEL,
 		OUTFLAG_FOWT_ACC,
+		OUTFLAG_FOWT_DISP_SD,
 //
 		OUTFLAG_WAVE_ELEV,
 		OUTFLAG_WAVE_VEL,
 		OUTFLAG_WAVE_ACC,
 		OUTFLAG_WAVE_PRES,
+		OUTFLAG_WAVE_ACC_2ND,
 //
 		OUTFLAG_HD_INERTIA_FORCE,
 		OUTFLAG_HD_DRAG_FORCE,
 		OUTFLAG_HD_FK_FORCE,
+		OUTFLAG_HD_2ND_FORCE_PART1,
+		OUTFLAG_HD_2ND_FORCE_PART2,
+		OUTFLAG_HD_2ND_FORCE_PART3,
+		OUTFLAG_HD_2ND_FORCE_PART4,
+		OUTFLAG_HD_2ND_FORCE_PART5,
 		OUTFLAG_HD_FORCE,
 //
 		OUTFLAG_HS_FORCE,
@@ -107,6 +114,7 @@ public:
 
 	static void print2outLine(const std::string &str);
 	static void print2outLine(const double num);
+	static void print2outLine_decimal(const double num);
 	static void print2outLine(const int num);
 	static void print2outLineHeader(const std::string &str);
 
