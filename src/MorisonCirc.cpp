@@ -701,7 +701,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> du1dz(fill::zeros);
 	vec::fixed<3> du2dt(fill::zeros);
 	vec::fixed<3> a_c(fill::zeros); // Convective acceleration of the fluid
-	vec::fixed<3> a_a(fill::zeros); // Axial acceleration of the fluid
+	vec::fixed<3> a_a(fill::zeros); // Axial-divergence acceleration of the fluid
 	vec::fixed<3> a_r(fill::zeros); // Fluid acceleration associated with body rotation
 
 	// Forces acting at the integration point and moment (with relation to n1) due to the force acting at the integration point
@@ -715,7 +715,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> moment_inertia_2nd_part1_ii(fill::zeros);
 	vec::fixed<3> force_inertia_2nd_part3_ii(fill::zeros); // Inertial component - Second order - Part that is due to the convective acceleration
 	vec::fixed<3> moment_inertia_2nd_part3_ii(fill::zeros);
-	vec::fixed<3> force_inertia_2nd_part4_ii(fill::zeros); // Inertial component - Second order - Part that is due to the axial acceleration
+	vec::fixed<3> force_inertia_2nd_part4_ii(fill::zeros); // Inertial component - Second order - Part that is due to the axial-divergence acceleration
 	vec::fixed<3> moment_inertia_2nd_part4_ii(fill::zeros);
 	vec::fixed<3> force_inertia_2nd_part5_ii(fill::zeros); // Inertial component - Second order - Part that is due to body rotation
 	vec::fixed<3> moment_inertia_2nd_part5_ii(fill::zeros);
@@ -832,7 +832,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 
 				force_inertia_2nd_part3_ii = (datum::pi * D*D / 4.) * rho * Cm * a_c;
 
-				// 4th component: Force due to axial acceleration
+				// 4th component: Force due to axial-divergence acceleration
 				double dwdz = dot(du1dx, zvec_sd) * zvec_sd.at(0) + dot(du1dy, zvec_sd) * zvec_sd.at(1) + dot(du1dz, zvec_sd) * zvec_sd.at(2);				
 				a_a = dwdz * (dot(u1, xvec_sd)*xvec_sd + dot(u1, yvec_sd)*yvec_sd - vel_ii); // vel_ii was already projected in the direction perpendicular to the cylinder
 				force_inertia_2nd_part4_ii = (datum::pi * D*D / 4.) * rho * (Cm - 1) * a_a;
