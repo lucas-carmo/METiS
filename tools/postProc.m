@@ -6,13 +6,13 @@ clc
 
 
 flNm = { 
-         '..\test\OC4_200m_0deg_BIC01-HD3_out.txt'
-         '..\test\OC4_200m_0deg_BIC01-HD4_out.txt'
+            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_OC4\OC4_bicromatica\mts\fixa\Dir0_H4p0_BIC01-HD2_out.txt'
+            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_OC4\OC4_bicromatica\mts\axial_refined_dt\Dir0_H4p0_BIC01-HD2_out_1.txt'
         };
 
 legSpec = { 
-            'fixed'
-            'moving'
+            'Wheeler - Fixed pos'
+            'Wheeler'
           };
     
 %===== Choose the output
@@ -23,23 +23,24 @@ analysisList = containers.Map;
 
 % FOWT position, velocity and acceleration
 analysisList('fowt_disp') = 1;
-analysisList('fowt_vel') = 0;
-analysisList('fowt_acc') = 0;
+analysisList('fowt_vel') = 1;
+analysisList('fowt_acc') = 1;
 
 % Forces
 analysisList('hd_inertia_force') = 0;
 analysisList('hd_drag_force') = 0;
 analysisList('hd_fk_force') = 0;
-analysisList('hd_2nd_force_part1') = 1;
+analysisList('hd_2nd_force_part1') = 0;
 analysisList('hd_force') = 0;
 analysisList('hs_force') = 0;
 analysisList('ad_hub_force') = 0;
-analysisList('total_force') = 0;
+analysisList('total_force') = 1;
 
 % Wave outputs
-analysisList('wave_elev') = 0;
+analysisList('wave_elev') = 1;
 analysisList('wave_vel') = 0;
 analysisList('wave_acc') = 0;
+analysisList('wave_acc_2nd') = 0;
 analysisList('wave_press') = 0;
 
 
@@ -47,7 +48,7 @@ analysisList('wave_press') = 0;
 width4Line = 2;
 colors4Plot = num2cell(get(groot,'defaultAxesColorOrder'), 2);
 sizeOfFont = 12;
-style4Plot = {'-', '--', '--'};
+style4Plot = {'-', '-', '-'};
 
 
 %=========================================================================%
@@ -79,6 +80,7 @@ for ii = 1:numel(flNm)
         title4plot = k(jj);
         label4plot{1,1} = {'surge'; 'sway'; 'heave'; 'roll'; 'pitch'; 'yaw'};
         
+        clear y
         % Displacement, forces, etc
         if strcmp(k{jj}, 'fowt_disp')
             y = [data.surge, data.sway, data.heave, data.roll, data.pitch, data.yaw];            
@@ -131,28 +133,29 @@ for ii = 1:numel(flNm)
         % vectors (velocity and acceleration).
         if strcmp(k{jj}, 'wave_elev') || strcmp(k{jj}, 'wave_press')
             waveLocation = find(contains(fieldsOfData, k{jj})==1);
-            for ww = waveLocation:-1:1
-                y(:,1,ww) = data.(fieldsOfData(waveLocation{ww}));
-                title4plot{ww} = fieldsOfData(waveLocation{ww});
-                label4plot{ww} = '';
+            for ww = numel(waveLocation):-1:1
+                y(:,1,ww) = data.(fieldsOfData{waveLocation(ww)});
+                title4plot{ww} = fieldsOfData(waveLocation(ww));
+                label4plot{ww} = {' '; ''; ''};
             end
             
-        elseif strcmp(k{jj}, 'wave_vel') || strcmp(k{jj}, 'wave_acc')
-            waveLocation_x = find(contains(fieldsOfData, [k{jj} '_x'])==1);
-            waveLocation_y = find(contains(fieldsOfData, [k{jj} '_y'])==1);
-            waveLocation_z = find(contains(fieldsOfData, [k{jj} '_z'])==1);
-            for ww = waveLocation:-1:1
-                y(:,:,ww) = [data.(fieldsOfData(waveLocation_x{ww})), data.(fieldsOfData(waveLocation_y{ww})), data.(fieldsOfData(waveLocation_z{ww}))];
-                title4plot{ww} = fieldsOfData(waveLocation{ww});
+        elseif strcmp(k{jj}, 'wave_vel') || strcmp(k{jj}, 'wave_acc') || strcmp(k{jj}, 'wave_acc_2nd')
+            waveLocation_x = find(contains(fieldsOfData, k{jj})==1 & contains(fieldsOfData, '_x')==1); 
+            waveLocation_y = find(contains(fieldsOfData, k{jj})==1 & contains(fieldsOfData, '_y')==1); 
+            waveLocation_z = find(contains(fieldsOfData, k{jj})==1 & contains(fieldsOfData, '_z')==1); 
+            for ww = numel(waveLocation_x):-1:1
+                y(:,:,ww) = [data.(fieldsOfData{waveLocation_x(ww)}), data.(fieldsOfData{waveLocation_y(ww)}), data.(fieldsOfData{waveLocation_z(ww)})];
+                title4plot{ww} = strrep(fieldsOfData{waveLocation_x(ww)}, '_x', '');
                 label4plot{ww} = {'x'; 'y'; 'z'};
             end
         end                
                 
-        % Only wave quantities may have the third dimension of 'y' larger than 1 
+        % Only wave quantities may have the third dimension of 'y' larger than 1
+        % The others will iterate only once
         for ww = 1:size(y,3)             
             % Create figures and axes
             if ii == 1                           
-                figVec(caa) = figure('name', title4plot{ww}, 'color', 'w', 'units','normalized','outerposition',[0 0 1 1]);
+                figVec(caa) = figure('name', char(title4plot{ww}), 'color', 'w', 'units','normalized','outerposition',[0 0 1 1]);
                 title(strrep(title4plot{ww}, '_', '\_'))
 
                 % Check the number of subplots            
