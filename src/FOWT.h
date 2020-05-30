@@ -18,7 +18,7 @@ private:
 	Floater m_floater;
 	//Tower m_tower;
 	RNA m_rna;
-	vec::fixed<3> m_extLinStiff;
+	mat::fixed<6,6> m_extLinStiff;
 	vec::fixed<6> m_extConstForce;
 
 	/*
@@ -64,7 +64,7 @@ public:
 	void setMoorMode(const int moorMode);
 	void setDoFs(std::array<bool, 6> &dofs);
 
-	void setExtLinStiff(const vec::fixed<3> &extLinStiff);
+	void setExtLinStiff(const mat::fixed<6,6> &extLinStiff);
 	void setExtConstForce(const vec::fixed<6> &extConstForce);
 
 	void setFilderSD(const double omega, const double zeta);

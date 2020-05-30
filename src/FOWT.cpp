@@ -42,7 +42,7 @@ void FOWT::setDoFs(std::array<bool, 6> &dofs)
 }
 
 
-void FOWT::setExtLinStiff(const vec::fixed<3> &extLinStiff)
+void FOWT::setExtLinStiff(const mat::fixed<6,6> &extLinStiff)
 {
 	m_extLinStiff = extLinStiff;
 }
@@ -152,12 +152,17 @@ vec::fixed<6> FOWT::constForce() const
 
 std::string FOWT::printLinStiff() const
 {
-	std::string output = "(" + std::to_string( m_extLinStiff(0) );
-	for ( int ii = 1; ii < m_extLinStiff.n_elem; ++ii )
+	std::string output = "\n\t";
+	for ( int ii = 0; ii < m_extLinStiff.n_rows; ++ii )
 	{
-		output = output + "," + std::to_string( m_extLinStiff(ii) );
+		for (int jj = 0; jj < m_extLinStiff.n_cols; ++jj)
+		{
+			output = output + std::to_string(m_extLinStiff.at(ii, jj));
+			(jj == 5) ? (output = output + "\n\t") : (output = output + " \t ; \t");
+		}		
 	}
-	return output + ")";
+
+	return output + "\n";
 }
 
 
@@ -374,7 +379,7 @@ vec::fixed<6> FOWT::mooringForce()
 {
 	if (m_moorMode == 1)
 	{
-		return (vec::fixed<6> {-m_extLinStiff(0)*m_disp(0), -m_extLinStiff(1)*m_disp(1), 0, 0, 0, -m_extLinStiff(2)*m_disp(5)} + m_extConstForce);
+		return (-m_extLinStiff*m_disp + m_extConstForce);
 	}
 
 	return vec::fixed<6> {0, 0, 0, 0, 0, 0};

@@ -6,17 +6,22 @@
 %%-----------------------------------------------------------------------------%%
 %%------------------------------- ACTIVE Forces -------------------------------%%
 %%-----------------------------------------------------------------------------%%
-Hydro       2
-Aero        0
-Moor        1
+Hydro	2
+Aero     0
+Moor     1
 DOFS 1 1 1 1 1 1
 
 %%-----------------------------------------------------------------------------%%
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
 %%-----------------------------------------------------------------------------%%
 TimeStep	0.25 % Time step, in seconds
-TimeTotal	10000 % Total simulation time, in secods
+TimeTotal	7500 % Total simulation time, in secods
 TimeRamp	280 % Numerical ramp, in seconds
+
+
+% Only the wave acceleration is stretched
+% If HydroMode != 2 and WaveStret == 1, the latter is ignored
+WaveStret 2 % 0: No stretching; 1: Vertical stretching ( same as Taylor serie's from Kim and Chen, 1994); 2: Wheeler's stretching
 
 
 %%-----------------------------------------------------------------------------%%
@@ -26,9 +31,6 @@ Grav		9.81
 WatDens		1025
 WatDepth	200
 
-% Only the wave acceleration is stretched
-% If HydroMode != 2 and WaveStret == 1, the latter is ignored
-WaveStret   1 % 0: No stretching; 1: Taylor serie's from Kim and Chen, 1994, to evaluate force due to wave elevation; 2: Wheeler's stretching
 
 % Filter for slow drift motions. Angular frequency \t Damping (in % of critical). Default values are 0.025 and 0.20.
 % To neglect it, provide a negative value to the angular frequency. In this case, the total instantaneous is used 
@@ -37,23 +39,26 @@ WaveStret   1 % 0: No stretching; 1: Taylor serie's from Kim and Chen, 1994, to 
 % FiltSlowDrift  0 0 % Is the same as using the fixed initial position for evaluating second-order terms
 FiltSlowDrift  0.025 0.20
 
-
 Wave
 % WRWAVE \t Height \t Angular frequency \t Direction (in degrees) \t Phase (in degrees)
 % FRWAVE \t Height \t Frequency         \t Direction (in degrees) \t Phase (in degrees)
 % TRWAVE \t Height \t Period            \t Direction (in degrees) \t Phase (in degrees)
-TRWAVE	4	15.7080	0	0
-TRWAVE	4	17.9520	0	0
+TRWAVE	2	5.9840	0	0
+TRWAVE	2	6.2832	0	0
 END
-
- 
 
 
 %%-----------------------------------------------------------------------------%%
 %%----------------------------- EXTERNA FORCES --------------------------------%%
 %%-----------------------------------------------------------------------------%%
-ExtLinStiff        7.08e+04,7.08e+04,1.17e+08 % Linear mooring stiffness in surge, sway, yaw
 ExtConstForce       0,0,-1.8901e+06,0,0,0 % Constant external force (due to lines pre-tension)
+ExtLinStiff % No need for END keyword because this is always a 6x6 matrix
+7.084E+04   0.000E+00  0.000E+00  0.000E+00  -1.080E+05   0.000E+00
+0.000E+00   7.084E+04  0.000E+00  1.080E+05   0.000E+00   0.000E+00
+0.000E+00   0.000E+00  1.910E+04  0.000E+00   0.000E+00   0.000E+00
+0.000E+00   1.070E+05  0.000E+00  8.730E+07   0.000E+00   0.000E+00
+-1.070E+05  0.000E+00  0.000E+00  0.000E+00   8.730E+07   0.000E+00
+0.000E+00   0.000E+00  0.000E+00  0.000E+00   0.000E+00   1.170E+08
 
 
 %%-----------------------------------------------------------------------------%%
@@ -175,9 +180,15 @@ fowt_acc
 hd_force
 hd_drag_force
 hd_inertia_force
+hd_fk_force
 total_force
 hd_2nd_force_part1
+hd_2nd_force_part2
+hd_2nd_force_part3
+hd_2nd_force_part4
+hd_2nd_force_part5
 hd_force
 wave_elev 1
 wave_acc
+wave_acc_2nd
 END

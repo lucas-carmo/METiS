@@ -260,24 +260,87 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			fowt.setDoFs(aux_activeDoFs);
 		}
 
+		else if (caseInsCompare(getKeyword(strInput), "Morison_rect")) // A list of rectangular cylinder Morison Elements is supposed to follow the "Morison_rect" keyword
+		{
+		IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
+
+		while (!caseInsCompare(getKeyword(strInput), "END"))
+		{
+			if (!m_inFl) // Signal if the end of file is reached before the end keyword
+			{
+				throw std::runtime_error("End of file reached before END keyword in MORISON_RECT specification.");
+				return;
+			}
+
+			// The fifteen properties of a circular cylinder Morison's Element are separated by white spaces in the input string.
+			std::vector<std::string> input = stringTokenize(strInput, " \t");
+			if (input.size() != 15)
+			{
+				throw std::runtime_error("Unable to read the rectangular cylinder in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+			}
+
+			// Check whether nodes were specified
+			if (envir.isNodeEmpty())
+			{
+				throw std::runtime_error("Nodes should be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()));
+			}
+
+			// Aux variables to handle the data read from the input file
+			vec::fixed<3> aux_node1_coord = envir.getNode(string2num<unsigned int>(input.at(0)));
+			vec::fixed<3> aux_node2_coord = envir.getNode(string2num<unsigned int>(input.at(1)));
+			vec::fixed<3> aux_node3_coord = envir.getNode(string2num<unsigned int>(input.at(2)));
+			double aux_diam_X = string2num<double>(input.at(3));
+			double aux_CD_X = string2num<double>(input.at(4));
+			double aux_CM_X = string2num<double>(input.at(5));
+			double aux_diam_Y = string2num<double>(input.at(6));
+			double aux_CD_Y = string2num<double>(input.at(7));
+			double aux_CM_Y = string2num<double>(input.at(8));
+			unsigned int aux_numIntPoints = string2num<unsigned int>(input.at(9));
+			double aux_botArea = string2num<double>(input.at(10));
+			double aux_topArea = string2num<double>(input.at(11));
+			double aux_axialCD = string2num<double>(input.at(12));
+			double aux_axialCa = string2num<double>(input.at(13));
+			bool aux_botPressFlag = string2num<bool>(input.at(14));
+
+			floater.addMorisonRect(aux_node1_coord, aux_node2_coord, aux_node3_coord, aux_diam_X, aux_diam_Y, aux_CD_X, aux_CD_Y,
+				aux_CM_X, aux_CM_Y, aux_numIntPoints, aux_botArea, aux_topArea, aux_axialCD, aux_axialCa, aux_botPressFlag);
+
+			IO::readLineInputFile(strInput);
+		}
+		}
+
+		// The mooring line stiffness is a 6x6 matrix with columns separated by whitespaces or tabs.
+		// Different rows correspond to different lines in the input file.
 		else if (caseInsCompare(getKeyword(strInput), "ExtLinStiff"))
 		{
-			// The mooring line stiffness in surge, sway and yaw are separated by commas in the input string
-			std::vector<std::string> input = stringTokenize(getData(strInput), ",");
-			if (input.size() != 3)
+			IO::readLineInputFile(strInput); // Read next line, since current line is just the keyword
+			arma::mat::fixed<6, 6> aux_extStiff(fill::zeros);
+			for (unsigned int countRows = 0; countRows < 6; ++countRows)
 			{
-				throw std::runtime_error("Unable to read linear stiffness in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-			}
+				//if (!m_inFl) // Signal if the end of file is reached before everything is read
+				//{
+				//	throw std::runtime_error("End of file reached before external stiffness EXTLINSTIFF was fully read.");
+				//	return;
+				//}
 
-			// Read to an auxiliar array before passing to fowt
-			vec::fixed<3> aux;
-			for (int ii = 0; ii < aux.size(); ++ii)
-			{
-				aux.at(ii) = string2num<double>(input.at(ii));
-			}
+				std::vector<std::string> input = stringTokenize(strInput, " \t");
+				if (input.size() != 6)
+				{
+					throw std::runtime_error("Unable to read row of linear stiffness matrix in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+				}
 
-			fowt.setExtLinStiff(aux);
+				// Read to an auxiliar matrix before passing to fowt
+				for (int ii = 0; ii < aux_extStiff.n_rows; ++ii)
+				{
+					aux_extStiff.at(countRows, ii) = string2num<double>(input.at(ii));
+				}
+
+				// Go to next line
+				IO::readLineInputFile(strInput);
+			}
+			fowt.setExtLinStiff(aux_extStiff);
 		}
+
 
 		else if (caseInsCompare(getKeyword(strInput), "ExtConstForce"))
 		{
@@ -300,14 +363,14 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		else if (caseInsCompare(getKeyword(strInput), "FiltSlowDrift"))
 		{
-		// Need 2 inputs separated by a space or a tab:
-		// angular frequency and damping levels (in % of critical damping)
-		std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
-		if (input.size() != 2)
-		{
-			throw std::runtime_error("Unable to read slow drift filter in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-		}
-		fowt.setFilderSD(string2num<double>(input.at(0)), string2num<double>(input.at(1)));
+			// Need 2 inputs separated by a space or a tab:
+			// angular frequency and damping levels (in % of critical damping)
+			std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
+			if (input.size() != 2)
+			{
+				throw std::runtime_error("Unable to read slow drift filter in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+			}
+			fowt.setFilderSD(string2num<double>(input.at(0)), string2num<double>(input.at(1)));
 		}
 
 		// Read data to floater - which is a part of FOWT
