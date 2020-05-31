@@ -33,18 +33,20 @@ protected:
 	vec::fixed<3> m_node1Pos_t0;
 	vec::fixed<3> m_node2Pos_t0;
 
-	// Nodes position considering only the mean and slow drift of the FOWT.
+	// Nodes position and velocity considering only the mean and slow drift of the FOWT.
 	// They are used in the calculation of the contribution of quadratic
 	// terms (including the quadratic drag) to the hydrodynamic force.
 	vec::fixed<3> m_node1Pos_sd;
 	vec::fixed<3> m_node2Pos_sd;
+	vec::fixed<3> m_node1Vel_sd;
+	vec::fixed<3> m_node2Vel_sd;
 
 public:
 	MorisonElement(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints, 
 				   const bool botPressFlag, const double axialCD, const double axialCa);
 	
 	// Functions related to position, velocity and acceleration
-	void updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc, const vec::fixed<6> &floaterCoGpos_SD);
+	void updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD);
 	vec::fixed<3> node1Pos_t0() const;
 	vec::fixed<3> node2Pos_t0() const;
 	vec::fixed<3> node1Pos() const;
@@ -53,6 +55,8 @@ public:
 	vec::fixed<3> node2Pos_sd() const;
 	vec::fixed<3> node1Vel() const;
 	vec::fixed<3> node2Vel() const;
+	vec::fixed<3> node1Vel_sd() const;
+	vec::fixed<3> node2Vel_sd() const;
 	vec::fixed<3> node1Acc() const;
 	vec::fixed<3> node2Acc() const;
 	vec::fixed<3> node1AccCentrip() const;

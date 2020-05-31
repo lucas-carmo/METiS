@@ -298,7 +298,7 @@ void FOWT::update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec
 	}
 
 	// Aqui tem que passar os deslocamentos com relacao ao CoG do floater. Calcular aqui mesmo baseado na posicao do centro de referencia de movimento
-	m_floater.update(m_disp, m_vel, m_acc, m_disp_sd); 
+	m_floater.update(m_disp, m_vel, m_acc, m_disp_sd, m_vel_sd); 
 }
 
 vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)

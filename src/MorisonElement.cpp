@@ -32,7 +32,7 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 /*****************************************************
 	Functions for node position / velocity / acceleration
 *****************************************************/
-void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc, const vec::fixed<6> &floaterCoGpos_SD)
+void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD)
 {
 	mat::fixed<3, 3> RotatMatrix(rotatMatrix(floaterCoGpos.rows(3,5))); // Calculate it here so we just need to calculate the matrix once
 	vec::fixed<3> R1 = RotatMatrix * m_cog2node1; // R1 and R2 are the vectors that give the node1 and node2 positions with respect to the CoG of the structure
@@ -50,13 +50,16 @@ void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, co
 	m_node1Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R1) + m_node1AccCentrip;
 	m_node2Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R2) + m_node2AccCentrip;
 
-	// Node's positions considering only the mean and slow drift motions
+	// Node's position and velocity considering only the mean and slow drift motions
 	RotatMatrix = rotatMatrix(floaterCoGpos_SD.rows(3,5));
 	R1 = RotatMatrix * m_cog2node1;
 	R2 = RotatMatrix * m_cog2node2;
 
 	m_node1Pos_sd = floaterCoGpos_SD.rows(0, 2) + R1;
 	m_node2Pos_sd = floaterCoGpos_SD.rows(0, 2) + R2;
+
+	m_node1Vel_sd = floaterVel_SD.rows(0, 2) + arma::cross(floaterVel_SD.rows(3, 5), R1);
+	m_node2Vel_sd = floaterVel_SD.rows(0, 2) + arma::cross(floaterVel_SD.rows(3, 5), R2);
 }
 
 vec::fixed<3> MorisonElement::node1Pos() const
@@ -97,6 +100,16 @@ vec::fixed<3> MorisonElement::node1Vel() const
 vec::fixed<3> MorisonElement::node2Vel() const
 {
 	return m_node2Vel;
+}
+
+vec::fixed<3> MorisonElement::node1Vel_sd() const
+{
+	return m_node1Vel_sd;
+}
+
+vec::fixed<3> MorisonElement::node2Vel_sd() const
+{
+	return m_node2Vel_sd;
 }
 
 vec::fixed<3> MorisonElement::node1Acc() const
