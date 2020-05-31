@@ -651,8 +651,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> v2 = node2Vel();
 	vec::fixed<3> a1 = node1AccCentrip();
 	vec::fixed<3> a2 = node2AccCentrip();
-	vec::fixed<3> v1_wf = node1Vel() - node1Vel_sd();
-	vec::fixed<3> v2_wf = node2Vel() - node2Vel_sd();
 
 	// Bottom and top diameter
 	botDiam = m_botDiam;
@@ -835,13 +833,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 				force_inertia_2nd_part3_ii = (datum::pi * D*D / 4.) * rho * Cm * a_c;
 
 				// 4th component: Force due to axial-divergence acceleration
-				// Structural velocity of the integration point - Only the wave frequency component is considered
-				vec::fixed<3> vel_ii_wf = v1_wf + lambda * (v2_wf - v1_wf);
-				vel_ii_wf = dot(vel_ii_wf, xvec_sd) * xvec_sd + dot(vel_ii_wf, yvec_sd) * yvec_sd; // Get only the part that is perpendicular to the cylinder axis
-
-				// Component of the velocity and acceleration of the integration point that is perpendicular to the axis of the cylinder
 				double dwdz = dot(du1dx, zvec_sd) * zvec_sd.at(0) + dot(du1dy, zvec_sd) * zvec_sd.at(1) + dot(du1dz, zvec_sd) * zvec_sd.at(2);				
-				a_a = dwdz * (dot(u1, xvec_sd)*xvec_sd + dot(u1, yvec_sd)*yvec_sd - vel_ii_wf);
+				a_a = dwdz * (dot(u1, xvec_sd)*xvec_sd + dot(u1, yvec_sd)*yvec_sd - vel_ii); // vel_ii was already projected in the direction perpendicular to the cylinder
 				force_inertia_2nd_part4_ii = (datum::pi * D*D / 4.) * rho * (Cm - 1) * a_a;
 
 				// 5th component: Force due to cylinder rotation
