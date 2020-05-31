@@ -313,32 +313,24 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		// Different rows correspond to different lines in the input file.
 		else if (caseInsCompare(getKeyword(strInput), "ExtLinStiff"))
 		{
-			IO::readLineInputFile(strInput); // Read next line, since current line is just the keyword
-			arma::mat::fixed<6, 6> aux_extStiff(fill::zeros);
-			for (unsigned int countRows = 0; countRows < 6; ++countRows)
+		arma::mat::fixed<6, 6> aux_extStiff(fill::zeros);
+		for (unsigned int countRows = 0; countRows < 6; ++countRows)
+		{
+			IO::readLineInputFile(strInput);
+
+			std::vector<std::string> input = stringTokenize(strInput, " \t");
+			if (input.size() != 6)
 			{
-				//if (!m_inFl) // Signal if the end of file is reached before everything is read
-				//{
-				//	throw std::runtime_error("End of file reached before external stiffness EXTLINSTIFF was fully read.");
-				//	return;
-				//}
-
-				std::vector<std::string> input = stringTokenize(strInput, " \t");
-				if (input.size() != 6)
-				{
-					throw std::runtime_error("Unable to read row of linear stiffness matrix in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-				}
-
-				// Read to an auxiliar matrix before passing to fowt
-				for (int ii = 0; ii < aux_extStiff.n_rows; ++ii)
-				{
-					aux_extStiff.at(countRows, ii) = string2num<double>(input.at(ii));
-				}
-
-				// Go to next line
-				IO::readLineInputFile(strInput);
+				throw std::runtime_error("Unable to read row of linear stiffness matrix in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 			}
-			fowt.setExtLinStiff(aux_extStiff);
+
+			// Read to an auxiliar matrix before passing to fowt
+			for (int ii = 0; ii < aux_extStiff.n_rows; ++ii)
+			{
+				aux_extStiff.at(countRows, ii) = string2num<double>(input.at(ii));
+			}
+		}
+		fowt.setExtLinStiff(aux_extStiff);
 		}
 
 
