@@ -86,7 +86,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 
 		// RK4: second estimation
 		// Update fowt and environment
-		fowt.update(disp0 + disp_k1 / 2, vel0 + vel_k1 / 2, acc_k1, envir.timeStep());
+		fowt.update(disp0 + disp_k1 / 2, vel0 + vel_k1 / 2, acc_k1, envir.timeStep());		
 		envir.stepTime(envir.timeStep()/2);
 
 		acc_k2 = fowt.calcAcceleration(envir);
@@ -117,6 +117,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 
 		// We only need to update fowt, as envir was already updated during the RK4 steps
 		fowt.update(disp_total, vel_total, acc_total, envir.timeStep());
+		fowt.update_sd(disp_total, envir.timeStep());
 
 		// Print progress to the screen only after integer seconds.
 		// The criterion is to verify if the current time is different

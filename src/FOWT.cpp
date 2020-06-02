@@ -258,31 +258,49 @@ void FOWT::print2outLine() const
 // Update FOWT displacement, velocity, acceleration and any other necessary state.
 // dt is used only for integrating the filter equation for the slow drift motions.
 void FOWT::update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc, const double dt)
-{
+{	
 	m_disp = disp;
 	m_vel = vel;
-	m_acc = acc;	
+	m_acc = acc;
 
-	// Evaluate (and update) the axis system that follows the slow position.
+	if (m_filterSD_omega < 0)
+	{
+		m_disp_sd = disp;
+		m_vel_sd = vel;
+		m_acc_sd = acc;
+	}
+
+	// Aqui tem que passar os deslocamentos com relacao ao CoG do floater. Calcular aqui mesmo baseado na posicao do centro de referencia de movimento
+	m_floater.update(m_disp, m_vel, m_acc, m_disp_sd, m_vel_sd); 
+}
+
+// Evaluate (and update) the axis system that follows the slow position.
+// Done so by applying a second-order low-pass filter to the displacement.
+void FOWT::update_sd(const vec::fixed<6> &disp, const double dt)
+{	
 	double wf = m_filterSD_omega;
 	double zeta = m_filterSD_zeta;
 
+	// Otherwise, the forces are calculated at the instantaneous body position, and hence there is
+	// no need to filter the motion here
 	if (wf >= 0)
 	{
-
+		// Integrated using RK4. However, since the simulation time step must be small enough to 
+		// capture wave frequency motions, which are way faster than slow drift motions, even an
+		// explicit Euler method would work
 		vec::fixed<6> acc_sd_k1 = -2 * wf*zeta*m_vel_sd - wf * wf * (m_disp_sd - m_disp);
 		vec::fixed<6> vel_sd_k1 = acc_sd_k1 * dt;
 		vec::fixed<6> disp_sd_k1 = m_vel_sd * dt;
 
-		vec::fixed<6> acc_sd_k2 = -2 * wf*zeta*(m_vel_sd + vel_sd_k1 / 2) - wf * wf * (m_disp_sd + disp_sd_k1 / 2 - m_disp);
+		vec::fixed<6> acc_sd_k2 = -2 * wf*zeta*(m_vel_sd + vel_sd_k1 / 2) - wf * wf * (m_disp_sd + disp_sd_k1 / 2 - (m_disp + (disp - m_disp) / 2));
 		vec::fixed<6> vel_sd_k2 = acc_sd_k2 * dt;
 		vec::fixed<6> disp_sd_k2 = (m_vel_sd + vel_sd_k1 / 2) * dt;
 
-		vec::fixed<6> acc_sd_k3 = -2 * wf*zeta*(m_vel_sd + vel_sd_k2 / 2) - wf * wf * (m_disp_sd + disp_sd_k2 / 2 - m_disp);
+		vec::fixed<6> acc_sd_k3 = -2 * wf*zeta*(m_vel_sd + vel_sd_k2 / 2) - wf * wf * (m_disp_sd + disp_sd_k2 / 2 - (m_disp + (disp - m_disp) / 2));
 		vec::fixed<6> vel_sd_k3 = acc_sd_k3 * dt;
 		vec::fixed<6> disp_sd_k3 = (m_vel_sd + vel_sd_k2 / 2) * dt;
 
-		vec::fixed<6> acc_sd_k4 = -2 * wf*zeta*(m_vel_sd + vel_sd_k3) - wf * wf * (m_disp_sd + disp_sd_k3 - m_disp);
+		vec::fixed<6> acc_sd_k4 = -2 * wf*zeta*(m_vel_sd + vel_sd_k3) - wf * wf * (m_disp_sd + disp_sd_k3 - disp);
 		vec::fixed<6> vel_sd_k4 = acc_sd_k3 * dt;
 		vec::fixed<6> disp_sd_k4 = (m_vel_sd + vel_sd_k3) * dt;
 
@@ -290,15 +308,6 @@ void FOWT::update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec
 		m_vel_sd += (vel_sd_k1 + 2 * vel_sd_k2 + 2 * vel_sd_k3 + vel_sd_k4) / 6;
 		m_disp_sd += (disp_sd_k1 + 2 * disp_sd_k2 + 2 * disp_sd_k3 + disp_sd_k4) / 6;
 	}
-	else
-	{
-		m_acc_sd = m_acc;
-		m_vel_sd = m_vel;
-		m_disp_sd = m_disp;
-	}
-
-	// Aqui tem que passar os deslocamentos com relacao ao CoG do floater. Calcular aqui mesmo baseado na posicao do centro de referencia de movimento
-	m_floater.update(m_disp, m_vel, m_acc, m_disp_sd, m_vel_sd); 
 }
 
 vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
