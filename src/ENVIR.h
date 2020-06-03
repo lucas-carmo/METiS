@@ -124,6 +124,8 @@ public:
 	vec::fixed<3> du1dz(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> du2dt(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
 	vec::fixed<3> du2dt(const vec::fixed<3> &coord) const;
+	vec::fixed<3> wavePressure_2ndOrd(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
+	vec::fixed<3> wavePressure_2ndOrd(const vec::fixed<3> &coord) const;
 
 	double windVel_X(const vec::fixed<3> &coord) const;
 };

@@ -941,6 +941,12 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		addWaveProbe = true;
 	}
 
+	if (caseInsCompare(keyword, "wave_pres_2nd"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_WAVE_PRES_2ND) = true;
+		addWaveProbe = true;
+	}
+
 	if (addWaveProbe)
 	{
 		if (!getData(strInput).empty())
@@ -1251,7 +1257,7 @@ void IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed
 void IO::print2outLine(const OutFlag &flag, const int ID, const double num)
 {
 
-	if ( (flag != OUTFLAG_WAVE_ELEV) && (flag != OUTFLAG_WAVE_PRES))
+	if ( (flag != OUTFLAG_WAVE_ELEV) && (flag != OUTFLAG_WAVE_PRES) && (flag != OUTFLAG_WAVE_PRES_2ND))
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const int ID, const double num).");
 	}
@@ -1268,6 +1274,11 @@ void IO::print2outLine(const OutFlag &flag, const int ID, const double num)
 		if (flag == OUTFLAG_WAVE_PRES)
 		{
 			print2outLineHeader("wave_pres_" + std::to_string(ID));
+		}
+
+		if (flag == OUTFLAG_WAVE_PRES_2ND)
+		{
+			print2outLineHeader("wave_pres_2nd" + std::to_string(ID));
 		}
 	}
 
@@ -1454,6 +1465,10 @@ std::string IO::printOutVar()
 
 		case IO::OUTFLAG_WAVE_PRES:
 			output += "Wave Pressure: ";
+			break;
+
+		case IO::OUTFLAG_WAVE_PRES_2ND:
+			output += "Wave Pressure - 2nd order: ";
 			break;
 
 		case IO::OUTFLAG_HD_INERTIA_FORCE:

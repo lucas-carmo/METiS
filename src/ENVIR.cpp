@@ -790,9 +790,6 @@ vec::fixed<3> ENVIR::du1dz(const vec::fixed<3> &coord, const double zwl) const
 	return acc;
 }
 
-
-
-
 vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const
 {
 	arma::vec::fixed<3> acc = { 0,0,0 };
@@ -861,13 +858,82 @@ vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord) const
 	// the acceleration due to a pair ij is equal to ji.
 	for (int ii = 0; ii < m_wave.size(); ++ii)
 	{
-		for (int jj = ii+1; jj < m_wave.size(); ++jj)
+		for (int jj = ii + 1; jj < m_wave.size(); ++jj)
 		{
-			acc += 2*ENVIR::du2dt(coord, ii, jj);
+			acc += 2 * ENVIR::du2dt(coord, ii, jj);
 		}
 	}
 	return acc;
 }
+
+vec::fixed<3> ENVIR::wavePressure_2ndOrd(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const
+{
+	arma::vec::fixed<3> p = { 0,0,0 };
+
+	// In this case, the calculation below would lead to 0/0, but the limit is actually 0. This is fine, as the second order potential should not contribute to the mean drift.
+	if (waveIndex1 == waveIndex2)
+	{
+		return p;
+	}
+
+	// More friendly notation
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+	double g = m_gravity;
+
+	double w1 = m_wave.at(waveIndex1).angFreq();
+	double A1 = m_wave.at(waveIndex1).amp();
+	double k1 = m_wave.at(waveIndex1).waveNumber();
+	double b1 = m_wave.at(waveIndex1).direction() * arma::datum::pi / 180.;
+	double phase1 = m_wave.at(waveIndex1).phase() * arma::datum::pi / 180.;
+	double cosB1 = m_wave.at(waveIndex1).cosBeta();
+	double sinB1 = m_wave.at(waveIndex1).sinBeta();
+
+	double A2 = m_wave.at(waveIndex2).amp();
+	double w2 = m_wave.at(waveIndex2).angFreq();
+	double k2 = m_wave.at(waveIndex2).waveNumber();
+	double b2 = m_wave.at(waveIndex2).direction() * arma::datum::pi / 180.;
+	double phase2 = m_wave.at(waveIndex2).phase() * arma::datum::pi / 180.;
+	double cosB2 = m_wave.at(waveIndex2).cosBeta();
+	double sinB2 = m_wave.at(waveIndex2).sinBeta();
+
+	// This formulation is valid only below the mean water level, i.e. z <= 0
+	if (z <= 0)
+	{
+		arma::vec::fixed<3> k1_k2 = { k1 * cosB1 - k2 * cosB2, k1 * sinB1 - k2 * sinB2, 0 };
+		double norm_k1_k2 = arma::norm(k1_k2);
+
+		// Isso aqui soh depende das propriedades das ondas e da profundidades. Da pra calcular previamente uma vez soh.
+		double aux = ((w2 - w1) / (w1 * w2)) * k1 * k2 * (std::cos(b1 - b2) + std::tanh(k1*h) * std::tanh(k2*h))
+			- 0.5 * (k1*k1 / (w1 * pow(std::cosh(k1*h), 2)) - k2 * k2 / (w2 * pow(std::cosh(k2*h), 2)));
+		aux = aux / (g * norm_k1_k2 * std::tanh(norm_k1_k2 * h) - (w1 - w2)*(w1 - w2));
+
+		p = 0.5 * A1 * A2 * (w1 - w2) * g*g * aux * (w1 - w2) * std::cosh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h)
+			* std::cos(dot(k1_k2, coord) - (w1 - w2) * t + phase1 - phase2);
+	}
+
+	return p * ramp();
+}
+
+
+vec::fixed<3> ENVIR::wavePressure_2ndOrd(const vec::fixed<3> &coord) const
+{
+	arma::vec::fixed<3> p = { 0,0,0 };
+
+	// When i == j, p = {0,0,0}, so it is safe to skip this part of the loop.
+	// Besides, as only the real part of the second-order difference-frequency potential is used,
+	// the acceleration due to a pair ij is equal to ji.
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		for (int jj = ii + 1; jj < m_wave.size(); ++jj)
+		{
+			p += 2 * ENVIR::wavePressure_2ndOrd(coord, ii, jj);
+		}
+	}
+	return p;
+}
+
 
 double ENVIR::windVel_X(const vec::fixed<3> &coord) const
 {
