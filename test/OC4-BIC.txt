@@ -37,7 +37,7 @@ WatDepth	200
 % to evaluate second order terms
 % Angular frequency \t Damping (in % of critical).
 % FiltSlowDrift  0 0 % Is the same as using the fixed initial position for evaluating second-order terms
-FiltSlowDrift  0.025 0.20
+FiltSlowDrift  0.10 0.20
 
 Wave
 % WRWAVE \t Height \t Angular frequency \t Direction (in degrees) \t Phase (in degrees)
