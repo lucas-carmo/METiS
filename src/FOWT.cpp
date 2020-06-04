@@ -14,7 +14,7 @@ FOWT::FOWT() : m_extLinStiff(fill::zeros), m_mass(datum::nan),
 	m_CoG.fill(datum::nan);
 
 	// Default values for the filter in case the user has not specified any.
-	m_filterSD_omega = 0.025;
+	m_filterSD_omega = 0.10;
 	m_filterSD_zeta = 0.20;
 }
 
