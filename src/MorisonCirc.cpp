@@ -755,8 +755,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		acc_ii = a1 + lambda * (a2 - a1);
 
 		// Component of the velocity and acceleration of the integration point that is perpendicular to the axis of the cylinder
-		vel_ii = dot(vel_ii, xvec) * xvec + dot(vel_ii, yvec) * yvec;
-		acc_ii = dot(acc_ii, xvec) * xvec + dot(acc_ii, yvec) * yvec;
+		vel_ii -= dot(vel_ii, zvec) * zvec;
+		acc_ii -= dot(acc_ii, zvec) * zvec;
 
 		/*******
 			Fluid velocity/acceleration
@@ -771,8 +771,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder,
 		// written in the GLOBAL reference frame.
 		// Note that du1dt uses the instantaneous local position, while u1 considers the slow drift position.
-		du1dt = dot(du1dt, xvec) * xvec + dot(du1dt, yvec) * yvec;
-		u1 = dot(u1, xvec_sd) * xvec_sd + dot(u1, yvec_sd) * yvec_sd;
+		du1dt -= dot(du1dt, zvec) * zvec;
+		u1 -= dot(u1, zvec_sd) * zvec_sd;
 
 		// Calculation of the forces and moments in the integration node. The moments are given with respect to n1,
 		// but are output with respect to node 1.
@@ -813,7 +813,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			{
 				// 1st component: Force due to the second-order potential
 				du2dt = envir.du2dt(n_ii_sd);
-				du2dt = dot(du2dt, xvec_sd) * xvec_sd + dot(du2dt, yvec_sd) * yvec_sd;
+				du2dt -= dot(du2dt, zvec_sd) * zvec_sd;
 				force_inertia_2nd_part1_ii = (datum::pi * D*D / 4.) * rho * Cm * du2dt;
 
 				// 2nd component: Due to the wave elevation. Calculated after this loop of integration along the cylinder length if Taylor stretching is used.
@@ -828,16 +828,16 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 				a_c.at(0) = u1.at(0) * du1dx.at(0) + u1.at(1) * du1dy.at(0) + u1.at(2) * du1dz.at(0);
 				a_c.at(1) = u1.at(0) * du1dx.at(1) + u1.at(1) * du1dy.at(1) + u1.at(2) * du1dz.at(1);
 				a_c.at(2) = u1.at(0) * du1dx.at(2) + u1.at(1) * du1dy.at(2) + u1.at(2) * du1dz.at(2);
-				a_c = dot(a_c, xvec_sd) * xvec_sd + dot(a_c, yvec_sd) * yvec_sd;
+				a_c -= dot(a_c, zvec_sd) * zvec_sd;
 
 				force_inertia_2nd_part3_ii = (datum::pi * D*D / 4.) * rho * Cm * a_c;
 
 				// 4th component: Force due to axial-divergence acceleration
-				double dwdz = dot(du1dx, zvec_sd) * zvec_sd.at(0) + dot(du1dy, zvec_sd) * zvec_sd.at(1) + dot(du1dz, zvec_sd) * zvec_sd.at(2);				
-				a_a = dwdz * (dot(u1, xvec_sd)*xvec_sd + dot(u1, yvec_sd)*yvec_sd - vel_ii); // vel_ii was already projected in the direction perpendicular to the cylinder
+				double dwdz = dot(du1dx, zvec_sd) * zvec_sd.at(0) + dot(du1dy, zvec_sd) * zvec_sd.at(1) + dot(du1dz, zvec_sd) * zvec_sd.at(2);
+				a_a = dwdz * (u1 - dot(u1, zvec_sd)*zvec_sd - vel_ii); // vel_ii was already projected in the direction perpendicular to the cylinder
 				force_inertia_2nd_part4_ii = (datum::pi * D*D / 4.) * rho * (Cm - 1) * a_a;
 
-				// 5th component: Force due to cylinder rotation
+				// 5th component: Force due to cylinder rotation				
 				a_r = dot(u1, zvec_sd) * (1/L) * ( dot(v2 - v1, xvec_sd) * yvec_sd + dot(v2 - v1, yvec_sd) * xvec_sd );
 				force_inertia_2nd_part5_ii = -(datum::pi * D*D / 4.) * rho * (Cm - 1) * a_r;
 			}
