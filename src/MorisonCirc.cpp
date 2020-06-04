@@ -894,7 +894,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		n_ii = (n2 - n1) * (0-n1.at(2))/(n2.at(2)-n1.at(2)) + n1; // Coordinates of the intersction with the still water line;				
 		n_ii.at(2) = 0; // Since envir.du1dt returns 0 for z > 0, this line is necessary to make sure that the z coordinate of n_ii is exactly 0, and not slightly above due to roundoff errors.
 		du1dt = envir.du1dt(n_ii, 0);
-		du1dt = dot(du1dt, xvec) * xvec_sd + dot(du1dt, yvec) * yvec;
+		du1dt -= dot(du1dt, zvec) * zvec;
 		eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
 		force_inertia_2nd_part2.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta;
 		double R_ii = norm(n_ii - n1, 2) + eta / 2;
