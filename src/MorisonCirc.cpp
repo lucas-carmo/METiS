@@ -906,7 +906,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	*/
 	// Component of the fluid velocity/acceleration at the bottom node that is parallel to the cylinder axis
 	du1dt = dot(envir.du1dt(n1, 0), zvec) * zvec;
-	u1 = dot(envir.u1(n1, 0), zvec) * zvec; // Since the bottom contribution is not integrated along the length, it is OK to keep it at the instantaneous position
+	u1 = dot(envir.u1(n1_sd, 0), zvec_sd) * zvec_sd;
 
 	// Component of the velocity and acceleration of the bottom that is perpendicular to the axis of the cylinder
 	vec::fixed<3> v_axial = dot(v1, zvec) * zvec;
