@@ -765,7 +765,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		// Calculated in the instantaneous position.
 		du1dt = envir.du1dt(n_ii, eta); // Wheeler stretching method requires 'eta' as input
 		
-		// Fluid acceleration at the integration point.
+		// Fluid velocity at the integration point.
 		u1 = envir.u1(n_ii_sd, eta);
 
 		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder,
