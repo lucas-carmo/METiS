@@ -899,6 +899,11 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		m_whichResult2Output.at(IO::OUTFLAG_HS_FORCE) = true;
 	}
 
+	if (caseInsCompare(keyword, "moor_force"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_MOOR_FORCE) = true;
+	}
+
 	if (caseInsCompare(keyword, "ad_hub_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_AD_HUB_FORCE) = true;
@@ -1042,7 +1047,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 {
 	// Check whether the specified flag is indeed one that requires a vector with six components
 	if ((flag != IO::OUTFLAG_FOWT_DISP) && (flag != IO::OUTFLAG_FOWT_VEL) && (flag != IO::OUTFLAG_FOWT_ACC) && (flag != IO::OUTFLAG_FOWT_DISP_SD) &&
-		(flag != IO::OUTFLAG_TOTAL_FORCE) && (flag != IO::OUTFLAG_HD_FORCE)  && (flag != IO::OUTFLAG_HS_FORCE) &&
+		(flag != IO::OUTFLAG_TOTAL_FORCE) && (flag != IO::OUTFLAG_HD_FORCE) && (flag != IO::OUTFLAG_HS_FORCE) && (flag != IO::OUTFLAG_MOOR_FORCE) &&
 		(flag != IO::OUTFLAG_HD_INERTIA_FORCE) && (flag != IO::OUTFLAG_HD_DRAG_FORCE) && (flag != IO::OUTFLAG_HD_FK_FORCE) &&
 		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART1) && (flag != IO::OUTFLAG_HD_2ND_FORCE_PART2) &&
 		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART3) && (flag != IO::OUTFLAG_HD_2ND_FORCE_PART4) &&
@@ -1141,6 +1146,14 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			for (int ii = 1; ii <= 6; ++ii)
 			{
 				print2outLineHeader("ad_hub_force_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_MOOR_FORCE)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("moor_force_" + std::to_string(ii));
 			}
 		}
 
@@ -1509,6 +1522,10 @@ std::string IO::printOutVar()
 
 		case IO::OUTFLAG_HS_FORCE:
 			output += "Hydrostatic force: ";
+			break;
+
+		case IO::OUTFLAG_MOOR_FORCE:
+			output += "Mooring force: ";
 			break;
 
 		case IO::OUTFLAG_AD_HUB_FORCE:

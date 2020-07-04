@@ -386,12 +386,15 @@ vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)
 
 vec::fixed<6> FOWT::mooringForce()
 {
+	vec::fixed<6> force{0, 0, 0, 0, 0, 0};
 	if (m_moorMode == 1)
 	{
-		return (-m_extLinStiff*m_disp + m_extConstForce);
+		force = (-m_extLinStiff*m_disp + m_extConstForce);
 	}
 
-	return vec::fixed<6> {0, 0, 0, 0, 0, 0};
+	IO::print2outLine(IO::OUTFLAG_MOOR_FORCE, force);
+
+	return force;
 }
 
 vec::fixed<6> FOWT::weightForce(const double gravity)
