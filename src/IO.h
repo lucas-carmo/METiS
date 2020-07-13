@@ -54,6 +54,8 @@ public:
 //
 		OUTFLAG_TOTAL_FORCE,
 //
+		OUTFLAG_ADDED_MASS_DIAG,
+//
 		OUTFLAG_SIZE
 	};
 

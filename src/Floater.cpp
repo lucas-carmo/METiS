@@ -210,6 +210,7 @@ mat::fixed<6, 6> Floater::addedMass(const double density) const
 		A += m_MorisonElements.at(ii)->addedMass_perp(density) + m_MorisonElements.at(ii)->addedMass_paral(density);
 	}
 
+	IO::print2outLine(IO::OUTFLAG_ADDED_MASS_DIAG, A.diag());
 	return A;
 }
 
