@@ -20,6 +20,7 @@ private:
 	std::vector<std::unique_ptr<MorisonElement>> m_MorisonElements;	
 
 	vec::fixed<6> m_disp; // Floater displacement (i.e. [instantaneous position] - [initial position])
+	vec::fixed<6> m_disp_sd; // Keep track of the slow position of the floater as well
 
 public:
 	Floater();

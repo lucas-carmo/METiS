@@ -9,7 +9,7 @@ using namespace arma;
 class MorisonElement
 {
 protected:
-	vec::fixed<3> m_cog2node1; // Position of node 1 with respect do the floater CoG (note that this is NOT the CoG of the FOWT), i.e. m_node1Pos(t) - CoG(t). Since the floater is treated as a rigid body, this is constant.  
+	vec::fixed<3> m_cog2node1; // Position of node 1 with respect do the floater CoG (note that this is NOT the CoG of the FOWT), i.e. m_node1Pos(t) - CoG(t). Since the floater is treated as a rigid body, this is constant (it is written in the coordinate system attached to the floater).  
 	vec::fixed<3> m_cog2node2;
 	int m_numIntPoints;
 
@@ -70,7 +70,8 @@ public:
 	virtual mat::fixed<6, 6> addedMass_paral(const double rho) const = 0;
 
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const = 0;
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov, 
+	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, const mat::fixed<3, 3> &rotat, const vec::fixed<3> &refPt, const vec::fixed<3> &refPt_sd,
+											vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov,
 											vec::fixed<6> &force_inertia_2nd_part1, vec::fixed<6> &force_inertia_2nd_part2, 
 											vec::fixed<6> &force_inertia_2nd_part3, vec::fixed<6> &force_inertia_2nd_part4, 
 											vec::fixed<6> &force_inertia_2nd_part5) const = 0;
