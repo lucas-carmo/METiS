@@ -8,10 +8,10 @@ using namespace arma;
 	Constructors
 *****************************************************/
 MorisonCirc::MorisonCirc(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints,
-						 const bool botPressFlag, const double axialCD, const double axialCa,
-						 const double diam, const double CD, double CM, const double botDiam, const double topDiam)
+	const bool botPressFlag, const double axialCD, const double axialCa,
+	const double diam, const double CD, double CM, const double botDiam, const double topDiam)
 	: MorisonElement(node1Pos, node2Pos, cog, numIntPoints, botPressFlag, axialCD, axialCa),
-					 m_diam(diam), m_CD(CD), m_CM(CM), m_botDiam(botDiam), m_topDiam(topDiam)
+	m_diam(diam), m_CD(CD), m_CM(CM), m_botDiam(botDiam), m_topDiam(topDiam)
 {}
 
 
@@ -152,9 +152,9 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho) const
 	{
 		for (int qq = pp; qq < 3; ++qq)
 		{
-			A(pp, qq) = Lambda * L * ( arma::dot(xvec, globalBase.col(pp))*arma::dot(xvec, globalBase.col(qq))
-							         + arma::dot(yvec, globalBase.col(pp))*arma::dot(yvec, globalBase.col(qq))
-									 );
+			A(pp, qq) = Lambda * L * (arma::dot(xvec, globalBase.col(pp))*arma::dot(xvec, globalBase.col(qq))
+				+ arma::dot(yvec, globalBase.col(pp))*arma::dot(yvec, globalBase.col(qq))
+				);
 		}
 	}
 
@@ -191,99 +191,99 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho) const
 		}
 
 		A(3, 3) += Lambda * step *
-				 (
-				   pow(y_ii - yG, 2) * ( pow(arma::dot(xvec, globalBase.col(2)), 2) + pow(arma::dot(yvec, globalBase.col(2)), 2) )
-			     + pow(z_ii - zG, 2) * ( pow(arma::dot(xvec, globalBase.col(1)), 2) + pow(arma::dot(yvec, globalBase.col(1)), 2) )
-				 - 2 * (y_ii - yG) * (z_ii - zG)  * ( arma::dot(xvec, globalBase.col(1)) * arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1)) * arma::dot(yvec, globalBase.col(2)) )
-				 );
+			(
+				pow(y_ii - yG, 2) * (pow(arma::dot(xvec, globalBase.col(2)), 2) + pow(arma::dot(yvec, globalBase.col(2)), 2))
+				+ pow(z_ii - zG, 2) * (pow(arma::dot(xvec, globalBase.col(1)), 2) + pow(arma::dot(yvec, globalBase.col(1)), 2))
+				- 2 * (y_ii - yG) * (z_ii - zG)  * (arma::dot(xvec, globalBase.col(1)) * arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1)) * arma::dot(yvec, globalBase.col(2)))
+				);
 
 		A(4, 4) += Lambda * step *
-				(
-				  pow(x_ii - xG, 2) * (pow(arma::dot(xvec, globalBase.col(2)), 2) + pow(arma::dot(yvec, globalBase.col(2)), 2))
+			(
+				pow(x_ii - xG, 2) * (pow(arma::dot(xvec, globalBase.col(2)), 2) + pow(arma::dot(yvec, globalBase.col(2)), 2))
 				+ pow(z_ii - zG, 2) * (pow(arma::dot(xvec, globalBase.col(0)), 2) + pow(arma::dot(yvec, globalBase.col(0)), 2))
 				- 2 * (x_ii - xG) * (z_ii - zG)  * (arma::dot(xvec, globalBase.col(0)) * arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0)) * arma::dot(yvec, globalBase.col(2)))
 				);
 
 		A(5, 5) += Lambda * step *
-				(
-				  pow(x_ii - xG, 2) * (pow(arma::dot(xvec, globalBase.col(1)), 2) + pow(arma::dot(yvec, globalBase.col(1)), 2))
+			(
+				pow(x_ii - xG, 2) * (pow(arma::dot(xvec, globalBase.col(1)), 2) + pow(arma::dot(yvec, globalBase.col(1)), 2))
 				+ pow(y_ii - yG, 2) * (pow(arma::dot(xvec, globalBase.col(0)), 2) + pow(arma::dot(yvec, globalBase.col(0)), 2))
 				- 2 * (x_ii - xG) * (y_ii - yG)  * (arma::dot(xvec, globalBase.col(0)) * arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0)) * arma::dot(yvec, globalBase.col(1)))
 				);
 
 		A(0, 3) += Lambda * step *
-			    (
-				  (y_ii - yG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
+			(
+			(y_ii - yG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
 				- (z_ii - zG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
 				);
 
 		A(0, 4) += Lambda * step *
-				(
-				  (z_ii - zG) * (pow(arma::dot(xvec, globalBase.col(0)), 2) + pow(arma::dot(yvec, globalBase.col(0)), 2))
+			(
+			(z_ii - zG) * (pow(arma::dot(xvec, globalBase.col(0)), 2) + pow(arma::dot(yvec, globalBase.col(0)), 2))
 				- (x_ii - xG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
 				);
 
 		A(0, 5) += Lambda * step *
-				(
-				  (x_ii - xG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
+			(
+			(x_ii - xG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
 				- (y_ii - yG) * (pow(arma::dot(xvec, globalBase.col(0)), 2) + pow(arma::dot(yvec, globalBase.col(0)), 2))
 				);
 
 		A(1, 3) += Lambda * step *
-				(
-				  (y_ii - yG) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
+			(
+			(y_ii - yG) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
 				- (z_ii - zG) * (pow(arma::dot(xvec, globalBase.col(1)), 2) + pow(arma::dot(yvec, globalBase.col(1)), 2))
 				);
 
 		A(1, 4) += Lambda * step *
-				(
-				  (z_ii - zG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
+			(
+			(z_ii - zG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
 				- (x_ii - xG) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
 				);
 
 		A(1, 5) += Lambda * step *
-				(
-				  (x_ii - xG) * (pow(arma::dot(xvec, globalBase.col(1)), 2) + pow(arma::dot(yvec, globalBase.col(1)), 2))
+			(
+			(x_ii - xG) * (pow(arma::dot(xvec, globalBase.col(1)), 2) + pow(arma::dot(yvec, globalBase.col(1)), 2))
 				- (y_ii - yG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
 				);
 
 		A(2, 3) += Lambda * step *
-				(
-				  (y_ii - yG) * (pow(arma::dot(xvec, globalBase.col(2)), 2) + pow(arma::dot(yvec, globalBase.col(2)), 2))
+			(
+			(y_ii - yG) * (pow(arma::dot(xvec, globalBase.col(2)), 2) + pow(arma::dot(yvec, globalBase.col(2)), 2))
 				- (z_ii - zG) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
 				);
 
 		A(2, 4) += Lambda * step *
-				(
-				  (z_ii - zG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
+			(
+			(z_ii - zG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
 				- (x_ii - xG) * (pow(arma::dot(xvec, globalBase.col(2)), 2) + pow(arma::dot(yvec, globalBase.col(2)), 2))
 				);
 
 		A(2, 5) += Lambda * step *
-				(
-				  (x_ii - xG) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
+			(
+			(x_ii - xG) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
 				- (y_ii - yG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
 				);
 
 		A(3, 4) += Lambda * step *
-				(
-				- (x_ii - xG) * (y_ii - yG) * (pow(arma::dot(xvec, globalBase.col(2)), 2) + pow(arma::dot(yvec, globalBase.col(2)), 2))
+			(
+				-(x_ii - xG) * (y_ii - yG) * (pow(arma::dot(xvec, globalBase.col(2)), 2) + pow(arma::dot(yvec, globalBase.col(2)), 2))
 				- (x_ii - xG) * (z_ii - zG) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
 				+ (y_ii - yG) * (z_ii - zG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
 				- pow(z_ii - zG, 2) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
 				);
 
 		A(3, 5) += Lambda * step *
-				(
-				  (x_ii - xG) * (y_ii - yG) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
+			(
+			(x_ii - xG) * (y_ii - yG) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
 				- (x_ii - xG) * (z_ii - zG) * (pow(arma::dot(xvec, globalBase.col(1)), 2) + pow(arma::dot(yvec, globalBase.col(1)), 2))
 				- pow(y_ii - yG, 2) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
 				+ (y_ii - yG) * (z_ii - zG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
 				);
 
 		A(4, 5) += Lambda * step *
-				(
-				- pow(x_ii - xG, 2) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
+			(
+				-pow(x_ii - xG, 2) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
 				+ (x_ii - xG) * (y_ii - yG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
 				+ (x_ii - xG) * (y_ii - yG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
 				- (y_ii - yG) * (z_ii - zG) * (pow(arma::dot(xvec, globalBase.col(0)), 2) + pow(arma::dot(yvec, globalBase.col(0)), 2))
@@ -362,99 +362,99 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho) const
 	}
 
 	A(3, 3) += Lambda *
-			(
-			  pow(y_ii - yG, 2) * pow(arma::dot(zvec, globalBase.col(2)), 2)
+		(
+			pow(y_ii - yG, 2) * pow(arma::dot(zvec, globalBase.col(2)), 2)
 			+ pow(z_ii - zG, 2) * pow(arma::dot(zvec, globalBase.col(1)), 2)
 			- 2 * (y_ii - yG) * (z_ii - zG) * arma::dot(zvec, globalBase.col(1)) * arma::dot(zvec, globalBase.col(2))
 			);
 
 	A(4, 4) += Lambda *
-			(
-			  pow(x_ii - xG, 2) * pow(arma::dot(zvec, globalBase.col(2)), 2)
+		(
+			pow(x_ii - xG, 2) * pow(arma::dot(zvec, globalBase.col(2)), 2)
 			+ pow(z_ii - zG, 2) * pow(arma::dot(zvec, globalBase.col(0)), 2)
 			- 2 * (x_ii - xG) * (z_ii - zG)  * arma::dot(zvec, globalBase.col(0)) * arma::dot(zvec, globalBase.col(2))
 			);
 
 	A(5, 5) += Lambda *
-			(
-			  pow(x_ii - xG, 2) * pow(arma::dot(zvec, globalBase.col(1)), 2)
+		(
+			pow(x_ii - xG, 2) * pow(arma::dot(zvec, globalBase.col(1)), 2)
 			+ pow(y_ii - yG, 2) * pow(arma::dot(zvec, globalBase.col(0)), 2)
 			- 2 * (x_ii - xG) * (y_ii - yG)  * arma::dot(zvec, globalBase.col(0)) * arma::dot(zvec, globalBase.col(1))
 			);
 
 	A(0, 3) += Lambda *
-			(
-			  (y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
+		(
+		(y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
 			- (z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
 			);
 
 	A(0, 4) += Lambda *
-			(
-			  (z_ii - zG) * pow(arma::dot(zvec, globalBase.col(0)), 2)
+		(
+		(z_ii - zG) * pow(arma::dot(zvec, globalBase.col(0)), 2)
 			- (x_ii - xG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
 			);
 
 	A(0, 5) += Lambda *
-			(
-			  (x_ii - xG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
+		(
+		(x_ii - xG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
 			- (y_ii - yG) * pow(arma::dot(zvec, globalBase.col(0)), 2)
 			);
 
 	A(1, 3) += Lambda *
-			(
-			  (y_ii - yG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
+		(
+		(y_ii - yG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
 			- (z_ii - zG) * pow(arma::dot(zvec, globalBase.col(1)), 2)
 			);
 
 	A(1, 4) += Lambda *
-			(
-			  (z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
+		(
+		(z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
 			- (x_ii - xG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
 			);
 
 	A(1, 5) += Lambda *
-			(
-			  (x_ii - xG) * pow(arma::dot(zvec, globalBase.col(1)), 2)
+		(
+		(x_ii - xG) * pow(arma::dot(zvec, globalBase.col(1)), 2)
 			- (y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
 			);
 
 	A(2, 3) += Lambda *
-			(
-			  (y_ii - yG) * pow(arma::dot(zvec, globalBase.col(2)), 2)
+		(
+		(y_ii - yG) * pow(arma::dot(zvec, globalBase.col(2)), 2)
 			- (z_ii - zG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
 			);
 
 	A(2, 4) += Lambda *
-			(
-			  (z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
+		(
+		(z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
 			- (x_ii - xG) * pow(arma::dot(zvec, globalBase.col(2)), 2)
 			);
 
 	A(2, 5) += Lambda *
-			(
-			  (x_ii - xG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
+		(
+		(x_ii - xG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
 			- (y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
 			);
 
 	A(3, 4) += Lambda *
-			(
-			- (x_ii - xG) * (y_ii - yG) * pow(arma::dot(zvec, globalBase.col(2)), 2)
+		(
+			-(x_ii - xG) * (y_ii - yG) * pow(arma::dot(zvec, globalBase.col(2)), 2)
 			- (x_ii - xG) * (z_ii - zG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
 			+ (y_ii - yG) * (z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
 			- pow(z_ii - zG, 2) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
 			);
 
 	A(3, 5) += Lambda *
-			(
-			  (x_ii - xG) * (y_ii - yG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
+		(
+		(x_ii - xG) * (y_ii - yG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
 			- (x_ii - xG) * (z_ii - zG) * pow(arma::dot(zvec, globalBase.col(1)), 2)
 			- pow(y_ii - yG, 2) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
 			+ (y_ii - yG) * (z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
 			);
 
 	A(4, 5) += Lambda *
-			(
-			- pow(x_ii - xG, 2) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
+		(
+			-pow(x_ii - xG, 2) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
 			+ (x_ii - xG) * (y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
 			+ (x_ii - xG) * (y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
 			- (y_ii - yG) * (z_ii - zG) * pow(arma::dot(zvec, globalBase.col(0)), 2)
@@ -518,7 +518,7 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 	double tanAlpha{ 0 };
 
 	// Check if the angle is 90 degrees
-	if (std::abs(alpha - arma::datum::pi/2) > datum::eps)
+	if (std::abs(alpha - arma::datum::pi / 2) > datum::eps)
 	{
 		tanAlpha = tan(alpha);
 	}
@@ -551,9 +551,9 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 		n2 = n1 + (std::abs(0 - n1[2]) / (n2[2] - n1[2])) * norm(n2 - n1) * zvec;
 		L = norm(n2 - n1);
 
-		xb = tanAlpha * pow(D/2, 2) / (4 * L);
+		xb = tanAlpha * pow(D / 2, 2) / (4 * L);
 		yb = 0;
-		zb = (pow(tanAlpha*D/2, 2) + 4 * pow(L, 2)) / (8 * L);
+		zb = (pow(tanAlpha*D / 2, 2) + 4 * pow(L, 2)) / (8 * L);
 	}
 
 	else // if the cylinder is horizontal and not completely submerged, forces and moments are equal to zero
@@ -584,11 +584,12 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 
 // The vectors passed as reference are used to return the different components of the hydrodynamic force acting on the cylinder,
 // without the need of calling three different methods for each component of the hydrodynamic force
-vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydroMode, 
-												vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov, 
-												vec::fixed<6> &force_inertia_2nd_part1, vec::fixed<6> &force_inertia_2nd_part2,
-												vec::fixed<6> &force_inertia_2nd_part3, vec::fixed<6> &force_inertia_2nd_part4, 
-												vec::fixed<6> &force_inertia_2nd_part5) const
+vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydroMode, const mat::fixed<3, 3> &rotat,
+	const vec::fixed<3> &refPt, const vec::fixed<3> &refPt_sd,
+	vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov,
+	vec::fixed<6> &force_inertia_2nd_part1, vec::fixed<6> &force_inertia_2nd_part2,
+	vec::fixed<6> &force_inertia_2nd_part3, vec::fixed<6> &force_inertia_2nd_part4,
+	vec::fixed<6> &force_inertia_2nd_part5) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
@@ -656,6 +657,15 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	botDiam = m_botDiam;
 	topDiam = m_topDiam;
 
+	// If only first-order forces are going to be calculated, consider the fixed (or slow) position.
+	int multInertPt2 = 1; // This is used to remove the second-order force due to the product of the first-order normal vector and first-order acceleration at the body fixed position
+	if (hydroMode == 1)
+	{
+		n1 = n1_sd;
+		n2 = n2_sd;
+		multInertPt2 = 0;
+	}
+
 	// Make sure that node1 is below node2 (or at the same height, at least).
 	// Otherwise, need to swap them. This is useful for a check below that speeds up the calculation
 	// by ignoring the nodes above the free surface.
@@ -696,7 +706,9 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 
 	vec::fixed<3> u1(fill::zeros); // Fluid velocity at the integration point
 	vec::fixed<3> du1dt(fill::zeros); // Components of fluid acceleration at the integration point
-	vec::fixed<3> du1dx(fill::zeros); 
+	vec::fixed<3> du1dt_pt1(fill::zeros);
+	vec::fixed<3> du1dt_pt2(fill::zeros);
+	vec::fixed<3> du1dx(fill::zeros);
 	vec::fixed<3> du1dy(fill::zeros);
 	vec::fixed<3> du1dz(fill::zeros);
 	vec::fixed<3> du2dt(fill::zeros);
@@ -707,6 +719,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	// Forces acting at the integration point and moment (with relation to n1) due to the force acting at the integration point
 	vec::fixed<3> force_inertia_ii(fill::zeros); // Inertial component
 	vec::fixed<3> moment_inertia_ii(fill::zeros);
+	vec::fixed<3> force_inertia_ii_pt2(fill::zeros); // Used to separate the part that is due to the product of first-order normal and first-order acc at the fixed body position
+	vec::fixed<3> moment_inertia_ii_pt2(fill::zeros);
 
 	vec::fixed<3> force_drag_ii(fill::zeros); // Drag component
 	vec::fixed<3> moment_drag_ii(fill::zeros);
@@ -748,7 +762,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		******/
 		// Absolute (R_ii) and relative (lambda) distance between the integration point and the bottom node		
 		double R_ii = norm(n_ii - n1, 2);
-		double lambda = R_ii / L;
+		double lambda = norm(n_ii - n1, 2) / L; // Relative distance between the integration point and the bottom node		
 
 		// Velocity and acceleration of the integration point
 		vel_ii = v1 + lambda * (v2 - v1);
@@ -761,52 +775,58 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		/*******
 			Fluid velocity/acceleration
 		******/
-		// Fluid acceleration at the integration point.
-		// Calculated in the instantaneous position.
-		du1dt = envir.du1dt(n_ii, eta); // Wheeler stretching method requires 'eta' as input
-		
-		// Fluid velocity at the integration point.
-		u1 = envir.u1(n_ii_sd, eta);
+		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder.
+		// Written in the GLOBAL reference frame.
 
-		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder,
-		// written in the GLOBAL reference frame.
-		// Note that du1dt uses the instantaneous local position, while u1 considers the slow drift position.
-		du1dt -= arma::dot(du1dt, zvec) * zvec;
+		// Fluid acceleration at the integration point - For integration at the instantaneous position
+		du1dt = envir.du1dt(n_ii, eta);  // Wheeler stretching method requires 'eta' as input
+		du1dt_pt1 = du1dt - arma::dot(du1dt, zvec_sd) * zvec_sd;
+
+		// Fluid acceleration at the integration point - For taking in account the variation of the normal at the fixed (or slow) position
+		du1dt = envir.du1dt(n_ii_sd, eta);
+		du1dt_pt2 = multInertPt2 * rotat * (du1dt - arma::dot(du1dt, zvec_sd) * zvec_sd);
+
+		// Fluid velocity at the integration point.		
+		u1 = envir.u1(n_ii_sd, eta);
 		u1 -= arma::dot(u1, zvec_sd) * zvec_sd;
 
-		// Calculation of the forces and moments in the integration node. The moments are given with respect to n1,
-		// but are output with respect to node 1.
-		// Components from Morison's Equation
+		/*******
+			Forces
+		******/
+		// Force due to first-order acceleration integrated considering the instantaneous position of the cylinder
 		if (n_ii[2] <= 0 && envir.waveStret() <= 1)
 		{
-			force_inertia_ii = datum::pi * D*D / 4. * rho * Cm * du1dt - datum::pi * D*D / 4. * rho * (Cm - 1) * acc_ii;
+			force_inertia_ii = datum::pi * D*D / 4. * rho * Cm * du1dt_pt1;
 		}
 		else if (n_ii[2] <= zwl && envir.waveStret() == 2)
 		{
-			force_inertia_ii = datum::pi * D*D / 4. * rho * Cm * du1dt;
-			if (n_ii[2] <= 0)
-			{
-				force_inertia_ii += -datum::pi * D*D / 4. * rho * (Cm - 1) * acc_ii;
-			}
+			force_inertia_ii = datum::pi * D*D / 4. * rho * Cm * du1dt_pt1;
 		}
 		else
 		{
 			force_inertia_ii.zeros();
 		}
+		moment_inertia_ii = cross(R_ii * zvec, force_inertia_ii) + cross(n1 - refPt, force_inertia_ii);
 
+		// - Force due to the product of first-order acceleration and first-order normal vector
+		// - Quadratic drag,
+		// Both are integrated considering the fixed (or slow) position of the cylinder.
 		if (n_ii_sd[2] <= 0)
 		{
 			force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - vel_ii, 2) * (u1 - vel_ii);
+			force_inertia_ii_pt2 = datum::pi * D*D / 4. * rho * Cm * du1dt_pt2 - datum::pi * D*D / 4. * rho * (Cm - 1) * acc_ii; // acc_ii aparentemente não faz diferença
+			force_inertia_ii += force_inertia_ii_pt2;
 		}
 		else
 		{
 			force_drag_ii.zeros();
+			force_inertia_ii_pt2.zeros();
 		}
+		moment_inertia_ii += cross(R_ii * zvec_sd, force_inertia_ii_pt2) + cross(n1_sd - refPt_sd, force_inertia_ii_pt2);
+		moment_drag_ii = cross(R_ii * zvec_sd, force_drag_ii) + cross(n1_sd - refPt_sd, force_drag_ii);
 
-		moment_inertia_ii = cross(R_ii * zvec, force_inertia_ii);
-		moment_drag_ii = cross(R_ii * zvec_sd, force_drag_ii);
-
-		// If required, calculate the second-order part (inertial forces)
+		// If required, calculate the other second-order inertial forces,
+		// which are integrated considering the fixed (or slow) position of the cylinder.
 		if (hydroMode == 2)
 		{
 			if (n_ii_sd[2] <= 0)
@@ -816,7 +836,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 				du2dt -= arma::dot(du2dt, zvec_sd) * zvec_sd;
 				force_inertia_2nd_part1_ii = (datum::pi * D*D / 4.) * rho * Cm * du2dt;
 
-				// 2nd component: Due to the wave elevation. Calculated after this loop of integration along the cylinder length if Taylor stretching is used.
+				// 2nd component: Due to the wave elevation.
+				// Calculated after this loop of integration along the cylinder length if Taylor stretching is used.
 				// Otherwise, this component is zero and its effects are included in the integration of the forces due to the first-order fluid acceleration.
 
 				// 3rd component: Force due to convective acceleration
@@ -838,7 +859,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 				force_inertia_2nd_part4_ii = (datum::pi * D*D / 4.) * rho * (Cm - 1) * a_a;
 
 				// 5th component: Force due to cylinder rotation				
-				a_r = arma::dot(u1, zvec_sd) * (1/L) * ( arma::dot(v2 - v1, xvec_sd) * yvec_sd + arma::dot(v2 - v1, yvec_sd) * xvec_sd );
+				a_r = arma::dot(u1, zvec_sd) * (1 / L) * (arma::dot(v2 - v1, xvec_sd) * yvec_sd + arma::dot(v2 - v1, yvec_sd) * xvec_sd);
 				force_inertia_2nd_part5_ii = -(datum::pi * D*D / 4.) * rho * (Cm - 1) * a_r;
 			}
 			else
@@ -848,36 +869,36 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 				force_inertia_2nd_part4_ii.zeros();
 				force_inertia_2nd_part5_ii.zeros();
 			}
-			moment_inertia_2nd_part1_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part1_ii);
-			moment_inertia_2nd_part3_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part3_ii);
-			moment_inertia_2nd_part4_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part4_ii);
-			moment_inertia_2nd_part5_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part5_ii);
+			moment_inertia_2nd_part1_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part1_ii) + cross(n1_sd - refPt_sd, force_inertia_2nd_part1_ii);
+			moment_inertia_2nd_part3_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part3_ii) + cross(n1_sd - refPt_sd, force_inertia_2nd_part3_ii);
+			moment_inertia_2nd_part4_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part4_ii) + cross(n1_sd - refPt_sd, force_inertia_2nd_part4_ii);
+			moment_inertia_2nd_part5_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part5_ii) + cross(n1_sd - refPt_sd, force_inertia_2nd_part5_ii);
 		}
 
 		// Integrate the forces along the cylinder using Simpson's Rule
 		if (ii == 1 || ii == ncyl)
 		{
-			force_inertia += (dL/3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
-			force_drag += (dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
-			force_inertia_2nd_part1 += (dL/3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
+			force_inertia += (dL / 3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
+			force_drag += (dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
+			force_inertia_2nd_part1 += (dL / 3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
 			force_inertia_2nd_part3 += (dL / 3.0) * join_cols(force_inertia_2nd_part3_ii, moment_inertia_2nd_part3_ii);
 			force_inertia_2nd_part4 += (dL / 3.0) * join_cols(force_inertia_2nd_part4_ii, moment_inertia_2nd_part4_ii);
 			force_inertia_2nd_part5 += (dL / 3.0) * join_cols(force_inertia_2nd_part5_ii, moment_inertia_2nd_part5_ii);
 		}
 		else if (ii % 2 == 0)
 		{
-			force_inertia += (4*dL/3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
-			force_drag += (4*dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
-			force_inertia_2nd_part1 += (4*dL/3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
+			force_inertia += (4 * dL / 3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
+			force_drag += (4 * dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
+			force_inertia_2nd_part1 += (4 * dL / 3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
 			force_inertia_2nd_part3 += (4 * dL / 3.0) * join_cols(force_inertia_2nd_part3_ii, moment_inertia_2nd_part3_ii);
 			force_inertia_2nd_part4 += (4 * dL / 3.0) * join_cols(force_inertia_2nd_part4_ii, moment_inertia_2nd_part4_ii);
 			force_inertia_2nd_part5 += (4 * dL / 3.0) * join_cols(force_inertia_2nd_part5_ii, moment_inertia_2nd_part5_ii);
 		}
 		else
 		{
-			force_inertia += (2*dL/3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
-			force_drag += (2*dL/3.0) * join_cols(force_drag_ii, moment_drag_ii);
-			force_inertia_2nd_part1 += (2*dL/3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
+			force_inertia += (2 * dL / 3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
+			force_drag += (2 * dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
+			force_inertia_2nd_part1 += (2 * dL / 3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
 			force_inertia_2nd_part3 += (2 * dL / 3.0) * join_cols(force_inertia_2nd_part3_ii, moment_inertia_2nd_part3_ii);
 			force_inertia_2nd_part4 += (2 * dL / 3.0) * join_cols(force_inertia_2nd_part4_ii, moment_inertia_2nd_part4_ii);
 			force_inertia_2nd_part5 += (2 * dL / 3.0) * join_cols(force_inertia_2nd_part5_ii, moment_inertia_2nd_part5_ii);
@@ -890,16 +911,18 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	// If waveStret == 0, this effect is not included in the analysis, 
 	// and if waveStret > 1, this force component is included in force_inertia.
 	if (hydroMode == 2 && envir.waveStret() == 1 && (n2.at(2)*n1.at(2) < 0))
-	{	
-		n_ii = (n2 - n1) * (0-n1.at(2))/(n2.at(2)-n1.at(2)) + n1; // Coordinates of the intersction with the still water line;				
+	{
+		n_ii = (n2 - n1) * (0 - n1.at(2)) / (n2.at(2) - n1.at(2)) + n1; // Coordinates of the intersection with the still water line;				
 		n_ii.at(2) = 0; // Since envir.du1dt returns 0 for z > 0, this line is necessary to make sure that the z coordinate of n_ii is exactly 0, and not slightly above due to roundoff errors.
-		du1dt = envir.du1dt(n_ii, 0);		
-		du1dt -= arma::dot(du1dt, zvec) * zvec;
+		du1dt = envir.du1dt(n_ii, 0);
+		du1dt -= arma::dot(du1dt, zvec_sd) * zvec_sd;
 		eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
 		force_inertia_2nd_part2.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta;
 		double R_ii = norm(n_ii - n1, 2) + eta / 2;
-		force_inertia_2nd_part2.rows(3, 5) = cross(R_ii * zvec, force_inertia_2nd_part2.rows(0, 2));
+		force_inertia_2nd_part2.rows(3, 5) = cross(R_ii * zvec, force_inertia_2nd_part2.rows(0, 2)) + cross(n1 - refPt, force_inertia_2nd_part2.rows(0, 2));
 	}
+
+
 
 	/*
 		Second part: forces on the bottom of the cylinder
@@ -913,29 +936,30 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> a_axial = arma::dot(a1, zvec) * zvec;
 
 	// Calculate the force acting on the bottom of the cylinder
-	force_inertia.rows(0,2) += rho * Ca_V * (4/3.) * datum::pi * (D*D*D/8.) * (du1dt - a_axial);
-	force_drag.rows(0, 2) += 0.5 * rho * Cd_V * datum::pi * (D*D/4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
+	vec::fixed<3> force_inertia_axial = rho * Ca_V * (4 / 3.) * datum::pi * (D*D*D / 8.) * (du1dt - a_axial);
+	vec::fixed<3> force_drag_axial = 0.5 * rho * Cd_V * datum::pi * (D*D / 4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
+
+	force_inertia.rows(0, 2) += force_inertia_axial;
+	force_inertia.rows(3, 5) += cross(n1 - refPt, force_inertia_axial);
+
+	force_drag.rows(0, 2) += force_drag_axial;
+	force_drag.rows(3, 5) += cross(n1 - refPt, force_drag_axial);
 
 	if (m_botPressFlag)
 	{
-		force_froudeKrylov.rows(0, 2) += datum::pi * (botDiam*botDiam/4. * envir.wavePressure(n1)
-										- ( botDiam*botDiam/4. - topDiam*topDiam/4.) * envir.wavePressure(n2) ) * zvec;
+		force_froudeKrylov.rows(0, 2) = datum::pi * (botDiam*botDiam / 4. * envir.wavePressure(n1)
+			- (botDiam*botDiam / 4. - topDiam * topDiam / 4.) * envir.wavePressure(n2)) * zvec_sd;
+
+		force_froudeKrylov.rows(3, 5) = cross(n1 - refPt, force_froudeKrylov.rows(0, 2));
 	}
 
 
 	/*
 		Total force
 	*/
-	force = force_inertia + force_drag + force_froudeKrylov + 
-		    force_inertia_2nd_part1 + force_inertia_2nd_part2 +
-			force_inertia_2nd_part3 + force_inertia_2nd_part4 + force_inertia_2nd_part5;
-
-	// The moment was calculated with relation to n1, which may be different from node1.
-	// We need to change the fulcrum to node1
-	force.rows(3,5) = force.rows(3,5) + cross( n1 - node1Pos(), force.rows(0,2) );
-
-	force_inertia.rows(3, 5) = force_inertia.rows(3, 5) + cross(n1 - node1Pos(), force_inertia.rows(0, 2));
-	force_drag.rows(3, 5) = force_drag.rows(3, 5) + cross(n1 - node1Pos(), force_drag.rows(0, 2));
+	force = force_inertia + force_drag + force_froudeKrylov +
+		force_inertia_2nd_part1 + force_inertia_2nd_part2 +
+		force_inertia_2nd_part3 + force_inertia_2nd_part4 + force_inertia_2nd_part5;
 
 	return force;
 }
