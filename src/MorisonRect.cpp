@@ -42,6 +42,11 @@ mat::fixed<6, 6> MorisonRect::addedMass_perp(const double rho) const
 	return A;
 }
 
+double MorisonRect::A_perp(const int ii, const int jj, const vec::fixed<3> &x, const vec::fixed<3> &xG, const vec::fixed<3> &xvec, const vec::fixed<3> &yvec) const
+{
+	return 0;
+}
+
 mat::fixed<6, 6> MorisonRect::addedMass_paral(const double rho) const
 {
 	mat::fixed<6, 6> A(fill::zeros);

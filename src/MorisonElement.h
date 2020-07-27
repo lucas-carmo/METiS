@@ -67,6 +67,7 @@ public:
 
 	// Contribution to the added mass
 	virtual mat::fixed<6, 6> addedMass_perp(const double rho) const = 0;
+	virtual double A_perp(const int ii, const int jj, const vec::fixed<3> &x, const vec::fixed<3> &xG, const vec::fixed<3> &xvec, const vec::fixed<3> &yvec) const = 0;
 	virtual mat::fixed<6, 6> addedMass_paral(const double rho) const = 0;
 
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const = 0;

@@ -90,391 +90,6 @@ void MorisonCirc::make_local_base_sd(arma::vec::fixed<3> &xvec, arma::vec::fixed
 	}
 }
 
-// TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
-mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho) const
-{
-	mat::fixed<6, 6> A(fill::zeros);
-
-	// Use a more friendly notation
-	double Lambda = datum::pi * pow(m_diam / 2., 2) * rho * (m_CM - 1);
-	double ncyl = m_numIntPoints;
-
-	// Nodes position and vectors of the local coordinate system vectors
-	vec::fixed<3> n1 = node1Pos();
-	vec::fixed<3> n2 = node2Pos();
-	vec::fixed<3> xvec(fill::zeros);
-	vec::fixed<3> yvec(fill::zeros);
-	vec::fixed<3> zvec(fill::zeros);
-	MorisonCirc::make_local_base(xvec, yvec, zvec);
-
-	// Center of Gravity
-	double xG = n1[0] - m_cog2node1[0];
-	double yG = n1[1] - m_cog2node1[1];
-	double zG = n1[2] - m_cog2node1[2];
-
-	// Make sure that node1 is below node2 (or at the same height, at least).
-	// Otherwise, need to swap them.
-	if (n1[2] > n2[2])
-	{
-		n1.swap(n2);
-
-		// If the nodes position is reversed, we need to reverse the local base as well
-		xvec = -xvec;
-		yvec = -yvec;
-		zvec = -zvec;
-	}
-
-
-	// Since n2 is above n1, if n1[2] > 0, the cylinder is above the waterline
-	if (n1[2] > 0)
-	{
-		return A;
-	}
-
-	// If only one of the nodes is above the water line, the coordinates of the other node
-	// are changed by those of the intersection between the cylinder axis and the static
-	// water line(defined by z_global = 0)
-	if (n2[2] > 0)
-	{
-		n2 = n1 + (std::abs(0 - n1[2]) / (n2[2] - n1[2])) * norm(n2 - n1) * zvec;
-	}
-
-	// Length of the cylinder and of each interval between points
-	double L = norm(n2 - n1, 2);
-	double dL = norm(n2 - n1, 2) / (ncyl - 1);
-
-
-	// Vectors of the global coordinate system - arranjed, they result in an eye matrix
-	mat::fixed<3, 3> globalBase(fill::eye);
-
-	// The purely translational elements of the matrix (Aij for i,j = 1, 2, 3) are integrated analytically
-	for (int pp = 0; pp < 3; ++pp)
-	{
-		for (int qq = pp; qq < 3; ++qq)
-		{
-			A(pp, qq) = Lambda * L * (arma::dot(xvec, globalBase.col(pp))*arma::dot(xvec, globalBase.col(qq))
-				+ arma::dot(yvec, globalBase.col(pp))*arma::dot(yvec, globalBase.col(qq))
-				);
-		}
-	}
-
-	vec::fixed<3> n_ii;
-	double x_ii{ 0 };
-	double y_ii{ 0 };
-	double z_ii{ 0 };
-	double step{ 0 }; // Used for Simpson's rule. See below.
-	for (int ii = 1; ii <= ncyl; ++ii)
-	{
-		n_ii = (n2 - n1) * (ii - 1) / (ncyl - 1) + n1; // Coordinates of the integration point
-
-		if (n_ii[2] > 0)
-		{
-			break; // Since n2 is above n1, if we reach n_ii[2] > 0, all the next n_ii are also above the waterline
-		}
-
-		x_ii = n_ii[0];
-		y_ii = n_ii[1];
-		z_ii = n_ii[2];
-
-		// Integrate along the cylinder using Simpon's rule
-		if (ii == 1 || ii == ncyl)
-		{
-			step = dL / 3.;
-		}
-		else if (ii % 2 == 0)
-		{
-			step = 4 * dL / 3.;
-		}
-		else
-		{
-			step = 2 * dL / 3.;
-		}
-
-		A(3, 3) += Lambda * step *
-			(
-				pow(y_ii - yG, 2) * (pow(arma::dot(xvec, globalBase.col(2)), 2) + pow(arma::dot(yvec, globalBase.col(2)), 2))
-				+ pow(z_ii - zG, 2) * (pow(arma::dot(xvec, globalBase.col(1)), 2) + pow(arma::dot(yvec, globalBase.col(1)), 2))
-				- 2 * (y_ii - yG) * (z_ii - zG)  * (arma::dot(xvec, globalBase.col(1)) * arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1)) * arma::dot(yvec, globalBase.col(2)))
-				);
-
-		A(4, 4) += Lambda * step *
-			(
-				pow(x_ii - xG, 2) * (pow(arma::dot(xvec, globalBase.col(2)), 2) + pow(arma::dot(yvec, globalBase.col(2)), 2))
-				+ pow(z_ii - zG, 2) * (pow(arma::dot(xvec, globalBase.col(0)), 2) + pow(arma::dot(yvec, globalBase.col(0)), 2))
-				- 2 * (x_ii - xG) * (z_ii - zG)  * (arma::dot(xvec, globalBase.col(0)) * arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0)) * arma::dot(yvec, globalBase.col(2)))
-				);
-
-		A(5, 5) += Lambda * step *
-			(
-				pow(x_ii - xG, 2) * (pow(arma::dot(xvec, globalBase.col(1)), 2) + pow(arma::dot(yvec, globalBase.col(1)), 2))
-				+ pow(y_ii - yG, 2) * (pow(arma::dot(xvec, globalBase.col(0)), 2) + pow(arma::dot(yvec, globalBase.col(0)), 2))
-				- 2 * (x_ii - xG) * (y_ii - yG)  * (arma::dot(xvec, globalBase.col(0)) * arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0)) * arma::dot(yvec, globalBase.col(1)))
-				);
-
-		A(0, 3) += Lambda * step *
-			(
-			(y_ii - yG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
-				- (z_ii - zG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
-				);
-
-		A(0, 4) += Lambda * step *
-			(
-			(z_ii - zG) * (pow(arma::dot(xvec, globalBase.col(0)), 2) + pow(arma::dot(yvec, globalBase.col(0)), 2))
-				- (x_ii - xG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
-				);
-
-		A(0, 5) += Lambda * step *
-			(
-			(x_ii - xG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
-				- (y_ii - yG) * (pow(arma::dot(xvec, globalBase.col(0)), 2) + pow(arma::dot(yvec, globalBase.col(0)), 2))
-				);
-
-		A(1, 3) += Lambda * step *
-			(
-			(y_ii - yG) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
-				- (z_ii - zG) * (pow(arma::dot(xvec, globalBase.col(1)), 2) + pow(arma::dot(yvec, globalBase.col(1)), 2))
-				);
-
-		A(1, 4) += Lambda * step *
-			(
-			(z_ii - zG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
-				- (x_ii - xG) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
-				);
-
-		A(1, 5) += Lambda * step *
-			(
-			(x_ii - xG) * (pow(arma::dot(xvec, globalBase.col(1)), 2) + pow(arma::dot(yvec, globalBase.col(1)), 2))
-				- (y_ii - yG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
-				);
-
-		A(2, 3) += Lambda * step *
-			(
-			(y_ii - yG) * (pow(arma::dot(xvec, globalBase.col(2)), 2) + pow(arma::dot(yvec, globalBase.col(2)), 2))
-				- (z_ii - zG) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
-				);
-
-		A(2, 4) += Lambda * step *
-			(
-			(z_ii - zG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
-				- (x_ii - xG) * (pow(arma::dot(xvec, globalBase.col(2)), 2) + pow(arma::dot(yvec, globalBase.col(2)), 2))
-				);
-
-		A(2, 5) += Lambda * step *
-			(
-			(x_ii - xG) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
-				- (y_ii - yG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
-				);
-
-		A(3, 4) += Lambda * step *
-			(
-				-(x_ii - xG) * (y_ii - yG) * (pow(arma::dot(xvec, globalBase.col(2)), 2) + pow(arma::dot(yvec, globalBase.col(2)), 2))
-				- (x_ii - xG) * (z_ii - zG) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
-				+ (y_ii - yG) * (z_ii - zG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
-				- pow(z_ii - zG, 2) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
-				);
-
-		A(3, 5) += Lambda * step *
-			(
-			(x_ii - xG) * (y_ii - yG) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
-				- (x_ii - xG) * (z_ii - zG) * (pow(arma::dot(xvec, globalBase.col(1)), 2) + pow(arma::dot(yvec, globalBase.col(1)), 2))
-				- pow(y_ii - yG, 2) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
-				+ (y_ii - yG) * (z_ii - zG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
-				);
-
-		A(4, 5) += Lambda * step *
-			(
-				-pow(x_ii - xG, 2) * (arma::dot(xvec, globalBase.col(1))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(1))*arma::dot(yvec, globalBase.col(2)))
-				+ (x_ii - xG) * (y_ii - yG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(2)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(2)))
-				+ (x_ii - xG) * (y_ii - yG) * (arma::dot(xvec, globalBase.col(0))*arma::dot(xvec, globalBase.col(1)) + arma::dot(yvec, globalBase.col(0))*arma::dot(yvec, globalBase.col(1)))
-				- (y_ii - yG) * (z_ii - zG) * (pow(arma::dot(xvec, globalBase.col(0)), 2) + pow(arma::dot(yvec, globalBase.col(0)), 2))
-				);
-	}
-
-
-	// The matrix is symmetrical. In the lines above, only the upper triangle was filled.
-	// In the loop below, the lower triangle is filled with the values from the upper triangle.
-	for (int pp = 0; pp < 6; ++pp)
-	{
-		for (int qq = 0; qq < pp; ++qq)
-		{
-			A(pp, qq) = A(qq, pp);
-		}
-	}
-
-	return A;
-}
-
-
-
-// TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
-mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho) const
-{
-	mat::fixed<6, 6> A(fill::zeros);
-
-	// Use a more friendly notation
-	double Lambda = rho * m_axialCa * (4 / 3.) * datum::pi * pow(m_diam / 2, 3);
-	double ncyl = m_numIntPoints;
-
-	// Nodes position and vectors of the local coordinate system vectors
-	vec::fixed<3> n1 = node1Pos();
-	vec::fixed<3> n2 = node2Pos();
-	vec::fixed<3> xvec(fill::zeros);
-	vec::fixed<3> yvec(fill::zeros);
-	vec::fixed<3> zvec(fill::zeros);
-	MorisonCirc::make_local_base(xvec, yvec, zvec);
-
-	// Center of Gravity
-	double xG = n1[0] - m_cog2node1[0];
-	double yG = n1[1] - m_cog2node1[1];
-	double zG = n1[2] - m_cog2node1[2];
-
-	// Make sure that node1 is below node2 (or at the same height, at least).
-	// Otherwise, need to swap them.
-	if (n1[2] > n2[2])
-	{
-		n1.swap(n2);
-
-		// If the nodes position is reversed, we need to reverse the local base as well
-		xvec = -xvec;
-		yvec = -yvec;
-		zvec = -zvec;
-	}
-
-	// Vectors of the global coordinate system - arranjed, they result in an eye matrix
-	mat::fixed<3, 3> globalBase(fill::eye);
-
-	// Coordinates of the analysed point, i.e. the bottom node
-	double x_ii = n1[0];
-	double y_ii = n1[1];
-	double z_ii = n1[2];
-
-	if (z_ii > 0)
-	{
-		return A;
-	}
-
-	for (int pp = 0; pp < 3; ++pp)
-	{
-		for (int qq = pp; qq < 3; ++qq)
-		{
-			A(pp, qq) = Lambda * arma::dot(zvec, globalBase.col(pp))*arma::dot(zvec, globalBase.col(qq));
-		}
-	}
-
-	A(3, 3) += Lambda *
-		(
-			pow(y_ii - yG, 2) * pow(arma::dot(zvec, globalBase.col(2)), 2)
-			+ pow(z_ii - zG, 2) * pow(arma::dot(zvec, globalBase.col(1)), 2)
-			- 2 * (y_ii - yG) * (z_ii - zG) * arma::dot(zvec, globalBase.col(1)) * arma::dot(zvec, globalBase.col(2))
-			);
-
-	A(4, 4) += Lambda *
-		(
-			pow(x_ii - xG, 2) * pow(arma::dot(zvec, globalBase.col(2)), 2)
-			+ pow(z_ii - zG, 2) * pow(arma::dot(zvec, globalBase.col(0)), 2)
-			- 2 * (x_ii - xG) * (z_ii - zG)  * arma::dot(zvec, globalBase.col(0)) * arma::dot(zvec, globalBase.col(2))
-			);
-
-	A(5, 5) += Lambda *
-		(
-			pow(x_ii - xG, 2) * pow(arma::dot(zvec, globalBase.col(1)), 2)
-			+ pow(y_ii - yG, 2) * pow(arma::dot(zvec, globalBase.col(0)), 2)
-			- 2 * (x_ii - xG) * (y_ii - yG)  * arma::dot(zvec, globalBase.col(0)) * arma::dot(zvec, globalBase.col(1))
-			);
-
-	A(0, 3) += Lambda *
-		(
-		(y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
-			- (z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
-			);
-
-	A(0, 4) += Lambda *
-		(
-		(z_ii - zG) * pow(arma::dot(zvec, globalBase.col(0)), 2)
-			- (x_ii - xG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
-			);
-
-	A(0, 5) += Lambda *
-		(
-		(x_ii - xG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
-			- (y_ii - yG) * pow(arma::dot(zvec, globalBase.col(0)), 2)
-			);
-
-	A(1, 3) += Lambda *
-		(
-		(y_ii - yG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
-			- (z_ii - zG) * pow(arma::dot(zvec, globalBase.col(1)), 2)
-			);
-
-	A(1, 4) += Lambda *
-		(
-		(z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
-			- (x_ii - xG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
-			);
-
-	A(1, 5) += Lambda *
-		(
-		(x_ii - xG) * pow(arma::dot(zvec, globalBase.col(1)), 2)
-			- (y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
-			);
-
-	A(2, 3) += Lambda *
-		(
-		(y_ii - yG) * pow(arma::dot(zvec, globalBase.col(2)), 2)
-			- (z_ii - zG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
-			);
-
-	A(2, 4) += Lambda *
-		(
-		(z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
-			- (x_ii - xG) * pow(arma::dot(zvec, globalBase.col(2)), 2)
-			);
-
-	A(2, 5) += Lambda *
-		(
-		(x_ii - xG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
-			- (y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
-			);
-
-	A(3, 4) += Lambda *
-		(
-			-(x_ii - xG) * (y_ii - yG) * pow(arma::dot(zvec, globalBase.col(2)), 2)
-			- (x_ii - xG) * (z_ii - zG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
-			+ (y_ii - yG) * (z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
-			- pow(z_ii - zG, 2) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
-			);
-
-	A(3, 5) += Lambda *
-		(
-		(x_ii - xG) * (y_ii - yG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
-			- (x_ii - xG) * (z_ii - zG) * pow(arma::dot(zvec, globalBase.col(1)), 2)
-			- pow(y_ii - yG, 2) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
-			+ (y_ii - yG) * (z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
-			);
-
-	A(4, 5) += Lambda *
-		(
-			-pow(x_ii - xG, 2) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
-			+ (x_ii - xG) * (y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
-			+ (x_ii - xG) * (y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
-			- (y_ii - yG) * (z_ii - zG) * pow(arma::dot(zvec, globalBase.col(0)), 2)
-			);
-
-
-	// The matrix is symmetrical. In the lines above, only the upper triangle was filled.
-	// In the loop below, the lower triangle is filled with the values from the upper triangle.
-	for (int pp = 0; pp < 6; ++pp)
-	{
-		for (int qq = 0; qq < pp; ++qq)
-		{
-			A(pp, qq) = A(qq, pp);
-		}
-	}
-
-	return A;
-}
-
-
 
 vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) const
 {
@@ -962,6 +577,414 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		force_inertia_2nd_part3 + force_inertia_2nd_part4 + force_inertia_2nd_part5;
 
 	return force;
+}
+
+
+mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho) const
+{
+	mat::fixed<6, 6> A(fill::zeros);
+
+	// Use a more friendly notation
+	double Lambda = datum::pi * pow(m_diam / 2., 2) * rho * (m_CM - 1);
+	double ncyl = m_numIntPoints;
+
+	// Nodes position and vectors of the local coordinate system vectors
+	vec::fixed<3> n1 = node1Pos();
+	vec::fixed<3> n2 = node2Pos();
+	vec::fixed<3> xvec(fill::zeros);
+	vec::fixed<3> yvec(fill::zeros);
+	vec::fixed<3> zvec(fill::zeros);
+	MorisonCirc::make_local_base(xvec, yvec, zvec);
+
+	// Center of Gravity
+	vec::fixed<3> xG = n1 - m_cog2node1;
+
+	// Make sure that node1 is below node2 (or at the same height, at least).
+	// Otherwise, need to swap them.
+	if (n1[2] > n2[2])
+	{
+		n1.swap(n2);
+
+		// If the nodes position is reversed, we need to reverse the local base as well
+		xvec = -xvec;
+		yvec = -yvec;
+		zvec = -zvec;
+	}
+
+
+	// Since n2 is above n1, if n1[2] > 0, the cylinder is above the waterline
+	if (n1[2] > 0)
+	{
+		return A;
+	}
+
+	// If only one of the nodes is above the water line, the coordinates of the other node
+	// are changed by those of the intersection between the cylinder axis and the static
+	// water line(defined by z_global = 0)
+	if (n2[2] > 0)
+	{
+		n2 = n1 + (std::abs(0 - n1[2]) / (n2[2] - n1[2])) * norm(n2 - n1) * zvec;
+	}
+
+	// Length of the cylinder and of each interval between points
+	double L = norm(n2 - n1, 2);
+	double dL = norm(n2 - n1, 2) / (ncyl - 1);
+
+	// The purely translational elements of the matrix (Aij for i,j = 1, 2, 3) are integrated analytically
+	for (int pp = 0; pp < 3; ++pp)
+	{
+		for (int qq = pp; qq < 3; ++qq)
+		{
+			A(pp, qq) = Lambda * L * A_perp(pp, qq, {0,0,0}, xG, xvec, yvec);
+		}
+	}
+
+	vec::fixed<3> n_ii;
+	double step{ 0 }; // Used for Simpson's rule. See below.
+	for (int ii = 1; ii <= ncyl; ++ii)
+	{
+		n_ii = (n2 - n1) * (ii - 1) / (ncyl - 1) + n1; // Coordinates of the integration point
+
+		if (n_ii[2] > 0)
+		{
+			break; // Since n2 is above n1, if we reach n_ii[2] > 0, all the next n_ii are also above the waterline
+		}
+
+		// Integrate along the cylinder using Simpon's rule
+		if (ii == 1 || ii == ncyl)
+		{
+			step = dL / 3.;
+		}
+		else if (ii % 2 == 0)
+		{
+			step = 4 * dL / 3.;
+		}
+		else
+		{
+			step = 2 * dL / 3.;
+		}
+
+		for (int pp = 0; pp < 6; ++pp)
+		{
+			int q0 = pp;
+			if (pp < 3) // The first square of the matrix was already filled above
+			{
+				q0 = 3;
+			}
+			for (int qq = q0; qq < 6; ++qq)
+			{
+				A(pp, qq) += Lambda * step * A_perp(pp, qq, n_ii, xG, xvec, yvec);
+			}
+			// (const int ii, const int jj, const vec::fixed<3> &x, const vec::fixed<3> &xG, const vec::fixed<3> &xvec, const vec::fixed<3> &yvec)
+		}
+	}
+
+	// The matrix is symmetrical. In the lines above, only the upper triangle was filled.
+	// In the loop below, the lower triangle is filled with the values from the upper triangle.
+	for (int pp = 0; pp < 6; ++pp)
+	{
+		for (int qq = 0; qq < pp; ++qq)
+		{
+			A(pp, qq) = A(qq, pp);
+		}
+	}
+
+	return A;
+}
+
+
+double MorisonCirc::A_perp(const int ii, const int jj, const vec::fixed<3> &x, const vec::fixed<3> &xG, const vec::fixed<3> &xvec, const vec::fixed<3> &yvec) const
+{
+
+	if (ii < 3 && jj < 3)
+	{
+		return (xvec.at(ii) * xvec.at(jj) + yvec.at(ii) * yvec.at(jj));
+	}
+
+	if (ii == 3 && jj == 3)
+	{
+		return (pow(x.at(1) - xG.at(1), 2) * (pow(xvec.at(2), 2) + pow(yvec.at(2), 2))
+			+ pow(x.at(2) - xG.at(2), 2) * (pow(xvec.at(1), 2) + pow(yvec.at(1), 2))
+			- 2 * (x.at(1) - xG.at(1)) * (x.at(2) - xG.at(2))  * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
+			);
+	}
+
+	if (ii == 4 && jj == 4)
+	{
+		return (pow(x.at(0) - xG.at(0), 2) * (pow(xvec.at(2), 2) + pow(yvec.at(2), 2))
+				+ pow(x.at(2) - xG.at(2), 2) * (pow(xvec.at(0), 2) + pow(yvec.at(0), 2))
+				- 2 * (x.at(0) - xG.at(0)) * (x.at(2) - xG.at(2))  * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
+				);
+	}
+
+	if (ii == 5 && jj == 5)
+	{
+		return (pow(x.at(0) - xG.at(0), 2) * (pow(xvec.at(1), 2) + pow(yvec.at(1), 2))
+				+ pow(x.at(1) - xG.at(1), 2) * (pow(xvec.at(0), 2) + pow(yvec.at(0), 2))
+				- 2 * (x.at(0) - xG.at(0)) * (x.at(1) - xG.at(1))  * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
+				);
+	}
+
+	if (ii == 0 && jj == 3)
+	{
+		return ((x.at(1) - xG.at(1)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
+				- (x.at(2) - xG.at(2)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
+				);
+	}
+
+	if (ii == 0 && jj == 4)
+	{
+		return ((x.at(2) - xG.at(2)) * (pow(xvec.at(0), 2) + pow(yvec.at(0), 2))
+				- (x.at(0) - xG.at(0)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
+				);
+	}
+
+	if (ii == 0 && jj == 5)
+	{
+		return ((x.at(0) - xG.at(0)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
+				- (x.at(1) - xG.at(1)) * (pow(xvec.at(0), 2) + pow(yvec.at(0), 2))
+				);
+	}
+
+	if (ii == 1 && jj == 3)
+	{
+		return ((x.at(1) - xG.at(1)) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
+			    - (x.at(2) - xG.at(2)) * (pow(xvec.at(1), 2) + pow(yvec.at(1), 2))
+				);
+	}
+
+	if (ii == 1 && jj == 4)
+	{
+		return ((x.at(2) - xG.at(2)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
+				- (x.at(0) - xG.at(0)) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
+				);
+	}
+
+	if (ii == 1 && jj == 5)
+	{
+		return ((x.at(0) - xG.at(0)) * (pow(xvec.at(1), 2) + pow(yvec.at(1), 2))
+				- (x.at(1) - xG.at(1)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
+				);
+	}
+		
+	if (ii == 2 && jj == 3)
+	{
+		return ((x.at(1) - xG.at(1)) * (pow(xvec.at(2), 2) + pow(yvec.at(2), 2))
+				- (x.at(2) - xG.at(2)) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
+				);
+	}
+		
+	if (ii == 2 && jj == 4)
+	{
+		return ((x.at(2) - xG.at(2)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
+				- (x.at(0) - xG.at(0)) * (pow(xvec.at(2), 2) + pow(yvec.at(2), 2))
+				);
+	}
+	
+	if (ii == 2 && jj == 5)
+	{
+		return ((x.at(0) - xG.at(0)) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
+				- (x.at(1) - xG.at(1)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
+				);
+	}
+
+	if (ii == 3 && jj == 4)
+	{
+		return (-(x.at(0) - xG.at(0)) * (x.at(1) - xG.at(1)) * (pow(xvec.at(2), 2) + pow(yvec.at(2), 2))
+				- (x.at(0) - xG.at(0)) * (x.at(2) - xG.at(2)) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
+				+ (x.at(1) - xG.at(1)) * (x.at(2) - xG.at(2)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
+				- pow(x.at(2) - xG.at(2), 2) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
+				);
+	}
+
+	if (ii == 3 && jj == 5)
+	{
+		return ((x.at(0) - xG.at(0)) * (x.at(1) - xG.at(1)) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
+				- (x.at(0) - xG.at(0)) * (x.at(2) - xG.at(2)) * (pow(xvec.at(1), 2) + pow(yvec.at(1), 2))
+				- pow(x.at(1) - xG.at(1), 2) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
+				+ (x.at(1) - xG.at(1)) * (x.at(2) - xG.at(2)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
+				);
+	}
+
+	if (ii == 4 && jj == 5)
+	{
+		return (-pow(x.at(0) - xG.at(0), 2) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
+				+ (x.at(0) - xG.at(0)) * (x.at(1) - xG.at(1)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
+				+ (x.at(0) - xG.at(0)) * (x.at(1) - xG.at(1)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
+				- (x.at(1) - xG.at(1)) * (x.at(2) - xG.at(2)) * (pow(xvec.at(0), 2) + pow(yvec.at(0), 2))
+				);
+	}		
+
+	return 0;
+}
+
+
+// TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
+mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho) const
+{
+	mat::fixed<6, 6> A(fill::zeros);
+
+	// Use a more friendly notation
+	double Lambda = rho * m_axialCa * (4 / 3.) * datum::pi * pow(m_diam / 2, 3);
+	double ncyl = m_numIntPoints;
+
+	// Nodes position and vectors of the local coordinate system vectors
+	vec::fixed<3> n1 = node1Pos();
+	vec::fixed<3> n2 = node2Pos();
+	vec::fixed<3> xvec(fill::zeros);
+	vec::fixed<3> yvec(fill::zeros);
+	vec::fixed<3> zvec(fill::zeros);
+	MorisonCirc::make_local_base(xvec, yvec, zvec);
+
+	// Center of Gravity
+	double xG = n1[0] - m_cog2node1[0];
+	double yG = n1[1] - m_cog2node1[1];
+	double zG = n1[2] - m_cog2node1[2];
+
+	// Make sure that node1 is below node2 (or at the same height, at least).
+	// Otherwise, need to swap them.
+	if (n1[2] > n2[2])
+	{
+		n1.swap(n2);
+
+		// If the nodes position is reversed, we need to reverse the local base as well
+		xvec = -xvec;
+		yvec = -yvec;
+		zvec = -zvec;
+	}
+
+	// Vectors of the global coordinate system - arranjed, they result in an eye matrix
+	mat::fixed<3, 3> globalBase(fill::eye);
+
+	// Coordinates of the analysed point, i.e. the bottom node
+	double x_ii = n1[0];
+	double y_ii = n1[1];
+	double z_ii = n1[2];
+
+	if (z_ii > 0)
+	{
+		return A;
+	}
+
+	for (int pp = 0; pp < 3; ++pp)
+	{
+		for (int qq = pp; qq < 3; ++qq)
+		{
+			A(pp, qq) = Lambda * arma::dot(zvec, globalBase.col(pp))*arma::dot(zvec, globalBase.col(qq));
+		}
+	}
+
+	A(3, 3) += Lambda *
+		(
+			pow(y_ii - yG, 2) * pow(arma::dot(zvec, globalBase.col(2)), 2)
+			+ pow(z_ii - zG, 2) * pow(arma::dot(zvec, globalBase.col(1)), 2)
+			- 2 * (y_ii - yG) * (z_ii - zG) * arma::dot(zvec, globalBase.col(1)) * arma::dot(zvec, globalBase.col(2))
+			);
+
+	A(4, 4) += Lambda *
+		(
+			pow(x_ii - xG, 2) * pow(arma::dot(zvec, globalBase.col(2)), 2)
+			+ pow(z_ii - zG, 2) * pow(arma::dot(zvec, globalBase.col(0)), 2)
+			- 2 * (x_ii - xG) * (z_ii - zG)  * arma::dot(zvec, globalBase.col(0)) * arma::dot(zvec, globalBase.col(2))
+			);
+
+	A(5, 5) += Lambda *
+		(
+			pow(x_ii - xG, 2) * pow(arma::dot(zvec, globalBase.col(1)), 2)
+			+ pow(y_ii - yG, 2) * pow(arma::dot(zvec, globalBase.col(0)), 2)
+			- 2 * (x_ii - xG) * (y_ii - yG)  * arma::dot(zvec, globalBase.col(0)) * arma::dot(zvec, globalBase.col(1))
+			);
+
+	A(0, 3) += Lambda *
+		(
+		(y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
+			- (z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
+			);
+
+	A(0, 4) += Lambda *
+		(
+		(z_ii - zG) * pow(arma::dot(zvec, globalBase.col(0)), 2)
+			- (x_ii - xG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
+			);
+
+	A(0, 5) += Lambda *
+		(
+		(x_ii - xG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
+			- (y_ii - yG) * pow(arma::dot(zvec, globalBase.col(0)), 2)
+			);
+
+	A(1, 3) += Lambda *
+		(
+		(y_ii - yG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
+			- (z_ii - zG) * pow(arma::dot(zvec, globalBase.col(1)), 2)
+			);
+
+	A(1, 4) += Lambda *
+		(
+		(z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
+			- (x_ii - xG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
+			);
+
+	A(1, 5) += Lambda *
+		(
+		(x_ii - xG) * pow(arma::dot(zvec, globalBase.col(1)), 2)
+			- (y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
+			);
+
+	A(2, 3) += Lambda *
+		(
+		(y_ii - yG) * pow(arma::dot(zvec, globalBase.col(2)), 2)
+			- (z_ii - zG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
+			);
+
+	A(2, 4) += Lambda *
+		(
+		(z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
+			- (x_ii - xG) * pow(arma::dot(zvec, globalBase.col(2)), 2)
+			);
+
+	A(2, 5) += Lambda *
+		(
+		(x_ii - xG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
+			- (y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
+			);
+
+	A(3, 4) += Lambda *
+		(
+			-(x_ii - xG) * (y_ii - yG) * pow(arma::dot(zvec, globalBase.col(2)), 2)
+			- (x_ii - xG) * (z_ii - zG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
+			+ (y_ii - yG) * (z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
+			- pow(z_ii - zG, 2) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
+			);
+
+	A(3, 5) += Lambda *
+		(
+		(x_ii - xG) * (y_ii - yG) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
+			- (x_ii - xG) * (z_ii - zG) * pow(arma::dot(zvec, globalBase.col(1)), 2)
+			- pow(y_ii - yG, 2) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
+			+ (y_ii - yG) * (z_ii - zG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
+			);
+
+	A(4, 5) += Lambda *
+		(
+			-pow(x_ii - xG, 2) * arma::dot(zvec, globalBase.col(1))*arma::dot(zvec, globalBase.col(2))
+			+ (x_ii - xG) * (y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(2))
+			+ (x_ii - xG) * (y_ii - yG) * arma::dot(zvec, globalBase.col(0))*arma::dot(zvec, globalBase.col(1))
+			- (y_ii - yG) * (z_ii - zG) * pow(arma::dot(zvec, globalBase.col(0)), 2)
+			);
+
+
+	// The matrix is symmetrical. In the lines above, only the upper triangle was filled.
+	// In the loop below, the lower triangle is filled with the values from the upper triangle.
+	for (int pp = 0; pp < 6; ++pp)
+	{
+		for (int qq = 0; qq < pp; ++qq)
+		{
+			A(pp, qq) = A(qq, pp);
+		}
+	}
+
+	return A;
 }
 
 
