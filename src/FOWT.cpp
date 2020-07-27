@@ -323,7 +323,8 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 	if (std::find(m_dofs.begin(), m_dofs.end(), true) != m_dofs.end())
 	{
 		// Inertia matrix including added matrix
-		mat::fixed<6, 6> inertiaMatrix = m_floater.addedMass(envir.watDensity()) + m_floater.inertiaMatrix();
+		mat::fixed<6, 6> addedMass = m_floater.addedMass(envir.watDensity());
+		mat::fixed<6, 6> inertiaMatrix = addedMass + m_floater.inertiaMatrix();
 
 		// Avoid coupling effects when a DoF is disabled and the others are not.
 		// For doing so, set the calculated force to zero if the dof is deactivated.
@@ -349,7 +350,11 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 				acc[ii] = 0;
 			}
 		}
+
+		IO::print2outLine(IO::OUTFLAG_HD_ADD_MASS_FORCE, -addedMass * acc);
 	}
+
+
 	
 	return acc;
 }
