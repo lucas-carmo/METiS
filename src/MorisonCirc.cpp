@@ -580,7 +580,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 }
 
 
-mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho) const
+mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<3> &refPt) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
@@ -594,10 +594,7 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho) const
 	vec::fixed<3> xvec(fill::zeros);
 	vec::fixed<3> yvec(fill::zeros);
 	vec::fixed<3> zvec(fill::zeros);
-	MorisonCirc::make_local_base(xvec, yvec, zvec);
-
-	// Center of Gravity
-	vec::fixed<3> xG = n1 - m_cog2node1;
+	MorisonCirc::make_local_base_sd(xvec, yvec, zvec);
 
 	// Make sure that node1 is below node2 (or at the same height, at least).
 	// Otherwise, need to swap them.
@@ -635,7 +632,7 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho) const
 	{
 		for (int qq = pp; qq < 3; ++qq)
 		{
-			A(pp, qq) = Lambda * L * A_perp(pp, qq, {0,0,0}, xG, xvec, yvec);
+			A(pp, qq) = Lambda * L * A_perp(pp, qq, {0,0,0}, refPt, xvec, yvec);
 		}
 	}
 
@@ -673,7 +670,7 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho) const
 			}
 			for (int qq = q0; qq < 6; ++qq)
 			{
-				A(pp, qq) += Lambda * step * A_perp(pp, qq, n_ii, xG, xvec, yvec);
+				A(pp, qq) += Lambda * step * A_perp(pp, qq, n_ii, refPt, xvec, yvec);
 			}
 			// (const int ii, const int jj, const vec::fixed<3> &x, const vec::fixed<3> &xG, const vec::fixed<3> &xvec, const vec::fixed<3> &yvec)
 		}
@@ -820,7 +817,7 @@ double MorisonCirc::A_perp(const int ii, const int jj, const vec::fixed<3> &x, c
 
 
 // TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
-mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho) const
+mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const vec::fixed<3> &refPt) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
@@ -837,9 +834,9 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho) const
 	MorisonCirc::make_local_base(xvec, yvec, zvec);
 
 	// Center of Gravity
-	double xG = n1[0] - m_cog2node1[0];
-	double yG = n1[1] - m_cog2node1[1];
-	double zG = n1[2] - m_cog2node1[2];
+	double xG = refPt[0];
+	double yG = refPt[1];
+	double zG = refPt[2];
 
 	// Make sure that node1 is below node2 (or at the same height, at least).
 	// Otherwise, need to swap them.
