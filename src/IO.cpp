@@ -342,7 +342,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		else if (caseInsCompare(getKeyword(strInput), "FloaterCoG"))
 		{
-			// The different components of the inertia matrix are separated by commas in the input string
+			// The coordinates of the CoG are separated by commas in the input string
 			std::vector<std::string> input = stringTokenize(getData(strInput), ",");
 			if (input.size() != 3)
 			{
