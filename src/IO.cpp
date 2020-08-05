@@ -259,56 +259,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 			fowt.setDoFs(aux_activeDoFs);
 		}
-
-		else if (caseInsCompare(getKeyword(strInput), "Morison_rect")) // A list of rectangular cylinder Morison Elements is supposed to follow the "Morison_rect" keyword
-		{
-		IO::readLineInputFile(strInput); // Read next line, since current line is just the main keyword
-
-		while (!caseInsCompare(getKeyword(strInput), "END"))
-		{
-			if (!m_inFl) // Signal if the end of file is reached before the end keyword
-			{
-				throw std::runtime_error("End of file reached before END keyword in MORISON_RECT specification.");
-				return;
-			}
-
-			// The fifteen properties of a circular cylinder Morison's Element are separated by white spaces in the input string.
-			std::vector<std::string> input = stringTokenize(strInput, " \t");
-			if (input.size() != 15)
-			{
-				throw std::runtime_error("Unable to read the rectangular cylinder in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-			}
-
-			// Check whether nodes were specified
-			if (envir.isNodeEmpty())
-			{
-				throw std::runtime_error("Nodes should be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()));
-			}
-
-			// Aux variables to handle the data read from the input file
-			vec::fixed<3> aux_node1_coord = envir.getNode(string2num<unsigned int>(input.at(0)));
-			vec::fixed<3> aux_node2_coord = envir.getNode(string2num<unsigned int>(input.at(1)));
-			vec::fixed<3> aux_node3_coord = envir.getNode(string2num<unsigned int>(input.at(2)));
-			double aux_diam_X = string2num<double>(input.at(3));
-			double aux_CD_X = string2num<double>(input.at(4));
-			double aux_CM_X = string2num<double>(input.at(5));
-			double aux_diam_Y = string2num<double>(input.at(6));
-			double aux_CD_Y = string2num<double>(input.at(7));
-			double aux_CM_Y = string2num<double>(input.at(8));
-			unsigned int aux_numIntPoints = string2num<unsigned int>(input.at(9));
-			double aux_botArea = string2num<double>(input.at(10));
-			double aux_topArea = string2num<double>(input.at(11));
-			double aux_axialCD = string2num<double>(input.at(12));
-			double aux_axialCa = string2num<double>(input.at(13));
-			bool aux_botPressFlag = string2num<bool>(input.at(14));
-
-			floater.addMorisonRect(aux_node1_coord, aux_node2_coord, aux_node3_coord, aux_diam_X, aux_diam_Y, aux_CD_X, aux_CD_Y,
-				aux_CM_X, aux_CM_Y, aux_numIntPoints, aux_botArea, aux_topArea, aux_axialCD, aux_axialCa, aux_botPressFlag);
-
-			IO::readLineInputFile(strInput);
-		}
-		}
-
+		
 		// The mooring line stiffness is a 6x6 matrix with columns separated by whitespaces or tabs.
 		// Different rows correspond to different lines in the input file.
 		else if (caseInsCompare(getKeyword(strInput), "ExtLinStiff"))
