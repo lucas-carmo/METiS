@@ -175,7 +175,7 @@ std::string FOWT::printFloater() const
 	output = output + "\tInertia Matrix:\t" + m_floater.printInertia() + "\n";
 	output = output + "\tMorison Elements:\n" + m_floater.printMorisonElements() + "\n";
 
-	mat::fixed<6, 6> A = m_floater.addedMass(1);
+	mat::fixed<6, 6> A = m_floater.addedMass(1, m_hydroMode);
 	output = output + "\tAdded Mass for unitary density:\n";
 	for (int ii = 0; ii < 6; ++ii)
 	{
@@ -323,7 +323,7 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 	if (std::find(m_dofs.begin(), m_dofs.end(), true) != m_dofs.end())
 	{
 		// Inertia matrix including added matrix
-		mat::fixed<6, 6> addedMass = m_floater.addedMass(envir.watDensity());
+		mat::fixed<6, 6> addedMass = m_floater.addedMass(envir.watDensity(), m_hydroMode);
 		mat::fixed<6, 6> inertiaMatrix = addedMass + m_floater.inertiaMatrix();
 
 		// Avoid coupling effects when a DoF is disabled and the others are not.

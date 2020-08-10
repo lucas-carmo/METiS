@@ -37,9 +37,9 @@ public:
 	virtual void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const override;
 	virtual void make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const override;
 	virtual void make_local_base_sd(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const override;
-	virtual mat::fixed<6, 6> addedMass_perp(const double rho, const vec::fixed<3> &refPt) const override;
+	virtual mat::fixed<6, 6> addedMass_perp(const double rho, const vec::fixed<3> &refPt, const int hydroMode) const override;
 	virtual double A_perp(const int ii, const int jj, const vec::fixed<3> &x, const vec::fixed<3> &xG, const vec::fixed<3> &xvec, const vec::fixed<3> &yvec) const override;
-	virtual mat::fixed<6, 6> addedMass_paral(const double rho, const vec::fixed<3> &refPt) const override;
+	virtual mat::fixed<6, 6> addedMass_paral(const double rho, const vec::fixed<3> &refPt, const int hydroMode) const override;
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const override;
 	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, const mat::fixed<3, 3> &rotat, const vec::fixed<3> &refPt, const vec::fixed<3> &refPt_sd,
 		vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov,

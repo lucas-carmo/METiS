@@ -278,6 +278,9 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	{
 		n1 = n1_sd;
 		n2 = n2_sd;
+		xvec = xvec_sd;
+		yvec = yvec_sd;
+		zvec = zvec_sd;
 		multInertPt2 = 0;
 	}
 
@@ -367,7 +370,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			break;
 		}
 
-		if (envir.waveStret() == 2)
+		if (envir.waveStret() == 2 && hydroMode == 2)
 		{
 			eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
 		}
@@ -429,7 +432,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		if (n_ii_sd[2] <= 0)
 		{
 			force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - vel_ii, 2) * (u1 - vel_ii);
-			force_inertia_ii_pt2 = datum::pi * D*D / 4. * rho * Cm * du1dt_pt2 - datum::pi * D*D / 4. * rho * (Cm - 1) * acc_ii; // acc_ii aparentemente não faz diferença
+			force_inertia_ii_pt2 = datum::pi * D*D / 4. * rho * Cm * du1dt_pt2 - datum::pi * D*D / 4. * rho * (Cm - 1) * acc_ii; // acc_ii aparentemente nï¿½o faz diferenï¿½a
 			force_inertia_ii += force_inertia_ii_pt2;
 		}
 		else
@@ -580,7 +583,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 }
 
 
-mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<3> &refPt) const
+mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<3> &refPt, const int hydroMode) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
@@ -591,6 +594,11 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 	// Nodes position and vectors of the local coordinate system vectors
 	vec::fixed<3> n1 = node1Pos();
 	vec::fixed<3> n2 = node2Pos();
+	if (hydroMode == 1)
+	{
+		n1 = node1Pos_sd();
+		n2 = node2Pos_sd();
+	}
 	vec::fixed<3> xvec(fill::zeros);
 	vec::fixed<3> yvec(fill::zeros);
 	vec::fixed<3> zvec(fill::zeros);
@@ -828,10 +836,15 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const vec::fixed
 	// Nodes position and vectors of the local coordinate system vectors
 	vec::fixed<3> n1 = node1Pos();
 	vec::fixed<3> n2 = node2Pos();
+	if (hydroMode == 1)
+	{
+		n1 = node1Pos_sd();
+		n2 = node2Pos_sd();
+	}
 	vec::fixed<3> xvec(fill::zeros);
 	vec::fixed<3> yvec(fill::zeros);
 	vec::fixed<3> zvec(fill::zeros);
-	MorisonCirc::make_local_base(xvec, yvec, zvec);
+	MorisonCirc::make_local_base_sd(xvec, yvec, zvec);
 
 	// Center of Gravity
 	double xG = refPt[0];
