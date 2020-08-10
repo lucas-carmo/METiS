@@ -202,13 +202,21 @@ void Floater::update(const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel
 	}
 }
 
-mat::fixed<6, 6> Floater::addedMass(const double density) const
+mat::fixed<6, 6> Floater::addedMass(const double density, const int hydroMode) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		A += m_MorisonElements.at(ii)->addedMass_perp(density, m_disp.rows(0, 2) + CoG()) + m_MorisonElements.at(ii)->addedMass_paral(density, m_disp.rows(0, 2) + CoG());
+		if (hydroMode == 1)
+		{
+			A += m_MorisonElements.at(ii)->addedMass_perp(density, m_disp_sd.rows(0, 2) + CoG(), hydroMode) + m_MorisonElements.at(ii)->addedMass_paral(density, m_disp_sd.rows(0,2) + CoG(), hydroMode);
+	}
+		else
+		{
+			A += m_MorisonElements.at(ii)->addedMass_perp(density, m_disp.rows(0, 2) + CoG(), hydroMode) + m_MorisonElements.at(ii)->addedMass_paral(density, m_disp.rows(0, 2) + CoG(), hydroMode);
+		}
+
 	}
 
 	IO::print2outLine(IO::OUTFLAG_ADDED_MASS_DIAG, A.diag());
@@ -248,7 +256,15 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
+		// Force acting on each element
+		if (hydroMode == 1)
+		{
+			df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, rotat, (m_disp_sd.rows(0, 2) + CoG()), (m_disp_sd.rows(0, 2) + CoG()), df_inertia, df_drag, df_froudeKrylov, df_inertia_2nd_part1, df_inertia_2nd_part2, df_inertia_2nd_part3, df_inertia_2nd_part4, df_inertia_2nd_part5);
+		}
+		else
+		{
 		df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, rotat, (m_disp.rows(0, 2) + CoG()), (m_disp_sd.rows(0, 2) + CoG()), df_inertia, df_drag, df_froudeKrylov, df_inertia_2nd_part1, df_inertia_2nd_part2, df_inertia_2nd_part3, df_inertia_2nd_part4, df_inertia_2nd_part5);				
+		}
 
 		// Add to the forces acting on the whole floater
 		force += df;		

@@ -35,7 +35,7 @@ void MorisonRect::make_local_base_sd(arma::vec::fixed<3> &xvec, arma::vec::fixed
 
 
 // TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)
-mat::fixed<6, 6> MorisonRect::addedMass_perp(const double rho, const vec::fixed<3> &refPt) const
+mat::fixed<6, 6> MorisonRect::addedMass_perp(const double rho, const vec::fixed<3> &refP, const int hydroModet) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
@@ -47,7 +47,7 @@ double MorisonRect::A_perp(const int ii, const int jj, const vec::fixed<3> &x, c
 	return 0;
 }
 
-mat::fixed<6, 6> MorisonRect::addedMass_paral(const double rho, const vec::fixed<3> &refPt) const
+mat::fixed<6, 6> MorisonRect::addedMass_paral(const double rho, const vec::fixed<3> &refPt, const int hydroMode) const
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
