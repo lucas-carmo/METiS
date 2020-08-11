@@ -263,7 +263,7 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 		}
 		else
 		{
-		df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, rotat, (m_disp.rows(0, 2) + CoG()), (m_disp_sd.rows(0, 2) + CoG()), df_inertia, df_drag, df_froudeKrylov, df_inertia_2nd_part1, df_inertia_2nd_part2, df_inertia_2nd_part3, df_inertia_2nd_part4, df_inertia_2nd_part5);				
+			df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, rotat, (m_disp.rows(0, 2) + CoG()), (m_disp_sd.rows(0, 2) + CoG()), df_inertia, df_drag, df_froudeKrylov, df_inertia_2nd_part1, df_inertia_2nd_part2, df_inertia_2nd_part3, df_inertia_2nd_part4, df_inertia_2nd_part5);				
 		}
 
 		// Add to the forces acting on the whole floater
