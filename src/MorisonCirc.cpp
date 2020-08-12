@@ -387,8 +387,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		acc_ii = a1 + lambda * (a2 - a1);
 
 		// Component of the velocity and acceleration of the integration point that is perpendicular to the axis of the cylinder
-		vel_ii -= arma::dot(vel_ii, zvec) * zvec;
-		acc_ii -= arma::dot(acc_ii, zvec) * zvec;
+		vel_ii -= arma::dot(vel_ii, zvec_sd) * zvec_sd;
+		acc_ii -= arma::dot(acc_ii, zvec_sd) * zvec_sd;
 
 		/*******
 			Fluid velocity/acceleration
@@ -424,7 +424,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		{
 			force_inertia_ii.zeros();
 		}
-		moment_inertia_ii = cross(R_ii * zvec, force_inertia_ii) + cross(n1 - refPt, force_inertia_ii);
+		moment_inertia_ii = cross(n_ii - refPt, force_inertia_ii);		
 
 		// - Force due to the product of first-order acceleration and first-order normal vector
 		// - Quadratic drag,
@@ -440,8 +440,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			force_drag_ii.zeros();
 			force_inertia_ii_pt2.zeros();
 		}
-		moment_inertia_ii += cross(R_ii * zvec_sd, force_inertia_ii_pt2) + cross(n1_sd - refPt_sd, force_inertia_ii_pt2);
-		moment_drag_ii = cross(R_ii * zvec_sd, force_drag_ii) + cross(n1_sd - refPt_sd, force_drag_ii);
+		moment_inertia_ii += cross(n_ii_sd - refPt_sd, force_inertia_ii_pt2);
+		moment_drag_ii = cross(n_ii_sd - refPt_sd, force_drag_ii);
 
 		// If required, calculate the other second-order inertial forces,
 		// which are integrated considering the fixed (or slow) position of the cylinder.
@@ -487,10 +487,10 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 				force_inertia_2nd_part4_ii.zeros();
 				force_inertia_2nd_part5_ii.zeros();
 			}
-			moment_inertia_2nd_part1_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part1_ii) + cross(n1_sd - refPt_sd, force_inertia_2nd_part1_ii);
-			moment_inertia_2nd_part3_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part3_ii) + cross(n1_sd - refPt_sd, force_inertia_2nd_part3_ii);
-			moment_inertia_2nd_part4_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part4_ii) + cross(n1_sd - refPt_sd, force_inertia_2nd_part4_ii);
-			moment_inertia_2nd_part5_ii = cross(R_ii * zvec_sd, force_inertia_2nd_part5_ii) + cross(n1_sd - refPt_sd, force_inertia_2nd_part5_ii);
+			moment_inertia_2nd_part1_ii = cross(n_ii_sd - refPt_sd, force_inertia_2nd_part1_ii);
+			moment_inertia_2nd_part3_ii = cross(n_ii_sd - refPt_sd, force_inertia_2nd_part3_ii);
+			moment_inertia_2nd_part4_ii = cross(n_ii_sd - refPt_sd, force_inertia_2nd_part4_ii);
+			moment_inertia_2nd_part5_ii = cross(n_ii_sd - refPt_sd, force_inertia_2nd_part5_ii);
 		}
 
 		// Integrate the forces along the cylinder using Simpson's Rule
@@ -537,21 +537,20 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
 		force_inertia_2nd_part2.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta;
 		double R_ii = norm(n_ii - n1, 2) + eta / 2;
-		force_inertia_2nd_part2.rows(3, 5) = cross(R_ii * zvec, force_inertia_2nd_part2.rows(0, 2)) + cross(n1 - refPt, force_inertia_2nd_part2.rows(0, 2));
+		force_inertia_2nd_part2.rows(3, 5) = cross(n_ii - refPt, force_inertia_2nd_part2.rows(0, 2));
 	}
-
 
 
 	/*
 		Second part: forces on the bottom of the cylinder
 	*/
 	// Component of the fluid velocity/acceleration at the bottom node that is parallel to the cylinder axis
-	du1dt = arma::dot(envir.du1dt(n1, 0), zvec) * zvec;
+	du1dt = arma::dot(envir.du1dt(n1, 0), zvec_sd) * zvec_sd;
 	u1 = arma::dot(envir.u1(n1_sd, 0), zvec_sd) * zvec_sd;
 
 	// Component of the velocity and acceleration of the bottom that is perpendicular to the axis of the cylinder
-	vec::fixed<3> v_axial = arma::dot(v1, zvec) * zvec;
-	vec::fixed<3> a_axial = arma::dot(a1, zvec) * zvec;
+	vec::fixed<3> v_axial = arma::dot(v1, zvec_sd) * zvec_sd;
+	vec::fixed<3> a_axial = arma::dot(a1, zvec_sd) * zvec_sd;
 
 	// Calculate the force acting on the bottom of the cylinder
 	vec::fixed<3> force_inertia_axial = rho * Ca_V * (4 / 3.) * datum::pi * (D*D*D / 8.) * (du1dt - a_axial);
@@ -561,7 +560,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	force_inertia.rows(3, 5) += cross(n1 - refPt, force_inertia_axial);
 
 	force_drag.rows(0, 2) += force_drag_axial;
-	force_drag.rows(3, 5) += cross(n1 - refPt, force_drag_axial);
+	force_drag.rows(3, 5) += cross(n1_sd - refPt_sd, force_drag_axial);
 
 	if (m_botPressFlag)
 	{
