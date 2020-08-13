@@ -350,11 +350,15 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		First part: forces along the length of the cylinder considering the instantaneous position
 	*/
 	double Lw = L;
-	double ncyl = m_numIntPoints;
+	int ncyl = m_numIntPoints;
 	if (n2.at(2) > zwl)
 	{
 		Lw = L * (zwl - n1.at(2)) / (n2.at(2) - n1.at(2));
-		ncyl = static_cast<int>(std::ceil(Lw / (L / (m_numIntPoints - 1)))) + 1; // Number of points to discretize the part of the cylinder that is below the water		
+		ncyl = static_cast<int>(std::ceil(Lw / L * (m_numIntPoints - 1))) + 1; // Number of points to discretize the part of the cylinder that is below the water		
+	}
+	if (ncyl % 2 == 0)
+	{
+		ncyl += 1;
 	}
 	double dL = Lw / (ncyl - 1); // length of each interval between points
 
@@ -411,10 +415,14 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	*/
 	Lw = L;
 	ncyl = m_numIntPoints;
-	if (n2_sd.at(2) > zwl)
+	if (n2_sd.at(2) > 0)
 	{
-		Lw = L * (zwl - n1_sd.at(2)) / (n2_sd.at(2) - n1_sd.at(2));
-		ncyl = static_cast<int>(std::ceil(Lw / (L / (m_numIntPoints - 1)))) + 1; // Number of points to discretize the part of the cylinder that is below the water		
+		Lw = L * (0 - n1_sd.at(2)) / (n2_sd.at(2) - n1_sd.at(2));
+		ncyl = static_cast<int>(std::ceil(Lw / L * (m_numIntPoints - 1))) + 1; // Number of points to discretize the part of the cylinder that is below the water		
+	}
+	if (ncyl % 2 == 0)
+	{
+		ncyl += 1;
 	}
 	dL = Lw / (ncyl - 1); // length of each interval between points
 
@@ -422,9 +430,9 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	{
 		n_ii_sd = n1_sd + dL * (ii - 1) * zvec_sd;
 		
-		if (n_ii_sd[2] >= zwl && ii == ncyl)
+		if (n_ii_sd[2] >= 0 && ii == ncyl)
 		{
-			n_ii_sd[2] = zwl;
+			n_ii_sd[2] = 0;
 		}
 
 		if (envir.waveStret() == 2 && hydroMode == 2)
@@ -435,9 +443,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		/******
 			Body velocity/acceleration
 		******/
-		// Absolute (R_ii) and relative (lambda) distance between the integration point and the bottom node		
-		double R_ii = norm(n_ii_sd - n1_sd, 2);
-		double lambda = norm(n_ii_sd - n1_sd, 2) / L; // Relative distance between the integration point and the bottom node		
+		// Relative distance between the integration point and the bottom node
+		double lambda = norm(n_ii_sd - n1_sd, 2) / L;
 
 		// Velocity and acceleration of the integration point
 		vel_ii = v1 + lambda * (v2 - v1);
