@@ -17,16 +17,8 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 	m_cog2node1 = m_node1Pos - cog;
 	m_cog2node2 = m_node2Pos - cog;
 		
-	// Since Simpson's rule is employed for the integration of the forces along the 
-	// Morison's element, we need to make sure that the number of integration points is odd
-	if (numIntPoints % 2 == 0)
-	{
-		m_numIntPoints = numIntPoints + 1;
-	}
-	else
-	{
-		m_numIntPoints = numIntPoints;
-	}
+	m_numIntPoints = numIntPoints;
+
 }
 
 /*****************************************************
