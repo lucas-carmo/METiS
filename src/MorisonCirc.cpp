@@ -224,7 +224,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	double Cd = m_CD;
 	double Cm = m_CM;
 	double Cd_V = m_axialCD;
-	double Ca_V = m_axialCa;	
+	double Ca_V = m_axialCa;
 	double rho = envir.watDensity();
 	double botDiam = m_botDiam;
 	double topDiam = m_topDiam;
@@ -310,7 +310,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			zwl = intersectWL.at(2);
 		}
 	}
-			
+
 	/*
 		First part: forces on the length of the cylinder
 	*/
@@ -343,7 +343,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> force_inertia_2nd_part4_ii(fill::zeros); // Inertial component - Second order - Part that is due to the axial-divergence acceleration
 	vec::fixed<3> moment_inertia_2nd_part4_ii(fill::zeros);
 	vec::fixed<3> force_inertia_2nd_part5_ii(fill::zeros); // Inertial component - Second order - Part that is due to body rotation
-	vec::fixed<3> moment_inertia_2nd_part5_ii(fill::zeros);		
+	vec::fixed<3> moment_inertia_2nd_part5_ii(fill::zeros);
 
 
 	/*
@@ -394,7 +394,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			force_inertia_ii.zeros();
 		}
 		moment_inertia_ii = cross(n_ii - refPt, force_inertia_ii);
-				
+
 		// Integrate the forces along the cylinder using Simpson's Rule
 		if (ii == 1 || ii == ncyl)
 		{
@@ -429,7 +429,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	for (int ii = 1; ii <= ncyl; ++ii)
 	{
 		n_ii_sd = n1_sd + dL * (ii - 1) * zvec_sd;
-		
+
 		if (n_ii_sd[2] >= 0 && ii == ncyl)
 		{
 			n_ii_sd[2] = 0;
@@ -581,7 +581,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
 		force_inertia_2nd_part2.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta;
 		double R_ii = norm(n_ii - n1, 2) + eta / 2;
-		force_inertia_2nd_part2.rows(3, 5) = cross(n_ii - refPt, force_inertia_2nd_part2.rows(0, 2));
+		force_inertia_2nd_part2.rows(3, 5) = cross(n_ii + eta / 2 * zvec - refPt, force_inertia_2nd_part2.rows(0, 2));
 	}
 
 
@@ -589,12 +589,12 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		Third part: forces on the bottom of the cylinder
 	*/
 	// Component of the fluid velocity/acceleration at the bottom node that is parallel to the cylinder axis
-	du1dt = arma::dot(envir.du1dt(n1, 0), zvec_sd) * zvec_sd;
+	du1dt = arma::dot(envir.du1dt(n1, 0), zvec) * zvec;
 	u1 = arma::dot(envir.u1(n1_sd, 0), zvec_sd) * zvec_sd;
 
 	// Component of the velocity and acceleration of the bottom that is perpendicular to the axis of the cylinder
 	vec::fixed<3> v_axial = arma::dot(v1, zvec_sd) * zvec_sd;
-	vec::fixed<3> a_axial = arma::dot(a1, zvec_sd) * zvec_sd;
+	vec::fixed<3> a_axial = arma::dot(a1, zvec) * zvec;
 
 	// Calculate the force acting on the bottom of the cylinder
 	vec::fixed<3> force_inertia_axial = rho * Ca_V * (4 / 3.) * datum::pi * (D*D*D / 8.) * (du1dt - a_axial);
@@ -613,7 +613,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 
 		force_froudeKrylov.rows(3, 5) = cross(n1 - refPt, force_froudeKrylov.rows(0, 2));
 	}
-
 
 	/*
 		Total force
@@ -683,7 +682,7 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 	{
 		for (int qq = pp; qq < 3; ++qq)
 		{
-			A(pp, qq) = Lambda * L * A_perp(pp, qq, {0,0,0}, refPt, xvec, yvec);
+			A(pp, qq) = Lambda * L * A_perp(pp, qq, { 0,0,0 }, refPt, xvec, yvec);
 		}
 	}
 
@@ -760,108 +759,108 @@ double MorisonCirc::A_perp(const int ii, const int jj, const vec::fixed<3> &x, c
 	if (ii == 4 && jj == 4)
 	{
 		return (pow(x.at(0) - xG.at(0), 2) * (pow(xvec.at(2), 2) + pow(yvec.at(2), 2))
-				+ pow(x.at(2) - xG.at(2), 2) * (pow(xvec.at(0), 2) + pow(yvec.at(0), 2))
-				- 2 * (x.at(0) - xG.at(0)) * (x.at(2) - xG.at(2))  * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
-				);
+			+ pow(x.at(2) - xG.at(2), 2) * (pow(xvec.at(0), 2) + pow(yvec.at(0), 2))
+			- 2 * (x.at(0) - xG.at(0)) * (x.at(2) - xG.at(2))  * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
+			);
 	}
 
 	if (ii == 5 && jj == 5)
 	{
 		return (pow(x.at(0) - xG.at(0), 2) * (pow(xvec.at(1), 2) + pow(yvec.at(1), 2))
-				+ pow(x.at(1) - xG.at(1), 2) * (pow(xvec.at(0), 2) + pow(yvec.at(0), 2))
-				- 2 * (x.at(0) - xG.at(0)) * (x.at(1) - xG.at(1))  * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
-				);
+			+ pow(x.at(1) - xG.at(1), 2) * (pow(xvec.at(0), 2) + pow(yvec.at(0), 2))
+			- 2 * (x.at(0) - xG.at(0)) * (x.at(1) - xG.at(1))  * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
+			);
 	}
 
 	if (ii == 0 && jj == 3)
 	{
 		return ((x.at(1) - xG.at(1)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
-				- (x.at(2) - xG.at(2)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
-				);
+			- (x.at(2) - xG.at(2)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
+			);
 	}
 
 	if (ii == 0 && jj == 4)
 	{
 		return ((x.at(2) - xG.at(2)) * (pow(xvec.at(0), 2) + pow(yvec.at(0), 2))
-				- (x.at(0) - xG.at(0)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
-				);
+			- (x.at(0) - xG.at(0)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
+			);
 	}
 
 	if (ii == 0 && jj == 5)
 	{
 		return ((x.at(0) - xG.at(0)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
-				- (x.at(1) - xG.at(1)) * (pow(xvec.at(0), 2) + pow(yvec.at(0), 2))
-				);
+			- (x.at(1) - xG.at(1)) * (pow(xvec.at(0), 2) + pow(yvec.at(0), 2))
+			);
 	}
 
 	if (ii == 1 && jj == 3)
 	{
 		return ((x.at(1) - xG.at(1)) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
-			    - (x.at(2) - xG.at(2)) * (pow(xvec.at(1), 2) + pow(yvec.at(1), 2))
-				);
+			- (x.at(2) - xG.at(2)) * (pow(xvec.at(1), 2) + pow(yvec.at(1), 2))
+			);
 	}
 
 	if (ii == 1 && jj == 4)
 	{
 		return ((x.at(2) - xG.at(2)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
-				- (x.at(0) - xG.at(0)) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
-				);
+			- (x.at(0) - xG.at(0)) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
+			);
 	}
 
 	if (ii == 1 && jj == 5)
 	{
 		return ((x.at(0) - xG.at(0)) * (pow(xvec.at(1), 2) + pow(yvec.at(1), 2))
-				- (x.at(1) - xG.at(1)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
-				);
+			- (x.at(1) - xG.at(1)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
+			);
 	}
-		
+
 	if (ii == 2 && jj == 3)
 	{
 		return ((x.at(1) - xG.at(1)) * (pow(xvec.at(2), 2) + pow(yvec.at(2), 2))
-				- (x.at(2) - xG.at(2)) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
-				);
+			- (x.at(2) - xG.at(2)) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
+			);
 	}
-		
+
 	if (ii == 2 && jj == 4)
 	{
 		return ((x.at(2) - xG.at(2)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
-				- (x.at(0) - xG.at(0)) * (pow(xvec.at(2), 2) + pow(yvec.at(2), 2))
-				);
+			- (x.at(0) - xG.at(0)) * (pow(xvec.at(2), 2) + pow(yvec.at(2), 2))
+			);
 	}
-	
+
 	if (ii == 2 && jj == 5)
 	{
 		return ((x.at(0) - xG.at(0)) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
-				- (x.at(1) - xG.at(1)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
-				);
+			- (x.at(1) - xG.at(1)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
+			);
 	}
 
 	if (ii == 3 && jj == 4)
 	{
 		return (-(x.at(0) - xG.at(0)) * (x.at(1) - xG.at(1)) * (pow(xvec.at(2), 2) + pow(yvec.at(2), 2))
-				- (x.at(0) - xG.at(0)) * (x.at(2) - xG.at(2)) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
-				+ (x.at(1) - xG.at(1)) * (x.at(2) - xG.at(2)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
-				- pow(x.at(2) - xG.at(2), 2) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
-				);
+			- (x.at(0) - xG.at(0)) * (x.at(2) - xG.at(2)) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
+			+ (x.at(1) - xG.at(1)) * (x.at(2) - xG.at(2)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
+			- pow(x.at(2) - xG.at(2), 2) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
+			);
 	}
 
 	if (ii == 3 && jj == 5)
 	{
 		return ((x.at(0) - xG.at(0)) * (x.at(1) - xG.at(1)) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
-				- (x.at(0) - xG.at(0)) * (x.at(2) - xG.at(2)) * (pow(xvec.at(1), 2) + pow(yvec.at(1), 2))
-				- pow(x.at(1) - xG.at(1), 2) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
-				+ (x.at(1) - xG.at(1)) * (x.at(2) - xG.at(2)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
-				);
+			- (x.at(0) - xG.at(0)) * (x.at(2) - xG.at(2)) * (pow(xvec.at(1), 2) + pow(yvec.at(1), 2))
+			- pow(x.at(1) - xG.at(1), 2) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
+			+ (x.at(1) - xG.at(1)) * (x.at(2) - xG.at(2)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
+			);
 	}
 
 	if (ii == 4 && jj == 5)
 	{
 		return (-pow(x.at(0) - xG.at(0), 2) * (xvec.at(1) * xvec.at(2) + yvec.at(1) * yvec.at(2))
-				+ (x.at(0) - xG.at(0)) * (x.at(1) - xG.at(1)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
-				+ (x.at(0) - xG.at(0)) * (x.at(1) - xG.at(1)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
-				- (x.at(1) - xG.at(1)) * (x.at(2) - xG.at(2)) * (pow(xvec.at(0), 2) + pow(yvec.at(0), 2))
-				);
-	}		
+			+ (x.at(0) - xG.at(0)) * (x.at(1) - xG.at(1)) * (xvec.at(0) * xvec.at(2) + yvec.at(0) * yvec.at(2))
+			+ (x.at(0) - xG.at(0)) * (x.at(1) - xG.at(1)) * (xvec.at(0) * xvec.at(1) + yvec.at(0) * yvec.at(1))
+			- (x.at(1) - xG.at(1)) * (x.at(2) - xG.at(2)) * (pow(xvec.at(0), 2) + pow(yvec.at(0), 2))
+			);
+	}
 
 	return 0;
 }
