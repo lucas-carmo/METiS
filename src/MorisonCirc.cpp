@@ -457,9 +457,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		/*******
 			Fluid velocity/acceleration
 		******/
-		// Component of the fluid velocity and acceleration at the integration point that is perpendicular to the axis of the cylinder.
-		// Written in the GLOBAL reference frame.
-
 		// Fluid acceleration at the integration point - For taking in account the variation of the normal at the fixed (or slow) position
 		du1dt = envir.du1dt(n_ii_sd, eta);
 		du1dt = multInertPt2 * rotat * (du1dt - arma::dot(du1dt, zvec_sd) * zvec_sd);

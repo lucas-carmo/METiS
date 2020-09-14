@@ -110,42 +110,114 @@ void ENVIR::addRegularWave(const std::string &waveType, const double height, con
 }
 
 
-void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh)
+void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh, const int numberOfRegularWaves)
 {
-	// Frequency resolution and maximum possible frequency are determined by the total time simulation and time step
+	arma::vec w{ 0 };
+	arma::vec dw{ 0 };
+
+	// If the number of frequencies is not specified, the frequency resolution is determined by the total simulation time.
+	// A Harmonic Deterministic Amplitude Scheme (HDAS) is used.
 	// See Merigaud, A. and Ringwood, John V. - Free-Surface Time-Series Generation for Wave Energy Applications - IEEE J. of Oceanic Eng. - 2018
-	double dw = 2 * arma::datum::pi / m_timeTotal;
-	double wmax = arma::datum::pi / m_timeStep;
+	double dw0 = 2 * arma::datum::pi / m_timeTotal;
+	if (numberOfRegularWaves <= 0)
+	{		
+		w = arma::regspace(wlow, dw0, whigh);
+		dw = dw0*arma::ones<arma::vec>(w.size());
+	}
+
+	// Otherwise, use the Equal Area Deterministic Amplitude Scheme (EADAS)
+	else
+	{
+		double dE = Hs * Hs / 16. / numberOfRegularWaves; // m0 = (Hs/4)^2 divided by the number of strips, which is equal to the number of wave components
+		arma::vec w_bound = arma::zeros<arma::vec>(numberOfRegularWaves + 1);
+		w = arma::zeros<arma::vec>(numberOfRegularWaves);
+		dw = w;
+
+		// Find the frequencies that bound each strip		
+		//
+		// The objective is to find dw such that the area between w[ii] and w[ii-1] is equal to dE.
+		// By considering a trapezoidal integration, this is equivalent to solving
+		// f(x) = x * (S(w[ii-1]+x) + S(w[ii-1])) - 2*dE = 0
+		// For doing so, the bissection method is used. 
+		// It would be nice to implement a general function for solving this kind o problem instead of implementing it directly here.
+		w_bound.at(0) = wlow;
+		for (int ii = 1; ii < w_bound.size(); ++ii)
+		{						
+			// Need to bracket the solution first
+			double a = 0; // It is clear that f(0) has a negative value
+			double b = dw0; // First guess for a positive value is the dw obtained from a harmonic scheme
+
+			// Increase b until f(b) > 0			
+			while ((b * (JONSWAP(w_bound.at(ii - 1) + b, Tp, Hs, gamma) + JONSWAP(w_bound.at(ii - 1), Tp, Hs, gamma)) - 2 * dE) < 0)
+			{
+				b = b + dw0; // Use steps of dw
+			}
+
+			double x_j = (a + b) / 2;
+			double eps4dw = 1e-6*dE;
+			while (std::abs(x_j * (JONSWAP(w_bound.at(ii - 1) + x_j, Tp, Hs, gamma) + JONSWAP(w_bound.at(ii - 1), Tp, Hs, gamma)) - 2 * dE) > eps4dw)
+			{
+				// Test with limit a
+				if ((a * (JONSWAP(w_bound.at(ii - 1) + a, Tp, Hs, gamma) + JONSWAP(w_bound.at(ii - 1), Tp, Hs, gamma)) - 2 * dE)
+					* (x_j * (JONSWAP(w_bound.at(ii - 1) + x_j, Tp, Hs, gamma) + JONSWAP(w_bound.at(ii - 1), Tp, Hs, gamma)) - 2 * dE) < 0)
+				{
+					b = x_j;					
+				}
+
+				// Test with limit b
+				else if ((b * (JONSWAP(w_bound.at(ii - 1) + b, Tp, Hs, gamma) + JONSWAP(w_bound.at(ii - 1), Tp, Hs, gamma)) - 2 * dE) 
+					* (x_j * (JONSWAP(w_bound.at(ii - 1) + x_j, Tp, Hs, gamma) + JONSWAP(w_bound.at(ii - 1), Tp, Hs, gamma)) - 2 * dE) < 0)
+				{
+					a = x_j;
+				}
+
+				// It is very unlikely that this product will be exactly zero, which means that x_j is the exact solution, but this will be covered anywawy
+				else 
+				{
+					break;
+				}
+
+				// New guess for next step
+				x_j = (a + b) / 2;
+			}
+
+			if (x_j == 0)
+			{
+				throw std::runtime_error("Something went wrong in the frequency discretization in ENVIR::addJonswap for frequency w = " + std::to_string(w.at(ii-1)) + "rad/s");
+			}
+
+			// x_j is the frequency discretization that leads to an energy dE between w_bound(ii) and w_bound(ii-1)
+			dw(ii-1) = x_j;
+			w_bound(ii) = w_bound(ii - 1) + x_j;
+			w(ii-1) = 0.5 * (w_bound(ii) + w_bound(ii - 1)); // The frequency is taken at the midpoint between the boundaries
+		}
+	}
+
 
 	// Wave parameters that will be calculated using the JONSWAP spectrum
 	double height(0);
 	double phase(0);
 
-	// JONSWAP parameters
-	double wp = 2 * arma::datum::pi / Tp;
-	double sigma(0);
-	double A(0);
-	double Sw(0);
-
 	// Loop to create the waves
 	int ii = 0;
-	for (double w = wlow; w <= whigh; w += dw)
+	double Sw = 0;
+	for (int ii = 0; ii < w.size(); ++ii)
 	{
-		if (w <= wp)
+		if (w.at(ii) < wlow)
 		{
-			sigma = 0.07;
-		}
-		else
-		{
-			sigma = 0.09;
+			continue;
 		}
 
-		A = std::exp(-0.5 * std::pow((w / wp - 1) / sigma, 2));
-		Sw = 0.3125 * std::pow(Hs, 2) * Tp * std::pow(w / wp, -5) * std::exp(-1.25 * std::pow(wp / w, 4)) * (1 - 0.287*std::log(gamma)) * std::pow(gamma, A);
+		if (w.at(ii) > whigh)
+		{
+			break;
+		}
 
-		height = 2 * std::sqrt(2 * Sw * dw);
-		phase = -360 + (360 + 360) * randu(1, 1).at(0, 0);
-		addRegularWave("TRWave", height, 2 * arma::datum::pi / w, direction, phase);
+		Sw = JONSWAP(w.at(ii), Tp, Hs, gamma);
+
+		height = 2 * std::sqrt(2 * Sw * dw(ii));
+		phase = 360 * arma::randu(1, 1).at(0, 0);
+		addRegularWave("TRWave", height, 2 * arma::datum::pi / w.at(ii), direction, phase);
 	}
 }
 
@@ -938,4 +1010,37 @@ vec::fixed<3> ENVIR::wavePressure_2ndOrd(const vec::fixed<3> &coord) const
 double ENVIR::windVel_X(const vec::fixed<3> &coord) const
 {
 	return ( windRefVel() * pow(coord[2] / windRefHeight(), windExp()) );
+}
+
+
+
+
+
+
+
+
+// JONSWAP spectrum considering angular frequency (rad/s)
+double JONSWAP(const double w, const double Tp, const double Hs, const double gamma)
+{
+	if (w == 0)
+	{
+		return 0;
+	}
+
+	double wp = 2 * arma::datum::pi / Tp;
+	double sigma(0);
+	double A(0);
+	double Sw(0);
+
+	if (w <= wp)
+	{
+		sigma = 0.07;
+	}
+	else
+	{
+		sigma = 0.09;
+	}
+
+	A = std::exp(-0.5 * std::pow((w / wp - 1) / sigma, 2));
+	return 320 * Hs*Hs * pow(Tp, -4) * std::pow(w, -5) * std::exp(-1950 * pow(Tp, -4) * std::pow(w, -4)) * std::pow(gamma, A);
 }

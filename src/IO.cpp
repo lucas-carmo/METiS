@@ -159,11 +159,12 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				// Check if it is a JONSWAP spectrum
 				else if (caseInsCompare(getKeyword(strInput), "JONSW"))
 				{
-					// Need 6 inputs, separated by a space or a tab for defining the JONSWAP spectrum:
+					// Need at least 7 inputs, with an additional optional, separated by a space or a tab for defining the JONSWAP spectrum:
 					// significant height, peak period, gamma, direction of propagation (at present, unidirectional seas are implemented)
-					// lowest frequency limit (rad/s), and highest frequency limit (rad/s) (beyond this limits, the spectrum is set to zero)
+					// lowest frequency limit (rad/s), highest frequency limit (rad/s) (beyond this limits, the spectrum is set to zero), 
+					// seed for random number generator, and, optionally, the number of wave components.
 					std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
-					if (input.size() != 6)
+					if (input.size() != 7 && input.size() != 8)
 					{
 						throw std::runtime_error("Unable to read JONSWAP spectrum in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 					}
@@ -174,8 +175,26 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					double aux_dir = string2num<double>(input.at(3));
 					double aux_wlow = string2num<double>(input.at(4));
 					double aux_whigh = string2num<double>(input.at(5));
+					
+					// Use the seed for the RNG
+					if (caseInsCompare(input.at(6), "?"))
+					{
+						arma::arma_rng::set_seed_random();
+					}
+					else
+					{
+						double seed = string2num<double>(input.at(6));
+						arma::arma_rng::set_seed(seed);
+					}
 
-					envir.addJonswap(aux_Hs, aux_Tp, aux_gamma, aux_dir, aux_wlow, aux_whigh);
+					// If the number of components is specified, the Equal Area method is used to discretize the wave spectrum
+					// Otherwise, the number of components is calculated from the total simulation time
+					int aux_nComponents = -1;
+					if (input.size() == 8)
+					{
+						aux_nComponents = string2num<int>(input.at(7));
+					}					
+					envir.addJonswap(aux_Hs, aux_Tp, aux_gamma, aux_dir, aux_wlow, aux_whigh, aux_nComponents);
 				}
 
 				// Otherwise, there could be a typo or something of the kind.

@@ -66,7 +66,7 @@ public:
 
 	void addNode(const unsigned int nodeID, const double nodeCoordX, const double nodeCoordY, const double nodeCoordZ);
 	void addRegularWave(const std::string &waveType, const double height, const double freqORperiod, const double direction, const double phase);
-	void addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh);
+	void addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh, const int numberOfRegularWaves);
 
 	void addWaveProbe(const unsigned int ID);
 
@@ -129,3 +129,6 @@ public:
 
 	double windVel_X(const vec::fixed<3> &coord) const;
 };
+
+// JONSWAP wave spectrum considering frequency in rad/s
+double JONSWAP(const double w, const double Tp, const double Hs, const double gamma);
