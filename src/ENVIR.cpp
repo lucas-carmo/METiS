@@ -1009,7 +1009,7 @@ vec::fixed<3> ENVIR::wavePressure_2ndOrd(const vec::fixed<3> &coord) const
 
 double ENVIR::windVel_X(const vec::fixed<3> &coord) const
 {
-	return ( windRefVel() * pow(coord[2] / windRefHeight(), windExp()) );
+	return (ramp() * windRefVel() * pow(coord[2] / windRefHeight(), windExp()) );
 }
 
 
