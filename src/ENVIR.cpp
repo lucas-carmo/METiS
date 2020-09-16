@@ -110,7 +110,7 @@ void ENVIR::addRegularWave(const std::string &waveType, const double height, con
 }
 
 
-void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh, const int numberOfRegularWaves)
+void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh, const int numberOfRegularWaves, const double dwMax)
 {
 	arma::vec w{ 0 };
 	arma::vec dw{ 0 };
@@ -120,16 +120,19 @@ void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, con
 	// See Merigaud, A. and Ringwood, John V. - Free-Surface Time-Series Generation for Wave Energy Applications - IEEE J. of Oceanic Eng. - 2018
 	double dw0 = 2 * arma::datum::pi / m_timeTotal;
 	if (numberOfRegularWaves <= 0)
-	{		
+	{
 		w = arma::regspace(wlow, dw0, whigh);
-		dw = dw0*arma::ones<arma::vec>(w.size());
+		dw = dw0 * arma::ones<arma::vec>(w.size());
 	}
 
 	// Otherwise, use the Equal Area Deterministic Amplitude Scheme (EADAS)
 	else
 	{
-		double dE = Hs * Hs / 16. / numberOfRegularWaves; // m0 = (Hs/4)^2 divided by the number of strips, which is equal to the number of wave components
-		arma::vec w_bound = arma::zeros<arma::vec>(numberOfRegularWaves + 1);
+		double dE = Hs * Hs / 16. / numberOfRegularWaves; // m0 = (Hs/4)^2 divided by the number of strips, which is equal to the number of wave components		
+
+		// The final size of w (and dw) is probably different from numberOfRegularWaves due to the limitations given by dwMax
+		// and the high cut-off frequency (whigh). There can be both fewer or more frequencies than what was originally asked by the used.
+		// In any case, this first guess of vector size is used to reduce the calls of insert_rows.
 		w = arma::zeros<arma::vec>(numberOfRegularWaves);
 		dw = w;
 
@@ -137,42 +140,45 @@ void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, con
 		//
 		// The objective is to find dw such that the area between w[ii] and w[ii-1] is equal to dE.
 		// By considering a trapezoidal integration, this is equivalent to solving
-		// f(x) = x * (S(w[ii-1]+x) + S(w[ii-1])) - 2*dE = 0
-		// For doing so, the bissection method is used. 
-		// It would be nice to implement a general function for solving this kind o problem instead of implementing it directly here.
-		w_bound.at(0) = wlow;
-		for (int ii = 1; ii < w_bound.size(); ++ii)
-		{						
+		// f(x) = x * (S(w_a+x) + S(w_a)) - 2*dE = 0
+		// For doing so, the bissection method is used (it would be nice to implement a general function for solving this kind o problem instead of implementing it directly here)
+		// However, this leads to a very coarse discretization in the parts of the spectrum where there is little energy.
+		// Hence, if the x found is too big, i.e. larger than dwMax, it is break down in steps equal do dwMax
+		double w_a = wlow;
+		int ii = 0;
+		double E_sum = 0;
+		while (true)
+		{
 			// Need to bracket the solution first
 			double a = 0; // It is clear that f(0) has a negative value
 			double b = dw0; // First guess for a positive value is the dw obtained from a harmonic scheme
 
 			// Increase b until f(b) > 0			
-			while ((b * (JONSWAP(w_bound.at(ii - 1) + b, Tp, Hs, gamma) + JONSWAP(w_bound.at(ii - 1), Tp, Hs, gamma)) - 2 * dE) < 0)
+			while ((b * (JONSWAP(w_a + b, Tp, Hs, gamma) + JONSWAP(w_a, Tp, Hs, gamma)) - 2 * dE) < 0)
 			{
-				b = b + dw0; // Use steps of dw
+				b = b + dw0; // Use steps of dw0
 			}
 
 			double x_j = (a + b) / 2;
 			double eps4dw = 1e-6*dE;
-			while (std::abs(x_j * (JONSWAP(w_bound.at(ii - 1) + x_j, Tp, Hs, gamma) + JONSWAP(w_bound.at(ii - 1), Tp, Hs, gamma)) - 2 * dE) > eps4dw)
+			while (std::abs(x_j * (JONSWAP(w_a + x_j, Tp, Hs, gamma) + JONSWAP(w_a, Tp, Hs, gamma)) - 2 * dE) > eps4dw)
 			{
 				// Test with limit a
-				if ((a * (JONSWAP(w_bound.at(ii - 1) + a, Tp, Hs, gamma) + JONSWAP(w_bound.at(ii - 1), Tp, Hs, gamma)) - 2 * dE)
-					* (x_j * (JONSWAP(w_bound.at(ii - 1) + x_j, Tp, Hs, gamma) + JONSWAP(w_bound.at(ii - 1), Tp, Hs, gamma)) - 2 * dE) < 0)
+				if ((a * (JONSWAP(w_a + a, Tp, Hs, gamma) + JONSWAP(w_a, Tp, Hs, gamma)) - 2 * dE)
+					* (x_j * (JONSWAP(w_a + x_j, Tp, Hs, gamma) + JONSWAP(w_a, Tp, Hs, gamma)) - 2 * dE) < 0)
 				{
-					b = x_j;					
+					b = x_j;
 				}
 
 				// Test with limit b
-				else if ((b * (JONSWAP(w_bound.at(ii - 1) + b, Tp, Hs, gamma) + JONSWAP(w_bound.at(ii - 1), Tp, Hs, gamma)) - 2 * dE) 
-					* (x_j * (JONSWAP(w_bound.at(ii - 1) + x_j, Tp, Hs, gamma) + JONSWAP(w_bound.at(ii - 1), Tp, Hs, gamma)) - 2 * dE) < 0)
+				else if ((b * (JONSWAP(w_a + b, Tp, Hs, gamma) + JONSWAP(w_a, Tp, Hs, gamma)) - 2 * dE)
+					* (x_j * (JONSWAP(w_a + x_j, Tp, Hs, gamma) + JONSWAP(w_a, Tp, Hs, gamma)) - 2 * dE) < 0)
 				{
 					a = x_j;
 				}
 
 				// It is very unlikely that this product will be exactly zero, which means that x_j is the exact solution, but this will be covered anywawy
-				else 
+				else
 				{
 					break;
 				}
@@ -183,13 +189,44 @@ void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, con
 
 			if (x_j == 0)
 			{
-				throw std::runtime_error("Something went wrong in the frequency discretization in ENVIR::addJonswap for frequency w = " + std::to_string(w.at(ii-1)) + "rad/s");
+				throw std::runtime_error("Something went wrong in the frequency discretization in ENVIR::addJonswap for frequency w = " + std::to_string(w_a) + "rad/s");
 			}
 
-			// x_j is the frequency discretization that leads to an energy dE between w_bound(ii) and w_bound(ii-1)
-			dw(ii-1) = x_j;
-			w_bound(ii) = w_bound(ii - 1) + x_j;
-			w(ii-1) = 0.5 * (w_bound(ii) + w_bound(ii - 1)); // The frequency is taken at the midpoint between the boundaries
+			// x_j is the frequency discretization that leads to an energy dE between w_a and w_a+x_j		
+			if (x_j > dwMax)
+			{
+				x_j = dwMax;
+			}
+			if (x_j < 0)
+			{
+				break;
+			}			
+
+			dw(ii) = x_j;
+			w(ii) = w_a + 0.5*dw(ii); // The frequency is taken at the midpoint between the boundaries
+			E_sum += dw(ii) * JONSWAP(w(ii), Tp, Hs, gamma);
+
+
+			if ((w(ii) >= whigh) || (E_sum >= Hs * Hs / 16))
+			{
+				// There may be cases that ii is smaller than numberOfRegularWaves.
+				// These extra elements are excluded from the vector.
+				if (ii < w.size()-1)
+				{
+					w.shed_rows(ii + 1, w.size() - 1);
+				}
+				break;
+			}
+
+			w_a += dw(ii);
+			ii = ii + 1;			
+
+			if (ii > w.size()-1)
+			{
+				w.insert_rows(ii, 1);
+				dw.insert_rows(ii, 1);
+			}
+
 		}
 	}
 

@@ -164,7 +164,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					// lowest frequency limit (rad/s), highest frequency limit (rad/s) (beyond this limits, the spectrum is set to zero), 
 					// seed for random number generator, and, optionally, the number of wave components.
 					std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
-					if (input.size() != 7 && input.size() != 8)
+					if (input.size() != 7 && input.size() != 9)
 					{
 						throw std::runtime_error("Unable to read JONSWAP spectrum in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 					}
@@ -190,11 +190,17 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					// If the number of components is specified, the Equal Area method is used to discretize the wave spectrum
 					// Otherwise, the number of components is calculated from the total simulation time
 					int aux_nComponents = -1;
-					if (input.size() == 8)
+					double aux_dwMax = 0;
+					if (input.size() == 9)
 					{
 						aux_nComponents = string2num<int>(input.at(7));
+						aux_dwMax = string2num<double>(input.at(8));
+						if (aux_dwMax <= 0)
+						{
+							throw std::runtime_error("Maximum delta omega specified in JONSWAP spectrum in input line " + std::to_string(IO::getInLineNumber()) + " must be > 0.");
+						}
 					}					
-					envir.addJonswap(aux_Hs, aux_Tp, aux_gamma, aux_dir, aux_wlow, aux_whigh, aux_nComponents);
+					envir.addJonswap(aux_Hs, aux_Tp, aux_gamma, aux_dir, aux_wlow, aux_whigh, aux_nComponents, aux_dwMax);
 				}
 
 				// Otherwise, there could be a typo or something of the kind.
