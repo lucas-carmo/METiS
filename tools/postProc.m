@@ -6,25 +6,25 @@ clc
 
 
 flNm = { 
-            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_OC4\OC4_bicromatica\mts\fixa\Dir0_H4p0_BIC01-HD2_out.txt'
-            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_OC4\OC4_bicromatica\mts\axial_refined_dt\Dir0_H4p0_BIC01-HD2_out_1.txt'
+            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_OC4\OC4_with_wind\regular\mts\Dir0_H4p0_T10p0-fixed_out.txt'
+            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_OC4\OC4_with_wind\regular\mts\Dir0_H4p0_T10p0-fixed_out_1.txt'
         };
 
 legSpec = { 
-            'Wheeler - Fixed pos'
-            'Wheeler'
+            'Novo'
+            'BD'
           };
     
 %===== Choose the output
-activeDoFs = [1 0 0 0 0 0];
+activeDoFs = [1 1 1 1 1 1];
 
 % Use a containers map for easier iteration and identification.
 analysisList = containers.Map;
 
 % FOWT position, velocity and acceleration
-analysisList('fowt_disp') = 1;
-analysisList('fowt_vel') = 1;
-analysisList('fowt_acc') = 1;
+analysisList('fowt_disp') = 0;
+analysisList('fowt_vel') = 0;
+analysisList('fowt_acc') = 0;
 
 % Forces
 analysisList('hd_inertia_force') = 0;
@@ -33,11 +33,11 @@ analysisList('hd_fk_force') = 0;
 analysisList('hd_2nd_force_part1') = 0;
 analysisList('hd_force') = 0;
 analysisList('hs_force') = 0;
-analysisList('ad_hub_force') = 0;
-analysisList('total_force') = 1;
+analysisList('ad_hub_force') = 1;
+analysisList('total_force') = 0;
 
 % Wave outputs
-analysisList('wave_elev') = 1;
+analysisList('wave_elev') = 0;
 analysisList('wave_vel') = 0;
 analysisList('wave_acc') = 0;
 analysisList('wave_acc_2nd') = 0;
@@ -118,7 +118,7 @@ for ii = 1:numel(flNm)
             y = [data.hs_force_1, data.hs_force_2, data.hs_force_3, data.hs_force_4, data.hs_force_5, data.hs_force_6];
             y(:, activeDoFs == 0) = [];
             
-        elseif strcmp(k{jj}, 'ad_force')
+        elseif strcmp(k{jj}, 'ad_hub_force')
             y = [data.ad_hub_force_1, data.ad_hub_force_2, data.ad_hub_force_3, data.ad_hub_force_4, data.ad_hub_force_5, data.ad_hub_force_6];
             y(:, activeDoFs == 0) = [];
             
