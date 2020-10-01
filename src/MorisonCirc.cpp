@@ -258,7 +258,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	topDiam = m_topDiam;
 
 	// If only first-order forces are going to be calculated, consider the fixed (or slow) position.
-	int multInertPt2 = 1; // This is used to remove the second-order force due to the product of the first-order normal vector and first-order acceleration at the body fixed position
 	if (hydroMode == 1)
 	{
 		n1 = n1_sd;
@@ -266,7 +265,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		xvec = xvec_sd;
 		yvec = yvec_sd;
 		zvec = zvec_sd;
-		multInertPt2 = 0;
 	}
 
 	// Make sure that node1 is below node2 (or at the same height, at least).
@@ -310,10 +308,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			zwl = intersectWL.at(2);
 		}
 	}
-
-	/*
-		First part: forces on the length of the cylinder
-	*/
+	
+	// Initialization of some variables
 	vec::fixed<3> n_ii(fill::zeros); // Coordinates of the integration point
 	vec::fixed<3> n_ii_sd(fill::zeros); // Coordinates of the integration point - considering the body fixed at the initial position
 	vec::fixed<3> vel_ii(fill::zeros); // Velocity of the integration point
@@ -345,10 +341,12 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> force_inertia_2nd_part5_ii(fill::zeros); // Inertial component - Second order - Part that is due to body rotation
 	vec::fixed<3> moment_inertia_2nd_part5_ii(fill::zeros);
 
+	// Relative distance between the integration point and the bottom node
+	double lambda{ 0 };
 
-	/*
-		First part: forces along the length of the cylinder considering the instantaneous position
-	*/
+	/*=================================
+		Forces along the length of the cylinder - Considering the instantaneous position
+	==================================*/
 	double Lw = L;
 	int ncyl = m_numIntPoints;
 	if (n2.at(2) > zwl)
@@ -376,23 +374,22 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
 		}
 
+		// Acceleration of the integration point
+		lambda = norm(n_ii_sd - n1_sd, 2) / L;
+		acc_ii = a1 + lambda * (a2 - a1);
+
+		// Component of the acceleration of the integration point that is perpendicular to the axis of the cylinder
+		acc_ii -= arma::dot(acc_ii, zvec_sd) * zvec_sd;
+
 		// Component of the fluid acceleration at the integration point that is perpendicular to the axis of the cylinder.
 		// Written in the GLOBAL reference frame.
 		du1dt = envir.du1dt(n_ii, eta);  // Wheeler stretching method requires 'eta' as input
-		du1dt = du1dt - arma::dot(du1dt, zvec_sd) * zvec_sd;
+		du1dt = du1dt - arma::dot(du1dt, zvec) * zvec;
 
-		/*******
-			Forces
-		******/
+		lambda = norm(n_ii - n1, 2) / L;
+		
 		// Force due to first-order acceleration integrated considering the instantaneous position of the cylinder
-		if (n_ii[2] <= zwl)
-		{
-			force_inertia_ii = datum::pi * D*D / 4. * rho * Cm * du1dt;
-		}
-		else // TODO: REMOVER ESSE CHECK
-		{
-			force_inertia_ii.zeros();
-		}
+		force_inertia_ii = datum::pi * D*D / 4. * rho * (Cm * du1dt - (Cm - 1) * acc_ii);
 		moment_inertia_ii = cross(n_ii - refPt, force_inertia_ii);
 
 		// Integrate the forces along the cylinder using Simpson's Rule
@@ -410,9 +407,10 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		}
 	}
 
-	/*
-		Second part: forces along the length of the cylinder considering the slow (or fixed) position
-	*/
+
+	/*=================================
+		Forces along the length of the cylinder - Considering the slow (or fixed) position
+	==================================*/	
 	Lw = L;
 	ncyl = m_numIntPoints;
 	if (n2_sd.at(2) > 0)
@@ -439,49 +437,28 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		{
 			eta = envir.waveElev(n_ii_sd.at(0), n_ii_sd.at(1));
 		}
-
-		/******
-			Body velocity/acceleration
-		******/
-		// Relative distance between the integration point and the bottom node
-		double lambda = norm(n_ii_sd - n1_sd, 2) / L;
-
-		// Velocity and acceleration of the integration point
+				
+		// Velocity of the integration point
+		lambda = norm(n_ii_sd - n1_sd, 2) / L;
 		vel_ii = v1 + lambda * (v2 - v1);
-		acc_ii = a1 + lambda * (a2 - a1);
 
-		// Component of the velocity and acceleration of the integration point that is perpendicular to the axis of the cylinder
+		// Component of the velocity of the integration point that is perpendicular to the axis of the cylinder
 		vel_ii -= arma::dot(vel_ii, zvec_sd) * zvec_sd;
-		acc_ii -= arma::dot(acc_ii, zvec_sd) * zvec_sd;
-
-		/*******
-			Fluid velocity/acceleration
-		******/
-		// Fluid acceleration at the integration point - For taking in account the variation of the normal at the fixed (or slow) position
-		du1dt = envir.du1dt(n_ii_sd, eta);
-		du1dt = multInertPt2 * rotat * (du1dt - arma::dot(du1dt, zvec_sd) * zvec_sd);
 
 		// Fluid velocity at the integration point.		
 		u1 = envir.u1(n_ii_sd, eta);
 		u1 -= arma::dot(u1, zvec_sd) * zvec_sd;
-
-		/*******
-			Forces
-		******/
-		// - Force due to the product of first-order acceleration and first-order normal vector
-		// - Quadratic drag,
-		// Both are integrated considering the fixed (or slow) position of the cylinder.
+	
+		// Quadratic drag force.
+		// Integrated considering the fixed (or slow) position of the cylinder.
 		if (n_ii_sd[2] <= 0)
 		{
 			force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - vel_ii, 2) * (u1 - vel_ii);
-			force_inertia_ii = datum::pi * D*D / 4. * rho * Cm * du1dt - datum::pi * D*D / 4. * rho * (Cm - 1) * acc_ii;
 		}
 		else
 		{
 			force_drag_ii.zeros();
-			force_inertia_ii.zeros();
 		}
-		moment_inertia_ii = cross(n_ii_sd - refPt_sd, force_inertia_ii);
 		moment_drag_ii = cross(n_ii_sd - refPt_sd, force_drag_ii);
 
 		// If required, calculate the other second-order inertial forces,
@@ -537,7 +514,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		// Integrate the forces along the cylinder using Simpson's Rule
 		if (ii == 1 || ii == ncyl)
 		{
-			force_inertia += (dL / 3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
 			force_drag += (dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
 			force_inertia_2nd_part1 += (dL / 3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
 			force_inertia_2nd_part3 += (dL / 3.0) * join_cols(force_inertia_2nd_part3_ii, moment_inertia_2nd_part3_ii);
@@ -546,7 +522,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		}
 		else if (ii % 2 == 0)
 		{
-			force_inertia += (4 * dL / 3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
 			force_drag += (4 * dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
 			force_inertia_2nd_part1 += (4 * dL / 3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
 			force_inertia_2nd_part3 += (4 * dL / 3.0) * join_cols(force_inertia_2nd_part3_ii, moment_inertia_2nd_part3_ii);
@@ -555,7 +530,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		}
 		else
 		{
-			force_inertia += (2 * dL / 3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
 			force_drag += (2 * dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
 			force_inertia_2nd_part1 += (2 * dL / 3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
 			force_inertia_2nd_part3 += (2 * dL / 3.0) * join_cols(force_inertia_2nd_part3_ii, moment_inertia_2nd_part3_ii);
@@ -582,9 +556,9 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	}
 
 
-	/*
-		Third part: forces on the bottom of the cylinder
-	*/
+	/*=================================
+		Forces on the bottom of the cylinder
+	==================================*/
 	// Component of the fluid velocity/acceleration at the bottom node that is parallel to the cylinder axis
 	du1dt = arma::dot(envir.du1dt(n1, 0), zvec) * zvec;
 	u1 = arma::dot(envir.u1(n1_sd, 0), zvec_sd) * zvec_sd;
