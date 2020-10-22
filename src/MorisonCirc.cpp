@@ -344,6 +344,10 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	// Relative distance between the integration point and the bottom node
 	double lambda{ 0 };
 
+	// Component of the velocity and acceleration that is parallel to the axis of the cylinder
+	vec::fixed<3> v_axial = arma::dot(v1, zvec_sd) * zvec_sd; // Velocities are included in second order terms only, hence are calculate at the sd position
+	vec::fixed<3> a_axial = arma::dot(a1, zvec) * zvec; // The situation is the opposite for the acceleration
+
 	/*=================================
 		Forces along the length of the cylinder - Considering the instantaneous position
 	==================================*/
@@ -379,7 +383,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		acc_ii = a1 + lambda * (a2 - a1);
 
 		// Component of the acceleration of the integration point that is perpendicular to the axis of the cylinder
-		acc_ii -= arma::dot(acc_ii, zvec_sd) * zvec_sd;
+		acc_ii -= a_axial;
 
 		// Component of the fluid acceleration at the integration point that is perpendicular to the axis of the cylinder.
 		// Written in the GLOBAL reference frame.
@@ -407,7 +411,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		}
 	}
 
-
 	/*=================================
 		Forces along the length of the cylinder - Considering the slow (or fixed) position
 	==================================*/	
@@ -423,7 +426,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		ncyl += 1;
 	}
 	dL = Lw / (ncyl - 1); // length of each interval between points
-
+	
 	for (int ii = 1; ii <= ncyl; ++ii)
 	{
 		n_ii_sd = n1_sd + dL * (ii - 1) * zvec_sd;
@@ -443,7 +446,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		vel_ii = v1 + lambda * (v2 - v1);
 
 		// Component of the velocity of the integration point that is perpendicular to the axis of the cylinder
-		vel_ii -= arma::dot(vel_ii, zvec_sd) * zvec_sd;
+		vel_ii -= v_axial;
 
 		// Fluid velocity at the integration point.		
 		u1 = envir.u1(n_ii_sd, eta);
@@ -495,7 +498,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 				force_inertia_2nd_part4_ii = (datum::pi * D*D / 4.) * rho * (Cm - 1) * a_a;
 
 				// 5th component: Force due to cylinder rotation				
-				a_r = arma::dot(u1, zvec_sd) * (1 / L) * (arma::dot(v2 - v1, xvec_sd) * yvec_sd + arma::dot(v2 - v1, yvec_sd) * xvec_sd);
+				a_r = 2*arma::dot(u1-v_axial, zvec_sd) * (1 / L) * (arma::dot(v2 - v1, xvec_sd) * yvec_sd + arma::dot(v2 - v1, yvec_sd) * xvec_sd);
 				force_inertia_2nd_part5_ii = -(datum::pi * D*D / 4.) * rho * (Cm - 1) * a_r;
 			}
 			else
@@ -561,11 +564,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	==================================*/
 	// Component of the fluid velocity/acceleration at the bottom node that is parallel to the cylinder axis
 	du1dt = arma::dot(envir.du1dt(n1, 0), zvec) * zvec;
-	u1 = arma::dot(envir.u1(n1_sd, 0), zvec_sd) * zvec_sd;
-
-	// Component of the velocity and acceleration of the bottom that is perpendicular to the axis of the cylinder
-	vec::fixed<3> v_axial = arma::dot(v1, zvec_sd) * zvec_sd;
-	vec::fixed<3> a_axial = arma::dot(a1, zvec) * zvec;
+	u1 = arma::dot(envir.u1(n1_sd, 0), zvec_sd) * zvec_sd;	
 
 	// Calculate the force acting on the bottom of the cylinder
 	vec::fixed<3> force_inertia_axial = rho * Ca_V * (4 / 3.) * datum::pi * (D*D*D / 8.) * (du1dt - a_axial);
