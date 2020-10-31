@@ -57,6 +57,13 @@ public:
 //
 		OUTFLAG_ADDED_MASS_DIAG,
 //
+	// Debug flags are not specified in the input files. As the name indicates, they are
+	// supposed to be used when debugging the code, and no call of print2outLine with
+	// an OUTFLAG_DEBUG should be present in production code.
+		OUTFLAG_DEBUG_NUM,
+		OUTFLAG_DEBUG_VEC_3,
+		OUTFLAG_DEBUG_VEC_6,
+//
 		OUTFLAG_SIZE
 	};
 

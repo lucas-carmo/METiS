@@ -1038,7 +1038,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART1) && (flag != IO::OUTFLAG_HD_2ND_FORCE_PART2) &&
 		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART3) && (flag != IO::OUTFLAG_HD_2ND_FORCE_PART4) &&
 		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART5) && (flag != IO::OUTFLAG_HD_ADD_MASS_FORCE) &&
-		(flag != IO::OUTFLAG_AD_HUB_FORCE) && (flag != IO::OUTFLAG_ADDED_MASS_DIAG)
+		(flag != IO::OUTFLAG_AD_HUB_FORCE) && (flag != IO::OUTFLAG_ADDED_MASS_DIAG) && (flag != OUTFLAG_DEBUG_VEC_6)
 	   )
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &force).");
@@ -1046,8 +1046,16 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 
 	// If the print header flag is true and if this is one of the requested output variables,
 	// then print the header based on the output flag
-	if (m_shouldWriteOutLineHeader && m_whichResult2Output.at(flag))
+	if (m_shouldWriteOutLineHeader && (m_whichResult2Output.at(flag) || flag == OUTFLAG_DEBUG_VEC_6))
 	{
+		if (flag == OUTFLAG_DEBUG_VEC_6)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("DEBUG_VEC_" + std::to_string(ii));
+			}
+		}
+
 		if (flag == OUTFLAG_HD_INERTIA_FORCE)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
@@ -1210,8 +1218,8 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 	}
 
 	// If the printing flag is true and if this is one of the requested output variables,
-	// then print it to the output line
-	if (m_shouldWriteOutLine && m_whichResult2Output.at(flag))
+	// then print it to the output line	
+	if (m_shouldWriteOutLine && (m_whichResult2Output.at(flag) || flag == OUTFLAG_DEBUG_VEC_6))
 	{
 		for (int ii = 0; ii < 6; ++ii)
 		{
@@ -1225,15 +1233,22 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 // and the value itself, which three component vector. Other future outputs may profit from this function as well.
 void IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed<3> &vector_3)
 {
-	if ((flag != OUTFLAG_WAVE_VEL) && (flag != OUTFLAG_WAVE_ACC) && (flag != OUTFLAG_WAVE_ACC_2ND))
+	if ((flag != OUTFLAG_WAVE_VEL) && (flag != OUTFLAG_WAVE_ACC) && (flag != OUTFLAG_WAVE_ACC_2ND) && (flag != OUTFLAG_DEBUG_VEC_3))
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed<3> &vector_3).");
 	}
 
 	// If the print header flag is true and if this is one of the requested output variables,
 	// then print the header based on the output flag
-	if (m_shouldWriteOutLineHeader && m_whichResult2Output.at(flag))
+	if (m_shouldWriteOutLineHeader && (m_whichResult2Output.at(flag) || flag == OUTFLAG_DEBUG_VEC_3))
 	{
+		if (flag == OUTFLAG_DEBUG_VEC_3)
+		{
+			print2outLineHeader("DEBUG_VEC_" + std::to_string(ID) + "_x");
+			print2outLineHeader("DEBUG_VEC_" + std::to_string(ID) + "_y");
+			print2outLineHeader("DEBUG_VEC_" + std::to_string(ID) + "_z");
+		}
+
 		if (flag == OUTFLAG_WAVE_VEL)
 		{
 			print2outLineHeader("wave_vel_" + std::to_string(ID) + "_x");
@@ -1258,7 +1273,7 @@ void IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed
 
 	// If the printing flag is true and if this is one of the requested output variables,
 	// then print it to the output line
-	if (m_shouldWriteOutLine && m_whichResult2Output.at(flag))
+	if (m_shouldWriteOutLine && (m_whichResult2Output.at(flag) || flag == OUTFLAG_DEBUG_VEC_3))
 	{
 		for (int ii = 0; ii < 3; ++ii)
 		{
@@ -1272,16 +1287,20 @@ void IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed
 // and the value itself, which is a double. Other future outputs may profit from this function as well.
 void IO::print2outLine(const OutFlag &flag, const int ID, const double num)
 {
-
-	if ( (flag != OUTFLAG_WAVE_ELEV) && (flag != OUTFLAG_WAVE_PRES) && (flag != OUTFLAG_WAVE_PRES_2ND))
+	if ( (flag != OUTFLAG_WAVE_ELEV) && (flag != OUTFLAG_WAVE_PRES) && (flag != OUTFLAG_WAVE_PRES_2ND) && (flag != OUTFLAG_DEBUG_NUM))
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const int ID, const double num).");
 	}
 
 	// If the print header flag is true and if this is one of the requested output variables,
 	// then print the header based on the output flag
-	if (m_shouldWriteOutLineHeader && m_whichResult2Output.at(flag))
+	if (m_shouldWriteOutLine && (m_whichResult2Output.at(flag) || flag == OUTFLAG_DEBUG_NUM))
 	{
+		if (flag == OUTFLAG_DEBUG_NUM)
+		{
+			print2outLineHeader("DEBUG_NUM_" + std::to_string(ID));
+		}
+
 		if (flag == OUTFLAG_WAVE_ELEV)
 		{
 			print2outLineHeader("wave_elev_" + std::to_string(ID));
@@ -1300,7 +1319,7 @@ void IO::print2outLine(const OutFlag &flag, const int ID, const double num)
 
 	// If the printing flag is true and if this is one of the requested output variables,
 	// then print it to the output line
-	if (m_shouldWriteOutLine && m_whichResult2Output.at(flag))
+	if (m_shouldWriteOutLine && (m_whichResult2Output.at(flag) || flag == OUTFLAG_DEBUG_NUM))
 	{
 		print2outLine(num);
 	}
