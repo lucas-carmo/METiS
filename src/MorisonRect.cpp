@@ -15,23 +15,17 @@ MorisonRect::MorisonRect(const vec &node1Pos, const vec &node2Pos, const vec &no
               m_diam_Y(diam_Y), m_CD_Y(CD_Y), m_CM_Y(CM_Y), m_botArea(botArea), m_topArea(topArea)
 {
 	m_cog2node3 = node3Pos - cog;
+	make_local_base_t0(m_xvec_t0, m_yvec_t0, m_zvec_t0);
 }
 
 
 /*****************************************************
 	Forces acting on the Morison Element
 *****************************************************/
-void MorisonRect::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const
-{
-}
-
 void MorisonRect::make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const
 {
 }
 
-void MorisonRect::make_local_base_sd(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const
-{
-}
 
 
 // TODO: depois de debugar direitinho, tirar os bound checks (usar [] ao inves de () pra acessar elementos das matrizes)

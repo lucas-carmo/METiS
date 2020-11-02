@@ -12,37 +12,16 @@ MorisonCirc::MorisonCirc(const vec &node1Pos, const vec &node2Pos, const vec &co
 	const double diam, const double CD, double CM, const double botDiam, const double topDiam)
 	: MorisonElement(node1Pos, node2Pos, cog, numIntPoints, botPressFlag, axialCD, axialCa),
 	m_diam(diam), m_CD(CD), m_CM(CM), m_botDiam(botDiam), m_topDiam(topDiam)
-{}
+{
+	make_local_base_t0(m_xvec_t0, m_yvec_t0, m_zvec_t0);
+}
 
 
 
 /*****************************************************
 	Forces acting on the Morison Element
 *****************************************************/
-void MorisonCirc::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const
-{
-	xvec.zeros();
-	yvec.zeros();
-	zvec = (m_node2Pos - m_node1Pos) / arma::norm(m_node2Pos - m_node1Pos, 2);
-
-	// if Zlocal == Zglobal, REFlocal = REFglobal
-	arma::vec::fixed<3> z_global = { 0,0,1 };
-	if (arma::approx_equal(zvec, z_global, "absdiff", arma::datum::eps))
-	{
-		xvec = { 1, 0, 0 };
-		yvec = { 0, 1, 0 };
-	}
-	else
-	{
-		yvec = arma::cross(z_global, zvec);
-		yvec = yvec / arma::norm(yvec, 2);
-
-		xvec = arma::cross(yvec, zvec);
-		xvec = xvec / arma::norm(xvec, 2);
-	}
-}
-
-// Same as make_local_base, but considering the initial position of the cylinder
+// Make the local base of the cylinder at t = 0
 void MorisonCirc::make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const
 {
 	xvec.zeros();
@@ -60,30 +39,10 @@ void MorisonCirc::make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed
 	{
 		yvec = arma::cross(z_global, zvec);
 		yvec = yvec / arma::norm(yvec, 2);
-
-		xvec = arma::cross(yvec, zvec);
-		xvec = xvec / arma::norm(xvec, 2);
-	}
-}
-
-// Same as make_local_base, but considering only the mean and slow drift position of the cylinder
-void MorisonCirc::make_local_base_sd(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const
-{
-	xvec.zeros();
-	yvec.zeros();
-	zvec = (m_node2Pos_sd - m_node1Pos_sd) / arma::norm(m_node2Pos_sd - m_node1Pos_sd, 2);
-
-	// if Zlocal == Zglobal, REFlocal = REFglobal
-	arma::vec::fixed<3> z_global = { 0,0,1 };
-	if (arma::approx_equal(zvec, z_global, "absdiff", arma::datum::eps))
-	{
-		xvec = { 1, 0, 0 };
-		yvec = { 0, 1, 0 };
-	}
-	else
-	{
-		yvec = arma::cross(z_global, zvec);
-		yvec = yvec / arma::norm(yvec, 2);
+		if (zvec(0) < 0)
+		{
+			yvec = -yvec;
+		}
 
 		xvec = arma::cross(yvec, zvec);
 		xvec = xvec / arma::norm(xvec, 2);
@@ -104,10 +63,9 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 	vec::fixed<3> n2 = node2Pos();
 
 	// Vectors of the local coordinate system vectors
-	vec::fixed<3> xvec(fill::zeros);
-	vec::fixed<3> yvec(fill::zeros);
-	vec::fixed<3> zvec(fill::zeros);
-	MorisonCirc::make_local_base(xvec, yvec, zvec);
+	vec::fixed<3> xvec = m_xvec;
+	vec::fixed<3> yvec = m_yvec;
+	vec::fixed<3> zvec = m_zvec;
 
 	// Make sure that node1 is below node2 (or at the same height, at least).
 	// Otherwise, need to swap them.
@@ -232,10 +190,9 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	// Nodes position and vectors of the local coordinate system
 	vec::fixed<3> n1 = node1Pos();
 	vec::fixed<3> n2 = node2Pos();
-	vec::fixed<3> xvec(fill::zeros);
-	vec::fixed<3> yvec(fill::zeros);
-	vec::fixed<3> zvec(fill::zeros);
-	MorisonCirc::make_local_base(xvec, yvec, zvec);
+	vec::fixed<3> xvec = m_xvec;
+	vec::fixed<3> yvec = m_yvec;
+	vec::fixed<3> zvec = m_zvec;
 
 	// Same thing, but considering only the mean and slow drift displacements of the FOWT.
 	// These ones are used to evaluate forces due to second order quantities (second order potential,
@@ -244,8 +201,10 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> n2_sd = node2Pos_sd();
 	vec::fixed<3> xvec_sd(fill::zeros);
 	vec::fixed<3> yvec_sd(fill::zeros);
-	vec::fixed<3> zvec_sd(fill::zeros);
-	MorisonCirc::make_local_base_sd(xvec_sd, yvec_sd, zvec_sd);
+	vec::fixed<3> zvec_sd(fill::zeros);	
+	xvec_sd = m_xvec_sd;
+	yvec_sd = m_yvec_sd;
+	zvec_sd = m_zvec_sd;
 
 	// Velocity and acceleration of the cylinder nodes
 	vec::fixed<3> v1 = node1Vel();
@@ -308,7 +267,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			zwl = intersectWL.at(2);
 		}
 	}
-	
+
 	// Initialization of some variables
 	vec::fixed<3> n_ii(fill::zeros); // Coordinates of the integration point
 	vec::fixed<3> n_ii_sd(fill::zeros); // Coordinates of the integration point - considering the body fixed at the initial position
@@ -426,7 +385,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		ncyl += 1;
 	}
 	dL = Lw / (ncyl - 1); // length of each interval between points
-	
+
 	for (int ii = 1; ii <= ncyl; ++ii)
 	{
 		n_ii_sd = n1_sd + dL * (ii - 1) * zvec_sd;
@@ -440,7 +399,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		{
 			eta = envir.waveElev(n_ii_sd.at(0), n_ii_sd.at(1));
 		}
-				
+
 		// Velocity of the integration point
 		lambda = norm(n_ii_sd - n1_sd, 2) / L;
 		vel_ii = v1 + lambda * (v2 - v1);
@@ -451,7 +410,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		// Fluid velocity at the integration point.		
 		u1 = envir.u1(n_ii_sd, eta);
 		u1 -= arma::dot(u1, zvec_sd) * zvec_sd;
-	
+
 		// Quadratic drag force.
 		// Integrated considering the fixed (or slow) position of the cylinder.
 		if (n_ii_sd[2] <= 0)
@@ -564,7 +523,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	==================================*/
 	// Component of the fluid velocity/acceleration at the bottom node that is parallel to the cylinder axis
 	du1dt = arma::dot(envir.du1dt(n1, 0), zvec) * zvec;
-	u1 = arma::dot(envir.u1(n1_sd, 0), zvec_sd) * zvec_sd;	
+	u1 = arma::dot(envir.u1(n1_sd, 0), zvec_sd) * zvec_sd;
 
 	// Calculate the force acting on the bottom of the cylinder
 	vec::fixed<3> force_inertia_axial = rho * Ca_V * (4 / 3.) * datum::pi * (D*D*D / 8.) * (du1dt - a_axial);
@@ -611,10 +570,9 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 		n1 = node1Pos_sd();
 		n2 = node2Pos_sd();
 	}
-	vec::fixed<3> xvec(fill::zeros);
-	vec::fixed<3> yvec(fill::zeros);
-	vec::fixed<3> zvec(fill::zeros);
-	MorisonCirc::make_local_base_sd(xvec, yvec, zvec);
+	vec::fixed<3> xvec = m_xvec_sd;
+	vec::fixed<3> yvec = m_yvec_sd;
+	vec::fixed<3> zvec = m_zvec_sd;
 
 	// Make sure that node1 is below node2 (or at the same height, at least).
 	// Otherwise, need to swap them.
@@ -853,10 +811,9 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const vec::fixed
 		n1 = node1Pos_sd();
 		n2 = node2Pos_sd();
 	}
-	vec::fixed<3> xvec(fill::zeros);
-	vec::fixed<3> yvec(fill::zeros);
-	vec::fixed<3> zvec(fill::zeros);
-	MorisonCirc::make_local_base_sd(xvec, yvec, zvec);
+	vec::fixed<3> xvec = m_xvec_sd;
+	vec::fixed<3> yvec = m_yvec_sd;
+	vec::fixed<3> zvec = m_zvec_sd;
 
 	// Center of Gravity
 	double xG = refPt[0];

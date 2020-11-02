@@ -18,7 +18,6 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 	m_cog2node2 = m_node2Pos - cog;
 		
 	m_numIntPoints = numIntPoints;
-
 }
 
 /*****************************************************
@@ -42,7 +41,11 @@ void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, co
 	m_node1Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R1) + m_node1AccCentrip;
 	m_node2Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R2) + m_node2AccCentrip;
 
-	// Node's position and velocity considering only the mean and slow drift motions
+	m_xvec = RotatMatrix * m_xvec_t0;
+	m_yvec = RotatMatrix * m_yvec_t0;
+	m_zvec = RotatMatrix * m_zvec_t0;
+
+	// Same thing, but considering only the mean and slow drift motions
 	RotatMatrix = rotatMatrix(floaterCoGpos_SD.rows(3,5));
 	R1 = RotatMatrix * m_cog2node1;
 	R2 = RotatMatrix * m_cog2node2;
@@ -52,6 +55,11 @@ void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, co
 
 	m_node1Vel_sd = floaterVel_SD.rows(0, 2) + arma::cross(floaterVel_SD.rows(3, 5), R1);
 	m_node2Vel_sd = floaterVel_SD.rows(0, 2) + arma::cross(floaterVel_SD.rows(3, 5), R2);
+
+	// Vectors of the local coordinate system
+	m_xvec_sd = RotatMatrix * m_xvec_t0;
+	m_yvec_sd = RotatMatrix * m_yvec_t0;
+	m_zvec_sd = RotatMatrix * m_zvec_t0;
 }
 
 vec::fixed<3> MorisonElement::node1Pos() const

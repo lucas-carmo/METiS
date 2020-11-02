@@ -41,6 +41,20 @@ protected:
 	vec::fixed<3> m_node1Vel_sd;
 	vec::fixed<3> m_node2Vel_sd;
 
+	// Vectors of the local base
+	// They could be calculated every time from the nodes' position,
+	// but as members they can be calculated only once when the cylinder is updated
+	vec::fixed<3> m_xvec_t0;
+	vec::fixed<3> m_yvec_t0;
+	vec::fixed<3> m_zvec_t0;
+	vec::fixed<3> m_xvec;
+	vec::fixed<3> m_yvec;
+	vec::fixed<3> m_zvec;
+	vec::fixed<3> m_xvec_sd;
+	vec::fixed<3> m_yvec_sd;
+	vec::fixed<3> m_zvec_sd;
+
+
 public:
 	MorisonElement(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints, 
 				   const bool botPressFlag, const double axialCD, const double axialCa);
@@ -61,9 +75,7 @@ public:
 	vec::fixed<3> node2Acc() const;
 	vec::fixed<3> node1AccCentrip() const;
 	vec::fixed<3> node2AccCentrip() const;
-	virtual void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
 	virtual void make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
-	virtual void make_local_base_sd(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
 
 	// Contribution to the added mass
 	virtual mat::fixed<6, 6> addedMass_perp(const double rho, const vec::fixed<3> &refPt, const int hydroMode) const = 0;
