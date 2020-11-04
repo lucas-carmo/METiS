@@ -337,11 +337,10 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
 		}
 
-		// Acceleration of the integration point
-		lambda = norm(n_ii_sd - n1_sd, 2) / L;
+		// Component of the acceleration of the integration point
+		// that is perpendicular to the axis of the cylinder
+		lambda = norm(n_ii - n1, 2) / L;
 		acc_ii = a1 + lambda * (a2 - a1);
-
-		// Component of the acceleration of the integration point that is perpendicular to the axis of the cylinder
 		acc_ii -= a_axial;
 
 		// Component of the fluid acceleration at the integration point that is perpendicular to the axis of the cylinder.
@@ -349,8 +348,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		du1dt = envir.du1dt(n_ii, eta);  // Wheeler stretching method requires 'eta' as input
 		du1dt = du1dt - arma::dot(du1dt, zvec) * zvec;
 
-		lambda = norm(n_ii - n1, 2) / L;
-		
 		// Force due to first-order acceleration integrated considering the instantaneous position of the cylinder
 		force_inertia_ii = datum::pi * D*D / 4. * rho * (Cm * du1dt - (Cm - 1) * acc_ii);
 		moment_inertia_ii = cross(n_ii - refPt, force_inertia_ii);
