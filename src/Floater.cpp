@@ -81,7 +81,7 @@ void Floater::setCoG(const vec::fixed<3> &cog)
 	Add circular cylinder Morison Element to m_MorisonElements
 */
 void Floater::addMorisonCirc(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_coord, const double diam, const double CD, const double CM, const unsigned int numIntPoints,
-	const double botDiam, const double topDiam, const double axialCD, const double axialCa, const bool botPressFlag)
+	const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2, const bool botPressFlag)
 {
 	// Since many times we need node1 to be below node2, it is better to swap them here in order to have less swaps in the future
 	if (node1_coord[2] > node2_coord[2])
@@ -98,7 +98,7 @@ void Floater::addMorisonCirc(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_co
 
 	// Create a circular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
 	m_MorisonElements.push_back(std::make_unique<MorisonCirc>(node1_coord, node2_coord, CoG(), numIntPoints,
-		botPressFlag, axialCD, axialCa, diam, CD, CM, botDiam, topDiam));
+		botPressFlag, axialCD_1, axialCa_1, axialCD_2, axialCa_2, diam, CD, CM));
 }
 
 /*
@@ -106,7 +106,7 @@ void Floater::addMorisonCirc(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_co
 */
 void Floater::addMorisonRect(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_coord, vec::fixed<3> &node3_coord, const double diam_X, const double diam_Y, 
 	const double CD_X, const double CD_Y, const double CM_X, const double CM_Y, const unsigned int numIntPoints,
-	const double botArea, const double topArea, const double axialCD, const double axialCa, const bool botPressFlag)
+	const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2, const bool botPressFlag)
 {
 	// Morison Elements need the position of the floater CoG
 	// to define their relative position in the rigid body
@@ -117,7 +117,7 @@ void Floater::addMorisonRect(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_co
 
 	// Create a rectangular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
 	m_MorisonElements.push_back(std::make_unique<MorisonRect>(node1_coord, node2_coord, node3_coord, CoG(), numIntPoints,
-		botPressFlag, axialCD, axialCa, diam_X, CD_X, CM_X, diam_Y, CD_Y, CM_Y, botArea, topArea));
+		botPressFlag, axialCD_1, axialCa_1, axialCD_2, axialCa_2, diam_X, CD_X, CM_X, diam_Y, CD_Y, CM_Y));
 }
 
 

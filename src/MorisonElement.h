@@ -14,8 +14,10 @@ protected:
 	int m_numIntPoints;
 
 	bool m_botPressFlag;
-	double m_axialCD;
-	double m_axialCa;		
+	double m_axialCD_1;
+	double m_axialCa_1;
+	double m_axialCD_2;
+	double m_axialCa_2;
 
 	// At first, the position, velocity and acceleration of the nodes were not members of the class, and they were calculated directly in their respective getters.
 	// However, this procedure involved the calculation of the same parameters several times, so I decided to keep them as members and calculate them with the function
@@ -57,7 +59,7 @@ protected:
 
 public:
 	MorisonElement(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints, 
-				   const bool botPressFlag, const double axialCD, const double axialCa);
+				   const bool botPressFlag, const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2);
 	
 	// Functions related to position, velocity and acceleration
 	void updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD);

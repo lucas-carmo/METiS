@@ -18,17 +18,14 @@ private:
 	double m_CD_Y;
 	double m_CM_Y;
 
-	double m_botArea;
-	double m_topArea;
-
 public:
 	/*****************************************************
 		Constructors
 	*****************************************************/
-	MorisonRect(const vec &node1Pos, const vec &node2Pos, const vec &node3Pos, const vec &cog, const int numIntPoints, 
-				const bool botPressFlag, const double axialCD, const double axialCa, const double diam_X, const double CD_X, const double CM_X,
-				const double diam_Y, const double CD_Y, const double CM_Y,
-				const double botArea, const double topArea);
+	MorisonRect(const vec &node1Pos, const vec &node2Pos, const vec &node3Pos, const vec &cog, const int numIntPoints,
+		const bool botPressFlag, const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2,
+		const double diam_X, const double CD_X, const double CM_X,
+		const double diam_Y, const double CD_Y, const double CM_Y);
 
 
 	/*****************************************************

@@ -7,12 +7,12 @@ using namespace arma;
     Constructors
 *****************************************************/
 MorisonRect::MorisonRect(const vec &node1Pos, const vec &node2Pos, const vec &node3Pos, const vec &cog, const int numIntPoints,
-						 const bool botPressFlag, const double axialCD, const double axialCa, const double diam_X, const double CD_X, const double CM_X,
-						 const double diam_Y, const double CD_Y, const double CM_Y,
-						 const double botArea, const double topArea)
-            : MorisonElement(node1Pos, node2Pos, cog, numIntPoints, botPressFlag, axialCD, axialCa),
+						 const bool botPressFlag, const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2,
+						 const double diam_X, const double CD_X, const double CM_X,
+						 const double diam_Y, const double CD_Y, const double CM_Y)
+            : MorisonElement(node1Pos, node2Pos, cog, numIntPoints, botPressFlag, axialCD_1, axialCa_1, axialCD_2, axialCa_2),
               m_diam_X(diam_X), m_CD_X(CD_X), m_CM_X(CM_X),
-              m_diam_Y(diam_Y), m_CD_Y(CD_Y), m_CM_Y(CM_Y), m_botArea(botArea), m_topArea(topArea)
+              m_diam_Y(diam_Y), m_CD_Y(CD_Y), m_CM_Y(CM_Y)
 {
 	m_cog2node3 = node3Pos - cog;
 	make_local_base_t0(m_xvec_t0, m_yvec_t0, m_zvec_t0);
@@ -84,10 +84,10 @@ std::string MorisonRect::print() const
 	output = output + "Drag Coeff. Y:\t" + std::to_string(m_CD_Y) + '\n';
 	output = output + "Inert. Coeff. Y:\t" + std::to_string(m_CM_Y) + '\n';
 	output = output + "Numb. of Int. Points:\t" + std::to_string(m_numIntPoints) + '\n';
-	output = output + "Bottom diameter:\t" + std::to_string(m_botArea) + '\n';
-	output = output + "Top diameter:\t" + std::to_string(m_topArea) + '\n';
-	output = output + "Axial CD:\t" + std::to_string(m_axialCD) + '\n';
-	output = output + "Axial Ca:\t" + std::to_string(m_axialCa) + '\n';
+	output = output + "Axial CD - Node 1:\t" + std::to_string(m_axialCD_1) + '\n';
+	output = output + "Axial Ca - Node 1:\t" + std::to_string(m_axialCa_1) + '\n';
+	output = output + "Axial CD - Node 2:\t" + std::to_string(m_axialCD_2) + '\n';
+	output = output + "Axial Ca - Node 2:\t" + std::to_string(m_axialCa_2) + '\n';
 	output = output + "Bot. Press. Flag.:\t" + std::to_string(m_botPressFlag) + '\n';
 
 	return output;

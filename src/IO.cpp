@@ -416,13 +416,13 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				double aux_CD = string2num<double>(input.at(3));
 				double aux_CM = string2num<double>(input.at(4));
 				unsigned int aux_numIntPoints = string2num<unsigned int>(input.at(5));
-				double aux_botDiam = string2num<double>(input.at(6));
-				double aux_topDiam = string2num<double>(input.at(7));
-				double aux_axialCD = string2num<double>(input.at(8));
-				double aux_axialCa = string2num<double>(input.at(9));
+				double aux_axialCD_1 = string2num<double>(input.at(6));
+				double aux_axialCa_1 = string2num<double>(input.at(7));
+				double aux_axialCD_2 = string2num<double>(input.at(8));
+				double aux_axialCa_2 = string2num<double>(input.at(9));
 				bool aux_botPressFlag = string2num<bool>(input.at(10));
 
-				floater.addMorisonCirc(aux_node1_coord, aux_node2_coord, aux_diam, aux_CD, aux_CM, aux_numIntPoints, aux_botDiam, aux_topDiam, aux_axialCD, aux_axialCa, aux_botPressFlag);
+				floater.addMorisonCirc(aux_node1_coord, aux_node2_coord, aux_diam, aux_CD, aux_CM, aux_numIntPoints, aux_axialCD_1, aux_axialCa_1, aux_axialCD_2, aux_axialCa_2, aux_botPressFlag);
 
 				// Go to next line
 				IO::readLineInputFile(strInput);
@@ -465,14 +465,14 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				double aux_CD_Y = string2num<double>(input.at(7));
 				double aux_CM_Y = string2num<double>(input.at(8));
 				unsigned int aux_numIntPoints = string2num<unsigned int>(input.at(9));
-				double aux_botArea = string2num<double>(input.at(10));
-				double aux_topArea = string2num<double>(input.at(11));
-				double aux_axialCD = string2num<double>(input.at(12));
-				double aux_axialCa = string2num<double>(input.at(13));
+				double aux_axialCD_1 = string2num<double>(input.at(10));
+				double aux_axialCa_1 = string2num<double>(input.at(11));
+				double aux_axialCD_2 = string2num<double>(input.at(12));
+				double aux_axialCa_2 = string2num<double>(input.at(13));
 				bool aux_botPressFlag = string2num<bool>(input.at(14));
 
 				floater.addMorisonRect(aux_node1_coord, aux_node2_coord, aux_node3_coord, aux_diam_X, aux_diam_Y, aux_CD_X, aux_CD_Y,
-					aux_CM_X, aux_CM_Y, aux_numIntPoints, aux_botArea, aux_topArea, aux_axialCD, aux_axialCa, aux_botPressFlag);
+					aux_CM_X, aux_CM_Y, aux_numIntPoints, aux_axialCD_1, aux_axialCa_1, aux_axialCD_2, aux_axialCa_2, aux_botPressFlag);
 
 				IO::readLineInputFile(strInput);
 			}

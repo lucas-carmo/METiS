@@ -14,16 +14,13 @@ private:
 	double m_CD;
 	double m_CM;
 
-	double m_botDiam;
-	double m_topDiam;
-
 public:
 	/*****************************************************
 		Constructors
 	*****************************************************/
 	MorisonCirc(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints,
-				const bool botPressFlag, const double axialCD, const double axialCa,
-				const double diam, const double CD, double CM, const double botDiam, const double topDiam);
+				const bool botPressFlag, const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2,
+				const double diam, const double CD, double CM);
 
 	/*****************************************************
 		Forces acting on the Morison Element and added mass

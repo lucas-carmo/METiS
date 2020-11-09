@@ -6,18 +6,15 @@ using namespace arma;
 /*****************************************************
 	Constructors
 *****************************************************/
-
 MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints,
-							   const bool botPressFlag, const double axialCD, const double axialCa)
-	: m_node1Pos(node1Pos), m_node2Pos(node2Pos), 
-	  m_botPressFlag(botPressFlag), m_axialCD(axialCD), m_axialCa(axialCa),
+							   const bool botPressFlag, const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2)
+	: m_node1Pos(node1Pos), m_node2Pos(node2Pos), m_numIntPoints(numIntPoints),
+	  m_botPressFlag(botPressFlag), m_axialCD_1(axialCD_1), m_axialCa_1(axialCa_1), m_axialCD_2(axialCD_2), m_axialCa_2(axialCa_2),
 	  m_cog2node1(fill::zeros), m_cog2node2(fill::zeros), m_node1Vel(fill::zeros), m_node2Vel(fill::zeros), m_node1Acc(fill::zeros), m_node2Acc(fill::zeros),
 	  m_node1Pos_t0(node1Pos), m_node2Pos_t0(node2Pos), m_node1Pos_sd(node1Pos), m_node2Pos_sd(node2Pos)
 {
 	m_cog2node1 = m_node1Pos - cog;
-	m_cog2node2 = m_node2Pos - cog;
-		
-	m_numIntPoints = numIntPoints;
+	m_cog2node2 = m_node2Pos - cog;		
 }
 
 /*****************************************************

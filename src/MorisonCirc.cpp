@@ -8,10 +8,10 @@ using namespace arma;
 	Constructors
 *****************************************************/
 MorisonCirc::MorisonCirc(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints,
-	const bool botPressFlag, const double axialCD, const double axialCa,
-	const double diam, const double CD, double CM, const double botDiam, const double topDiam)
-	: MorisonElement(node1Pos, node2Pos, cog, numIntPoints, botPressFlag, axialCD, axialCa),
-	m_diam(diam), m_CD(CD), m_CM(CM), m_botDiam(botDiam), m_topDiam(topDiam)
+	const bool botPressFlag, const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2,
+	const double diam, const double CD, double CM)
+	: MorisonElement(node1Pos, node2Pos, cog, numIntPoints, botPressFlag, axialCD_1, axialCa_1, axialCD_2, axialCa_2),
+	m_diam(diam), m_CD(CD), m_CM(CM)
 {
 	make_local_base_t0(m_xvec_t0, m_yvec_t0, m_zvec_t0);
 }
@@ -181,11 +181,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	double D = m_diam;
 	double Cd = m_CD;
 	double Cm = m_CM;
-	double Cd_V = m_axialCD;
-	double Ca_V = m_axialCa;
+	double CdV_1 = m_axialCD_1;
+	double CaV_1 = m_axialCa_1;
+	double CdV_2 = m_axialCD_2;
+	double CaV_2 = m_axialCa_2;
 	double rho = envir.watDensity();
-	double botDiam = m_botDiam;
-	double topDiam = m_topDiam;
 
 	// Nodes position and vectors of the local coordinate system
 	vec::fixed<3> n1 = node1Pos();
@@ -211,10 +211,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> v2 = node2Vel();
 	vec::fixed<3> a1 = node1AccCentrip();
 	vec::fixed<3> a2 = node2AccCentrip();
-
-	// Bottom and top diameter
-	botDiam = m_botDiam;
-	topDiam = m_topDiam;
 
 	// If only first-order forces are going to be calculated, consider the fixed (or slow) position.
 	if (hydroMode == 1)
@@ -248,9 +244,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		yvec_sd = -yvec_sd;
 		zvec_sd = -zvec_sd;
 
-		// Bottom diameter and top diameter must be swapped as well
-		botDiam = m_topDiam;
-		topDiam = m_botDiam;
+		// Axial coefficients must be swapped as well
+		CdV_1 = m_axialCD_2;
+		CaV_1 = m_axialCa_2;
+		CdV_2 = m_axialCD_1;
+		CaV_2 = m_axialCa_1;
 	}
 
 	double L = arma::norm(n2 - n1, 2); // Total cylinder length
@@ -507,7 +505,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		n_ii = (n2 - n1) * (0 - n1.at(2)) / (n2.at(2) - n1.at(2)) + n1; // Coordinates of the intersection with the still water line;				
 		n_ii.at(2) = 0; // Since envir.du1dt returns 0 for z > 0, this line is necessary to make sure that the z coordinate of n_ii is exactly 0, and not slightly above due to roundoff errors.
 		du1dt = envir.du1dt(n_ii, 0);
-		du1dt -= arma::dot(du1dt, zvec_sd) * zvec_sd;
+		du1dt -= arma::dot(du1dt, zvec) * zvec;
 		eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
 		force_inertia_2nd_part2.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta;
 		double R_ii = norm(n_ii - n1, 2) + eta / 2;
@@ -523,8 +521,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	u1 = arma::dot(envir.u1(n1_sd, 0), zvec_sd) * zvec_sd;
 
 	// Calculate the force acting on the bottom of the cylinder
-	vec::fixed<3> force_inertia_axial = rho * Ca_V * (4 / 3.) * datum::pi * (D*D*D / 8.) * (du1dt - a_axial);
-	vec::fixed<3> force_drag_axial = 0.5 * rho * Cd_V * datum::pi * (D*D / 4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
+	vec::fixed<3> force_inertia_axial = rho * CaV_1 * (4 / 3.) * datum::pi * (D*D*D / 8.) * (du1dt - a_axial);
+	vec::fixed<3> force_drag_axial = 0.5 * rho * CdV_1 * datum::pi * (D*D / 4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
 
 	force_inertia.rows(0, 2) += force_inertia_axial;
 	force_inertia.rows(3, 5) += cross(n1 - refPt, force_inertia_axial);
@@ -534,9 +532,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 
 	if (m_botPressFlag)
 	{
-		force_froudeKrylov.rows(0, 2) = datum::pi * (botDiam*botDiam / 4. * envir.wavePressure(n1)
-			- (botDiam*botDiam / 4. - topDiam * topDiam / 4.) * envir.wavePressure(n2)) * zvec_sd;
-
+		force_froudeKrylov.rows(0, 2) = datum::pi * 0.25 * D*D* (envir.wavePressure(n1)	- envir.wavePressure(n2)) * zvec_sd;
 		force_froudeKrylov.rows(3, 5) = cross(n1 - refPt, force_froudeKrylov.rows(0, 2));
 	}
 
@@ -797,7 +793,7 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const vec::fixed
 	mat::fixed<6, 6> A(fill::zeros);
 
 	// Use a more friendly notation
-	double Lambda = rho * m_axialCa * (4 / 3.) * datum::pi * pow(m_diam / 2, 3);
+	double Lambda = rho * m_axialCa_1 * (4 / 3.) * datum::pi * pow(m_diam / 2, 3);
 	double ncyl = m_numIntPoints;
 
 	// Nodes position and vectors of the local coordinate system vectors
@@ -979,10 +975,10 @@ std::string MorisonCirc::print() const
 	output = output + "Drag Coeff.:\t" + std::to_string(m_CD) + '\n';
 	output = output + "Inert. Coeff.:\t" + std::to_string(m_CM) + '\n';
 	output = output + "Numb. of Int. Points:\t" + std::to_string(m_numIntPoints) + '\n';
-	output = output + "Bottom diameter:\t" + std::to_string(m_botDiam) + '\n';
-	output = output + "Top diameter:\t" + std::to_string(m_topDiam) + '\n';
-	output = output + "Axial CD:\t" + std::to_string(m_axialCD) + '\n';
-	output = output + "Axial Ca:\t" + std::to_string(m_axialCa) + '\n';
+	output = output + "Axial CD - Node 1:\t" + std::to_string(m_axialCD_1) + '\n';
+	output = output + "Axial Ca - Node 1:\t" + std::to_string(m_axialCa_1) + '\n';
+	output = output + "Axial CD - Node 2:\t" + std::to_string(m_axialCD_2) + '\n';
+	output = output + "Axial Ca - Node 2:\t" + std::to_string(m_axialCa_2) + '\n';
 	output = output + "Bot. Press. Flag.:\t" + std::to_string(m_botPressFlag) + '\n';
 
 	return output;
