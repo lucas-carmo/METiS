@@ -14,6 +14,14 @@ MorisonCirc::MorisonCirc(const vec &node1Pos, const vec &node2Pos, const vec &co
 	m_diam(diam), m_CD(CD), m_CM(CM)
 {
 	make_local_base_t0(m_xvec_t0, m_yvec_t0, m_zvec_t0);
+
+	m_xvec_sd = m_xvec_t0;
+	m_yvec_sd = m_yvec_t0;
+	m_zvec_sd = m_zvec_t0;
+
+	m_xvec = m_xvec_t0;
+	m_yvec = m_yvec_t0;
+	m_zvec = m_zvec_t0;
 }
 
 
@@ -452,7 +460,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 				force_inertia_2nd_part4_ii = (datum::pi * D*D / 4.) * rho * (Cm - 1) * a_a;
 
 				// 5th component: Force due to cylinder rotation				
-				a_r = 2*arma::dot(u1-v_axial, zvec_sd) * (1 / L) * (arma::dot(v2 - v1, xvec_sd) * yvec_sd + arma::dot(v2 - v1, yvec_sd) * xvec_sd);
+				a_r = 2 * arma::dot(u1 - v_axial, zvec_sd) * (1 / L) * (arma::dot(v2 - v1, xvec_sd) * yvec_sd + arma::dot(v2 - v1, yvec_sd) * xvec_sd);
 				force_inertia_2nd_part5_ii = -(datum::pi * D*D / 4.) * rho * (Cm - 1) * a_r;
 			}
 			else
