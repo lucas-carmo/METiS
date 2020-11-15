@@ -107,7 +107,7 @@ public:
 		Forces, acceleration, displacement, etc
 	*****************************************************/
 	vec::fixed<6> calcAcceleration(const ENVIR &envir);
-	void update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc, const double dt);
+	void update(const ENVIR &envir, const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc);
 	void update_sd(const vec::fixed<6> &disp, const double dt);
 
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir);

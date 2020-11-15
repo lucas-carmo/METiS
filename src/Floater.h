@@ -17,6 +17,7 @@ private:
 	double m_mass;
 	vec::fixed<3> m_CoG; // Coordinates of center of gravity.
 	vec::fixed<6> m_inertia; // Moments and products of inertia. It is a 6x1 array. Actually, it is a symmetric 3x3 matrix, hence 3 elements are simply repeated.
+	mat::fixed<6, 6> m_addedMass_t0;
 	std::vector<std::unique_ptr<MorisonElement>> m_MorisonElements;	
 
 	vec::fixed<6> m_disp; // Floater displacement (i.e. [instantaneous position] - [initial position])
@@ -49,6 +50,7 @@ public:
 	vec::fixed<3> CoG() const;
 	double mass() const;
 	mat::fixed<6,6> inertiaMatrix() const;
+	mat::fixed<6, 6> addedMass_t0() const;
 
 	std::string printMass() const;
 	std::string printInertia() const;
@@ -59,9 +61,10 @@ public:
 	/*****************************************************
 		Forces, acceleration, displacement, etc
 	*****************************************************/
-	void update(const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc,
+	void update(const ENVIR &envir,const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc,
 				const vec::fixed<6> &FOWTdisp_SD, const vec::fixed<6> &FOWTvel_SD);
-	mat::fixed<6, 6> addedMass(const double density, const int hydroMode) const;
+	mat::fixed<6, 6> addedMass(const int hydroMode) const; // Calculated considering unitary density
+	mat::fixed<6, 6> addedMass(const double density, const int hydroMode);	
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode) const;
 	vec::fixed<6> hydrostaticForce(const ENVIR &envir) const;
 };

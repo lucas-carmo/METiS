@@ -8,7 +8,8 @@
 arma::mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, const double rotatZ)
 {
 	/* Rotation matrix is RotatMat = RotatX * RotatY * RotatZ, i.e. a rotation around the Z axis,
-	  followed by a rotation around the new y axis, and a rotation around the new x axis. Each rotation matrix is given by:
+	  followed by a rotation around the new y axis, and a rotation around the new x axis (intrinsic rotation).
+	  Each rotation matrix is given by:
 
 	  rotatX = { 	{ 1 ,        0        ,         0        },
 			     			{ 0 , cos(rotation(3)) , -sin(rotation(3)) },
@@ -50,6 +51,23 @@ arma::mat::fixed<3, 3> rotatMatrix(const arma::vec::fixed<3> &rotation)
 arma::mat::fixed<3, 3> rotatMatrix_deg(const arma::vec::fixed<3> &rotation)
 {
 	return rotatMatrix_deg(rotation(0), rotation(1), rotation(2));
+}
+
+arma::mat::fixed<3, 3> rotatMatrix_extrinsic(const double rotatX, const double rotatY, const double rotatZ)
+{
+	arma::mat::fixed<3, 3> rotatMatrix = {
+									{ std::cos(rotatY) * std::cos(rotatZ) , -std::cos(rotatX) * std::sin(rotatZ) + std::sin(rotatX) * std::sin(rotatY) * std::cos(rotatZ) , std::sin(rotatX) * std::sin(rotatZ) + std::cos(rotatX) * std::sin(rotatY) * std::cos(rotatZ) },
+									{ std::cos(rotatY) * std::sin(rotatZ) ,  std::cos(rotatX) * std::cos(rotatZ) + std::sin(rotatX) * std::sin(rotatY) * std::sin(rotatZ)  ,  - std::sin(rotatX) * std::sin(rotatZ) + std::cos(rotatX) * std::sin(rotatY) * std::sin(rotatZ) },
+									{ -std::sin(rotatY) ,  std::sin(rotatX) * std::cos(rotatY) ,   std::cos(rotatX) * std::cos(rotatY) }
+	};
+
+	return rotatMatrix;
+}
+
+
+arma::mat::fixed<3, 3> rotatMatrix_extrinsic(const arma::vec::fixed<3> &rotation)
+{
+	return rotatMatrix_extrinsic(rotation(0), rotation(1), rotation(2));
 }
 
 double deg2rad(const double degree)

@@ -46,7 +46,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	vec::fixed<6> acc_total(arma::fill::zeros);
 
 	// make sure that the members of FOWT are updated
-	fowt.update(disp0, vel0, acc0, envir.timeStep());
+	fowt.update(envir, disp0, vel0, acc0);
 
 	// The header of the formatted output file is written during the first time step and is then turned off
 	IO::print2outLineHeader_turnOn();
@@ -86,8 +86,8 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 
 		// RK4: second estimation
 		// Update fowt and environment
-		fowt.update(disp0 + disp_k1 / 2, vel0 + vel_k1 / 2, acc_k1, envir.timeStep());		
-		envir.stepTime(envir.timeStep()/2);
+		envir.stepTime(envir.timeStep() / 2);
+		fowt.update(envir, disp0 + disp_k1 / 2, vel0 + vel_k1 / 2, acc_k1);				
 
 		acc_k2 = fowt.calcAcceleration(envir);
 		vel_k2 = acc_k2 * envir.timeStep();
@@ -95,7 +95,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 
 		// RK4: third estimation
 		// Update only fowt. Environment is already at t+dt/2
-		fowt.update( disp0 + disp_k2/2 , vel0 + vel_k2/2 , acc_k2, envir.timeStep());
+		fowt.update(envir, disp0 + disp_k2/2 , vel0 + vel_k2/2 , acc_k2);
 
 		acc_k3 = fowt.calcAcceleration(envir);
 		vel_k3 = acc_k3 * envir.timeStep();
@@ -103,8 +103,8 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 
 		// RK4: fourth estimation
 		// Update fowt and environment, which needs to be in t+dt (hence, just need to add dt/2)
-		fowt.update( disp0 + disp_k3 , vel0 + vel_k3 , acc_k3, envir.timeStep());
-		envir.stepTime(envir.timeStep()/2);
+		envir.stepTime(envir.timeStep() / 2);
+		fowt.update(envir, disp0 + disp_k3, vel0 + vel_k3, acc_k3);
 
 		acc_k4 = fowt.calcAcceleration(envir);
 		vel_k4 = acc_k4 * envir.timeStep();
@@ -116,7 +116,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		disp_total = disp0 + (disp_k1 + 2*disp_k2 + 2*disp_k3 + disp_k4) / 6;
 
 		// We only need to update fowt, as envir was already updated during the RK4 steps
-		fowt.update(disp_total, vel_total, acc_total, envir.timeStep());
+		fowt.update(envir, disp_total, vel_total, acc_total);
 		fowt.update_sd(disp_total, envir.timeStep());
 
 		// Print progress to the screen only after integer seconds.

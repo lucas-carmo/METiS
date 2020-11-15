@@ -20,7 +20,7 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 /*****************************************************
 	Functions for node position / velocity / acceleration
 *****************************************************/
-void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD)
+void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD)
 {
 	mat::fixed<3, 3> RotatMatrix(rotatMatrix(floaterCoGpos.rows(3,5))); // Calculate it here so we just need to calculate the matrix once
 	vec::fixed<3> R1 = RotatMatrix * m_cog2node1; // R1 and R2 are the vectors that give the node1 and node2 positions with respect to the CoG of the structure
@@ -57,6 +57,11 @@ void MorisonElement::updateNodesPosVelAcc(const vec::fixed<6> &floaterCoGpos, co
 	m_xvec_sd = RotatMatrix * m_xvec_t0;
 	m_yvec_sd = RotatMatrix * m_yvec_t0;
 	m_zvec_sd = RotatMatrix * m_zvec_t0;
+
+	// Find the intersection with the instantaneous waterline
+	// Used in Wheeler stretching and in the calculation of the added mass matrix.
+	// If no intersection with the WL is found, this is an array of NaNs
+	m_intersectWL = findIntersectWL(envir);
 }
 
 vec::fixed<3> MorisonElement::node1Pos() const

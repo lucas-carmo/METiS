@@ -25,6 +25,8 @@ arma::mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, con
 arma::mat::fixed<3, 3> rotatMatrix_deg(const double rotatX, const double rotatY, const double rotatZ);
 arma::mat::fixed<3, 3> rotatMatrix(const arma::vec::fixed<3> &rotation);
 arma::mat::fixed<3, 3> rotatMatrix_deg(const arma::vec::fixed<3> &rotation);
+arma::mat::fixed<3, 3> rotatMatrix_extrinsic(const double rotatX, const double rotatY, const double rotatZ);
+arma::mat::fixed<3, 3> rotatMatrix_extrinsic(const arma::vec::fixed<3> &rotation);
 double deg2rad(const double degree);
 double minimum(const double x, const double y);
 bool almostEqual(const double x, const double y, double eps);

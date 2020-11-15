@@ -116,16 +116,16 @@ public:
 	double waveElev(const double x, const double y, const unsigned int waveIndex) const;
 	double waveElev(const double x, const double y) const;
 	double wavePressure(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
-	double wavePressure(const vec::fixed<3> &coord) const;	
+	double wavePressure(const vec::fixed<3> &coord) const;
+	double wavePressure_2ndOrd(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
+	double wavePressure_2ndOrd(const vec::fixed<3> &coord) const;
 	vec::fixed<3> u1(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> du1dt(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> du1dx(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> du1dy(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> du1dz(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> du2dt(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
-	vec::fixed<3> du2dt(const vec::fixed<3> &coord) const;
-	vec::fixed<3> wavePressure_2ndOrd(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
-	vec::fixed<3> wavePressure_2ndOrd(const vec::fixed<3> &coord) const;
+	vec::fixed<3> du2dt(const vec::fixed<3> &coord) const;	
 
 	double windVel_X(const vec::fixed<3> &coord) const;
 };

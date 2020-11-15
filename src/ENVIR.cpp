@@ -975,9 +975,9 @@ vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord) const
 	return acc;
 }
 
-vec::fixed<3> ENVIR::wavePressure_2ndOrd(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const
+double ENVIR::wavePressure_2ndOrd(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const
 {
-	arma::vec::fixed<3> p = { 0,0,0 };
+	double p{0};
 
 	// In this case, the calculation below would lead to 0/0, but the limit is actually 0. This is fine, as the second order potential should not contribute to the mean drift.
 	if (waveIndex1 == waveIndex2)
@@ -1026,11 +1026,11 @@ vec::fixed<3> ENVIR::wavePressure_2ndOrd(const vec::fixed<3> &coord, const unsig
 }
 
 
-vec::fixed<3> ENVIR::wavePressure_2ndOrd(const vec::fixed<3> &coord) const
+double ENVIR::wavePressure_2ndOrd(const vec::fixed<3> &coord) const
 {
-	arma::vec::fixed<3> p = { 0,0,0 };
+	double p{0};
 
-	// When i == j, p = {0,0,0}, so it is safe to skip this part of the loop.
+	// When i == j, p = 0, so it is safe to skip this part of the loop.
 	// Besides, as only the real part of the second-order difference-frequency potential is used,
 	// the acceleration due to a pair ij is equal to ji.
 	for (int ii = 0; ii < m_wave.size(); ++ii)

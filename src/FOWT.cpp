@@ -8,8 +8,8 @@
 	Constructors
 *****************************************************/
 FOWT::FOWT() : m_extLinStiff(fill::zeros), m_mass(datum::nan),
-			   m_disp(fill::zeros), m_vel(fill::zeros), m_acc(fill::zeros),
-			   m_disp_sd(fill::zeros), m_vel_sd(fill::zeros), m_acc_sd(fill::zeros)
+m_disp(fill::zeros), m_vel(fill::zeros), m_acc(fill::zeros),
+m_disp_sd(fill::zeros), m_vel_sd(fill::zeros), m_acc_sd(fill::zeros)
 {
 	m_CoG.fill(datum::nan);
 
@@ -38,11 +38,11 @@ void FOWT::setMoorMode(const int moorMode)
 
 void FOWT::setDoFs(std::array<bool, 6> &dofs)
 {
-    m_dofs = dofs;
+	m_dofs = dofs;
 }
 
 
-void FOWT::setExtLinStiff(const mat::fixed<6,6> &extLinStiff)
+void FOWT::setExtLinStiff(const mat::fixed<6, 6> &extLinStiff)
 {
 	m_extLinStiff = extLinStiff;
 }
@@ -71,7 +71,7 @@ void FOWT::setRNA(RNA &rna)
 	// Need to set the vertical distance between the hub and the CoG
 	if (!arma::is_finite(m_floater.CoG()))
 	{
-		throw std::runtime_error( "Need to set the floater CoG before calling FOWT::setRNA(RNA &rna)" );
+		throw std::runtime_error("Need to set the floater CoG before calling FOWT::setRNA(RNA &rna)");
 	}
 
 	m_rna.setHubHeight2CoG(CoG().at(2));
@@ -153,13 +153,13 @@ vec::fixed<6> FOWT::constForce() const
 std::string FOWT::printLinStiff() const
 {
 	std::string output = "\n\t";
-	for ( int ii = 0; ii < m_extLinStiff.n_rows; ++ii )
+	for (int ii = 0; ii < m_extLinStiff.n_rows; ++ii)
 	{
 		for (int jj = 0; jj < m_extLinStiff.n_cols; ++jj)
 		{
 			output = output + std::to_string(m_extLinStiff.at(ii, jj));
 			(jj == 5) ? (output = output + "\n\t") : (output = output + " \t ; \t");
-		}		
+		}
 	}
 
 	return output + "\n";
@@ -175,7 +175,7 @@ std::string FOWT::printFloater() const
 	output = output + "\tInertia Matrix:\t" + m_floater.printInertia() + "\n";
 	output = output + "\tMorison Elements:\n" + m_floater.printMorisonElements() + "\n";
 
-	mat::fixed<6, 6> A = m_floater.addedMass(1, m_hydroMode);
+	mat::fixed<6, 6> A = m_floater.addedMass(m_hydroMode);
 	output = output + "\tAdded Mass for unitary density:\n";
 	for (int ii = 0; ii < 6; ++ii)
 	{
@@ -246,7 +246,7 @@ std::string FOWT::printDoF() const
 void FOWT::print2outLine() const
 {
 	IO::print2outLine(IO::OUTFLAG_FOWT_DISP, m_disp);
-	IO::print2outLine(IO::OUTFLAG_FOWT_VEL, m_vel);	
+	IO::print2outLine(IO::OUTFLAG_FOWT_VEL, m_vel);
 	IO::print2outLine(IO::OUTFLAG_FOWT_ACC, m_acc);
 	IO::print2outLine(IO::OUTFLAG_FOWT_DISP_SD, m_disp_sd);
 }
@@ -257,8 +257,8 @@ void FOWT::print2outLine() const
 *****************************************************/
 // Update FOWT displacement, velocity, acceleration and any other necessary state.
 // dt is used only for integrating the filter equation for the slow drift motions.
-void FOWT::update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc, const double dt)
-{	
+void FOWT::update(const ENVIR &envir, const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc)
+{
 	m_disp = disp;
 	m_vel = vel;
 	m_acc = acc;
@@ -271,18 +271,16 @@ void FOWT::update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec
 	}
 
 	// Aqui tem que passar os deslocamentos com relacao ao CoG do floater. Calcular aqui mesmo baseado na posicao do centro de referencia de movimento
-	m_floater.update(m_disp, m_vel, m_acc, m_disp_sd, m_vel_sd); 
+	m_floater.update(envir, m_disp, m_vel, m_acc, m_disp_sd, m_vel_sd);
 }
 
 // Evaluate (and update) the axis system that follows the slow position.
 // Done so by applying a second-order low-pass filter to the displacement.
 void FOWT::update_sd(const vec::fixed<6> &disp, const double dt)
-{	
+{
 	double wf = m_filterSD_omega;
 	double zeta = m_filterSD_zeta;
 
-	// Otherwise, the forces are calculated at the instantaneous body position, and hence there is
-	// no need to filter the motion here
 	if (wf >= 0)
 	{
 		// Integrated using RK4. However, since the simulation time step must be small enough to 
@@ -342,6 +340,8 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 		// Armadillo will throw its own exception if this computation fails.
 		acc = arma::solve(inertiaMatrix, force);
 
+		IO::print2outLine(IO::OUTFLAG_HD_ADD_MASS_FORCE, -(addedMass - m_floater.addedMass_t0())* acc);
+
 		// Due to the coupling effects, it is necessary to set the accelerations of the inactive DoFs to 0
 		for (int ii = 0; ii < 6; ++ii)
 		{
@@ -350,12 +350,8 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 				acc[ii] = 0;
 			}
 		}
-
-		IO::print2outLine(IO::OUTFLAG_HD_ADD_MASS_FORCE, -addedMass * acc);
 	}
 
-
-	
 	return acc;
 }
 
@@ -391,10 +387,10 @@ vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)
 
 vec::fixed<6> FOWT::mooringForce()
 {
-	vec::fixed<6> force{0, 0, 0, 0, 0, 0};
+	vec::fixed<6> force{ 0, 0, 0, 0, 0, 0 };
 	if (m_moorMode == 1)
 	{
-		force = (-m_extLinStiff*m_disp + m_extConstForce);
+		force = (-m_extLinStiff * m_disp + m_extConstForce);
 	}
 
 	IO::print2outLine(IO::OUTFLAG_MOOR_FORCE, force);
@@ -404,7 +400,7 @@ vec::fixed<6> FOWT::mooringForce()
 
 vec::fixed<6> FOWT::weightForce(const double gravity)
 {
-	return vec::fixed<6> {0,0, -gravity * mass(), 0, 0, 0};
+	return vec::fixed<6> {0, 0, -gravity * mass(), 0, 0, 0};
 }
 
 vec::fixed<6> FOWT::totalForce(const ENVIR &envir)
