@@ -4,7 +4,7 @@ close all
 clc
 
 if ispc
-    folder = '..\test\teste\';
+    folder = 'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_OC4\OC4_bicromatica\mts\new_normal_lenta';
     
     % Remove files from previous runs. This is only needed because the next step
     % is to list all the .txt files in the folder.
@@ -17,7 +17,7 @@ if ispc
     % Run each of the files in sequence
     for ii = 1 : numel(files_to_run)
         flNm = [files_to_run(ii).folder '\' files_to_run(ii).name];
-        [status,result] = system(['"C:\Users\lucas.henrique\Documents\METiS - VS\x64\Release\METiS - VS.exe" "' flNm '"']);
+        [status,result] = system(['"C:\Users\lucas.henrique\Documents\METiS - VS\x64\Release\METiS - VS-new.exe" "' flNm '"']);
         disp(['status:' status]);
         disp(['result:' result]);
     end

@@ -70,6 +70,23 @@ arma::mat::fixed<3, 3> rotatMatrix_extrinsic(const arma::vec::fixed<3> &rotation
 	return rotatMatrix_extrinsic(rotation(0), rotation(1), rotation(2));
 }
 
+arma::mat::fixed<3, 3> smallRotatMatrix(const double rotatX, const double rotatY, const double rotatZ)
+{
+	arma::mat::fixed<3, 3> rotatMatrix = {
+									{ 1 , -rotatZ , rotatY },
+									{ rotatZ , 1 , -rotatX},
+									{ -rotatY ,  rotatX , 1}
+										};
+	return rotatMatrix;
+}
+
+
+arma::mat::fixed<3, 3> smallRotatMatrix(const arma::vec::fixed<3> &rotation)
+{
+	return smallRotatMatrix(rotation(0), rotation(1), rotation(2));
+}
+
+
 double deg2rad(const double degree)
 {
 	return degree * arma::datum::pi / 180;
