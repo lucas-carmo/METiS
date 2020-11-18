@@ -825,44 +825,44 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_DISP_SD) = true;
 	}
 
-	if (caseInsCompare(keyword, "hd_inertia_force"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_HD_INERTIA_FORCE) = true;
-	}
-
 	if (caseInsCompare(keyword, "hd_drag_force"))
 	{
-		m_whichResult2Output.at(IO::OUTFLAG_HD_DRAG_FORCE) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_DRAG) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_DRAG_EXT) = true;
 	}
 
-	if (caseInsCompare(keyword, "hd_fk_force"))
+	if (caseInsCompare(keyword, "hd_force1"))
 	{
-		m_whichResult2Output.at(IO::OUTFLAG_HD_FK_FORCE) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_1) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_1_EXT) = true;
 	}
 
-	if (caseInsCompare(keyword, "hd_2nd_force_part1"))
+	if (caseInsCompare(keyword, "hd_force2"))
 	{
-		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART1) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_2) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_2_EXT) = true;
 	}
 
-	if (caseInsCompare(keyword, "hd_2nd_force_part2"))
+	if (caseInsCompare(keyword, "hd_force3"))
 	{
-		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART2) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_3) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_3_EXT) = true;
 	}
 
-	if (caseInsCompare(keyword, "hd_2nd_force_part3"))
+	if (caseInsCompare(keyword, "hd_force4"))
 	{
-		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART3) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_4) = true;
 	}
 
-	if (caseInsCompare(keyword, "hd_2nd_force_part4"))
+	if (caseInsCompare(keyword, "hd_forceEta"))
 	{
-		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART4) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_ETA) = true;
 	}
 
-	if (caseInsCompare(keyword, "hd_2nd_force_part5"))
+	if (caseInsCompare(keyword, "hd_forceRem"))
 	{
-		m_whichResult2Output.at(IO::OUTFLAG_HD_2ND_FORCE_PART5) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_REM) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_REM_EXT) = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_add_mass_force"))
@@ -1034,11 +1034,11 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 	// Check whether the specified flag is indeed one that requires a vector with six components
 	if ((flag != IO::OUTFLAG_FOWT_DISP) && (flag != IO::OUTFLAG_FOWT_VEL) && (flag != IO::OUTFLAG_FOWT_ACC) && (flag != IO::OUTFLAG_FOWT_DISP_SD) &&
 		(flag != IO::OUTFLAG_TOTAL_FORCE) && (flag != IO::OUTFLAG_HD_FORCE) && (flag != IO::OUTFLAG_HS_FORCE) && (flag != IO::OUTFLAG_MOOR_FORCE) &&
-		(flag != IO::OUTFLAG_HD_INERTIA_FORCE) && (flag != IO::OUTFLAG_HD_DRAG_FORCE) && (flag != IO::OUTFLAG_HD_FK_FORCE) &&
-		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART1) && (flag != IO::OUTFLAG_HD_2ND_FORCE_PART2) &&
-		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART3) && (flag != IO::OUTFLAG_HD_2ND_FORCE_PART4) &&
-		(flag != IO::OUTFLAG_HD_2ND_FORCE_PART5) && (flag != IO::OUTFLAG_HD_ADD_MASS_FORCE) &&
-		(flag != IO::OUTFLAG_AD_HUB_FORCE) && (flag != IO::OUTFLAG_ADDED_MASS_DIAG) && (flag != OUTFLAG_DEBUG_VEC_6)
+		(flag != IO::OUTFLAG_HD_FORCE_DRAG) && (flag != IO::OUTFLAG_HD_FORCE_1) && (flag != IO::OUTFLAG_HD_FORCE_2) &&
+		(flag != IO::OUTFLAG_HD_FORCE_3) && (flag != IO::OUTFLAG_HD_FORCE_4) && (flag != IO::OUTFLAG_HD_FORCE_ETA) && (flag != IO::OUTFLAG_HD_FORCE_REM) &&
+		(flag != IO::OUTFLAG_HD_FORCE_DRAG_EXT) && (flag != IO::OUTFLAG_HD_FORCE_1_EXT) && (flag != IO::OUTFLAG_HD_FORCE_2_EXT) &&
+		(flag != IO::OUTFLAG_HD_FORCE_3_EXT) && (flag != IO::OUTFLAG_HD_FORCE_REM_EXT) &&
+		(flag != IO::OUTFLAG_HD_ADD_MASS_FORCE) && (flag != IO::OUTFLAG_AD_HUB_FORCE) && (flag != IO::OUTFLAG_ADDED_MASS_DIAG) && (flag != OUTFLAG_DEBUG_VEC_6)
 	   )
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &force).");
@@ -1056,67 +1056,94 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			}
 		}
 
-		if (flag == OUTFLAG_HD_INERTIA_FORCE)
-		{
-			for (int ii = 1; ii <= 6; ++ii)
-			{
-				print2outLineHeader("hd_inert_force_" + std::to_string(ii));
-			}
-		}
-
-		if (flag == OUTFLAG_HD_DRAG_FORCE)
+		if (flag == OUTFLAG_HD_FORCE_DRAG)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
 				print2outLineHeader("hd_drag_force_" + std::to_string(ii));
 			}
 		}
-
-		if (flag == OUTFLAG_HD_FK_FORCE)
+		if (flag == OUTFLAG_HD_FORCE_DRAG_EXT)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
-				print2outLineHeader("hd_fk_force_" + std::to_string(ii));
+				print2outLineHeader("hd_drag_force_ext_" + std::to_string(ii));
 			}
 		}
 
-		if (flag == OUTFLAG_HD_2ND_FORCE_PART1)
+		if (flag == OUTFLAG_HD_FORCE_1)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
-				print2outLineHeader("hd_2nd_force_P1_" + std::to_string(ii));
+				print2outLineHeader("hd_force1_" + std::to_string(ii));
+			}
+		}
+		if (flag == OUTFLAG_HD_FORCE_1_EXT)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_force1_ext_" + std::to_string(ii));
 			}
 		}
 
-		if (flag == OUTFLAG_HD_2ND_FORCE_PART2)
+		if (flag == OUTFLAG_HD_FORCE_2)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
-				print2outLineHeader("hd_2nd_force_P2_" + std::to_string(ii));
+				print2outLineHeader("hd_force2_" + std::to_string(ii));
+			}
+		}
+		if (flag == OUTFLAG_HD_FORCE_2_EXT)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_force2_ext_" + std::to_string(ii));
 			}
 		}
 
-		if (flag == OUTFLAG_HD_2ND_FORCE_PART3)
+		if (flag == OUTFLAG_HD_FORCE_3)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
-				print2outLineHeader("hd_2nd_force_P3_" + std::to_string(ii));
+				print2outLineHeader("hd_force3_" + std::to_string(ii));
+			}
+		}
+		if (flag == OUTFLAG_HD_FORCE_3_EXT)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_force3_ext_" + std::to_string(ii));
 			}
 		}
 
-		if (flag == OUTFLAG_HD_2ND_FORCE_PART4)
+		if (flag == OUTFLAG_HD_FORCE_4)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
-				print2outLineHeader("hd_2nd_force_P4_" + std::to_string(ii));
+				print2outLineHeader("hd_force4_" + std::to_string(ii));
 			}
 		}
 
-		if (flag == OUTFLAG_HD_2ND_FORCE_PART5)
+		if (flag == OUTFLAG_HD_FORCE_ETA)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
-				print2outLineHeader("hd_2nd_force_P5_" + std::to_string(ii));
+				print2outLineHeader("hd_forceEta_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_FORCE_REM)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_forceRem_" + std::to_string(ii));
+			}
+		}
+		if (flag == OUTFLAG_HD_FORCE_REM_EXT)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_forceRem_ext_" + std::to_string(ii));
 			}
 		}
 
@@ -1504,42 +1531,38 @@ std::string IO::printOutVar()
 
 		case IO::OUTFLAG_WAVE_PRES_2ND:
 			output += "Wave Pressure - 2nd order: ";
+			break;		
+
+		case IO::OUTFLAG_HD_FORCE_DRAG:
+			output += "Hydrodynamic force - Drag: ";
 			break;
 
-		case IO::OUTFLAG_HD_INERTIA_FORCE:
-			output += "Hydrodynamic inertial force: ";
+		case IO::OUTFLAG_HD_FORCE_1:
+			output += "Hydrodynamic force - Pt1 - 1st order pot: ";
 			break;
 
-		case IO::OUTFLAG_HD_DRAG_FORCE:
-			output += "Hydrodynamic drag force: ";
+		case IO::OUTFLAG_HD_FORCE_2:
+			output += "Hydrodynamic force - Pt2 - 2nd order pot: ";
 			break;
 
-		case IO::OUTFLAG_HD_2ND_FORCE_PART1:
-			output += "Hydrodynamic 2nd force - Part 1: ";
+		case IO::OUTFLAG_HD_FORCE_3:
+			output += "Hydrodynamic force - Pt3 - Conv acc: ";
 			break;
 
-		case IO::OUTFLAG_HD_2ND_FORCE_PART2:
-			output += "Hydrodynamic 2nd force - Part 2: ";
+		case IO::OUTFLAG_HD_FORCE_4:
+			output += "Hydrodynamic force - Pt4 - Ax-diverg: ";
 			break;
 
-		case IO::OUTFLAG_HD_2ND_FORCE_PART3:
-			output += "Hydrodynamic 2nd force - Part 3: ";
+		case IO::OUTFLAG_HD_FORCE_ETA:
+			output += "Hydrodynamic force - Eta - Wave elevation: ";
 			break;
 
-		case IO::OUTFLAG_HD_2ND_FORCE_PART4:
-			output += "Hydrodynamic 2nd force - Part 4: ";
-			break;
-
-		case IO::OUTFLAG_HD_2ND_FORCE_PART5:
-			output += "Hydrodynamic 2nd force - Part 5: ";
+		case IO::OUTFLAG_HD_FORCE_REM:
+			output += "Hydrodynamic force - Remaining";
 			break;
 
 		case IO::OUTFLAG_HD_ADD_MASS_FORCE:
 			output += "Force due to added mass: ";
-			break;
-
-		case IO::OUTFLAG_HD_FK_FORCE:
-			output += "Hydrodynamic Froude-Krylov force: ";
 			break;
 
 		case IO::OUTFLAG_HD_FORCE:

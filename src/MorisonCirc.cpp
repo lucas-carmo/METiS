@@ -165,25 +165,29 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 
 // The vectors passed as reference are used to return the different components of the hydrodynamic force acting on the cylinder,
 // without the need of calling three different methods for each component of the hydrodynamic force
-vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydroMode,
-	const vec::fixed<3> &refPt, const vec::fixed<3> &refPt_sd,
-	vec::fixed<6> &force_inertia, vec::fixed<6> &force_drag, vec::fixed<6> &force_froudeKrylov,
-	vec::fixed<6> &force_inertia_2nd_part1, vec::fixed<6> &force_inertia_2nd_part2,
-	vec::fixed<6> &force_inertia_2nd_part3, vec::fixed<6> &force_inertia_2nd_part4,
-	vec::fixed<6> &force_inertia_2nd_part5) const
+vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydroMode, const vec::fixed<3> &refPt, const vec::fixed<3> &refPt_sd,
+	vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_2,
+	vec::fixed<6> &force_3, vec::fixed<6> &force_4, vec::fixed<6> &force_eta, vec::fixed<6> &force_rem,
+	vec::fixed<6> &force_drag_ext, vec::fixed<6> &force_1_ext, vec::fixed<6> &force_2_ext,
+	vec::fixed<6> &force_3_ext, vec::fixed<6> &force_rem_ext) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
 
 	// Make sure that the force components that are passed as reference are set to zero
-	force_inertia.zeros();
 	force_drag.zeros();
-	force_froudeKrylov.zeros();
-	force_inertia_2nd_part1.zeros();
-	force_inertia_2nd_part2.zeros();
-	force_inertia_2nd_part3.zeros();
-	force_inertia_2nd_part4.zeros();
-	force_inertia_2nd_part5.zeros();
+	force_1.zeros();
+	force_2.zeros();
+	force_3.zeros();
+	force_4.zeros();
+	force_eta.zeros();
+	force_rem.zeros();
+
+	force_drag_ext.zeros();
+	force_1_ext.zeros();
+	force_2_ext.zeros();
+	force_3_ext.zeros();
+	force_rem_ext.zeros();
 
 	// Use a more friendly notation
 	double D = m_diam;
@@ -281,20 +285,19 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> a_r(fill::zeros); // Fluid acceleration associated with body rotation
 
 	// Forces acting at the integration point and moment (with relation to n1) due to the force acting at the integration point
-	vec::fixed<3> force_inertia_ii(fill::zeros); // Inertial component
-	vec::fixed<3> moment_inertia_ii(fill::zeros);
-
+	// TODO: quase certeza que todas essas variaveis moment sao desnecessarias
 	vec::fixed<3> force_drag_ii(fill::zeros); // Drag component
 	vec::fixed<3> moment_drag_ii(fill::zeros);
-
-	vec::fixed<3> force_inertia_2nd_part1_ii(fill::zeros); // Inertial component - Second order - Part that is due to the second-order difference-frequency potential
-	vec::fixed<3> moment_inertia_2nd_part1_ii(fill::zeros);
-	vec::fixed<3> force_inertia_2nd_part3_ii(fill::zeros); // Inertial component - Second order - Part that is due to the convective acceleration
-	vec::fixed<3> moment_inertia_2nd_part3_ii(fill::zeros);
-	vec::fixed<3> force_inertia_2nd_part4_ii(fill::zeros); // Inertial component - Second order - Part that is due to the axial-divergence acceleration
-	vec::fixed<3> moment_inertia_2nd_part4_ii(fill::zeros);
-	vec::fixed<3> force_inertia_2nd_part5_ii(fill::zeros); // Inertial component - Second order - Part that is due to body rotation
-	vec::fixed<3> moment_inertia_2nd_part5_ii(fill::zeros);
+	vec::fixed<3> force_1_ii(fill::zeros); // First part - Forces due to 1st order potential
+	vec::fixed<3> moment_1_ii(fill::zeros);
+	vec::fixed<3> force_2_ii(fill::zeros); // Second part - Forces due to 2nd order potential
+	vec::fixed<3> moment_2_ii(fill::zeros);
+	vec::fixed<3> force_3_ii(fill::zeros); // Third part - Forces due to the convective acceleration
+	vec::fixed<3> moment_3_ii(fill::zeros);
+	vec::fixed<3> force_4_ii(fill::zeros); // Fourth part - Forces due to the axial-divergence acceleration
+	vec::fixed<3> moment_4_ii(fill::zeros);
+	vec::fixed<3> force_rem_ii(fill::zeros); // Remaining components
+	vec::fixed<3> moment_rem_ii(fill::zeros);
 
 	// Relative distance between the integration point and the bottom node
 	double lambda{ 0 };
@@ -302,6 +305,10 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	// Component of the velocity and acceleration that is parallel to the axis of the cylinder
 	vec::fixed<3> v_axial = arma::dot(v1, zvec_sd) * zvec_sd; // Velocities are included in second order terms only, hence are calculate at the sd position
 	vec::fixed<3> a_axial = arma::dot(a1, zvec) * zvec; // The situation is the opposite for the acceleration
+
+	// Useful auxilliary variables to avoid recalculating things
+	vec::fixed<3> aux_force(fill::zeros);
+	double aux{ 0 };
 
 	/*=================================
 		Forces along the length of the cylinder - Considering the instantaneous position
@@ -319,6 +326,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	}
 	double dL = Lw / (ncyl - 1); // length of each interval between points
 
+	aux = datum::pi * D*D / 4. * rho;
 	for (int ii = 1; ii <= ncyl; ++ii)
 	{
 		n_ii = n1 + dL * (ii - 1) * zvec; // Coordinates of the integration point
@@ -340,26 +348,31 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		acc_ii -= a_axial;
 
 		// Component of the fluid acceleration at the integration point that is perpendicular to the axis of the cylinder.
-		// Written in the GLOBAL reference frame.
-		du1dt = envir.du1dt(n_ii, eta);  // Wheeler stretching method requires 'eta' as input
+		du1dt = envir.du1dt(n_ii, eta);
 		du1dt = du1dt - arma::dot(du1dt, zvec) * zvec;
 
-		// Force due to first-order acceleration integrated considering the instantaneous position of the cylinder
-		force_inertia_ii = datum::pi * D*D / 4. * rho * (Cm * du1dt - (Cm - 1) * acc_ii);
-		moment_inertia_ii = cross(n_ii - refPt, force_inertia_ii);
+		// Force due to first-order acceleration integrated considering the instantaneous position of the cylinder		
+		force_1_ii = aux * Cm * du1dt;
+		moment_1_ii = cross(n_ii - refPt, force_1_ii);
+
+		force_rem_ii = -aux * (Cm - 1) * acc_ii;
+		moment_rem_ii = cross(n_ii - refPt, force_rem_ii);
 
 		// Integrate the forces along the cylinder using Simpson's Rule
 		if (ii == 1 || ii == ncyl)
 		{
-			force_inertia += (dL / 3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
+			force_1 += (dL / 3.0) * join_cols(force_1_ii, moment_1_ii);
+			force_rem += (dL / 3.0) * join_cols(force_rem_ii, moment_rem_ii);
 		}
 		else if (ii % 2 == 0)
 		{
-			force_inertia += (4 * dL / 3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
+			force_1 += (4 * dL / 3.0) * join_cols(force_1_ii, moment_1_ii);
+			force_rem += (4 * dL / 3.0) * join_cols(force_rem_ii, moment_rem_ii);
 		}
 		else
 		{
-			force_inertia += (2 * dL / 3.0) * join_cols(force_inertia_ii, moment_inertia_ii);
+			force_1 += (2 * dL / 3.0) * join_cols(force_1_ii, moment_1_ii);
+			force_rem += (2 * dL / 3.0) * join_cols(force_rem_ii, moment_rem_ii);
 		}
 	}
 
@@ -379,6 +392,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	}
 	dL = Lw / (ncyl - 1); // length of each interval between points
 
+	force_rem_ii.zeros();
+	moment_rem_ii.zeros();
 	for (int ii = 1; ii <= ncyl; ++ii)
 	{
 		n_ii_sd = n1_sd + dL * (ii - 1) * zvec_sd;
@@ -393,111 +408,87 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			eta = envir.waveElev(n_ii_sd.at(0), n_ii_sd.at(1));
 		}
 
-		// Velocity of the integration point
-		lambda = norm(n_ii_sd - n1_sd, 2) / L;
-		vel_ii = v1 + lambda * (v2 - v1);
-
 		// Component of the velocity of the integration point that is perpendicular to the axis of the cylinder
+		lambda = norm(n_ii_sd - n1_sd, 2) / L;
+		vel_ii = v1 + lambda * (v2 - v1);		
 		vel_ii -= v_axial;
 
 		// Fluid velocity at the integration point.		
 		u1 = envir.u1(n_ii_sd, eta);
 		u1 -= arma::dot(u1, zvec_sd) * zvec_sd;
 
-		// Quadratic drag force.
-		// Integrated considering the fixed (or slow) position of the cylinder.
-		if (n_ii_sd[2] <= 0)
-		{
-			force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - vel_ii, 2) * (u1 - vel_ii);
-		}
-		else
-		{
-			force_drag_ii.zeros();
-		}
-		moment_drag_ii = cross(n_ii_sd - refPt_sd, force_drag_ii);
+		// Quadratic drag force.		
+		force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - vel_ii, 2) * (u1 - vel_ii);
 
-		// If required, calculate the other second-order inertial forces,
-		// which are integrated considering the fixed (or slow) position of the cylinder.
+		// If required, calculate the other second-order forces,
 		if (hydroMode == 2)
-		{
-			if (n_ii_sd[2] <= 0)
-			{
-				// 1st component: Force due to the second-order potential
-				du2dt = envir.du2dt(n_ii_sd);
-				du2dt -= arma::dot(du2dt, zvec_sd) * zvec_sd;
-				force_inertia_2nd_part1_ii = (datum::pi * D*D / 4.) * rho * Cm * du2dt;
+		{			
+			// 2nd component: Force due to the second-order potential
+			du2dt = envir.du2dt(n_ii_sd);
+			du2dt -= arma::dot(du2dt, zvec_sd) * zvec_sd;
+			force_2_ii = aux * Cm * du2dt; // aux == datum::pi * D*D / 4. * rho;
 
-				// 2nd component: Due to the wave elevation.
-				// Calculated after this loop of integration along the cylinder length if Taylor stretching is used.
-				// Otherwise, this component is zero and its effects are included in the integration of the forces due to the first-order fluid acceleration.
+			// 3rd component: Force due to convective acceleration
+			u1 = envir.u1(n_ii_sd, eta);
+			du1dx = envir.du1dx(n_ii_sd, eta);
+			du1dy = envir.du1dy(n_ii_sd, eta);
+			du1dz = envir.du1dz(n_ii_sd, eta);
 
-				// 3rd component: Force due to convective acceleration
-				u1 = envir.u1(n_ii_sd, eta);
-				du1dx = envir.du1dx(n_ii_sd, eta);
-				du1dy = envir.du1dy(n_ii_sd, eta);
-				du1dz = envir.du1dz(n_ii_sd, eta);
+			a_c.at(0) = u1.at(0) * du1dx.at(0) + u1.at(1) * du1dy.at(0) + u1.at(2) * du1dz.at(0);
+			a_c.at(1) = u1.at(0) * du1dx.at(1) + u1.at(1) * du1dy.at(1) + u1.at(2) * du1dz.at(1);
+			a_c.at(2) = u1.at(0) * du1dx.at(2) + u1.at(1) * du1dy.at(2) + u1.at(2) * du1dz.at(2);
+			a_c -= arma::dot(a_c, zvec_sd) * zvec_sd;
 
-				a_c.at(0) = u1.at(0) * du1dx.at(0) + u1.at(1) * du1dy.at(0) + u1.at(2) * du1dz.at(0);
-				a_c.at(1) = u1.at(0) * du1dx.at(1) + u1.at(1) * du1dy.at(1) + u1.at(2) * du1dz.at(1);
-				a_c.at(2) = u1.at(0) * du1dx.at(2) + u1.at(1) * du1dy.at(2) + u1.at(2) * du1dz.at(2);
-				a_c -= arma::dot(a_c, zvec_sd) * zvec_sd;
+			force_3_ii = aux * Cm * a_c;
 
-				force_inertia_2nd_part3_ii = (datum::pi * D*D / 4.) * rho * Cm * a_c;
+			// 4th component: Force due to axial-divergence acceleration
+			double dwdz = arma::dot(du1dx, zvec_sd) * zvec_sd.at(0) + arma::dot(du1dy, zvec_sd) * zvec_sd.at(1) + arma::dot(du1dz, zvec_sd) * zvec_sd.at(2);
+			a_a = dwdz * (u1 - arma::dot(u1, zvec_sd)*zvec_sd - vel_ii); // vel_ii was already projected in the direction perpendicular to the cylinder
+			force_4_ii = aux * a_a;
 
-				// 4th component: Force due to axial-divergence acceleration
-				double dwdz = arma::dot(du1dx, zvec_sd) * zvec_sd.at(0) + arma::dot(du1dy, zvec_sd) * zvec_sd.at(1) + arma::dot(du1dz, zvec_sd) * zvec_sd.at(2);
-				a_a = dwdz * (u1 - arma::dot(u1, zvec_sd)*zvec_sd - vel_ii); // vel_ii was already projected in the direction perpendicular to the cylinder
-				force_inertia_2nd_part4_ii = (datum::pi * D*D / 4.) * rho * (Cm - 1) * a_a;
-
-				// 5th component: Force due to cylinder rotation				
-				a_r = 2 * arma::dot(u1 - v_axial, zvec_sd) * (1 / L) * (arma::dot(v2 - v1, xvec_sd) * yvec_sd + arma::dot(v2 - v1, yvec_sd) * xvec_sd);
-				force_inertia_2nd_part5_ii = -(datum::pi * D*D / 4.) * rho * (Cm - 1) * a_r;
-			}
-			else
-			{
-				force_inertia_2nd_part1_ii.zeros();
-				force_inertia_2nd_part3_ii.zeros();
-				force_inertia_2nd_part4_ii.zeros();
-				force_inertia_2nd_part5_ii.zeros();
-			}
-			moment_inertia_2nd_part1_ii = cross(n_ii_sd - refPt_sd, force_inertia_2nd_part1_ii);
-			moment_inertia_2nd_part3_ii = cross(n_ii_sd - refPt_sd, force_inertia_2nd_part3_ii);
-			moment_inertia_2nd_part4_ii = cross(n_ii_sd - refPt_sd, force_inertia_2nd_part4_ii);
-			moment_inertia_2nd_part5_ii = cross(n_ii_sd - refPt_sd, force_inertia_2nd_part5_ii);
+			// Add to remaining forces: Force due to cylinder rotation				
+			a_r = 2 * arma::dot(u1 - v_axial, zvec_sd) * (1 / L) * (arma::dot(v2 - v1, xvec_sd) * yvec_sd + arma::dot(v2 - v1, yvec_sd) * xvec_sd);
+			force_rem_ii = -aux * (Cm - 1) * a_r;
 		}
+
+		moment_drag_ii = cross(n_ii_sd - refPt_sd, force_drag_ii);
+		moment_2_ii = cross(n_ii_sd - refPt_sd, force_2_ii);
+		moment_3_ii = cross(n_ii_sd - refPt_sd, force_3_ii);
+		moment_4_ii = cross(n_ii_sd - refPt_sd, force_4_ii);
+		moment_rem_ii = cross(n_ii_sd - refPt_sd, force_rem_ii);
 
 		// Integrate the forces along the cylinder using Simpson's Rule
 		if (ii == 1 || ii == ncyl)
 		{
 			force_drag += (dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
-			force_inertia_2nd_part1 += (dL / 3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
-			force_inertia_2nd_part3 += (dL / 3.0) * join_cols(force_inertia_2nd_part3_ii, moment_inertia_2nd_part3_ii);
-			force_inertia_2nd_part4 += (dL / 3.0) * join_cols(force_inertia_2nd_part4_ii, moment_inertia_2nd_part4_ii);
-			force_inertia_2nd_part5 += (dL / 3.0) * join_cols(force_inertia_2nd_part5_ii, moment_inertia_2nd_part5_ii);
+			force_2 += (dL / 3.0) * join_cols(force_2_ii, moment_2_ii);
+			force_3 += (dL / 3.0) * join_cols(force_3_ii, moment_3_ii);
+			force_4 += (dL / 3.0) * join_cols(force_4_ii, moment_4_ii);
+			force_rem += (dL / 3.0) * join_cols(force_rem_ii, moment_rem_ii);
 		}
 		else if (ii % 2 == 0)
 		{
 			force_drag += (4 * dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
-			force_inertia_2nd_part1 += (4 * dL / 3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
-			force_inertia_2nd_part3 += (4 * dL / 3.0) * join_cols(force_inertia_2nd_part3_ii, moment_inertia_2nd_part3_ii);
-			force_inertia_2nd_part4 += (4 * dL / 3.0) * join_cols(force_inertia_2nd_part4_ii, moment_inertia_2nd_part4_ii);
-			force_inertia_2nd_part5 += (4 * dL / 3.0) * join_cols(force_inertia_2nd_part5_ii, moment_inertia_2nd_part5_ii);
+			force_2 += (4 * dL / 3.0) * join_cols(force_2_ii, moment_2_ii);
+			force_3 += (4 * dL / 3.0) * join_cols(force_3_ii, moment_3_ii);
+			force_4 += (4 * dL / 3.0) * join_cols(force_4_ii, moment_4_ii);
+			force_rem += (4 * dL / 3.0) * join_cols(force_rem_ii, moment_rem_ii);
 		}
 		else
 		{
 			force_drag += (2 * dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
-			force_inertia_2nd_part1 += (2 * dL / 3.0) * join_cols(force_inertia_2nd_part1_ii, moment_inertia_2nd_part1_ii);
-			force_inertia_2nd_part3 += (2 * dL / 3.0) * join_cols(force_inertia_2nd_part3_ii, moment_inertia_2nd_part3_ii);
-			force_inertia_2nd_part4 += (2 * dL / 3.0) * join_cols(force_inertia_2nd_part4_ii, moment_inertia_2nd_part4_ii);
-			force_inertia_2nd_part5 += (2 * dL / 3.0) * join_cols(force_inertia_2nd_part5_ii, moment_inertia_2nd_part5_ii);
+			force_2 += (2 * dL / 3.0) * join_cols(force_2_ii, moment_2_ii);
+			force_3 += (2 * dL / 3.0) * join_cols(force_3_ii, moment_3_ii);
+			force_4 += (2 * dL / 3.0) * join_cols(force_4_ii, moment_4_ii);
+			force_rem += (2 * dL / 3.0) * join_cols(force_rem_ii, moment_rem_ii);
 		}
 	}
 
-	// 2nd component of the second order force: Force due to the wave elevation.
+	// Eta: Force due to the wave elevation.
 	// It is computed here only if Taylor series for wave stretching was chosen and
 	// if the cylinder intersects the water line.
 	// If waveStret == 0, this effect is not included in the analysis, 
-	// and if waveStret > 1, this force component is included in force_inertia.
+	// and if waveStret > 1, this force component is included in force_1.
 	if (hydroMode == 2 && envir.waveStret() == 1 && (n2.at(2)*n1.at(2) < 0))
 	{
 		n_ii = (n2 - n1) * (0 - n1.at(2)) / (n2.at(2) - n1.at(2)) + n1; // Coordinates of the intersection with the still water line;				
@@ -505,24 +496,19 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		du1dt = envir.du1dt(n_ii, 0);
 		du1dt -= arma::dot(du1dt, zvec) * zvec;
 		eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
-		force_inertia_2nd_part2.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta;
+		force_eta.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta;
 		double R_ii = norm(n_ii - n1, 2) + eta / 2;
-		force_inertia_2nd_part2.rows(3, 5) = cross(n_ii + eta / 2 * zvec - refPt, force_inertia_2nd_part2.rows(0, 2));
+		force_eta.rows(3, 5) = cross(n_ii + eta / 2 * zvec - refPt, force_eta.rows(0, 2));
 	}
 
 
 	/*=================================
 		Forces at the extremities of the cylinder
-	==================================*/
-	vec::fixed<3> force_inertia_axial(fill::zeros);
-	vec::fixed<3> force_drag_axial(fill::zeros);
-	vec::fixed<3> aux_fkForce(fill::zeros);
-	double aux_magVelRel_perp{0};
-	vec::fixed<3> aux_munkRainey(fill::zeros);
-
+	==================================*/	
 	// Calculate the force acting on the bottom of the cylinder
 	if (n1.at(2) <= zwl)
 	{
+		// Kinematics
 		du1dt = arma::dot(envir.du1dt(n1, 0), zvec) * zvec;		
 		a_c.zeros();
 		du2dt.zeros();
@@ -541,36 +527,66 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			du2dt = envir.du2dt(n1_sd);
 			du2dt = arma::dot(du2dt, zvec_sd) * zvec_sd;
 		}
+
+		// Drag force
 		u1 = arma::dot(u1, zvec_sd) * zvec_sd;
-		force_inertia_axial = rho * CaV_1 * (4 / 3.) * datum::pi * (D*D*D / 8.) * (du1dt + du2dt + a_c - a_axial);
-		force_drag_axial = 0.5 * rho * CdV_1 * datum::pi * (D*D / 4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
+		aux_force = 0.5 * rho * CdV_1 * datum::pi * (D*D / 4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
+		force_drag.rows(0, 2) += aux_force;
+		force_drag.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
 
-		force_inertia.rows(0, 2) += force_inertia_axial;
-		force_inertia.rows(3, 5) += cross(n1 - refPt, force_inertia_axial);
+		// Inertial force - pt1
+		aux = rho * CaV_1 * (4 / 3.) * datum::pi * (D*D*D / 8.);
+		aux_force = aux * du1dt;
+		force_1_ext.rows(0, 2) += aux_force;
+		force_1_ext.rows(3, 5) += cross(n1 - refPt, aux_force);
 
-		force_drag.rows(0, 2) += force_drag_axial;
-		force_drag.rows(3, 5) += cross(n1_sd - refPt_sd, force_drag_axial);
+		// Inertial force - pt2
+		aux_force = aux * du2dt;
+		force_2_ext.rows(0, 2) += aux_force;
+		force_2_ext.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
+
+		// Inertial force - pt3
+		aux_force = aux * a_c;
+		force_3_ext.rows(0, 2) += aux_force;
+		force_3_ext.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
+
+		// Remaining force components
+		aux_force = -aux * a_axial;
+		force_rem_ext.rows(0, 2) += aux_force;
+		force_rem_ext.rows(3, 5) += cross(n1 - refPt, aux_force);
 
 		if (m_botPressFlag)
 		{
-			aux_fkForce = envir.wavePressure(n1) * zvec;
-			aux_magVelRel_perp = 0;
-			aux_munkRainey.zeros();
+			// Force due to 1st order Froude-Krylov pressure is part of the first component
+			aux = datum::pi * 0.25 * D*D;
+			aux_force = aux * envir.wavePressure(n1) * zvec;
+			force_1_ext.rows(0, 2) += aux_force;
+			force_1_ext.rows(3, 5) += cross(n1 - refPt, aux_force);
+
 			if (hydroMode == 2)
 			{
-				aux_fkForce += envir.wavePressure_2ndOrd(n1_sd)*zvec_sd;
-				aux_magVelRel_perp = norm((envir.u1(n1_sd, 0) - u1) - (v1 - v_axial));
-				aux_munkRainey = cdot(u1 - v_axial, zvec_sd) * ((envir.u1(n1_sd, 0) - u1) - (v1 - v_axial));
+				// Inertial force - pt2 - 2nd order Froude-Krylov pressure
+				aux_force = aux * envir.wavePressure_2ndOrd(n1_sd) * zvec_sd;
+				force_2_ext.rows(0, 2) += aux_force;
+				force_2_ext.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
+
+				// Inertial force - pt3 - Quadratic pressure drop from Rainey's formulation
+				aux_force = -0.5 * aux * rho * (Cm - 1) * pow(norm((envir.u1(n1_sd, 0) - u1) - (v1 - v_axial)), 2) * zvec_sd;
+				force_3_ext.rows(0, 2) += aux_force;
+				force_3_ext.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
+
+				// Inertial force - Remaining - Point load from Rainey's formulation that results in a Munk moment
+				aux_force = aux * (Cm-1) * cdot(u1 - v_axial, zvec_sd) * ((envir.u1(n1_sd, 0) - u1) - (v1 - v_axial));
+				force_rem_ext.rows(0, 2) += aux_force;
+				force_rem_ext.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
 			}
-			aux_fkForce = datum::pi * 0.25 * D*D* aux_fkForce + 0.25 * rho * datum::pi * D*D * (Cm-1) * (-0.5 * aux_magVelRel_perp * aux_magVelRel_perp * zvec_sd + aux_munkRainey);
-			force_froudeKrylov.rows(0, 2) += aux_fkForce;
-			force_froudeKrylov.rows(3, 5) += cross(n1 - refPt, aux_fkForce);
 		}
 	}
 
-	// Same thing, but for the top node
+	// Calculate the force acting on the top of the cylinder
 	if (n2.at(2) <= zwl)
 	{
+		// Kinematics
 		du1dt = arma::dot(envir.du1dt(n2, 0), zvec) * zvec;
 		a_c.zeros();
 		du2dt.zeros();
@@ -589,40 +605,67 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			du2dt = envir.du2dt(n2_sd);
 			du2dt = arma::dot(du2dt, zvec_sd) * zvec_sd;
 		}
+
+		// Drag force
 		u1 = arma::dot(u1, zvec_sd) * zvec_sd;
+		aux_force = 0.5 * rho * CdV_2 * datum::pi * (D*D / 4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
+		force_drag.rows(0, 2) += aux_force;
+		force_drag.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
 
-		force_inertia_axial = rho * CaV_2 * (4 / 3.) * datum::pi * (D*D*D / 8.) * (du1dt + du2dt + a_c - a_axial);
-		force_drag_axial = 0.5 * rho * CdV_2 * datum::pi * (D*D / 4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
+		// Inertial force - pt1
+		aux = rho * CaV_2 * (4 / 3.) * datum::pi * (D*D*D / 8.);
+		aux_force = aux * du1dt;
+		force_1_ext.rows(0, 2) += aux_force;
+		force_1_ext.rows(3, 5) += cross(n2 - refPt, aux_force);
 
-		force_inertia.rows(0, 2) += force_inertia_axial;
-		force_inertia.rows(3, 5) += cross(n2 - refPt, force_inertia_axial);
+		// Inertial force - pt2
+		aux_force = aux * du2dt;
+		force_2_ext.rows(0, 2) += aux_force;
+		force_2_ext.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
 
-		force_drag.rows(0, 2) += force_drag_axial;
-		force_drag.rows(3, 5) += cross(n2_sd - refPt_sd, force_drag_axial);
+		// Inertial force - pt3
+		aux_force = aux * a_c;
+		force_3_ext.rows(0, 2) += aux_force;
+		force_3_ext.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
+
+		// Remaining force components
+		aux_force = -aux * a_axial;
+		force_rem_ext.rows(0, 2) += aux_force;
+		force_rem_ext.rows(3, 5) += cross(n2 - refPt, aux_force);
 
 		if (m_botPressFlag)
 		{
-			aux_fkForce = envir.wavePressure(n2) * zvec;
-			aux_magVelRel_perp = 0;
-			aux_munkRainey.zeros();
+			// Force due to 1st order Froude-Krylov pressure is part of the first component
+			aux = datum::pi * 0.25 * D*D;
+			aux_force = -aux * envir.wavePressure(n2) * zvec;
+			force_1_ext.rows(0, 2) += aux_force;
+			force_1_ext.rows(3, 5) += cross(n2 - refPt, aux_force);
+
 			if (hydroMode == 2)
 			{
-				aux_fkForce += envir.wavePressure_2ndOrd(n2_sd)*zvec_sd;
-				aux_magVelRel_perp = norm((envir.u1(n2_sd, 0) - u1) - (v1 - v_axial));
-				aux_munkRainey = cdot(u1 - v_axial, zvec_sd) * ((envir.u1(n2_sd, 0) - u1) - (v1 - v_axial));
+				// Inertial force - pt2 - 2nd order Froude-Krylov pressure
+				aux_force = -aux * envir.wavePressure_2ndOrd(n2_sd) * zvec_sd;
+				force_2_ext.rows(0, 2) += aux_force;
+				force_2_ext.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
+
+				// Inertial force - pt3 - Quadratic pressure drop from Rainey's formulation
+				aux_force = 0.5 * aux * rho * (Cm - 1) * pow(norm((envir.u1(n2_sd, 0) - u1) - (v1 - v_axial)), 2) * zvec_sd;
+				force_3_ext.rows(0, 2) += aux_force;
+				force_3_ext.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
+
+				// Inertial force - Remaining - Point load from Rainey's formulation that results in a Munk moment
+				aux_force = aux * (Cm - 1) * cdot(u1 - v_axial, zvec_sd) * ((envir.u1(n2_sd, 0) - u1) - (v1 - v_axial));
+				force_rem_ext.rows(0, 2) += aux_force;
+				force_rem_ext.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
 			}
-			aux_fkForce = -datum::pi * 0.25 * D*D* aux_fkForce + 0.25 * rho * datum::pi * D*D * (Cm - 1) * (0.5*aux_magVelRel_perp * aux_magVelRel_perp * zvec_sd + aux_munkRainey);
-			force_froudeKrylov.rows(0, 2) += aux_fkForce;
-			force_froudeKrylov.rows(3, 5) += cross(n2 - refPt, aux_fkForce);
 		}
 	}
 
 	/*
 		Total force
 	*/
-	force = force_inertia + force_drag + force_froudeKrylov +
-		force_inertia_2nd_part1 + force_inertia_2nd_part2 +
-		force_inertia_2nd_part3 + force_inertia_2nd_part4 + force_inertia_2nd_part5;
+	force = force_drag + force_1 + force_2 + force_3 + force_4 + force_eta + force_rem +
+		force_drag_ext + force_1_ext + force_2_ext + force_3_ext + force_rem_ext;
 
 	return force;
 }

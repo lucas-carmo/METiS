@@ -124,8 +124,8 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		// from its floor value by at most one time step.
 		if (almostEqual(envir.time(), std::floor(envir.time()), envir.timeStep()))
 		{
-		std::cout << "   Progress: " << std::setprecision(0) << envir.time() << " of " << envir.timeTotal() << " seconds -- " << std::fixed << std::setprecision(1) << 100 * envir.time() / envir.timeTotal() << "%" << '\r';
-		std::fflush(stdout);
+			std::cout << "   Progress: " << std::setprecision(0) << envir.time() << " of " << envir.timeTotal() << " seconds -- " << std::fixed << std::setprecision(1) << 100 * envir.time() / envir.timeTotal() << "%" << '\r';
+			std::fflush(stdout);
 		}
 	}
 }
