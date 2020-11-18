@@ -255,58 +255,83 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 	vec::fixed<6> force(fill::zeros); // Total hydrodynamic force acting on the floater
 	vec::fixed<6> df(fill::zeros); // Total hydrodynamic force acting on each cylinder
 
-	// These forces below are used to output the different components to the output files and internally in MorisonElement.hydrodynamicForce().
-	vec::fixed<6> force_inertia(fill::zeros); // Total force acting on the floater
-	vec::fixed<6> force_drag(fill::zeros);
-	vec::fixed<6> force_froudeKrylov(fill::zeros);
-	vec::fixed<6> force_inertia_2nd_part1(fill::zeros);
-	vec::fixed<6> force_inertia_2nd_part2(fill::zeros);
-	vec::fixed<6> force_inertia_2nd_part3(fill::zeros);
-	vec::fixed<6> force_inertia_2nd_part4(fill::zeros);
-	vec::fixed<6> force_inertia_2nd_part5(fill::zeros);
+	// These forces below are used to output the different components to the output files and internally in MorisonElement.hydrodynamicForce().	
+	vec::fixed<6> force_drag(fill::zeros); // Drag force
+	vec::fixed<6> force_1(fill::zeros);	// Component due to 1st order incoming flow
+	vec::fixed<6> force_2(fill::zeros); // Component due to 2nd order incoming flow
+	vec::fixed<6> force_3(fill::zeros); // Component due to axial acceleration
+	vec::fixed<6> force_4(fill::zeros); // Component due to the axial-divergence acceleration
+	vec::fixed<6> force_eta(fill::zeros); // Component due to the wave elevation
+	vec::fixed<6> force_rem(fill::zeros); // Remaining force components
 
-	vec::fixed<6> df_inertia(fill::zeros); // Forces acting on each Morison Element. They are set to zero inside MorisonElement.hydrodynamicForce().
+	// Same thing, but for the forces acting at the extremities of the cylinder
+	vec::fixed<6> force_drag_ext(fill::zeros);
+	vec::fixed<6> force_1_ext(fill::zeros);
+	vec::fixed<6> force_2_ext(fill::zeros);
+	vec::fixed<6> force_3_ext(fill::zeros);
+	vec::fixed<6> force_eta_ext(fill::zeros);
+	vec::fixed<6> force_rem_ext(fill::zeros);
+
+	// Forces acting on each Morison Element. They are set to zero inside MorisonElement.hydrodynamicForce().
 	vec::fixed<6> df_drag(fill::zeros);
-	vec::fixed<6> df_froudeKrylov(fill::zeros);
-	vec::fixed<6> df_inertia_2nd_part1(fill::zeros);
-	vec::fixed<6> df_inertia_2nd_part2(fill::zeros);
-	vec::fixed<6> df_inertia_2nd_part3(fill::zeros);
-	vec::fixed<6> df_inertia_2nd_part4(fill::zeros);
-	vec::fixed<6> df_inertia_2nd_part5(fill::zeros);
+	vec::fixed<6> df_1(fill::zeros);
+	vec::fixed<6> df_2(fill::zeros);
+	vec::fixed<6> df_3(fill::zeros);
+	vec::fixed<6> df_4(fill::zeros);
+	vec::fixed<6> df_eta(fill::zeros);
+	vec::fixed<6> df_rem(fill::zeros);
+
+	vec::fixed<6> df_drag_ext(fill::zeros);
+	vec::fixed<6> df_1_ext(fill::zeros);
+	vec::fixed<6> df_2_ext(fill::zeros);
+	vec::fixed<6> df_3_ext(fill::zeros);
+	vec::fixed<6> df_rem_ext(fill::zeros);
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
 		// Force acting on each element
 		if (hydroMode == 1)
 		{
-			df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, (m_disp_sd.rows(0, 2) + CoG()), (m_disp_sd.rows(0, 2) + CoG()), df_inertia, df_drag, df_froudeKrylov, df_inertia_2nd_part1, df_inertia_2nd_part2, df_inertia_2nd_part3, df_inertia_2nd_part4, df_inertia_2nd_part5);
+			df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, (m_disp_sd.rows(0, 2) + CoG()), (m_disp_sd.rows(0, 2) + CoG()), df_drag, df_1, df_2, df_3, df_4, df_eta, df_rem, df_drag_ext, df_1_ext, df_2_ext, df_3_ext, df_rem_ext);
 		}
 		else
 		{
-			df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode,  (m_disp.rows(0, 2) + CoG()), (m_disp_sd.rows(0, 2) + CoG()), df_inertia, df_drag, df_froudeKrylov, df_inertia_2nd_part1, df_inertia_2nd_part2, df_inertia_2nd_part3, df_inertia_2nd_part4, df_inertia_2nd_part5);				
+			df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, (m_disp.rows(0, 2) + CoG()), (m_disp_sd.rows(0, 2) + CoG()), df_drag, df_1, df_2, df_3, df_4, df_eta, df_rem, df_drag_ext, df_1_ext, df_2_ext, df_3_ext, df_rem_ext);
 		}
 
 		// Add to the forces acting on the whole floater
-		force += df;		
-		force_inertia += df_inertia;
+		force += df;
+
 		force_drag += df_drag;
-		force_froudeKrylov += df_froudeKrylov;
-		force_inertia_2nd_part1 += df_inertia_2nd_part1;
-		force_inertia_2nd_part2 += df_inertia_2nd_part2;
-		force_inertia_2nd_part3 += df_inertia_2nd_part3;
-		force_inertia_2nd_part4 += df_inertia_2nd_part4;
-		force_inertia_2nd_part5 += df_inertia_2nd_part5;
+		force_1 += df_1;
+		force_2 += df_2;
+		force_3 += df_3;
+		force_4 += df_4;
+		force_eta += df_eta;
+		force_rem += df_rem;
+
+		force_drag_ext += df_drag_ext;
+		force_1_ext += df_1_ext;
+		force_2_ext += df_2_ext;
+		force_3_ext += df_3_ext;
+		force_rem_ext += df_rem_ext;
 	}
 
 	IO::print2outLine(IO::OUTFLAG_HD_FORCE, force);
-	IO::print2outLine(IO::OUTFLAG_HD_INERTIA_FORCE, force_inertia);
-	IO::print2outLine(IO::OUTFLAG_HD_DRAG_FORCE, force_drag);
-	IO::print2outLine(IO::OUTFLAG_HD_FK_FORCE, force_froudeKrylov);
-	IO::print2outLine(IO::OUTFLAG_HD_2ND_FORCE_PART1, force_inertia_2nd_part1);
-	IO::print2outLine(IO::OUTFLAG_HD_2ND_FORCE_PART2, force_inertia_2nd_part2);
-	IO::print2outLine(IO::OUTFLAG_HD_2ND_FORCE_PART3, force_inertia_2nd_part3);
-	IO::print2outLine(IO::OUTFLAG_HD_2ND_FORCE_PART4, force_inertia_2nd_part4);
-	IO::print2outLine(IO::OUTFLAG_HD_2ND_FORCE_PART5, force_inertia_2nd_part5);
+
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG, force_drag);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_1, force_1);	
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_2, force_2);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_3, force_3);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_4, force_4);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_ETA, force_eta);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_REM, force_rem);
+
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG_EXT, force_drag);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_1_EXT, force_1);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_2_EXT, force_2);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_3_EXT, force_3);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_REM_EXT, force_rem);
 	
 	return force;
 }
