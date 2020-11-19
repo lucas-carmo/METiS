@@ -8,8 +8,8 @@
 	Constructors
 *****************************************************/
 FOWT::FOWT() : m_extLinStiff(fill::zeros), m_mass(datum::nan),
-m_disp(fill::zeros), m_vel(fill::zeros), m_acc(fill::zeros),
-m_disp_sd(fill::zeros), m_vel_sd(fill::zeros), m_acc_sd(fill::zeros)
+m_disp(fill::zeros), m_vel(fill::zeros),
+m_disp_sd(fill::zeros), m_vel_sd(fill::zeros)
 {
 	m_CoG.fill(datum::nan);
 
@@ -140,9 +140,9 @@ vec::fixed<6> FOWT::vel() const
 	return m_vel;
 }
 
-vec::fixed<6> FOWT::acc() const
+vec::fixed<6> FOWT::disp_sd() const
 {
-	return m_acc;
+	return m_disp_sd;
 }
 
 vec::fixed<6> FOWT::constForce() const
@@ -243,13 +243,6 @@ std::string FOWT::printDoF() const
 	return output;
 }
 
-void FOWT::print2outLine() const
-{
-	IO::print2outLine(IO::OUTFLAG_FOWT_DISP, m_disp);
-	IO::print2outLine(IO::OUTFLAG_FOWT_VEL, m_vel);
-	IO::print2outLine(IO::OUTFLAG_FOWT_ACC, m_acc);
-	IO::print2outLine(IO::OUTFLAG_FOWT_DISP_SD, m_disp_sd);
-}
 
 
 /*****************************************************
@@ -257,21 +250,19 @@ void FOWT::print2outLine() const
 *****************************************************/
 // Update FOWT displacement, velocity, acceleration and any other necessary state.
 // dt is used only for integrating the filter equation for the slow drift motions.
-void FOWT::update(const ENVIR &envir, const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc)
+void FOWT::update(const ENVIR &envir, const vec::fixed<6> &disp, const vec::fixed<6> &vel)
 {
 	m_disp = disp;
 	m_vel = vel;
-	m_acc = acc;
 
 	if (m_filterSD_omega < 0)
 	{
 		m_disp_sd = disp;
 		m_vel_sd = vel;
-		m_acc_sd = acc;
 	}
 
 	// Aqui tem que passar os deslocamentos com relacao ao CoG do floater. Calcular aqui mesmo baseado na posicao do centro de referencia de movimento
-	m_floater.update(envir, m_disp, m_vel, m_acc, m_disp_sd, m_vel_sd);
+	m_floater.update(envir, m_disp, m_vel, m_disp_sd, m_vel_sd);
 }
 
 // Evaluate (and update) the axis system that follows the slow position.
@@ -302,7 +293,6 @@ void FOWT::update_sd(const vec::fixed<6> &disp, const double dt)
 		vec::fixed<6> vel_sd_k4 = acc_sd_k3 * dt;
 		vec::fixed<6> disp_sd_k4 = (m_vel_sd + vel_sd_k3) * dt;
 
-		m_acc_sd = (acc_sd_k1 + 2 * acc_sd_k2 + 2 * acc_sd_k3 + acc_sd_k4) / 6;
 		m_vel_sd += (vel_sd_k1 + 2 * vel_sd_k2 + 2 * vel_sd_k3 + vel_sd_k4) / 6;
 		m_disp_sd += (disp_sd_k1 + 2 * disp_sd_k2 + 2 * disp_sd_k3 + disp_sd_k4) / 6;
 	}

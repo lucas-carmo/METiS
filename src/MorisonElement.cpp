@@ -10,7 +10,7 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 							   const bool botPressFlag, const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2)
 	: m_node1Pos(node1Pos), m_node2Pos(node2Pos), m_numIntPoints(numIntPoints),
 	  m_botPressFlag(botPressFlag), m_axialCD_1(axialCD_1), m_axialCa_1(axialCa_1), m_axialCD_2(axialCD_2), m_axialCa_2(axialCa_2),
-	  m_cog2node1(fill::zeros), m_cog2node2(fill::zeros), m_node1Vel(fill::zeros), m_node2Vel(fill::zeros), m_node1Acc(fill::zeros), m_node2Acc(fill::zeros),
+	  m_cog2node1(fill::zeros), m_cog2node2(fill::zeros), m_node1Vel(fill::zeros), m_node2Vel(fill::zeros),
 	  m_node1Pos_t0(node1Pos), m_node2Pos_t0(node2Pos), m_node1Pos_sd(node1Pos), m_node2Pos_sd(node2Pos)
 {
 	m_cog2node1 = m_node1Pos - cog;
@@ -20,7 +20,7 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 /*****************************************************
 	Functions for node position / velocity / acceleration
 *****************************************************/
-void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD)
+void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD)
 {
 	mat::fixed<3, 3> RotatMatrix(rotatMatrix(floaterCoGpos.rows(3,5))); // Calculate it here so we just need to calculate the matrix once
 	vec::fixed<3> R1 = RotatMatrix * m_cog2node1; // R1 and R2 are the vectors that give the node1 and node2 positions with respect to the CoG of the structure
@@ -34,9 +34,6 @@ void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6
 
 	m_node1AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R1));
 	m_node2AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R2));
-
-	m_node1Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R1) + m_node1AccCentrip;
-	m_node2Acc = floaterAcc.rows(0, 2) + arma::cross(floaterAcc.rows(3, 5), R2) + m_node2AccCentrip;
 
 	m_xvec = RotatMatrix * m_xvec_t0;
 	m_yvec = RotatMatrix * m_yvec_t0;
@@ -113,17 +110,6 @@ vec::fixed<3> MorisonElement::node2Vel_sd() const
 {
 	return m_node2Vel_sd;
 }
-
-vec::fixed<3> MorisonElement::node1Acc() const
-{
-	return m_node1Acc;
-}
-
-vec::fixed<3> MorisonElement::node2Acc() const
-{
-	return m_node2Acc;;
-}
-
 
 vec::fixed<3> MorisonElement::node1AccCentrip() const
 {

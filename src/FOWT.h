@@ -42,7 +42,6 @@ private:
 	*/
 	vec::fixed<6> m_disp; // m_disp(0:2) = Position with respect to the initial CoG (i.e. CoG(t) - CoG(0)) --- m_disp(3:5) = Rotation with respect to initial configuration. For now, we are considering small rotations
 	vec::fixed<6> m_vel;
-	vec::fixed<6> m_acc;
 
 	// Axis system that follows the mean and slow drift.
 	// They are evaluated by filtering the instantaneous position with the following parameters.
@@ -50,7 +49,6 @@ private:
 	double m_filterSD_zeta;
 	vec::fixed<6> m_disp_sd;
 	vec::fixed<6> m_vel_sd;
-	vec::fixed<6> m_acc_sd;
 
 public:
 	FOWT();
@@ -87,7 +85,7 @@ public:
 
 	vec::fixed<6> disp() const;
 	vec::fixed<6> vel() const;
-	vec::fixed<6> acc() const;
+	vec::fixed<6> disp_sd() const;
  
 	vec::fixed<6> constForce() const;
 	std::string printLinStiff() const;
@@ -99,15 +97,10 @@ public:
 	std::string printDoF() const;
 
 	/*****************************************************
-		To add to the string line that is written to the output file at each time step
-	*****************************************************/
-	void print2outLine() const;
-
-	/*****************************************************
 		Forces, acceleration, displacement, etc
 	*****************************************************/
 	vec::fixed<6> calcAcceleration(const ENVIR &envir);
-	void update(const ENVIR &envir, const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc);
+	void update(const ENVIR &envir, const vec::fixed<6> &disp, const vec::fixed<6> &vel);
 	void update_sd(const vec::fixed<6> &disp, const double dt);
 
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir);

@@ -203,7 +203,7 @@ std::string Floater::printMorisonElements() const
 /*****************************************************
 	Forces, acceleration, displacement, etc
 *****************************************************/
-void Floater::update(const ENVIR &envir, const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc, const vec::fixed<6> &FOWTdisp_SD, const vec::fixed<6> &FOWTvel_SD)
+void Floater::update(const ENVIR &envir, const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTdisp_SD, const vec::fixed<6> &FOWTvel_SD)
 {
 	m_disp = FOWTdisp;
 	m_disp_sd = FOWTdisp_SD;
@@ -211,7 +211,7 @@ void Floater::update(const ENVIR &envir, const vec::fixed<6> &FOWTdisp, const ve
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
 		// The CoG position is added to the displacements because updateMorisonElement requires the instantaneous position of the CoG of the floater
-		m_MorisonElements.at(ii)->updateMorisonElement(envir, FOWTdisp + join_cols(CoG(), zeros(3, 1)), FOWTvel, FOWTacc, FOWTdisp_SD + join_cols(CoG(), zeros(3, 1)), FOWTvel_SD);
+		m_MorisonElements.at(ii)->updateMorisonElement(envir, FOWTdisp + join_cols(CoG(), zeros(3, 1)), FOWTvel, FOWTdisp_SD + join_cols(CoG(), zeros(3, 1)), FOWTvel_SD);
 	}
 }
 

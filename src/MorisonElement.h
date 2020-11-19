@@ -26,8 +26,6 @@ protected:
 	vec::fixed<3> m_node2Pos;
 	vec::fixed<3> m_node1Vel;
 	vec::fixed<3> m_node2Vel;
-	vec::fixed<3> m_node1Acc;
-	vec::fixed<3> m_node2Acc;
 	vec::fixed<3> m_node1AccCentrip;
 	vec::fixed<3> m_node2AccCentrip;
 
@@ -66,7 +64,7 @@ public:
 				   const bool botPressFlag, const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2);
 	
 	// Functions related to position, velocity and acceleration
-	void updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterAcc, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD);
+	void updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD);
 	vec::fixed<3> node1Pos_t0() const;
 	vec::fixed<3> node2Pos_t0() const;
 	vec::fixed<3> node1Pos() const;
@@ -77,8 +75,6 @@ public:
 	vec::fixed<3> node2Vel() const;
 	vec::fixed<3> node1Vel_sd() const;
 	vec::fixed<3> node2Vel_sd() const;
-	vec::fixed<3> node1Acc() const;
-	vec::fixed<3> node2Acc() const;
 	vec::fixed<3> node1AccCentrip() const;
 	vec::fixed<3> node2AccCentrip() const;
 	virtual void make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
