@@ -59,14 +59,27 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	vec::fixed<6> vel_total(arma::fill::zeros);
 	vec::fixed<6> acc_total(arma::fill::zeros);
 
+
+	// Fifth-order Runge-Kutta method with adaptive stepsize
+	//
+	// If the error 'err' between the RK5 and the embedded 4th order method is 
+	// greater than what is required by delta0, the time step is reduced. Otherwise, it is increased.
+	double h = envir.timeStep();
+	double epsRel{ 0.01 };
+	double epsAbs{ 1e-6 };
+	vec::fixed<6> delta0{ 0 };
+	vec::fixed<6> delta1{ 0 };
+	vec::fixed<6> velErr(fill::zeros);
+	double safFact = 0.8;
+	double factor{ 1 };
+	bool condition = true;
+
 	// make sure that the members of FOWT are updated
 	fowt.update(envir, disp0, vel0);
 
 	// The header of the formatted output file is written during the first time step and is then turned off
 	IO::print2outLineHeader_turnOn();
-
-	double h = envir.timeStep();
-	while ( envir.time() <= envir.timeTotal() )
+	while (envir.time() <= envir.timeTotal())
 	{
 
 		IO::print2outLine_turnOn();
@@ -84,82 +97,109 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		IO::print2outLine(IO::OUTFLAG_FOWT_DISP_SD, fowt.disp_sd());
 
 
-		// RK4: first estimation
+		// Acceleration evaluated considering the previous time step does not change
+		// in the loop for the adaptive stepsize 
 		acc_k1 = fowt.calcAcceleration(envir);
-		vel_k1 = acc_k1 * h;
-		disp_k1 = vel0 * h;
 
 		// After the first time step, we do not need to print anything else to the header of the formatted output file
 		if (envir.time() == 0)
 		{
 			IO::print2outLineHeader_turnOff();
 			IO::printOutLineHeader2outFile();
-		}		
+		}
 		// Results are printed in the first estimation, since it is done with the state of the fowt and envir at the beginning of the time step
 		IO::print2outLine_turnOff();
 		IO::printOutLine2outFile();
 
-		/*
-		Other Runge-Kutta estimations for evaluating the next time step:
-		*/
-
-		// RK4: second estimation
-		envir.stepTime(a2*h);
-		fowt.update(envir, disp0 + b21*disp_k1, vel0 + b21*vel_k1);				
-
-		acc_k2 = fowt.calcAcceleration(envir);
-		vel_k2 = acc_k2 * h;
-		disp_k2 = (vel0 + b21*vel_k1) * h;
-
-		// RK4: third estimation
-		envir.stepTime(-a2*h + a3*h); // To step only a3*h from initial time
-		fowt.update(envir, disp0 + b31 * disp_k1 + b32 * disp_k2, vel0 + b31 * vel_k1 + b32 * vel_k2);
-
-		acc_k3 = fowt.calcAcceleration(envir);
-		vel_k3 = acc_k3 * h;
-		disp_k3 = (vel0 + b31 * vel_k1 + b32 * vel_k2) * h;		
-
-		// RK4: fourth estimation
-		envir.stepTime(-a3 * h + a4 * h); // To step only a4*h from initial time
-		fowt.update(envir, disp0 + b41 * disp_k1 + b42 * disp_k2 + b43 * disp_k3, vel0 + b41 * vel_k1 + b42 * vel_k2 + b43 * vel_k3);
-
-		acc_k4 = fowt.calcAcceleration(envir);
-		vel_k4 = acc_k4 * h;
-		disp_k4 = (vel0 + b41 * vel_k1 + b42 * vel_k2 + b43 * vel_k3) * h;
-
-		// RK4: fifth estimation
-		envir.stepTime(-a4 * h + a5 * h); // To step only a5*h from initial time
-		fowt.update(envir, disp0 + b51 * disp_k1 + b52 * disp_k2 + b53 * disp_k3 + b54 * disp_k4, vel0 + b51 * vel_k1 + b52 * vel_k2 + b53 * vel_k3 + b54 * vel_k4);
-
-		acc_k5 = fowt.calcAcceleration(envir);
-		vel_k5 = acc_k5 * h;
-		disp_k5 = (vel0 + b51 * vel_k1 + b52 * vel_k2 + b53 * vel_k3 + b54 * vel_k4) * h;
-
-		// RK4: sixth estimation
-		envir.stepTime(-a5 * h + a6 * h); // To step only a6*h from initial time
-		fowt.update(envir, disp0 + b61 * disp_k1 + b62 * disp_k2 + b63 * disp_k3 + b64 * disp_k4 + b65 * disp_k5, vel0 + b61 * vel_k1 + b62 * vel_k2 + b63 * vel_k3 + b64 * vel_k4 + b65 * vel_k5);
-
-		acc_k6 = fowt.calcAcceleration(envir);
-		vel_k6 = acc_k6 * h;
-		disp_k6 = (vel0 + b61 * vel_k1 + b62 * vel_k2 + b63 * vel_k3 + b64 * vel_k4 + b65 * vel_k5) * h;
-
-		// Calculate new state of the FOWT
-		acc_total = c1 * acc_k1 + c2 * acc_k2 + c3 * acc_k3 + c4 * acc_k4 + c5 * acc_k5 + c6*acc_k6;
-		vel_total = vel0 + c1*vel_k1 + c2*vel_k2 + c3*vel_k3 + c4*vel_k4 + c5*vel_k5 + c6*vel_k6;
-		disp_total = disp0 + c1*disp_k1 + c2*disp_k2 + c3*disp_k3 + c4*disp_k4 + c5*disp_k5 + c6*disp_k6;
-
-		// Update for next time step
-		envir.stepTime(-a6 * h + h);
-		fowt.update(envir, disp_total, vel_total);
-		fowt.update_sd(disp_total, h);
-
-		// Print progress to the screen only after integer seconds.
-		// The criterion is to verify if the current time is different
-		// from its floor value by at most one time step.
-		if (almostEqual(envir.time(), std::floor(envir.time()), envir.timeStep()))
+		// Loop for the adaptive stepsize control
+		condition = true;
+		while (condition)
 		{
-			std::cout << "   Progress: " << std::setprecision(0) << envir.time() << " of " << envir.timeTotal() << " seconds -- " << std::fixed << std::setprecision(1) << 100 * envir.time() / envir.timeTotal() << "%" << '\r';
-			std::fflush(stdout);
+			// RK5: first estimation
+			vel_k1 = acc_k1 * h;
+			disp_k1 = vel0 * h;
+
+			// RK5: second estimation
+			envir.stepTime(a2*h);
+			fowt.update(envir, disp0 + b21 * disp_k1, vel0 + b21 * vel_k1);
+
+			acc_k2 = fowt.calcAcceleration(envir);
+			vel_k2 = acc_k2 * h;
+			disp_k2 = (vel0 + b21 * vel_k1) * h;
+
+			// RK5: third estimation
+			envir.stepTime(-a2 * h + a3 * h); // To step only a3*h from initial time
+			fowt.update(envir, disp0 + b31 * disp_k1 + b32 * disp_k2, vel0 + b31 * vel_k1 + b32 * vel_k2);
+
+			acc_k3 = fowt.calcAcceleration(envir);
+			vel_k3 = acc_k3 * h;
+			disp_k3 = (vel0 + b31 * vel_k1 + b32 * vel_k2) * h;
+
+			// RK5: fourth estimation
+			envir.stepTime(-a3 * h + a4 * h); // To step only a4*h from initial time
+			fowt.update(envir, disp0 + b41 * disp_k1 + b42 * disp_k2 + b43 * disp_k3, vel0 + b41 * vel_k1 + b42 * vel_k2 + b43 * vel_k3);
+
+			acc_k4 = fowt.calcAcceleration(envir);
+			vel_k4 = acc_k4 * h;
+			disp_k4 = (vel0 + b41 * vel_k1 + b42 * vel_k2 + b43 * vel_k3) * h;
+
+			// RK5: fifth estimation
+			envir.stepTime(-a4 * h + a5 * h); // To step only a5*h from initial time
+			fowt.update(envir, disp0 + b51 * disp_k1 + b52 * disp_k2 + b53 * disp_k3 + b54 * disp_k4, vel0 + b51 * vel_k1 + b52 * vel_k2 + b53 * vel_k3 + b54 * vel_k4);
+
+			acc_k5 = fowt.calcAcceleration(envir);
+			vel_k5 = acc_k5 * h;
+			disp_k5 = (vel0 + b51 * vel_k1 + b52 * vel_k2 + b53 * vel_k3 + b54 * vel_k4) * h;
+
+			// RK5: sixth estimation
+			envir.stepTime(-a5 * h + a6 * h); // To step only a6*h from initial time
+			fowt.update(envir, disp0 + b61 * disp_k1 + b62 * disp_k2 + b63 * disp_k3 + b64 * disp_k4 + b65 * disp_k5, vel0 + b61 * vel_k1 + b62 * vel_k2 + b63 * vel_k3 + b64 * vel_k4 + b65 * vel_k5);
+
+			acc_k6 = fowt.calcAcceleration(envir);
+			vel_k6 = acc_k6 * h;
+			disp_k6 = (vel0 + b61 * vel_k1 + b62 * vel_k2 + b63 * vel_k3 + b64 * vel_k4 + b65 * vel_k5) * h;
+
+			// Results obtained with the RK5 and the associated error
+			acc_total = c1 * acc_k1 + c2 * acc_k2 + c3 * acc_k3 + c4 * acc_k4 + c5 * acc_k5 + c6 * acc_k6;
+			vel_total = c1 * vel_k1 + c2 * vel_k2 + c3 * vel_k3 + c4 * vel_k4 + c5 * vel_k5 + c6 * vel_k6;
+			velErr = (c1 - c1s)*vel_k1 + (c2 - c2s)*vel_k2 + (c3 - c3s)*vel_k3 + (c4 - c4s)*vel_k4 + (c5 - c5s)*vel_k5 + (c6 - c6s)*vel_k6;
+
+			// Evaluate the error
+			delta1 = arma::abs(velErr);
+			for (int ii = 0; ii < delta0.size(); ++ii)
+			{
+				delta0.at(ii) = epsRel * ((std::abs(h*acc_total.at(ii)) > epsAbs) ? std::abs(h*acc_total.at(ii)) : epsAbs);
+			}
+			factor = arma::min(delta0 / delta1);
+
+			if (!arma::is_finite(factor))
+			{
+				throw std::runtime_error("The adaptative stepsize RK5 diverged.");
+			}
+
+			if (factor >= 1)
+			{
+				// Update for next time step.				
+				vel_total += vel0;
+				disp_total = disp0 + c1 * disp_k1 + c2 * disp_k2 + c3 * disp_k3 + c4 * disp_k4 + c5 * disp_k5 + c6 * disp_k6;
+
+				envir.stepTime(-a6 * h + h);
+				fowt.update(envir, disp_total, vel_total);
+				fowt.update_sd(disp_total, h);
+
+				condition = false;
+
+				h *= safFact * std::pow(factor, 0.2);
+			}
+			else
+			{
+				envir.stepTime(-a6 * h);
+				h *= safFact * std::pow(factor, 0.25);
+			}
 		}
+
+		// Print progress to the screen 
+		std::cout << "   Progress: " << std::setprecision(0) << envir.time() << " of " << envir.timeTotal() << " seconds -- " << std::fixed << std::setprecision(1) << 100 * envir.time() / envir.timeTotal() << "%" << '\r';
+		std::fflush(stdout);
 	}
 }
