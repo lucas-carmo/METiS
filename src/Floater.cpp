@@ -327,11 +327,11 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 	IO::print2outLine(IO::OUTFLAG_HD_FORCE_ETA, force_eta);
 	IO::print2outLine(IO::OUTFLAG_HD_FORCE_REM, force_rem);
 
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG_EXT, force_drag);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_1_EXT, force_1);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_2_EXT, force_2);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_3_EXT, force_3);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_REM_EXT, force_rem);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG_EXT, force_drag_ext);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_1_EXT, force_1_ext);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_2_EXT, force_2_ext);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_3_EXT, force_3_ext);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_REM_EXT, force_rem_ext);
 	
 	return force;
 }
