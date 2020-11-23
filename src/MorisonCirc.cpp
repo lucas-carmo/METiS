@@ -408,17 +408,16 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			eta = envir.waveElev(n_ii_sd.at(0), n_ii_sd.at(1));
 		}
 
-		// Component of the velocity of the integration point that is perpendicular to the axis of the cylinder
+		// Velocity of the integration point
 		lambda = norm(n_ii_sd - n1_sd, 2) / L;
-		vel_ii = v1 + lambda * (v2 - v1);		
-		vel_ii -= v_axial;
+		vel_ii = v1 + lambda * (v2 - v1);				
 
 		// Fluid velocity at the integration point.		
 		u1 = envir.u1(n_ii_sd, eta);
 		u1 -= arma::dot(u1, zvec_sd) * zvec_sd;
 
 		// Quadratic drag force.		
-		force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - vel_ii, 2) * (u1 - vel_ii);
+		force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - (vel_ii-v_axial), 2) * (u1 - (vel_ii - v_axial));
 
 		// If required, calculate the other second-order forces,
 		if (hydroMode == 2)
@@ -443,11 +442,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 
 			// 4th component: Force due to axial-divergence acceleration
 			double dwdz = arma::dot(du1dx, zvec_sd) * zvec_sd.at(0) + arma::dot(du1dy, zvec_sd) * zvec_sd.at(1) + arma::dot(du1dz, zvec_sd) * zvec_sd.at(2);
-			a_a = dwdz * (u1 - arma::dot(u1, zvec_sd)*zvec_sd - vel_ii); // vel_ii was already projected in the direction perpendicular to the cylinder
-			force_4_ii = aux * a_a;
+			a_a = dwdz * (arma::dot(u1 - vel_ii, xvec_sd)*xvec_sd + arma::dot(u1 - vel_ii, yvec_sd)*yvec_sd);
+			force_4_ii = aux * (Cm - 1) * a_a;
 
 			// Add to remaining forces: Force due to cylinder rotation				
-			a_r = 2 * arma::dot(u1 - v_axial, zvec_sd) * (1 / L) * (arma::dot(v2 - v1, xvec_sd) * yvec_sd + arma::dot(v2 - v1, yvec_sd) * xvec_sd);
+			a_r = 2 * arma::dot(u1 - vel_ii, zvec_sd) * (1 / L) * (arma::dot(v2 - v1, xvec_sd) * xvec_sd + arma::dot(v2 - v1, yvec_sd) * yvec_sd);
 			force_rem_ii = -aux * (Cm - 1) * a_r;
 		}
 
@@ -571,7 +570,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 				force_2_ext.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
 
 				// Inertial force - pt3 - Quadratic pressure drop from Rainey's formulation
-				aux_force = -0.5 * aux * rho * (Cm - 1) * pow(norm((envir.u1(n1_sd, 0) - u1) - (v1 - v_axial)), 2) * zvec_sd;
+				aux_force = -0.5 * aux * rho * (Cm - 1) * (pow(arma::dot(envir.u1(n1_sd, 0) - v1, xvec_sd), 2) + pow(arma::dot(envir.u1(n1_sd, 0) - v1, yvec_sd), 2)) * zvec_sd;
 				force_3_ext.rows(0, 2) += aux_force;
 				force_3_ext.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
 
@@ -654,7 +653,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 				force_3_ext.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
 
 				// Inertial force - Remaining - Point load from Rainey's formulation that results in a Munk moment
-				aux_force = aux * (Cm - 1) * cdot(u1 - v_axial, zvec_sd) * ((envir.u1(n2_sd, 0) - u1) - (v1 - v_axial));
+				aux_force = -aux * (Cm - 1) * cdot(u1 - v_axial, zvec_sd) * ((envir.u1(n2_sd, 0) - u1) - (v1 - v_axial));
 				force_rem_ext.rows(0, 2) += aux_force;
 				force_rem_ext.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
 			}
