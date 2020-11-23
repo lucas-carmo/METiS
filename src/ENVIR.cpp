@@ -19,12 +19,22 @@ ENVIR::ENVIR()
 	m_watDepth = arma::datum::nan;
 }
 
+void ENVIR::setCurrentTime(const double time)
+{
+	m_time = time;
+}
+
 /*****************************************************
 	Setters
 *****************************************************/
 void ENVIR::setTimeStep(const double timeStep)
 {
 	m_timeStep = timeStep;
+}
+
+void ENVIR::setPrintStep(const double printStep)
+{
+	m_printStep = printStep;
 }
 
 void ENVIR::setTimeTotal(const double timeTotal)
@@ -280,6 +290,11 @@ double ENVIR::timeStep() const
 	return m_timeStep;
 }
 
+double ENVIR::printStep() const
+{
+	return m_printStep;
+}
+
 double ENVIR::timeTotal() const
 {
 	return m_timeTotal;
@@ -336,6 +351,11 @@ double ENVIR::windExp() const
 std::string ENVIR::printTimeStep() const
 {
 	return std::to_string(m_timeStep);
+}
+
+std::string ENVIR::printPrintStep() const
+{
+	return std::to_string(m_printStep);
 }
 
 std::string ENVIR::printTimeTotal() const

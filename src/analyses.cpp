@@ -1,5 +1,7 @@
 #include "analyses.h"
 
+
+#include <cmath>
 #include <iostream>
 #include <armadillo>
 #include <iomanip> // For input/output manipulators
@@ -65,6 +67,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	// If the error 'err' between the RK5 and the embedded 4th order method is 
 	// greater than what is required by delta0, the time step is reduced. Otherwise, it is increased.
 	double h = envir.timeStep();
+	double h_aux = h; // Extra time step used to print every print step without losing the time step calculated by the adaptive stepsize algorithm
 	double epsRel{ 0.01 };
 	double epsAbs{ 1e-6 };
 	vec::fixed<6> delta0{ 0 };
@@ -81,9 +84,12 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	IO::print2outLineHeader_turnOn();
 	while (envir.time() <= envir.timeTotal())
 	{
-
-		IO::print2outLine_turnOn();
-		IO::print2outLine_decimal(envir.time()); // Time has to be printed as decimal to avoid problems with large numbers
+		bool flagPrintStep(almostEqual(std::fmod(envir.time(), envir.printStep()), 0, epsAbs));
+		if (flagPrintStep)
+		{
+			IO::print2outLine_turnOn();
+			IO::print2outLine_decimal(envir.time()); // Time has to be printed as decimal to avoid problems with large numbers
+		}
 
 		// FOWT state at the beginning of the time step
 		disp0 = fowt.disp();
@@ -104,17 +110,33 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		// After the first time step, we do not need to print anything else to the header of the formatted output file
 		if (envir.time() == 0)
 		{
-			IO::print2outLineHeader_turnOff();
 			IO::printOutLineHeader2outFile();
+			IO::print2outLineHeader_turnOff();
 		}
 		// Results are printed in the first estimation, since it is done with the state of the fowt and envir at the beginning of the time step
-		IO::print2outLine_turnOff();
 		IO::printOutLine2outFile();
+		IO::print2outLine_turnOff();
 
 		// Loop for the adaptive stepsize control
 		condition = true;
 		while (condition)
 		{
+			// If the next print step is going to be crossed in this time step, adjust h so that
+			// the next step is a printable one. This leads to a reduction of h, so we obtain an error
+			// that is smaller than the one calculated in the previous step.
+			//
+			// In some cases, this may lead to a very small time step, which could significantly slow down 
+			// the simulation. Hence, keep a copy of the step 'h' evaluated in the previous time step to be
+			// used in the adptive stepsize control.
+			double nextPrintStep = envir.printStep()*(std::floor(envir.time() / envir.printStep()) + 1);
+			bool h_from_aux = false;
+			if ((envir.time() < nextPrintStep) && (envir.time() + h > nextPrintStep))
+			{
+				h_aux = h;
+				h = nextPrintStep - envir.time();
+				h_from_aux = true;
+			}
+
 			// RK5: first estimation
 			vel_k1 = acc_k1 * h;
 			disp_k1 = vel0 * h;
@@ -161,7 +183,6 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 
 			// Results obtained with the RK5 and the associated error
 			acc_total = c1 * acc_k1 + c2 * acc_k2 + c3 * acc_k3 + c4 * acc_k4 + c5 * acc_k5 + c6 * acc_k6;
-			vel_total = c1 * vel_k1 + c2 * vel_k2 + c3 * vel_k3 + c4 * vel_k4 + c5 * vel_k5 + c6 * vel_k6;
 			velErr = (c1 - c1s)*vel_k1 + (c2 - c2s)*vel_k2 + (c3 - c3s)*vel_k3 + (c4 - c4s)*vel_k4 + (c5 - c5s)*vel_k5 + (c6 - c6s)*vel_k6;
 
 			// Evaluate the error
@@ -172,7 +193,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 			}
 			factor = arma::min(delta0 / delta1);
 
-			if (!arma::is_finite(factor))
+			if (!arma::is_finite(factor) && !h_from_aux)
 			{
 				throw std::runtime_error("The adaptative stepsize RK5 diverged.");
 			}
@@ -180,16 +201,26 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 			if (factor >= 1)
 			{
 				// Update for next time step.				
-				vel_total += vel0;
+				vel_total = vel0 + c1 * vel_k1 + c2 * vel_k2 + c3 * vel_k3 + c4 * vel_k4 + c5 * vel_k5 + c6 * vel_k6;;
 				disp_total = disp0 + c1 * disp_k1 + c2 * disp_k2 + c3 * disp_k3 + c4 * disp_k4 + c5 * disp_k5 + c6 * disp_k6;
 
-				envir.stepTime(-a6 * h + h);
+				// When the time step is calculated in order to match the print step,
+				// there are cases where the resulting 'h' is so small that it is not 
+				// possible to step due to roundoff errors. Hence, set it to the desired value directly.
+				if (h < 1e-10 && h_from_aux)
+				{
+					envir.setCurrentTime(nextPrintStep);
+				}
+				else
+				{
+					envir.stepTime(-a6 * h + h);
+				}
 				fowt.update(envir, disp_total, vel_total);
 				fowt.update_sd(disp_total, h);
 
 				condition = false;
 
-				h *= safFact * std::pow(factor, 0.2);
+				h = (h_from_aux ? h_aux : h * safFact * std::pow(factor, 0.2));
 			}
 			else
 			{
@@ -198,8 +229,11 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 			}
 		}
 
-		// Print progress to the screen 
-		std::cout << "   Progress: " << std::setprecision(0) << envir.time() << " of " << envir.timeTotal() << " seconds -- " << std::fixed << std::setprecision(1) << 100 * envir.time() / envir.timeTotal() << "%" << '\r';
-		std::fflush(stdout);
+		// Print progress to the screen
+		if (flagPrintStep)
+		{
+			std::cout << "   Progress: " << std::setprecision(2) << envir.time() << " of " << envir.timeTotal() << " seconds -- " << std::fixed << std::setprecision(1) << 100 * envir.time() / envir.timeTotal() << "%" << '\r';
+			std::fflush(stdout);
+		}
 	}
 }

@@ -36,6 +36,7 @@ private:
 	Data to specify the numerical analysis
 	*/
 	double m_timeStep;
+	double m_printStep;
 	double m_timeTotal;
 	double m_timeRamp;
 	double m_time = 0;
@@ -52,7 +53,9 @@ public:
 	/*****************************************************
 		Setters
 	*****************************************************/
+	void setCurrentTime(const double time);
 	void setTimeStep(const double timeStep);
+	void setPrintStep(const double printStep);
 	void setTimeTotal(const double timeTotal);
 	void setTimeRamp(const double timeRamp);
 	void setGravity(const double gravity);
@@ -74,6 +77,7 @@ public:
 		Getters
 	*****************************************************/
 	double timeStep() const;
+	double printStep() const;
 	double timeTotal() const;
 	double time() const;
 
@@ -91,6 +95,7 @@ public:
 		Printing
 	*****************************************************/
 	std::string printTimeStep() const;
+	std::string printPrintStep() const;
 	std::string printTimeTotal() const;
 	std::string printTimeRamp() const;
 	std::string printNodes() const;

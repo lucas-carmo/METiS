@@ -69,6 +69,11 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			envir.setTimeStep(string2num<double>(getData(strInput)));
 		}
 
+		else if (caseInsCompare(getKeyword(strInput), "PrintStep"))
+		{
+			envir.setPrintStep(string2num<double>(getData(strInput)));
+		}
+
 		else if (caseInsCompare(getKeyword(strInput), "TimeTotal"))
 		{
 			envir.setTimeTotal(string2num<double>(getData(strInput)));
@@ -1400,9 +1405,12 @@ void IO::printOutLineHeader2outFile()
 		throw std::runtime_error("Unable to write to formatted output file.");
 	}
 
-	m_outFl << std::setw(IO::m_outColumnWidth) << "Time"; // First column must always be the current time
-	m_outFl << m_outLineHeader.str() << '\n'; // Then comes the results that are stored in the header stringstream
-	m_outLineHeader.str(""); // Need to clear the stream for the next time step
+	if (m_shouldWriteOutLineHeader)
+	{
+		m_outFl << std::setw(IO::m_outColumnWidth) << "Time"; // First column must always be the current time
+		m_outFl << m_outLineHeader.str() << '\n'; // Then comes the results that are stored in the header stringstream
+		m_outLineHeader.str(""); // Need to clear the stream for the next time step
+	}
 }
 
 void IO::printOutLine2outFile()
@@ -1412,8 +1420,11 @@ void IO::printOutLine2outFile()
 		throw std::runtime_error("Unable to write to formatted output file.");
 	}
 
-	m_outFl << m_outLine.str() << '\n';
-	m_outLine.str(""); // Need to clear the stream for the next time step
+	if (m_shouldWriteOutLine)
+	{
+		m_outFl << m_outLine.str() << '\n';
+		m_outLine.str(""); // Need to clear the stream for the next time step
+	}
 }
 
 
@@ -1429,7 +1440,8 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "\n\n";
 
 	m_sumFl << "ENVIR:\n";
-	m_sumFl << "Time Step:\t" << envir.timeStep() << '\n';
+	m_sumFl << "Base time Step:\t" << envir.timeStep() << '\n';
+	m_sumFl << "Print Step:\t" << envir.printStep() << '\n';
 	m_sumFl << "Total Time:\t" << envir.timeTotal() << '\n';
 	m_sumFl << "Time Ramp:\t" << envir.printTimeRamp() << '\n';
 	m_sumFl << "Gravity:\t" << envir.gravity() << '\n';
