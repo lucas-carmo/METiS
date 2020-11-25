@@ -77,6 +77,8 @@ public:
 	int aeroMode() const;
 	int moorMode() const;
 
+	bool isDoFActive(const int index);
+
 	double filterSD_omega() const;
 	double filterSD_zeta() const;
 

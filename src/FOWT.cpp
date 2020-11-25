@@ -98,6 +98,14 @@ int FOWT::moorMode() const
 	return m_moorMode;
 }
 
+bool FOWT::isDoFActive(const int index)
+{
+	if (index >= 0 && index < 6)
+		return m_dofs.at(index);
+	else
+		throw std::runtime_error("Invalid index in FOWT::isDoFActive(const int index).");
+}
+
 double FOWT::filterSD_omega() const
 {
 	return m_filterSD_omega;
@@ -329,6 +337,7 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 		// Solve inertiaMatrix * acc = force
 		// Armadillo will throw its own exception if this computation fails.
 		acc = arma::solve(inertiaMatrix, force);
+
 
 		IO::print2outLine(IO::OUTFLAG_HD_ADD_MASS_FORCE, -(addedMass - m_floater.addedMass_t0())* acc);
 

@@ -61,6 +61,16 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	vec::fixed<6> vel_total(arma::fill::zeros);
 	vec::fixed<6> acc_total(arma::fill::zeros);
 
+	// Check if this is a moving or fixed body
+	bool movBody = false;
+	for (int ii = 0; ii < 6; ++ii)
+	{
+		if (fowt.isDoFActive(ii))
+		{
+			movBody = true;
+			break;
+	}
+	}
 
 	// Fifth-order Runge-Kutta method with adaptive stepsize
 	//
@@ -73,6 +83,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	vec::fixed<6> delta0{ 0 };
 	vec::fixed<6> delta1{ 0 };
 	vec::fixed<6> velErr(fill::zeros);
+	vec::fixed<6> dispErr(fill::zeros);
 	double safFact = 0.8;
 	double factor{ 1 };
 	bool condition = true;
@@ -82,6 +93,8 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 
 	// The header of the formatted output file is written during the first time step and is then turned off
 	IO::print2outLineHeader_turnOn();
+	double nextPrintStep{ 0 };
+	bool h_from_aux{ false };
 	while (envir.time() <= envir.timeTotal())
 	{
 		bool flagPrintStep(almostEqual(std::fmod(envir.time(), envir.printStep()), 0, epsAbs));
@@ -102,6 +115,12 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		IO::print2outLine(IO::OUTFLAG_FOWT_ACC, acc_total); // Acc calculated from previous time step
 		IO::print2outLine(IO::OUTFLAG_FOWT_DISP_SD, fowt.disp_sd());
 
+		// Print progress to the screen
+		if (flagPrintStep)
+		{
+			std::cout << "   Progress: " << std::setprecision(2) << envir.time() << " of " << envir.timeTotal() << " seconds -- " << std::fixed << std::setprecision(1) << 100 * envir.time() / envir.timeTotal() << "%" << '\r';
+			std::fflush(stdout);
+		}
 
 		// Acceleration evaluated considering the previous time step does not change
 		// in the loop for the adaptive stepsize 
@@ -118,25 +137,9 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		IO::print2outLine_turnOff();
 
 		// Loop for the adaptive stepsize control
-		condition = true;
-		while (condition)
-		{
-			// If the next print step is going to be crossed in this time step, adjust h so that
-			// the next step is a printable one. This leads to a reduction of h, so we obtain an error
-			// that is smaller than the one calculated in the previous step.
-			//
-			// In some cases, this may lead to a very small time step, which could significantly slow down 
-			// the simulation. Hence, keep a copy of the step 'h' evaluated in the previous time step to be
-			// used in the adptive stepsize control.
-			double nextPrintStep = envir.printStep()*(std::floor(envir.time() / envir.printStep()) + 1);
-			bool h_from_aux = false;
-			if ((envir.time() < nextPrintStep) && (envir.time() + h > nextPrintStep))
-			{
-				h_aux = h;
-				h = nextPrintStep - envir.time();
-				h_from_aux = true;
-			}
-
+		condition = true;		
+		while (condition && movBody)
+		{			
 			// RK5: first estimation
 			vel_k1 = acc_k1 * h;
 			disp_k1 = vel0 * h;
@@ -181,28 +184,29 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 			vel_k6 = acc_k6 * h;
 			disp_k6 = (vel0 + b61 * vel_k1 + b62 * vel_k2 + b63 * vel_k3 + b64 * vel_k4 + b65 * vel_k5) * h;
 
-			// Results obtained with the RK5 and the associated error
-			acc_total = c1 * acc_k1 + c2 * acc_k2 + c3 * acc_k3 + c4 * acc_k4 + c5 * acc_k5 + c6 * acc_k6;
-			velErr = (c1 - c1s)*vel_k1 + (c2 - c2s)*vel_k2 + (c3 - c3s)*vel_k3 + (c4 - c4s)*vel_k4 + (c5 - c5s)*vel_k5 + (c6 - c6s)*vel_k6;
+			// Results obtained with the RK5 and the associated error			
+			disp_total = c1 * disp_k1 + c2 * disp_k2 + c3 * disp_k3 + c4 * disp_k4 + c5 * disp_k5 + c6 * disp_k6;
+			dispErr = (c1 - c1s)*disp_k1 + (c2 - c2s)*disp_k2 + (c3 - c3s)*disp_k3 + (c4 - c4s)*disp_k4 + (c5 - c5s)*disp_k5 + (c6 - c6s)*disp_k6;
 
 			// Evaluate the error
-			delta1 = arma::abs(velErr);
+			delta1 = arma::abs(dispErr);
 			for (int ii = 0; ii < delta0.size(); ++ii)
-			{
-				delta0.at(ii) = epsRel * ((std::abs(h*acc_total.at(ii)) > epsAbs) ? std::abs(h*acc_total.at(ii)) : epsAbs);
+			{				
+				delta0.at(ii) = epsRel * ((std::abs(disp_total.at(ii)) > epsAbs) ? std::abs(disp_total.at(ii)) : epsAbs);
 			}
 			factor = arma::min(delta0 / delta1);
 
 			if (!arma::is_finite(factor) && !h_from_aux)
 			{
-				throw std::runtime_error("The adaptative stepsize RK5 diverged.");
+				throw std::runtime_error("The adaptive stepsize RK5 diverged.");
 			}
 
 			if (factor >= 1)
 			{
-				// Update for next time step.				
-				vel_total = vel0 + c1 * vel_k1 + c2 * vel_k2 + c3 * vel_k3 + c4 * vel_k4 + c5 * vel_k5 + c6 * vel_k6;;
-				disp_total = disp0 + c1 * disp_k1 + c2 * disp_k2 + c3 * disp_k3 + c4 * disp_k4 + c5 * disp_k5 + c6 * disp_k6;
+				// Update for next time step.
+				acc_total = c1 * acc_k1 + c2 * acc_k2 + c3 * acc_k3 + c4 * acc_k4 + c5 * acc_k5 + c6 * acc_k6;
+				vel_total = vel0 + c1 * vel_k1 + c2 * vel_k2 + c3 * vel_k3 + c4 * vel_k4 + c5 * vel_k5 + c6 * vel_k6;
+				disp_total += disp0;
 
 				// When the time step is calculated in order to match the print step,
 				// there are cases where the resulting 'h' is so small that it is not 
@@ -227,13 +231,28 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 				envir.stepTime(-a6 * h);
 				h *= safFact * std::pow(factor, 0.25);
 			}
+		}				
+
+		// If the next print step is going to be crossed in this time step, adjust h so that
+		// the next step is a printable one. This leads to a reduction of h, so we obtain an error
+		// that is smaller than the one calculated in the previous step.
+		//
+		// In some cases, this may lead to a very small time step, which could significantly slow down 
+		// the simulation. Hence, keep a copy of the step 'h' evaluated in the previous time step to be
+		// used in the adptive stepsize control.
+		nextPrintStep = envir.printStep()*(std::floor(envir.time() / envir.printStep()) + 1);
+		h_from_aux = false;
+		if ((envir.time() < nextPrintStep) && (envir.time() + h > nextPrintStep))
+		{
+			h_aux = h;
+			h = nextPrintStep - envir.time();
+			h_from_aux = true;
 		}
 
-		// Print progress to the screen
-		if (flagPrintStep)
+		if (!movBody)
 		{
-			std::cout << "   Progress: " << std::setprecision(2) << envir.time() << " of " << envir.timeTotal() << " seconds -- " << std::fixed << std::setprecision(1) << 100 * envir.time() / envir.timeTotal() << "%" << '\r';
-			std::fflush(stdout);
+			envir.stepTime(h);
+			h = envir.timeStep();
 		}
 	}
 }
