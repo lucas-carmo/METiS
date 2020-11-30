@@ -1573,6 +1573,10 @@ std::string IO::printOutVar()
 			output += "Hydrodynamic force - Remaining";
 			break;
 
+		case IO::OUTFLAG_HD_FORCE_DRAG_EXT:
+			output += "Hydrodynamic force - Drag: ";
+			break;		
+
 		case IO::OUTFLAG_HD_ADD_MASS_FORCE:
 			output += "Force due to added mass: ";
 			break;
@@ -1601,6 +1605,27 @@ std::string IO::printOutVar()
 			output += "Total force: ";
 			break;
 
+		// Options that are not printted to the sum file:
+		// - Forces at the extremities, since they are activated with their respective forces along the length of the cylinder
+		// - Debug options, as they are for development usage
+		case IO::OUTFLAG_DEBUG_NUM:
+			break;
+		case OUTFLAG_DEBUG_VEC_3:
+			break;
+		case OUTFLAG_DEBUG_VEC_6:
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_1_EXT:			
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_2_EXT:
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_3_EXT:
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_REM_EXT:
+			break;
 		default:
 			output += "Unknown specifier in output flags.";
 			break;
