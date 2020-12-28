@@ -496,8 +496,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		du1dt -= arma::dot(du1dt, zvec) * zvec;
 		eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
 		force_eta.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta;
-		double R_ii = norm(n_ii - n1, 2) + eta / 2;
-		force_eta.rows(3, 5) = cross(n_ii + eta / 2 * zvec - refPt, force_eta.rows(0, 2));
+		force_eta.rows(3, 5) = cross(n_ii - refPt, force_eta.rows(0, 2));
 	}
 
 
