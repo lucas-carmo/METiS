@@ -1345,7 +1345,7 @@ void IO::print2outLine(const OutFlag &flag, const int ID, const double num)
 
 		if (flag == OUTFLAG_WAVE_PRES_2ND)
 		{
-			print2outLineHeader("wave_pres_2nd" + std::to_string(ID));
+			print2outLineHeader("wave_pres_2nd_" + std::to_string(ID));
 		}
 	}
 
