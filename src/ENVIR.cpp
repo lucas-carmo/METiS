@@ -505,7 +505,7 @@ double ENVIR::waveElev(const double x, const double y, const unsigned int waveIn
 	double beta = m_wave.at(waveIndex).direction() * arma::datum::pi / 180.;
 	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
 
-	return A * cos(k*cos(beta)*x + k * sin(beta)*y - w * m_time + phase);
+	return ramp() * A * cos(k*cos(beta)*x + k * sin(beta)*y - w * m_time + phase);
 }
 
 double ENVIR::waveElev(const double x, const double y) const
@@ -517,7 +517,7 @@ double ENVIR::waveElev(const double x, const double y) const
 		elev += ENVIR::waveElev(x, y, ii);
 	}
 
-	return elev * ramp();
+	return elev;
 }
 
 
@@ -1039,7 +1039,7 @@ double ENVIR::wavePressure_2ndOrd(const vec::fixed<3> &coord, const unsigned int
 			- 0.5 * (k1*k1 / (w1 * pow(std::cosh(k1*h), 2)) - k2 * k2 / (w2 * pow(std::cosh(k2*h), 2)));
 		aux = aux / (g * norm_k1_k2 * std::tanh(norm_k1_k2 * h) - (w1 - w2)*(w1 - w2));
 
-		p = 0.5 * A1 * A2 * (w1 - w2) * g*g * aux * (w1 - w2) * std::cosh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h)
+		p = 0.5 * m_watDens * A1 * A2 * (w1 - w2) * g*g * aux * std::cosh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h)
 			* std::cos(dot(k1_k2, coord) - (w1 - w2) * t + phase1 - phase2);
 	}
 
