@@ -1610,6 +1610,7 @@ std::string IO::printOutVar()
 		// - Forces at the extremities, since they are activated with their respective forces along the length of the cylinder
 		// - Debug options, as they are for development usage
 		case IO::OUTFLAG_DEBUG_NUM:
+<<<<<<< HEAD
 			printFlag = false;
 			break;
 
@@ -1637,6 +1638,25 @@ std::string IO::printOutVar()
 			printFlag = false;
 			break;
 
+=======
+			break;
+		case OUTFLAG_DEBUG_VEC_3:
+			break;
+		case OUTFLAG_DEBUG_VEC_6:
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_1_EXT:			
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_2_EXT:
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_3_EXT:
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_REM_EXT:
+			break;
+>>>>>>> dev
 		default:
 			output += "Unknown specifier in output flags.";
 			break;
