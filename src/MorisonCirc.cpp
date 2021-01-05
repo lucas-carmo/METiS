@@ -507,12 +507,12 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	if (n1.at(2) <= zwl)
 	{
 		// Kinematics
-		du1dt = arma::dot(envir.du1dt(n1, 0), zvec) * zvec;		
+		du1dt = arma::dot(envir.du1dt(n1, 0), zvec) * zvec;
+		u1 = envir.u1(n1_sd, 0);
 		a_c.zeros();
 		du2dt.zeros();
 		if (hydroMode == 2)
 		{
-			u1 = envir.u1(n1_sd, 0);
 			du1dx = envir.du1dx(n1_sd, 0);
 			du1dy = envir.du1dy(n1_sd, 0);
 			du1dz = envir.du1dz(n1_sd, 0);
@@ -527,10 +527,10 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		}
 
 		// Drag force
-		u1 = arma::dot(u1, zvec_sd) * zvec_sd;
+		u1 = arma::dot(u1, zvec_sd) * zvec_sd;		
 		aux_force = 0.5 * rho * CdV_1 * datum::pi * (D*D / 4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
-		force_drag.rows(0, 2) += aux_force;
-		force_drag.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
+		force_drag_ext.rows(0, 2) += aux_force;
+		force_drag_ext.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
 
 		// Inertial force - pt1
 		aux = rho * CaV_1 * (4 / 3.) * datum::pi * (D*D*D / 8.);
@@ -586,11 +586,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	{
 		// Kinematics
 		du1dt = arma::dot(envir.du1dt(n2, 0), zvec) * zvec;
+		u1 = envir.u1(n2_sd, 0);
 		a_c.zeros();
 		du2dt.zeros();
 		if (hydroMode == 2)
-		{
-			u1 = envir.u1(n2_sd, 0);
+		{			
 			du1dx = envir.du1dx(n2_sd, 0);
 			du1dy = envir.du1dy(n2_sd, 0);
 			du1dz = envir.du1dz(n2_sd, 0);
@@ -607,8 +607,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		// Drag force
 		u1 = arma::dot(u1, zvec_sd) * zvec_sd;
 		aux_force = 0.5 * rho * CdV_2 * datum::pi * (D*D / 4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
-		force_drag.rows(0, 2) += aux_force;
-		force_drag.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
+		force_drag_ext.rows(0, 2) += aux_force;
+		force_drag_ext.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
 
 		// Inertial force - pt1
 		aux = rho * CaV_2 * (4 / 3.) * datum::pi * (D*D*D / 8.);
