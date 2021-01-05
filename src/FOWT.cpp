@@ -330,7 +330,13 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 		{
 			if (!m_dofs[ii])
 			{
-				force[ii] = 0;
+				force.at(ii) = 0;
+
+				// Even when the dof is disabled, it is necessary to provide a non-zero inertia
+				// entry at the main diagonal to avoid a singular matrix
+				inertiaMatrix.row(ii).zeros();
+				inertiaMatrix.col(ii).zeros();
+				inertiaMatrix.at(ii, ii) = 1;
 			}
 		}
 
@@ -340,15 +346,6 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 
 
 		IO::print2outLine(IO::OUTFLAG_HD_ADD_MASS_FORCE, -(addedMass - m_floater.addedMass_t0())* acc);
-
-		// Due to the coupling effects, it is necessary to set the accelerations of the inactive DoFs to 0
-		for (int ii = 0; ii < 6; ++ii)
-		{
-			if (!m_dofs[ii])
-			{
-				acc[ii] = 0;
-			}
-		}
 	}
 
 	return acc;
