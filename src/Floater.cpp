@@ -245,7 +245,6 @@ mat::fixed<6, 6> Floater::addedMass(const int hydroMode) const
 			A += m_MorisonElements.at(ii)->addedMass_perp(1, m_disp.rows(0, 2) + CoG(), hydroMode) + m_MorisonElements.at(ii)->addedMass_paral(1, m_disp.rows(0, 2) + CoG(), hydroMode);
 		}
 	}
-	IO::print2outLine(IO::OUTFLAG_ADDED_MASS_DIAG, A.diag());
 	return A;
 }
 
