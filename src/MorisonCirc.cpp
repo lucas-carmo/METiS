@@ -300,12 +300,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> moment_rem_ii(fill::zeros);
 
 	// Relative distance between the integration point and the bottom node
-	double lambda{ 0 };
-
+	double lambda{ 0 };	
+	
 	// Component of the velocity and acceleration that is parallel to the axis of the cylinder
 	vec::fixed<3> v_axial = arma::dot(v1, zvec_sd) * zvec_sd; // Velocities are included in second order terms only, hence are calculate at the sd position
-	vec::fixed<3> a_axial = arma::dot(a1, zvec) * zvec; // The situation is the opposite for the acceleration
-
+	
 	// Useful auxilliary variables to avoid recalculating things
 	vec::fixed<3> aux_force(fill::zeros);
 	double aux{ 0 };
@@ -345,11 +344,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		// that is perpendicular to the axis of the cylinder
 		lambda = norm(n_ii - n1, 2) / L;
 		acc_ii = a1 + lambda * (a2 - a1);
-		acc_ii -= a_axial;
+		acc_ii = arma::dot(acc_ii, xvec_sd)*xvec + arma::dot(acc_ii, yvec_sd)*yvec;
 
 		// Component of the fluid acceleration at the integration point that is perpendicular to the axis of the cylinder.
 		du1dt = envir.du1dt(n_ii, eta);
-		du1dt = du1dt - arma::dot(du1dt, zvec) * zvec;
+		du1dt = arma::dot(du1dt, xvec_sd) * xvec+ arma::dot(du1dt, yvec_sd) * yvec;
 
 		// Force due to first-order acceleration integrated considering the instantaneous position of the cylinder		
 		force_1_ii = aux * Cm * du1dt;
@@ -416,7 +415,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		u1 = envir.u1(n_ii_sd, eta);
 		u1 -= arma::dot(u1, zvec_sd) * zvec_sd;
 
-		// Quadratic drag force.		
+		// Quadratic drag force.
 		force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - (vel_ii-v_axial), 2) * (u1 - (vel_ii - v_axial));
 
 		// If required, calculate the other second-order forces,
@@ -493,7 +492,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		n_ii = (n2 - n1) * (0 - n1.at(2)) / (n2.at(2) - n1.at(2)) + n1; // Coordinates of the intersection with the still water line;				
 		n_ii.at(2) = 0; // Since envir.du1dt returns 0 for z > 0, this line is necessary to make sure that the z coordinate of n_ii is exactly 0, and not slightly above due to roundoff errors.
 		du1dt = envir.du1dt(n_ii, 0);
-		du1dt -= arma::dot(du1dt, zvec) * zvec;
+		du1dt = arma::dot(du1dt, xvec_sd) * xvec + arma::dot(du1dt, yvec_sd) * yvec;
 		eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
 		force_eta.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta;
 		force_eta.rows(3, 5) = cross(n_ii - refPt, force_eta.rows(0, 2));
@@ -507,7 +506,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	if (n1.at(2) <= zwl)
 	{
 		// Kinematics
-		du1dt = arma::dot(envir.du1dt(n1, 0), zvec) * zvec;
+		du1dt = arma::dot(envir.du1dt(n1, 0), zvec_sd) * zvec;
 		u1 = envir.u1(n1_sd, 0);
 		a_c.zeros();
 		du2dt.zeros();
@@ -549,7 +548,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		force_3_ext.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
 
 		// Remaining force components
-		aux_force = -aux * a_axial;
+		aux_force = -aux * arma::dot(a1, zvec_sd) * zvec_sd;
 		force_rem_ext.rows(0, 2) += aux_force;
 		force_rem_ext.rows(3, 5) += cross(n1 - refPt, aux_force);
 
@@ -585,7 +584,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	if (n2.at(2) <= zwl)
 	{
 		// Kinematics
-		du1dt = arma::dot(envir.du1dt(n2, 0), zvec) * zvec;
+		du1dt = arma::dot(envir.du1dt(n2, 0), zvec_sd) * zvec;
 		u1 = envir.u1(n2_sd, 0);
 		a_c.zeros();
 		du2dt.zeros();
@@ -627,7 +626,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		force_3_ext.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
 
 		// Remaining force components
-		aux_force = -aux * a_axial;
+		aux_force = -aux * arma::dot(a2, zvec_sd) * zvec;
 		force_rem_ext.rows(0, 2) += aux_force;
 		force_rem_ext.rows(3, 5) += cross(n2 - refPt, aux_force);
 
