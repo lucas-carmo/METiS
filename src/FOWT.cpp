@@ -320,6 +320,7 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 	{
 		// Inertia matrix including added matrix
 		mat::fixed<6, 6> addedMass = m_floater.addedMass(envir.watDensity(), m_hydroMode);
+		IO::print2outLine(IO::OUTFLAG_ADDED_MASS_DIAG, addedMass.diag());
 		mat::fixed<6, 6> inertiaMatrix = addedMass + m_floater.inertiaMatrix();
 
 		// Avoid coupling effects when a DoF is disabled and the others are not.

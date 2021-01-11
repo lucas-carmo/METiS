@@ -226,7 +226,6 @@ mat::fixed<6, 6> Floater::addedMass(const double density, const int hydroMode)
 		m_addedMass_t0 = A;
 	}
 
-	IO::print2outLine(IO::OUTFLAG_ADDED_MASS_DIAG, A.diag());
 	return A;
 }
 
