@@ -30,9 +30,12 @@ Floater::Floater()
 Floater& Floater::operator= (const Floater &floater)
 {
 	// Shallow copy for simple member variables
+	m_mass = floater.m_mass;
 	m_CoG = floater.m_CoG;
 	m_inertia = floater.m_inertia;
-	m_mass = floater.m_mass;
+	m_addedMass_t0 = floater.m_addedMass_t0;
+	m_disp = floater.m_disp;
+	m_disp_sd = floater.m_disp_sd;
 
 	// The member variables that need deep copying are:
 	// - m_MorisonElements;

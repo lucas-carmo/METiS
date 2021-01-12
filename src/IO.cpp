@@ -1574,10 +1574,6 @@ std::string IO::printOutVar()
 			output += "Hydrodynamic force - Remaining: ";
 			break;
 
-		case IO::OUTFLAG_HD_FORCE_DRAG_EXT:
-			output += "Hydrodynamic force - Drag: ";
-			break;		
-
 		case IO::OUTFLAG_HD_ADD_MASS_FORCE:
 			output += "Force due to added mass: ";
 			break;
@@ -1621,6 +1617,10 @@ std::string IO::printOutVar()
 			printFlag = false;
 			break;
 
+			break;
+		case IO::OUTFLAG_HD_FORCE_DRAG_EXT:
+			printFlag = false;
+			break;
 		case IO::OUTFLAG_HD_FORCE_1_EXT:
 			printFlag = false;
 			break;

@@ -34,8 +34,6 @@ protected:
 	vec::fixed<3> m_node2Pos_t0;
 
 	// Nodes position and velocity considering only the mean and slow drift of the FOWT.
-	// They are used in the calculation of the contribution of quadratic
-	// terms (including the quadratic drag) to the hydrodynamic force.
 	vec::fixed<3> m_node1Pos_sd;
 	vec::fixed<3> m_node2Pos_sd;
 	vec::fixed<3> m_node1Vel_sd;
