@@ -21,6 +21,7 @@ private:
 	std::vector<std::unique_ptr<MorisonElement>> m_MorisonElements;	
 
 	vec::fixed<6> m_disp; // Floater displacement (i.e. [instantaneous position] - [initial position])
+	vec::fixed<6> m_disp_1stOrd; // Position considering only the solution of the first-order hydrodynamic problem
 	vec::fixed<6> m_disp_sd; // Keep track of the slow position of the floater as well
 
 public:
@@ -61,10 +62,10 @@ public:
 	/*****************************************************
 		Forces, acceleration, displacement, etc
 	*****************************************************/
-	void update(const ENVIR &envir,const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTdisp_SD, const vec::fixed<6> &FOWTvel_SD);
+	void update(const ENVIR &envir, const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTdisp_SD, const vec::fixed<6> &FOWTvel_SD, const vec::fixed<6> &FOWTdisp_1stOrd, const vec::fixed<6> &FOWTvel_1stOrd);
 	mat::fixed<6, 6> addedMass(const int hydroMode) const; // Calculated considering unitary density
 	mat::fixed<6, 6> addedMass(const double density, const int hydroMode);	
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode) const;
-	vec::fixed<6> hydrostaticForce(const ENVIR &envir) const;
+	vec::fixed<6> hydrostaticForce(const ENVIR &envir, const int hydroMode) const;
 };
 

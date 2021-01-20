@@ -27,39 +27,41 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	double c1{ 37 / 378. }, c2{ 0 }, c3{ 250 / 621. }, c4{ 125 / 594. }, c5{ 0 }, c6{ 512 / 1771. };
 	double c1s{ 2825 / 27648. }, c2s{ 0 }, c3s{ 18575 / 48384. }, c4s{ 13525 / 55296. }, c5s{ 277 / 14336. }, c6s{ 0.25 };
 
-	// FOWT state in the beginning
-	vec::fixed<6> disp0(fowt.disp());
-	vec::fixed<6> vel0(fowt.vel());
+	// FOWT state in the beginning 
+	// - Components from 0 to 5: quantities obtained from the solution of the first-order hydrodynamic problem
+	// - Components from 6 to 11: total quantities obtained considering all the forces
+	vec::fixed<12> disp0(join_cols(fowt.disp_1stOrd(), fowt.disp()));
+	vec::fixed<12> vel0(join_cols(fowt.vel_1stOrd(), fowt.vel()));
 
 	// RK4 estimations
-	vec::fixed<6> disp_k1(arma::fill::zeros);
-	vec::fixed<6> vel_k1(arma::fill::zeros);
-	vec::fixed<6> acc_k1(arma::fill::zeros);
+	vec::fixed<12> disp_k1(arma::fill::zeros);
+	vec::fixed<12> vel_k1(arma::fill::zeros);
+	vec::fixed<12> acc_k1(arma::fill::zeros);
 
-	vec::fixed<6> disp_k2(arma::fill::zeros);
-	vec::fixed<6> vel_k2(arma::fill::zeros);
-	vec::fixed<6> acc_k2(arma::fill::zeros);
+	vec::fixed<12> disp_k2(arma::fill::zeros);
+	vec::fixed<12> vel_k2(arma::fill::zeros);
+	vec::fixed<12> acc_k2(arma::fill::zeros);
 
-	vec::fixed<6> disp_k3(arma::fill::zeros);
-	vec::fixed<6> vel_k3(arma::fill::zeros);
-	vec::fixed<6> acc_k3(arma::fill::zeros);
+	vec::fixed<12> disp_k3(arma::fill::zeros);
+	vec::fixed<12> vel_k3(arma::fill::zeros);
+	vec::fixed<12> acc_k3(arma::fill::zeros);
 
-	vec::fixed<6> disp_k4(arma::fill::zeros);
-	vec::fixed<6> vel_k4(arma::fill::zeros);
-	vec::fixed<6> acc_k4(arma::fill::zeros);
+	vec::fixed<12> disp_k4(arma::fill::zeros);
+	vec::fixed<12> vel_k4(arma::fill::zeros);
+	vec::fixed<12> acc_k4(arma::fill::zeros);
 
-	vec::fixed<6> disp_k5(arma::fill::zeros);
-	vec::fixed<6> vel_k5(arma::fill::zeros);
-	vec::fixed<6> acc_k5(arma::fill::zeros);
+	vec::fixed<12> disp_k5(arma::fill::zeros);
+	vec::fixed<12> vel_k5(arma::fill::zeros);
+	vec::fixed<12> acc_k5(arma::fill::zeros);
 
-	vec::fixed<6> disp_k6(arma::fill::zeros);
-	vec::fixed<6> vel_k6(arma::fill::zeros);
-	vec::fixed<6> acc_k6(arma::fill::zeros);
+	vec::fixed<12> disp_k6(arma::fill::zeros);
+	vec::fixed<12> vel_k6(arma::fill::zeros);
+	vec::fixed<12> acc_k6(arma::fill::zeros);
 
 	// RK4: calculated values
-	vec::fixed<6> disp_total(arma::fill::zeros);
-	vec::fixed<6> vel_total(arma::fill::zeros);
-	vec::fixed<6> acc_total(arma::fill::zeros);
+	vec::fixed<12> disp_total(arma::fill::zeros);
+	vec::fixed<12> vel_total(arma::fill::zeros);
+	vec::fixed<12> acc_total(arma::fill::zeros);
 
 	// Check if this is a moving or fixed body
 	bool movBody = false;
@@ -69,7 +71,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		{
 			movBody = true;
 			break;
-	}
+		}
 	}
 
 	// Fifth-order Runge-Kutta method with adaptive stepsize
@@ -80,10 +82,10 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	double h_aux = h; // Extra time step used to print every print step without losing the time step calculated by the adaptive stepsize algorithm
 	double epsRel{ 0.01 };
 	double epsAbs{ 1e-6 };
-	vec::fixed<6> delta0{ 0 };
-	vec::fixed<6> delta1{ 0 };
-	vec::fixed<6> velErr(fill::zeros);
-	vec::fixed<6> dispErr(fill::zeros);
+	vec::fixed<12> delta0{ 0 };
+	vec::fixed<12> delta1{ 0 };
+	vec::fixed<12> velErr(fill::zeros);
+	vec::fixed<12> dispErr(fill::zeros);
 	double safFact = 0.8;
 	double factor{ 1 };
 	bool condition = true;
@@ -105,14 +107,17 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		}
 
 		// FOWT state at the beginning of the time step
-		disp0 = fowt.disp();
-		vel0 = fowt.vel();
+		disp0 = join_cols(fowt.disp_1stOrd(), fowt.disp());
+		vel0 = join_cols(fowt.vel_1stOrd(), fowt.vel());
 
 		// Output wave and FOWT characteristics that may have been requested in the input file
 		envir.printWaveCharact();
-		IO::print2outLine(IO::OUTFLAG_FOWT_DISP, disp0);
-		IO::print2outLine(IO::OUTFLAG_FOWT_VEL, vel0);
-		IO::print2outLine(IO::OUTFLAG_FOWT_ACC, acc_total); // Acc calculated from previous time step
+		IO::print2outLine(IO::OUTFLAG_FOWT_DISP_1ST, disp0.rows(0, 5));
+		IO::print2outLine(IO::OUTFLAG_FOWT_VEL_1ST, vel0.rows(0, 5));
+		IO::print2outLine(IO::OUTFLAG_FOWT_ACC_1ST, acc_total.rows(0, 5));
+		IO::print2outLine(IO::OUTFLAG_FOWT_DISP, disp0.rows(6,11));
+		IO::print2outLine(IO::OUTFLAG_FOWT_VEL, vel0.rows(6, 11));
+		IO::print2outLine(IO::OUTFLAG_FOWT_ACC, acc_total.rows(6, 11));		
 		IO::print2outLine(IO::OUTFLAG_FOWT_DISP_SD, fowt.disp_sd());
 
 		// Print progress to the screen
@@ -220,7 +225,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 					envir.stepTime(-a6 * h + h);
 				}
 				fowt.update(envir, disp_total, vel_total);
-				fowt.update_sd(disp_total, h);
+				fowt.update_sd(disp_total.rows(6,11), h);
 
 				condition = false;
 

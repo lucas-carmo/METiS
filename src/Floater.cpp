@@ -32,9 +32,10 @@ Floater& Floater::operator= (const Floater &floater)
 	// Shallow copy for simple member variables
 	m_mass = floater.m_mass;
 	m_CoG = floater.m_CoG;
-	m_inertia = floater.m_inertia;
+	m_inertia = floater.m_inertia;	
 	m_addedMass_t0 = floater.m_addedMass_t0;
 	m_disp = floater.m_disp;
+	m_disp_1stOrd = floater.m_disp_1stOrd;
 	m_disp_sd = floater.m_disp_sd;
 
 	// The member variables that need deep copying are:
@@ -206,15 +207,16 @@ std::string Floater::printMorisonElements() const
 /*****************************************************
 	Forces, acceleration, displacement, etc
 *****************************************************/
-void Floater::update(const ENVIR &envir, const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTdisp_SD, const vec::fixed<6> &FOWTvel_SD)
+void Floater::update(const ENVIR &envir, const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTdisp_SD, const vec::fixed<6> &FOWTvel_SD, const vec::fixed<6> &FOWTdisp_1stOrd, const vec::fixed<6> &FOWTvel_1stOrd)
 {
 	m_disp = FOWTdisp;
 	m_disp_sd = FOWTdisp_SD;
+	m_disp_1stOrd = FOWTdisp_1stOrd;
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
 		// The CoG position is added to the displacements because updateMorisonElement requires the instantaneous position of the CoG of the floater
-		m_MorisonElements.at(ii)->updateMorisonElement(envir, FOWTdisp + join_cols(CoG(), zeros(3, 1)), FOWTvel, FOWTdisp_SD + join_cols(CoG(), zeros(3, 1)), FOWTvel_SD);
+		m_MorisonElements.at(ii)->updateMorisonElement(envir, FOWTdisp + join_cols(CoG(), zeros(3, 1)), FOWTvel, FOWTdisp_SD + join_cols(CoG(), zeros(3, 1)), FOWTvel_SD, FOWTdisp_1stOrd + join_cols(CoG(), zeros(3, 1)), FOWTvel_1stOrd);
 	}
 }
 
@@ -288,72 +290,101 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 	vec::fixed<6> df_3_ext(fill::zeros);
 	vec::fixed<6> df_rem_ext(fill::zeros);
 
-	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	if (hydroMode == 1)
 	{
 		// Force acting on each element
-		if (hydroMode == 1)
+		for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 		{
-			df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, (m_disp_sd.rows(0, 2) + CoG()), (m_disp_sd.rows(0, 2) + CoG()), df_drag, df_1, df_2, df_3, df_4, df_eta, df_rem, df_drag_ext, df_1_ext, df_2_ext, df_3_ext, df_rem_ext);
+			df = m_MorisonElements.at(ii)->hydrodynamicForce_1stOrd(envir, (m_disp_sd.rows(0, 2) + CoG()), df_drag, df_1, df_drag_ext, df_1_ext);
+			force += df;
+
+			force_drag += df_drag;
+			force_1 += df_1;
+
+			force_drag_ext += df_drag_ext;
+			force_1_ext += df_1_ext;
+
+			IO::print2outLine(IO::OUTFLAG_HD_FORCE_1ST, force);
+
+			IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG_1ST, force_drag);
+			IO::print2outLine(IO::OUTFLAG_HD_FORCE_1_1ST, force_1);
+			IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG_EXT_1ST, force_drag_ext);
+			IO::print2outLine(IO::OUTFLAG_HD_FORCE_1_EXT_1ST, force_1_ext);
 		}
-		else
-		{
-			df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, (m_disp.rows(0, 2) + CoG()), (m_disp_sd.rows(0, 2) + CoG()), df_drag, df_1, df_2, df_3, df_4, df_eta, df_rem, df_drag_ext, df_1_ext, df_2_ext, df_3_ext, df_rem_ext);
-		}
-
-		// Add to the forces acting on the whole floater
-		force += df;
-
-		force_drag += df_drag;
-		force_1 += df_1;
-		force_2 += df_2;
-		force_3 += df_3;
-		force_4 += df_4;
-		force_eta += df_eta;
-		force_rem += df_rem;
-
-		force_drag_ext += df_drag_ext;
-		force_1_ext += df_1_ext;
-		force_2_ext += df_2_ext;
-		force_3_ext += df_3_ext;
-		force_rem_ext += df_rem_ext;
 	}
 
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE, force);
+	else
+	{
+		for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+		{
+			df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, (m_disp_1stOrd.rows(0, 2) + CoG()), (m_disp_sd.rows(0, 2) + CoG()), df_drag, df_1, df_2, df_3, df_4, df_eta, df_rem, df_drag_ext, df_1_ext, df_2_ext, df_3_ext, df_rem_ext);
 
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG, force_drag);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_1, force_1);	
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_2, force_2);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_3, force_3);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_4, force_4);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_ETA, force_eta);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_REM, force_rem);
+			// Add to the forces acting on the whole floater
+			force += df;
 
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG_EXT, force_drag_ext);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_1_EXT, force_1_ext);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_2_EXT, force_2_ext);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_3_EXT, force_3_ext);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_REM_EXT, force_rem_ext);
+			force_drag += df_drag;
+			force_1 += df_1;
+			force_2 += df_2;
+			force_3 += df_3;
+			force_4 += df_4;
+			force_eta += df_eta;
+			force_rem += df_rem;
+
+			force_drag_ext += df_drag_ext;
+			force_1_ext += df_1_ext;
+			force_2_ext += df_2_ext;
+			force_3_ext += df_3_ext;
+			force_rem_ext += df_rem_ext;
+		}
+
+		IO::print2outLine(IO::OUTFLAG_HD_FORCE, force);
+
+		IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG, force_drag);
+		IO::print2outLine(IO::OUTFLAG_HD_FORCE_1, force_1);
+		IO::print2outLine(IO::OUTFLAG_HD_FORCE_2, force_2);
+		IO::print2outLine(IO::OUTFLAG_HD_FORCE_3, force_3);
+		IO::print2outLine(IO::OUTFLAG_HD_FORCE_4, force_4);
+		IO::print2outLine(IO::OUTFLAG_HD_FORCE_ETA, force_eta);
+		IO::print2outLine(IO::OUTFLAG_HD_FORCE_REM, force_rem);
+
+		IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG_EXT, force_drag_ext);
+		IO::print2outLine(IO::OUTFLAG_HD_FORCE_1_EXT, force_1_ext);
+		IO::print2outLine(IO::OUTFLAG_HD_FORCE_2_EXT, force_2_ext);
+		IO::print2outLine(IO::OUTFLAG_HD_FORCE_3_EXT, force_3_ext);
+		IO::print2outLine(IO::OUTFLAG_HD_FORCE_REM_EXT, force_rem_ext);		
+	}	
 	
 	return force;
 }
 
-vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir) const
+vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir, const int hydroMode) const
 {
 	vec::fixed<6> force(fill::zeros);		
 	vec::fixed<6> df(fill::zeros);
 	
-	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	if (hydroMode == 1)
 	{
-		df = m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity());
+		for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+		{
+			df = m_MorisonElements.at(ii)->hydrostaticForce_1stOrd(envir.watDensity(), envir.gravity());
 
-		// The moments acting on the cylinders were calculated with respect to the first node
-		// We need to change the fulcrum to the CoG
-		df.rows(3,5) = df.rows(3,5) + cross( m_MorisonElements.at(ii)->node1Pos() - (m_disp.rows(0, 2) + CoG()), df.rows(0,2) );
-
-		force += df;
+			// The moments acting on the cylinders were calculated with respect to the first node
+			// We need to change the fulcrum to the CoG
+			df.rows(3, 5) = df.rows(3, 5) + cross(m_MorisonElements.at(ii)->node1Pos_1stOrd() - (m_disp_1stOrd.rows(0, 2) + CoG()), df.rows(0, 2));			
+			force += df;
+		}
+		IO::print2outLine(IO::OUTFLAG_HS_FORCE_1ST, force);
 	}
-
-	IO::print2outLine(IO::OUTFLAG_HS_FORCE, force);
+	else
+	{
+		for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+		{
+			df = m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity());
+			df.rows(3, 5) = df.rows(3, 5) + cross(m_MorisonElements.at(ii)->node1Pos() - (m_disp.rows(0, 2) + CoG()), df.rows(0, 2));			
+			force += df;
+		}
+		IO::print2outLine(IO::OUTFLAG_HS_FORCE, force);		
+	}	
 
 	return force;
 }

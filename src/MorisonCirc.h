@@ -30,6 +30,16 @@ public:
 	virtual double A_perp(const int ii, const int jj, const vec::fixed<3> &x, const vec::fixed<3> &xG, const vec::fixed<3> &xvec, const vec::fixed<3> &yvec) const override;
 	virtual double A_paral(const int ii, const int jj, const vec::fixed<3> &x, const vec::fixed<3> &xG, const vec::fixed<3> &zvec) const override;
 	virtual mat::fixed<6, 6> addedMass_paral(const double rho, const vec::fixed<3> &refPt, const int hydroMode) const override;
+
+	virtual vec::fixed<6> hydrostaticForce_basic(const double rho, const double g,
+												 const vec::fixed<3> &n1, const vec::fixed<3> &n2,
+											     const vec::fixed<3> &xvec, const vec::fixed<3> &yvec, const vec::fixed<3> &zvec) const override;
+
+	// Forces used in the solution of the first-order problem
+	virtual vec::fixed<6> hydrostaticForce_1stOrd(const double rho, const double g) const override;
+	virtual vec::fixed<6> hydrodynamicForce_1stOrd(const ENVIR &envir, const vec::fixed<3> &refPt, vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_drag_ext, vec::fixed<6> &force_1_ext) const override;
+
+	// Forces up to second order - to be used in the evaluation of the total acceleration
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const override;
 	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, const vec::fixed<3> &refPt, const vec::fixed<3> &refPt_sd,
 		vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_2,

@@ -20,55 +20,44 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 /*****************************************************
 	Functions for node position / velocity / acceleration
 *****************************************************/
-void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD)
+void MorisonElement::calcPosVel(const vec::fixed<6> &pos, const vec::fixed<6> &vel,
+								   vec::fixed<3> &node1Pos, vec::fixed<3> &node2Pos, vec::fixed<3> &node1Vel, vec::fixed<3> &node2Vel,
+                                   vec::fixed<3> &xvec, vec::fixed<3> &yvec, vec::fixed<3> &zvec)
 {
-	mat::fixed<3, 3> RotatMatrix(rotatMatrix(floaterCoGpos.rows(3,5))); // Calculate it here so we just need to calculate the matrix once
+	mat::fixed<3, 3> RotatMatrix(rotatMatrix(pos.rows(3, 5)));
+
 	vec::fixed<3> R1 = RotatMatrix * m_cog2node1; // R1 and R2 are the vectors that give the node1 and node2 positions with respect to the CoG of the structure
-	vec::fixed<3> R2 = RotatMatrix * m_cog2node2;	
+	vec::fixed<3> R2 = RotatMatrix * m_cog2node2;
 
-	m_node1Pos = floaterCoGpos.rows(0, 2) + R1;
-	m_node2Pos = floaterCoGpos.rows(0, 2) + R2;
+	node1Pos = pos.rows(0,2) + R1;
+	node2Pos = pos.rows(0, 2) + R2;
 
-	m_node1Vel = floaterVel.rows(0, 2) + arma::cross(floaterVel.rows(3, 5), R1);
-	m_node2Vel = floaterVel.rows(0, 2) + arma::cross(floaterVel.rows(3, 5), R2);
+	node1Vel = vel.rows(0, 2) + arma::cross(vel.rows(3, 5), R1);
+	node2Vel = vel.rows(0, 2) + arma::cross(vel.rows(3, 5), R2);
 
-	m_node1AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R1));
-	m_node2AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R2));
+	xvec = RotatMatrix * m_xvec_t0;
+	yvec = RotatMatrix * m_yvec_t0;
+	zvec = RotatMatrix * m_zvec_t0;
+}
 
-	m_xvec = RotatMatrix * m_xvec_t0;
-	m_yvec = RotatMatrix * m_yvec_t0;
-	m_zvec = RotatMatrix * m_zvec_t0;
+void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD, const vec::fixed<6> &floaterCoGpos_1stOrd, const vec::fixed<6> &floaterVel_1stOrd)
+{
+	// Considering total body motion
+	calcPosVel(floaterCoGpos, floaterVel, m_node1Pos, m_node2Pos, m_node1Vel, m_node2Vel, m_xvec, m_yvec, m_zvec);
+	mat::fixed<3, 3> RotatMatrix(rotatMatrix(floaterCoGpos.rows(3, 5)));
+	m_node1AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), RotatMatrix * m_cog2node1));
+	m_node2AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), RotatMatrix * m_cog2node2));
 
-	// Same thing, but considering only the mean and slow drift motions
-	RotatMatrix = rotatMatrix(floaterCoGpos_SD.rows(3,5));
-	R1 = RotatMatrix * m_cog2node1;
-	R2 = RotatMatrix * m_cog2node2;
+	// Considering only the mean and slow drift motions
+	calcPosVel(floaterCoGpos_SD, floaterVel_SD, m_node1Pos_sd, m_node2Pos_sd, m_node1Vel_sd, m_node2Vel_sd, m_xvec_sd, m_yvec_sd, m_zvec_sd);
 
-	m_node1Pos_sd = floaterCoGpos_SD.rows(0, 2) + R1;
-	m_node2Pos_sd = floaterCoGpos_SD.rows(0, 2) + R2;
-
-	m_node1Vel_sd = floaterVel_SD.rows(0, 2) + arma::cross(floaterVel_SD.rows(3, 5), R1);
-	m_node2Vel_sd = floaterVel_SD.rows(0, 2) + arma::cross(floaterVel_SD.rows(3, 5), R2);
-
-	// Vectors of the local coordinate system
-	m_xvec_sd = RotatMatrix * m_xvec_t0;
-	m_yvec_sd = RotatMatrix * m_yvec_t0;
-	m_zvec_sd = RotatMatrix * m_zvec_t0;
+	// Considering only motions due to firt-order wave forces
+	calcPosVel(floaterCoGpos_1stOrd, floaterVel_1stOrd, m_node1Pos_1stOrd, m_node2Pos_1stOrd, m_node1Vel_1stOrd, m_node2Vel_1stOrd, m_xvec_1stOrd, m_yvec_1stOrd, m_zvec_1stOrd);
 
 	// Find the intersection with the instantaneous waterline
 	// Used in Wheeler stretching and in the calculation of the added mass matrix.
 	// If no intersection with the WL is found, this is an array of NaNs
 	m_intersectWL = findIntersectWL(envir);
-}
-
-vec::fixed<3> MorisonElement::node1Pos() const
-{
-	return m_node1Pos;
-}
-
-vec::fixed<3> MorisonElement::node2Pos() const
-{
-	return m_node2Pos;
 }
 
 vec::fixed<3> MorisonElement::node1Pos_t0() const
@@ -91,14 +80,24 @@ vec::fixed<3> MorisonElement::node2Pos_sd() const
 	return m_node2Pos_sd;
 }
 
-vec::fixed<3> MorisonElement::node1Vel() const
+vec::fixed<3> MorisonElement::node1Pos_1stOrd() const
 {
-	return m_node1Vel;
+	return m_node1Pos_1stOrd;
 }
 
-vec::fixed<3> MorisonElement::node2Vel() const
+vec::fixed<3> MorisonElement::node2Pos_1stOrd() const
 {
-	return m_node2Vel;
+	return m_node2Pos_1stOrd;
+}
+
+vec::fixed<3> MorisonElement::node1Pos() const
+{
+	return m_node1Pos;
+}
+
+vec::fixed<3> MorisonElement::node2Pos() const
+{
+	return m_node2Pos;
 }
 
 vec::fixed<3> MorisonElement::node1Vel_sd() const
@@ -111,6 +110,26 @@ vec::fixed<3> MorisonElement::node2Vel_sd() const
 	return m_node2Vel_sd;
 }
 
+vec::fixed<3> MorisonElement::node1Vel_1stOrd() const
+{
+	return m_node1Vel_1stOrd;
+}
+
+vec::fixed<3> MorisonElement::node2Vel_1stOrd() const
+{
+	return m_node2Vel_1stOrd;
+}
+
+vec::fixed<3> MorisonElement::node1Vel() const
+{
+	return m_node1Vel;
+}
+
+vec::fixed<3> MorisonElement::node2Vel() const
+{
+	return m_node2Vel;
+}
+
 vec::fixed<3> MorisonElement::node1AccCentrip() const
 {
 	return m_node1AccCentrip;
@@ -120,7 +139,6 @@ vec::fixed<3> MorisonElement::node2AccCentrip() const
 {
 	return m_node2AccCentrip;
 }
-
 
 // Calculate the intersection between the cylinder and waterline, considering the wave elevation.
 // Returns arma::datum::nan if no intersection is found.

@@ -39,22 +39,31 @@ protected:
 	vec::fixed<3> m_node1Vel_sd;
 	vec::fixed<3> m_node2Vel_sd;
 
+	// Nodes position and velocity considering obtained as the solution of the 1st order hydrodynamic problem.
+	// They are used in the calculation of the contribution of secon order terms
+	vec::fixed<3> m_node1Pos_1stOrd;
+	vec::fixed<3> m_node2Pos_1stOrd;
+	vec::fixed<3> m_node1Vel_1stOrd;
+	vec::fixed<3> m_node2Vel_1stOrd;
+
 	// Vectors of the local base
 	// They could be calculated every time from the nodes' position,
 	// but as members they can be calculated only once when the cylinder is updated
-	vec::fixed<3> m_xvec_t0;
+	vec::fixed<3> m_xvec_t0; // Considering the initial position of the cylinder
 	vec::fixed<3> m_yvec_t0;
 	vec::fixed<3> m_zvec_t0;
-	vec::fixed<3> m_xvec;
-	vec::fixed<3> m_yvec;
-	vec::fixed<3> m_zvec;
-	vec::fixed<3> m_xvec_sd;
+	vec::fixed<3> m_xvec_sd; // Considering the slowly varying position of the cylinder
 	vec::fixed<3> m_yvec_sd;
 	vec::fixed<3> m_zvec_sd;
+	vec::fixed<3> m_xvec_1stOrd; // Considering only first-order motions
+	vec::fixed<3> m_yvec_1stOrd;
+	vec::fixed<3> m_zvec_1stOrd;
+	vec::fixed<3> m_xvec; // Considering the instantaneous total position of the cylinder
+	vec::fixed<3> m_yvec;
+	vec::fixed<3> m_zvec;
 
 	// Intersection with the instantaneous waterline
 	vec::fixed<3> m_intersectWL;
-
 
 
 public:
@@ -62,19 +71,31 @@ public:
 				   const bool botPressFlag, const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2);
 	
 	// Functions related to position, velocity and acceleration
-	void updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD);
+	void calcPosVel(const vec::fixed<6> &pos, const vec::fixed<6> &vel,
+		            vec::fixed<3> &node1Pos, vec::fixed<3> &node2Pos, vec::fixed<3> &node1Vel, vec::fixed<3> &node2Vel,
+		            vec::fixed<3> &xvec, vec::fixed<3> &yvec, vec::fixed<3> &zvec) ;
+	void updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD,
+		                      const vec::fixed<6> &floaterVel_SD, const vec::fixed<6> &floaterCoGpos_1stOrd, const vec::fixed<6> &floaterVel_1stOrd);
+
 	vec::fixed<3> node1Pos_t0() const;
 	vec::fixed<3> node2Pos_t0() const;
-	vec::fixed<3> node1Pos() const;
-	vec::fixed<3> node2Pos() const;
 	vec::fixed<3> node1Pos_sd() const;
 	vec::fixed<3> node2Pos_sd() const;
-	vec::fixed<3> node1Vel() const;
-	vec::fixed<3> node2Vel() const;
+	vec::fixed<3> node1Pos_1stOrd() const;
+	vec::fixed<3> node2Pos_1stOrd() const;
+	vec::fixed<3> node1Pos() const;
+	vec::fixed<3> node2Pos() const;
+
 	vec::fixed<3> node1Vel_sd() const;
 	vec::fixed<3> node2Vel_sd() const;
+	vec::fixed<3> node1Vel_1stOrd() const;
+	vec::fixed<3> node2Vel_1stOrd() const;
+	vec::fixed<3> node1Vel() const;
+	vec::fixed<3> node2Vel() const;	
+
 	vec::fixed<3> node1AccCentrip() const;
 	vec::fixed<3> node2AccCentrip() const;
+
 	virtual void make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
 
 	// Contribution to the added mass
@@ -83,6 +104,15 @@ public:
 	virtual mat::fixed<6, 6> addedMass_paral(const double rho, const vec::fixed<3> &refPt, const int hydroMode) const = 0;
 	virtual double A_paral(const int ii, const int jj, const vec::fixed<3> &x, const vec::fixed<3> &xG, const vec::fixed<3> &zvec) const = 0;
 
+	virtual vec::fixed<6> hydrostaticForce_basic(const double rho, const double g,
+		const vec::fixed<3> &n1, const vec::fixed<3> &n2,
+		const vec::fixed<3> &xvec, const vec::fixed<3> &yvec, const vec::fixed<3> &zvec) const = 0;
+
+	// Forces used in the solution of the first-order problem
+	virtual vec::fixed<6> hydrostaticForce_1stOrd(const double rho, const double g) const = 0;
+	virtual vec::fixed<6> hydrodynamicForce_1stOrd(const ENVIR &envir, const vec::fixed<3> &refPt, vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_drag_ext, vec::fixed<6> &force_1_ext) const = 0;
+
+	// Forces up to second order - to be used in the evaluation of the total acceleration
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const = 0;
 	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, const vec::fixed<3> &refPt, const vec::fixed<3> &refPt_sd,
 											vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_2, 

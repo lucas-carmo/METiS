@@ -29,7 +29,7 @@ std::ofstream IO::m_sumFl;
 
 std::string IO::m_outFilePath = "";
 std::ofstream IO::m_outFl;
-const unsigned int IO::m_outColumnWidth = 21;
+const unsigned int IO::m_outColumnWidth = 25;
 const unsigned int IO::m_outNumPrecision = 4;
 std::array<bool, IO::OUTFLAG_SIZE> IO::m_whichResult2Output;
 
@@ -692,6 +692,11 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 	fowt.setFloater(floater);
 	fowt.setRNA(rna);
+
+	// Need to initialize the vectors that constitute the basis of each cylinder
+	vec::fixed<12> disp0(fill::zeros);
+	vec::fixed<12> vel0(fill::zeros);
+	fowt.update(envir, disp0, vel0);
 }
 
 
@@ -813,16 +818,19 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	if (caseInsCompare(keyword, "fowt_disp"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_DISP) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_DISP_1ST) = true;
 	}
 
 	if (caseInsCompare(keyword, "fowt_vel"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_VEL) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_VEL_1ST) = true;
 	}
 
 	if (caseInsCompare(keyword, "fowt_acc"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_ACC) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_ACC_1ST) = true;
 	}
 
 	if (caseInsCompare(keyword, "fowt_disp_sd"))
@@ -834,12 +842,16 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_DRAG) = true;
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_DRAG_EXT) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_DRAG_1ST) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_DRAG_EXT_1ST) = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_force1"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_1) = true;
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_1_EXT) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_1_1ST) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_1_EXT_1ST) = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_force2"))
@@ -878,16 +890,19 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	if (caseInsCompare(keyword, "hd_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_1ST) = true;
 	}
 
 	if (caseInsCompare(keyword, "hs_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HS_FORCE) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HS_FORCE_1ST) = true;
 	}
 
 	if (caseInsCompare(keyword, "moor_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_MOOR_FORCE) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_MOOR_FORCE_1ST) = true;
 	}
 
 	if (caseInsCompare(keyword, "ad_hub_force"))
@@ -1038,11 +1053,14 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 {
 	// Check whether the specified flag is indeed one that requires a vector with six components
 	if ((flag != IO::OUTFLAG_FOWT_DISP) && (flag != IO::OUTFLAG_FOWT_VEL) && (flag != IO::OUTFLAG_FOWT_ACC) && (flag != IO::OUTFLAG_FOWT_DISP_SD) &&
+		(flag != IO::OUTFLAG_FOWT_DISP_1ST) && (flag != IO::OUTFLAG_FOWT_VEL_1ST) && (flag != IO::OUTFLAG_FOWT_ACC_1ST) &&
 		(flag != IO::OUTFLAG_TOTAL_FORCE) && (flag != IO::OUTFLAG_HD_FORCE) && (flag != IO::OUTFLAG_HS_FORCE) && (flag != IO::OUTFLAG_MOOR_FORCE) &&
+		(flag != IO::OUTFLAG_HD_FORCE_1ST) && (flag != IO::OUTFLAG_HS_FORCE_1ST) && (flag != IO::OUTFLAG_MOOR_FORCE_1ST) &&
 		(flag != IO::OUTFLAG_HD_FORCE_DRAG) && (flag != IO::OUTFLAG_HD_FORCE_1) && (flag != IO::OUTFLAG_HD_FORCE_2) &&
 		(flag != IO::OUTFLAG_HD_FORCE_3) && (flag != IO::OUTFLAG_HD_FORCE_4) && (flag != IO::OUTFLAG_HD_FORCE_ETA) && (flag != IO::OUTFLAG_HD_FORCE_REM) &&
 		(flag != IO::OUTFLAG_HD_FORCE_DRAG_EXT) && (flag != IO::OUTFLAG_HD_FORCE_1_EXT) && (flag != IO::OUTFLAG_HD_FORCE_2_EXT) &&
 		(flag != IO::OUTFLAG_HD_FORCE_3_EXT) && (flag != IO::OUTFLAG_HD_FORCE_REM_EXT) &&
+		(flag != IO::OUTFLAG_HD_FORCE_DRAG_1ST) && (flag != IO::OUTFLAG_HD_FORCE_1_1ST) && (flag != IO::OUTFLAG_HD_FORCE_DRAG_EXT_1ST) && (flag != IO::OUTFLAG_HD_FORCE_1_EXT_1ST) &&
 		(flag != IO::OUTFLAG_HD_ADD_MASS_FORCE) && (flag != IO::OUTFLAG_AD_HUB_FORCE) && (flag != IO::OUTFLAG_ADDED_MASS_DIAG) && (flag != OUTFLAG_DEBUG_VEC_6)
 	   )
 	{
@@ -1075,6 +1093,20 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 				print2outLineHeader("hd_drag_force_ext_" + std::to_string(ii));
 			}
 		}
+		if (flag == OUTFLAG_HD_FORCE_DRAG_1ST)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_drag_force_1st_" + std::to_string(ii));
+			}
+		}
+		if (flag == OUTFLAG_HD_FORCE_DRAG_EXT_1ST)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_drag_force_ext_1st_" + std::to_string(ii));
+			}
+		}
 
 		if (flag == OUTFLAG_HD_FORCE_1)
 		{
@@ -1088,6 +1120,20 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			for (int ii = 1; ii <= 6; ++ii)
 			{
 				print2outLineHeader("hd_force1_ext_" + std::to_string(ii));
+			}
+		}
+		if (flag == OUTFLAG_HD_FORCE_1_1ST)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_force1_1st_" + std::to_string(ii));
+			}
+		}
+		if (flag == OUTFLAG_HD_FORCE_1_EXT_1ST)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_force1_ext_1st_" + std::to_string(ii));
 			}
 		}
 
@@ -1167,12 +1213,26 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 				print2outLineHeader("hd_force_" + std::to_string(ii));
 			}
 		}
+		if (flag == OUTFLAG_HD_FORCE_1ST)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_force_1st_" + std::to_string(ii));
+			}
+		}
 
 		if (flag == OUTFLAG_HS_FORCE)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
 				print2outLineHeader("hs_force_" + std::to_string(ii));
+			}
+		}
+		if (flag == OUTFLAG_HS_FORCE_1ST)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hs_force_1st_" + std::to_string(ii));
 			}
 		}
 
@@ -1189,6 +1249,13 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			for (int ii = 1; ii <= 6; ++ii)
 			{
 				print2outLineHeader("moor_force_" + std::to_string(ii));
+			}
+		}
+		if (flag == OUTFLAG_MOOR_FORCE_1ST)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("moor_force_1st_" + std::to_string(ii));
 			}
 		}
 
@@ -1217,6 +1284,24 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			print2outLineHeader("pitch");
 			print2outLineHeader("yaw");
 		}
+		if (flag == OUTFLAG_FOWT_DISP_1ST)
+		{
+			print2outLineHeader("surge_1st");
+			print2outLineHeader("sway_1st");
+			print2outLineHeader("heave_1st");
+			print2outLineHeader("roll_1st");
+			print2outLineHeader("pitch_1st");
+			print2outLineHeader("yaw_1st");
+		}
+		if (flag == OUTFLAG_FOWT_DISP_SD)
+		{
+			print2outLineHeader("surge_sd");
+			print2outLineHeader("sway_sd");
+			print2outLineHeader("heave_sd");
+			print2outLineHeader("roll_sd");
+			print2outLineHeader("pitch_sd");
+			print2outLineHeader("yaw_sd");
+		}
 
 		if (flag == OUTFLAG_FOWT_VEL)
 		{
@@ -1226,6 +1311,15 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			print2outLineHeader("roll_vel");
 			print2outLineHeader("pitch_vel");
 			print2outLineHeader("yaw_vel");
+		}
+		if (flag == OUTFLAG_FOWT_VEL_1ST)
+		{
+			print2outLineHeader("surge_vel_1st");
+			print2outLineHeader("sway_vel_1st");
+			print2outLineHeader("heave_vel_1st");
+			print2outLineHeader("roll_vel_1st");
+			print2outLineHeader("pitch_vel_1st");
+			print2outLineHeader("yaw_vel_1st");
 		}
 
 		if (flag == OUTFLAG_FOWT_ACC)
@@ -1237,16 +1331,15 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			print2outLineHeader("pitch_acc");
 			print2outLineHeader("yaw_acc");
 		}
-
-		if (flag == OUTFLAG_FOWT_DISP_SD)
+		if (flag == OUTFLAG_FOWT_ACC_1ST)
 		{
-			print2outLineHeader("surge_sd");
-			print2outLineHeader("sway_sd");
-			print2outLineHeader("heave_sd");
-			print2outLineHeader("roll_sd");
-			print2outLineHeader("pitch_sd");
-			print2outLineHeader("yaw_sd");
-		}
+			print2outLineHeader("surge_acc_1st");
+			print2outLineHeader("sway_acc_1st");
+			print2outLineHeader("heave_acc_1st");
+			print2outLineHeader("roll_acc_1st");
+			print2outLineHeader("pitch_acc_1st");
+			print2outLineHeader("yaw_acc_1st");
+		}		
 	}
 
 	// If the printing flag is true and if this is one of the requested output variables,
@@ -1572,7 +1665,7 @@ std::string IO::printOutVar()
 
 		case IO::OUTFLAG_HD_FORCE_REM:
 			output += "Hydrodynamic force - Remaining: ";
-			break;
+			break;		
 
 		case IO::OUTFLAG_HD_ADD_MASS_FORCE:
 			output += "Force due to added mass: ";
@@ -1605,6 +1698,7 @@ std::string IO::printOutVar()
 		// Options that are not printted to the sum file:
 		// - Forces at the extremities, since they are activated with their respective forces along the length of the cylinder
 		// - Debug options, as they are for development usage
+		// - 1st order quantities, because they are activated with their respective total flags
 		case IO::OUTFLAG_DEBUG_NUM:
 			printFlag = false;
 			break;
@@ -1617,11 +1711,39 @@ std::string IO::printOutVar()
 			printFlag = false;
 			break;
 
+		case IO::OUTFLAG_FOWT_DISP_1ST:
+			printFlag = false;
 			break;
+
+		case IO::OUTFLAG_FOWT_VEL_1ST:
+			printFlag = false;
+			break;
+
+		case IO::OUTFLAG_FOWT_ACC_1ST:
+			printFlag = false;
+			break;
+
 		case IO::OUTFLAG_HD_FORCE_DRAG_EXT:
 			printFlag = false;
 			break;
+
+		case IO::OUTFLAG_HD_FORCE_DRAG_1ST:
+			printFlag = false;
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_DRAG_EXT_1ST:
+			printFlag = false;
+			break;
+
 		case IO::OUTFLAG_HD_FORCE_1_EXT:
+			printFlag = false;
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_1_1ST:
+			printFlag = false;
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_1_EXT_1ST:
 			printFlag = false;
 			break;
 
@@ -1634,6 +1756,18 @@ std::string IO::printOutVar()
 			break;
 
 		case IO::OUTFLAG_HD_FORCE_REM_EXT:
+			printFlag = false;
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_1ST:
+			printFlag = false;
+			break;
+
+		case IO::OUTFLAG_HS_FORCE_1ST:
+			printFlag = false;
+			break;
+
+		case IO::OUTFLAG_MOOR_FORCE_1ST:
 			printFlag = false;
 			break;
 
