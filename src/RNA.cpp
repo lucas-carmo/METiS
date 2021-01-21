@@ -334,6 +334,7 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 			// - windVel[2] is the component that is in the rotation plan and in the radial direction
 			windVel.zeros();
 			windVel[0] = envir.windVel_X(nodeCoord_earth);
+			windVel[1] = envir.windVel_Y(nodeCoord_earth);
 			windVel = rotorRotation * (rigidBodyRotation * windVel);
 
 			// Structural velocity of the nodes. Need to be written in the node coordinate system

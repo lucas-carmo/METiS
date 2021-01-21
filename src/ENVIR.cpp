@@ -77,6 +77,11 @@ void ENVIR::setWindRefVel(const double windRefVel)
 	m_windRefVel = windRefVel;
 }
 
+void ENVIR::setWindDir(const double windDir)
+{
+	m_windDir = windDir;
+}
+
 void ENVIR::setWindRefHeight(const double windRefHeight)
 {
 	m_windRefHeight = windRefHeight;
@@ -338,6 +343,11 @@ double ENVIR::windRefVel() const
 double ENVIR::windRefHeight() const
 {
 	return m_windRefHeight;
+}
+
+double ENVIR::windDir() const
+{
+	return m_windDir;
 }
 
 double ENVIR::windExp() const
@@ -1067,7 +1077,12 @@ double ENVIR::wavePressure_2ndOrd(const vec::fixed<3> &coord) const
 
 double ENVIR::windVel_X(const vec::fixed<3> &coord) const
 {
-	return (ramp() * windRefVel() * pow(coord[2] / windRefHeight(), windExp()) );
+	return (ramp() * windRefVel() * std::cos(m_windDir * arma::datum::pi / 180.) * pow(coord[2] / windRefHeight(), windExp()) );
+}
+
+double ENVIR::windVel_Y(const vec::fixed<3> &coord) const
+{
+	return (-ramp() * windRefVel() * std::sin(m_windDir * arma::datum::pi / 180.) * pow(coord[2] / windRefHeight(), windExp()));
 }
 
 

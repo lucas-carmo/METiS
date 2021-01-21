@@ -27,6 +27,7 @@ TimeRamp	180                 % Numerical ramp, in seconds
 Grav		9.81
 AirDens     1.225
 WindVel     10.0 % Measured at the reference height
+WindDir     0
 WindHeight  90
 WindExp     0.2
 UseTipLoss  1

@@ -26,6 +26,7 @@ private:
 
 	double m_airDens;
 	double m_windRefVel;
+	double m_windDir;
 	double m_windRefHeight;
 	double m_windExp;
 
@@ -64,6 +65,7 @@ public:
 	void setWaveStret(const unsigned int waveStret);
 	void setAirDens(const double airDens);
 	void setWindRefVel(const double windRefVel);
+	void setWindDir(const double windDir);
 	void setWindRefHeight(const double windRefHeight);
 	void setWindExp(const double windExp);
 
@@ -88,6 +90,7 @@ public:
 	double airDensity() const;
 	double windRefVel() const;
 	double windRefHeight() const;
+	double windDir() const;
 	double windExp() const;
 
 
@@ -133,6 +136,7 @@ public:
 	vec::fixed<3> du2dt(const vec::fixed<3> &coord) const;	
 
 	double windVel_X(const vec::fixed<3> &coord) const;
+	double windVel_Y(const vec::fixed<3> &coord) const;
 };
 
 // JONSWAP wave spectrum considering frequency in rad/s
