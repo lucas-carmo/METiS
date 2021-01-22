@@ -408,10 +408,7 @@ vec::fixed<12> FOWT::calcAcceleration(const ENVIR &envir)
 
 		// Solve inertiaMatrix * acc = force
 		// Armadillo will throw its own exception if this computation fails.
-		acc = arma::solve(inertiaMatrix, force);
-
-		mat::fixed<3, 3> RotatMatrix(rotatMatrix(m_disp.rows(3, 5)));
-		acc.rows(3, 5) = arma::solve(RotatMatrix, acc.rows(3, 5));		
+		acc = arma::solve(inertiaMatrix, force);		
 	}
 
 	if (m_hydroMode == 1)

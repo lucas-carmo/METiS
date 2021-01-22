@@ -52,6 +52,7 @@ void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6
 	calcPosVel(floaterCoGpos_SD, floaterVel_SD, m_node1Pos_sd, m_node2Pos_sd, m_node1Vel_sd, m_node2Vel_sd, m_xvec_sd, m_yvec_sd, m_zvec_sd);
 
 	// Considering only motions due to firt-order wave forces
+	// The position is summed with the slow position
 	calcPosVel(floaterCoGpos_1stOrd, floaterVel_1stOrd, m_node1Pos_1stOrd, m_node2Pos_1stOrd, m_node1Vel_1stOrd, m_node2Vel_1stOrd, m_xvec_1stOrd, m_yvec_1stOrd, m_zvec_1stOrd);
 
 	// Find the intersection with the instantaneous waterline
