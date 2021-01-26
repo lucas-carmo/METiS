@@ -59,7 +59,7 @@ public:
 	/*****************************************************
 		Setters
 	*****************************************************/
-	void setHydroMode(const int hydroKinMode);
+	void setHydroMode(const int hydroMode);
 	void setAeroMode(const int aeroMode);
 	void setMoorMode(const int moorMode);
 	void setDoFs(std::array<bool, 6> &dofs);

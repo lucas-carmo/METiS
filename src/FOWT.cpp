@@ -21,9 +21,9 @@ m_disp_sd(fill::zeros), m_vel_sd(fill::zeros)
 /*****************************************************
 	Setters
 *****************************************************/
-void FOWT::setHydroMode(const int hydroKinMode)
+void FOWT::setHydroMode(const int hydroMode)
 {
-	m_hydroMode = hydroKinMode;
+	m_hydroMode = hydroMode;
 }
 
 void FOWT::setAeroMode(const int aeroMode)
@@ -322,17 +322,28 @@ vec::fixed<12> FOWT::calcAcceleration(const ENVIR &envir)
 	vec::fixed<6> acc_1stOrd(fill::zeros);
 	vec::fixed<6> acc(fill::zeros);	
 
-	mat::fixed<6, 6> addedMass_t0(fill::zeros);
-	try
+	mat::fixed<6, 6> addedMass(fill::zeros);
+
+	// If the fixed position is considered for the evaluation of second-order hydrodynamic forces and
+	// the solution of the first-order hydrodynamic problem, the added mass matrix is fixed through the whole simulation
+	if (m_filterSD_omega == 0)
 	{
-		addedMass_t0 = m_floater.addedMass_t0();
+		try
+		{
+			addedMass = m_floater.addedMass_t0();
+		}
+		catch (...)
+		{
+			addedMass = m_floater.addedMass(envir.watDensity(), 1);
+		}
 	}
-	catch (...)
+	// Otherwise, it is reevaluated at each time step at the slow position
+	else
 	{
-		addedMass_t0 = m_floater.addedMass(envir.watDensity(), 1);
+		addedMass = m_floater.addedMass(envir.watDensity(), 1);
 	}
-	mat::fixed<6, 6> inertiaMatrix = addedMass_t0 + m_floater.inertiaMatrix();
-	IO::print2outLine(IO::OUTFLAG_ADDED_MASS_DIAG, addedMass_t0.diag());
+	mat::fixed<6, 6> inertiaMatrix = addedMass + m_floater.inertiaMatrix();
+	IO::print2outLine(IO::OUTFLAG_ADDED_MASS_DIAG, addedMass.diag());
 
 
 	/*
@@ -376,7 +387,7 @@ vec::fixed<12> FOWT::calcAcceleration(const ENVIR &envir)
 	*/
 	// Calculate the total force acting on the FOWT
 	vec::fixed<6> force = totalForce(envir);
-	vec::fixed<6> forceAddedMass = -(m_floater.addedMass(envir.watDensity(), m_hydroMode) - addedMass_t0) * acc_1stOrd;
+	vec::fixed<6> forceAddedMass = -(m_floater.addedMass(envir.watDensity(), m_hydroMode) - addedMass) * acc_1stOrd;
 
 	force = force + forceAddedMass;
 	IO::print2outLine(IO::OUTFLAG_HD_ADD_MASS_FORCE, forceAddedMass);
@@ -386,7 +397,7 @@ vec::fixed<12> FOWT::calcAcceleration(const ENVIR &envir)
 	// (i.e. if at least one element of m_dofs is equal to 'true')
 	if (std::find(m_dofs.begin(), m_dofs.end(), true) != m_dofs.end())
 	{
-		mat::fixed<6,6> inertiaMatrix = addedMass_t0 + m_floater.inertiaMatrix();
+		mat::fixed<6,6> inertiaMatrix = addedMass + m_floater.inertiaMatrix();
 
 		// Avoid coupling effects when a DoF is disabled and the others are not.
 		// For doing so, set the calculated force to zero if the dof is deactivated.
