@@ -18,8 +18,8 @@ private:
 	Floater m_floater;
 	//Tower m_tower;
 	RNA m_rna;
-	mat::fixed<6,6> m_extLinStiff;
 	vec::fixed<6> m_extConstForce;
+	mat::fixed<6,6> m_extLinStiff;
 
 	/*
 	Specification of the analysis

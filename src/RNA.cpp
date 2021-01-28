@@ -449,13 +449,12 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 	aeroForce.rows(3, 5) = rotatShaft2FOWT * aeroForce.rows(3, 5);
 
 	// 3) Change the fulcrum to the CoG of the FOWT. Distance is hubHeight2CoG() along the tower and overhang() along the shaft
-	arma::vec::fixed<3> leverHub2CoG{ 0,0,0 };
-	leverHub2CoG = arma::vec::fixed<3>{ 0,0,hubHeight2CoG() } + rotatShaft2FOWT * arma::vec::fixed<3> {overhang(), 0, 0};
+	arma::vec::fixed<3> leverHub2CoG = arma::vec::fixed<3>{ 0,0,hubHeight2CoG() } + rotatShaft2FOWT * arma::vec::fixed<3> {overhang(), 0, 0};
 	aeroForce.rows(3, 5) += arma::cross(leverHub2CoG, aeroForce.rows(0, 2));
 
 	// 4) Write aeroForce in the global coordinate system
 	aeroForce.rows(0, 2) = rotatMatrix(FOWTpos.rows(3, 5)) * aeroForce.rows(0, 2);
-	aeroForce.rows(3, 5) = rotatMatrix(FOWTpos.rows(3, 5)) * aeroForce.rows(3, 5);
+	aeroForce.rows(3, 5) = rotatMatrix(FOWTpos.rows(3, 5)) * aeroForce.rows(3, 5);	
 
 	return aeroForce;
 }
