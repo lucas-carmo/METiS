@@ -15,8 +15,9 @@ DOFS 0 0 0 0 0 0
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
 %%-----------------------------------------------------------------------------%%
 TimeStep    0.1                % Time step, in seconds
+PrintStep   0.1
 TimeTotal  	120					% Total simulation time, in secods
-TimeRamp	180                 % Numerical ramp, in seconds
+TimeRamp    0                 % Numerical ramp, in seconds
 
 
 
@@ -45,7 +46,7 @@ FloaterCoG		0,0,0
 %%---------------------------- RNA DESCRIPTION --------------------------------%%
 %%-----------------------------------------------------------------------------%%
 RotSpeed    12  % Rotor speed in rpm (constant)
-RotTilt     5   % Rotor tilt angle (degrees)
+RotTilt     -5   % Rotor tilt angle (degrees)
 RotYaw      3   % Rotor yaw angle (degrees)
 NumBlades   3   % Number of blades
 BldPitch    3   % Blade pitch angle (degrees)
