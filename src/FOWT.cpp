@@ -275,8 +275,8 @@ void FOWT::update(const ENVIR &envir, const vec::fixed<12> &disp, const vec::fix
 
 	if (m_filterSD_omega < 0)
 	{
-		m_disp_sd = disp;
-		m_vel_sd = vel;
+		m_disp_sd = disp.rows(6,11);
+		m_vel_sd = vel.rows(6, 11);
 	}
 
 	// Aqui tem que passar os deslocamentos com relacao ao CoG do floater. Calcular aqui mesmo baseado na posicao do centro de referencia de movimento
@@ -447,7 +447,9 @@ vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)
 {
 	if (m_aeroMode == 1)
 	{
-		return m_rna.aeroForce(envir, m_disp + join_cols(CoG(), vec::fixed<3> {0, 0, 0}), m_vel);
+		vec::fixed<6> dbg = m_rna.aeroForce(envir, m_disp + join_cols(CoG(), vec::fixed<3> {0, 0, 0}), m_vel);
+		IO::print2outLine(IO::OUTFLAG_DEBUG_VEC_6, dbg);
+		return dbg;
 	}
 
 	return vec::fixed<6> {0, 0, 0, 0, 0, 0};
