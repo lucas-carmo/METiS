@@ -42,6 +42,16 @@ void MorisonElement::calcPosVel(const vec::fixed<6> &pos, const vec::fixed<6> &v
 
 void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD, const vec::fixed<6> &floaterCoGpos_1stOrd, const vec::fixed<6> &floaterVel_1stOrd)
 {
+	updateMorisonElement(floaterCoGpos, floaterVel, floaterCoGpos_SD, floaterVel_SD, floaterCoGpos_1stOrd, floaterVel_1stOrd);
+
+	// Find the intersection with the instantaneous waterline
+	// Used in Wheeler stretching and in the calculation of the added mass matrix.
+	// If no intersection with the WL is found, this is an array of NaNs
+	m_intersectWL = findIntersectWL(envir);
+}
+
+void MorisonElement::updateMorisonElement(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD, const vec::fixed<6> &floaterCoGpos_1stOrd, const vec::fixed<6> &floaterVel_1stOrd)
+{
 	// Considering total body motion
 	calcPosVel(floaterCoGpos, floaterVel, m_node1Pos, m_node2Pos, m_node1Vel, m_node2Vel, m_xvec, m_yvec, m_zvec);
 	mat::fixed<3, 3> RotatMatrix(rotatMatrix(floaterCoGpos.rows(3, 5)));
@@ -54,11 +64,6 @@ void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6
 	// Considering only motions due to firt-order wave forces
 	// The position is summed with the slow position
 	calcPosVel(floaterCoGpos_1stOrd, floaterVel_1stOrd, m_node1Pos_1stOrd, m_node2Pos_1stOrd, m_node1Vel_1stOrd, m_node2Vel_1stOrd, m_xvec_1stOrd, m_yvec_1stOrd, m_zvec_1stOrd);
-
-	// Find the intersection with the instantaneous waterline
-	// Used in Wheeler stretching and in the calculation of the added mass matrix.
-	// If no intersection with the WL is found, this is an array of NaNs
-	m_intersectWL = findIntersectWL(envir);
 }
 
 vec::fixed<3> MorisonElement::node1Pos_t0() const

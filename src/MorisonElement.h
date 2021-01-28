@@ -73,9 +73,11 @@ public:
 	// Functions related to position, velocity and acceleration
 	void calcPosVel(const vec::fixed<6> &pos, const vec::fixed<6> &vel,
 		            vec::fixed<3> &node1Pos, vec::fixed<3> &node2Pos, vec::fixed<3> &node1Vel, vec::fixed<3> &node2Vel,
-		            vec::fixed<3> &xvec, vec::fixed<3> &yvec, vec::fixed<3> &zvec) ;
+		            vec::fixed<3> &xvec, vec::fixed<3> &yvec, vec::fixed<3> &zvec) ;	
 	void updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD,
 		                      const vec::fixed<6> &floaterVel_SD, const vec::fixed<6> &floaterCoGpos_1stOrd, const vec::fixed<6> &floaterVel_1stOrd);
+	void updateMorisonElement(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD,
+							  const vec::fixed<6> &floaterVel_SD, const vec::fixed<6> &floaterCoGpos_1stOrd, const vec::fixed<6> &floaterVel_1stOrd); // Version that does not find the intersection with the waterline
 
 	vec::fixed<3> node1Pos_t0() const;
 	vec::fixed<3> node2Pos_t0() const;

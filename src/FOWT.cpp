@@ -192,8 +192,8 @@ std::string FOWT::printFloater() const
 	output = output + "\tInertia Matrix:\t" + m_floater.printInertia() + "\n";
 	output = output + "\tMorison Elements:\n" + m_floater.printMorisonElements() + "\n";
 
-	mat::fixed<6, 6> A = m_floater.addedMass(m_hydroMode);
-	output = output + "\tAdded Mass for unitary density:\n";
+	mat::fixed<6, 6> A = m_floater.addedMass_t0();
+	output = output + "\tDimensional added Mass at initial position (same units as input):\n";
 	for (int ii = 0; ii < 6; ++ii)
 	{
 		output = output + "\t\t";
@@ -328,14 +328,7 @@ vec::fixed<12> FOWT::calcAcceleration(const ENVIR &envir)
 	// the solution of the first-order hydrodynamic problem, the added mass matrix is fixed through the whole simulation
 	if (m_filterSD_omega == 0)
 	{
-		try
-		{
-			addedMass = m_floater.addedMass_t0();
-		}
-		catch (...)
-		{
-			addedMass = m_floater.addedMass(envir.watDensity(), 1);
-		}
+			addedMass = m_floater.addedMass_t0();			
 	}
 	// Otherwise, it is reevaluated at each time step at the slow position
 	else

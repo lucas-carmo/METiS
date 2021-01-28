@@ -221,6 +221,11 @@ void Floater::update(const ENVIR &envir, const vec::fixed<6> &FOWTdisp, const ve
 	}
 }
 
+void Floater::setAddedMass_t0(const double density)
+{
+	m_addedMass_t0 = density*addedMass(0);
+}
+
 mat::fixed<6, 6> Floater::addedMass(const double density, const int hydroMode) 
 {
 	mat::fixed<6, 6> A(fill::zeros);
@@ -241,7 +246,11 @@ mat::fixed<6, 6> Floater::addedMass(const int hydroMode) const
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		if (hydroMode == 1)
+		if (hydroMode == 0) // Useful to evaluate the initial added mass matrix
+		{
+			A += m_MorisonElements.at(ii)->addedMass_perp(1, CoG(), hydroMode) + m_MorisonElements.at(ii)->addedMass_paral(1, CoG(), hydroMode);
+		}
+		else if(hydroMode == 1)
 		{
 			A += m_MorisonElements.at(ii)->addedMass_perp(1, m_disp_sd.rows(0, 2) + CoG(), hydroMode) + m_MorisonElements.at(ii)->addedMass_paral(1, m_disp_sd.rows(0, 2) + CoG(), hydroMode);
 		}

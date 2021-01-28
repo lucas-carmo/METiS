@@ -70,9 +70,25 @@ vec::fixed<6> MorisonCirc::hydrostaticForce_basic(const double rho, const double
 
 	vec::fixed<3> n1 = node1;
 	vec::fixed<3> n2 = node2;
-	vec::fixed<3> xvec = in_xvec;
-	vec::fixed<3> yvec = in_yvec;
-	vec::fixed<3> zvec = in_zvec;
+
+	// Make local basis in such a way that the rotation is around the local y axis
+	vec::fixed<3> zvec = (n2 - n1) / arma::norm(n2 - n1, 2);
+	vec::fixed<3> xvec(fill::zeros);
+	vec::fixed<3> yvec(fill::zeros);
+	vec::fixed<3> z_global{ 0,0,1 };
+	if (arma::approx_equal(zvec, z_global, "absdiff", arma::datum::eps))
+	{
+		xvec = { 1, 0, 0 };
+		yvec = { 0, 1, 0 };
+	}
+	else
+	{
+		yvec = arma::cross(z_global, zvec);
+		yvec = yvec / arma::norm(yvec, 2);		
+
+		xvec = arma::cross(yvec, zvec);
+		xvec = xvec / arma::norm(xvec, 2);
+	}
 	
 	// Make sure that node1 is below node2 (or at the same height, at least).
 	// Otherwise, need to swap them.
@@ -94,7 +110,7 @@ vec::fixed<6> MorisonCirc::hydrostaticForce_basic(const double rho, const double
 
 	// Calculation of the inclination of the cylinder (with respect to the
 	// vertical), which is used in the calculation of the center of buoyoancy
-	double alpha = acos(arma::dot(zvec, arma::vec::fixed<3> {0, 0, 1})); // zvec and {0, 0, 1} are both unit vectors
+	double alpha = std::acos(arma::dot(zvec, arma::vec::fixed<3> {0, 0, 1})); // zvec and {0, 0, 1} are both unit vectors
 	double tanAlpha{ 0 };
 
 	// Check if the angle is 90 degrees
@@ -907,7 +923,15 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 	vec::fixed<3> xvec = m_xvec_1stOrd;
 	vec::fixed<3> yvec = m_yvec_1stOrd;
 	vec::fixed<3> zvec = m_zvec_1stOrd;
-	if (hydroMode == 1)
+	if (hydroMode == 0)
+	{
+		n1 = node1Pos_t0();
+		n2 = node2Pos_t0();
+		xvec = m_xvec_t0;
+		yvec = m_yvec_t0;
+		zvec = m_zvec_t0;
+	}
+	else if(hydroMode == 1)
 	{
 		n1 = node1Pos_sd();
 		n2 = node2Pos_sd();
@@ -1144,7 +1168,15 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const vec::fixed
 	vec::fixed<3> xvec = m_xvec_1stOrd;
 	vec::fixed<3> yvec = m_yvec_1stOrd;
 	vec::fixed<3> zvec = m_zvec_1stOrd;
-	if (hydroMode == 1)
+	if (hydroMode == 0)
+	{
+		n1 = node1Pos_t0();
+		n2 = node2Pos_t0();
+		xvec = m_xvec_t0;
+		yvec = m_yvec_t0;
+		zvec = m_zvec_t0;
+	}
+	else if(hydroMode == 1)
 	{
 		n1 = node1Pos_sd();
 		n2 = node2Pos_sd();

@@ -52,6 +52,12 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 	Floater floater;
 	RNA rna;
 
+	// Initial displacement and velocity
+	// 12 components in order to use fowt.update, which has the 1st order motions in the first 6 components 
+	// and the total motions in the rest
+	vec::fixed<12> disp0(fill::zeros);
+	vec::fixed<12> vel0(fill::zeros);
+
 	// Read file line by line
 	std::string strInput{""};
 	while (m_inFl)
@@ -257,7 +263,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			}
 		}
 
-
 		/*
 			Read data to fowt
 		*/
@@ -391,6 +396,39 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			}
 
 			floater.setCoG(aux);
+		}
+
+
+		else if (caseInsCompare(getKeyword(strInput), "Disp0"))
+		{
+			// The components of the initial displacement of the FOWT are separated by commas in the input string
+			std::vector<std::string> input = stringTokenize(getData(strInput), ",");
+			if (input.size() != 6)
+			{
+				throw std::runtime_error("Unable to read Disp0 in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+			}
+
+			for (int ii = 0; ii < 6; ++ii)
+			{
+				disp0(ii) = string2num<double>(input.at(ii));
+				disp0(ii+6) = string2num<double>(input.at(ii));
+			}
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "Vel0"))
+		{
+			// The components of the initial displacement of the FOWT are separated by commas in the input string
+			std::vector<std::string> input = stringTokenize(getData(strInput), ",");
+			if (input.size() != 6)
+			{
+				throw std::runtime_error("Unable to read Vel0 in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+			}
+
+			for (int ii = 0; ii < 6; ++ii)
+			{
+				vel0(ii) = string2num<double>(input.at(ii));
+				vel0(ii + 6) = string2num<double>(input.at(ii));
+			}	
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Morison_circ")) // A list of circular cylinder Morison Elements is supposed to follow the "Morison_circ" keyword
@@ -630,7 +668,6 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		 		}
 
 		 		// Implement in the future
-
 		 		IO::readLineInputFile(strInput);
 			}
 		}
@@ -695,12 +732,11 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		}
 	}
 
+	floater.setAddedMass_t0(envir.watDensity()); // Evaluate the added mass matrix before the body is displaced by the initial displacement
 	fowt.setFloater(floater);
 	fowt.setRNA(rna);
 
 	// Need to initialize the vectors that constitute the basis of each cylinder
-	vec::fixed<12> disp0(fill::zeros);
-	vec::fixed<12> vel0(fill::zeros);
 	fowt.update(envir, disp0, vel0);
 }
 
@@ -819,28 +855,33 @@ unsigned int IO::getInLineNumber()
 void IO::setResults2Output(std::string strInput, ENVIR &envir)
 {
 	const std::string keyword = getKeyword(strInput);
+	bool isOutput = false;
 
 	if (caseInsCompare(keyword, "fowt_disp"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_DISP) = true;
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_DISP_1ST) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "fowt_vel"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_VEL) = true;
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_VEL_1ST) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "fowt_acc"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_ACC) = true;
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_ACC_1ST) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "fowt_disp_sd"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_DISP_SD) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_drag_force"))
@@ -849,6 +890,7 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_DRAG_EXT) = true;
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_DRAG_1ST) = true;
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_DRAG_EXT_1ST) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_force1"))
@@ -857,72 +899,85 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_1_EXT) = true;
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_1_1ST) = true;
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_1_EXT_1ST) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_force2"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_2) = true;
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_2_EXT) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_force3"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_3) = true;
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_3_EXT) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_force4"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_4) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_forceEta"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_ETA) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_forceRem"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_REM) = true;
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_REM_EXT) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_add_mass_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_ADD_MASS_FORCE) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE) = true;
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_1ST) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "hs_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HS_FORCE) = true;
 		m_whichResult2Output.at(IO::OUTFLAG_HS_FORCE_1ST) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "moor_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_MOOR_FORCE) = true;
 		m_whichResult2Output.at(IO::OUTFLAG_MOOR_FORCE_1ST) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "ad_hub_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_AD_HUB_FORCE) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "added_mass"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_ADDED_MASS_DIAG) = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "total_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_TOTAL_FORCE) = true;
+		isOutput = true;
 	}
 
 	// Add wave probes for wave elev, velocity, acceleration or pressure
@@ -931,36 +986,42 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ELEV) = true;
 		addWaveProbe = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "wave_vel"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_WAVE_VEL) = true;
 		addWaveProbe = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "wave_acc"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ACC) = true;
 		addWaveProbe = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "wave_pres"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_WAVE_PRES) = true;
 		addWaveProbe = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "wave_acc_2nd"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_WAVE_ACC_2ND) = true;
 		addWaveProbe = true;
+		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "wave_pres_2nd"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_WAVE_PRES_2ND) = true;
 		addWaveProbe = true;
+		isOutput = true;
 	}
 
 	if (addWaveProbe)
@@ -980,6 +1041,11 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 				envir.addWaveProbe(string2num<unsigned int>(input.at(ii)));
 			}
 		}
+	}
+
+	if (!isOutput)
+	{
+		print2log("WARNING: Unknown output option '" + keyword + "' in line " + std::to_string(IO::getInLineNumber()) + ".");
 	}
 }
 
@@ -1606,19 +1672,19 @@ std::string IO::printOutVar()
 		switch (ii)
 		{
 		case IO::OUTFLAG_FOWT_DISP:
-			output += "FOWT rigid motion: ";
+			output += "FOWT rigid displacement: ";
 			break;
 
 		case IO::OUTFLAG_FOWT_VEL:
-			output += "FOWT rigid motion: ";
+			output += "FOWT rigid velocity: ";
 			break;
 
 		case IO::OUTFLAG_FOWT_ACC:
-			output += "FOWT rigid motion: ";
+			output += "FOWT rigid acceleration: ";
 			break;
 
 		case IO::OUTFLAG_FOWT_DISP_SD:
-			output += "FOWT rigid motion - Slow: ";
+			output += "FOWT rigid displacement - Slow: ";
 			break;
 
 		case IO::OUTFLAG_WAVE_ELEV:
