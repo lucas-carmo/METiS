@@ -15,6 +15,7 @@ class Floater
 {
 private:
 	double m_mass;
+	bool m_instantSD{ false }; // If FOWT.m_filterSD_omega < 0, the slow position is actually equal to the instantaneous position, which has an important effect in the functions of Floater class.
 	vec::fixed<3> m_CoG; // Coordinates of center of gravity.
 	vec::fixed<6> m_inertia; // Moments and products of inertia. It is a 6x1 array. Actually, it is a symmetric 3x3 matrix, hence 3 elements are simply repeated.
 	mat::fixed<6, 6> m_addedMass_t0;
@@ -38,6 +39,7 @@ public:
 	void setMass(const double mass);
 	void setInertia(const vec::fixed<6> &inertia);
 	void setCoG(const vec::fixed<3> &cog);
+	void setInstantSD(bool instantSD);
 
 	void addMorisonCirc(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_coord, const double diam, const double CD, const double CM, const unsigned int numIntPoints,
 	const double botDiam, const double topDiam, const double axialCD, const double axialCa, const bool botPressFlag);
@@ -52,6 +54,12 @@ public:
 	double mass() const;
 	mat::fixed<6,6> inertiaMatrix() const;
 	mat::fixed<6, 6> addedMass_t0() const;
+
+	// Floater position, including rotations, with respect to the CoG position
+	vec::fixed<6> CoGPos() const;
+	vec::fixed<6> CoGPos_1stOrd() const;
+	vec::fixed<6> CoGPos_sd() const;
+
 
 	std::string printMass() const;
 	std::string printInertia() const;

@@ -20,7 +20,7 @@ Floater::Floater()
 	m_mass = datum::nan;
 	m_CoG.fill(datum::nan);	
 	m_inertia.fill(datum::nan);
-	m_addedMass_t0.fill(datum::nan);
+	m_addedMass_t0.fill(datum::nan);	
 }
 
 
@@ -81,6 +81,11 @@ void Floater::setCoG(const vec::fixed<3> &cog)
 	m_CoG = cog;
 }
 
+void Floater::setInstantSD(bool instantSD)
+{
+	m_instantSD = instantSD;
+}
+
 
 /*
 	Add circular cylinder Morison Element to m_MorisonElements
@@ -135,6 +140,25 @@ mat::fixed<6, 6> Floater::addedMass_t0() const
 	{
 		throw std::runtime_error("Tried to call Floater::addedMass_t0(), but it was not calculated yet. Try calling Floater::addedMass(const double density, const int hydroMode) first.");
 	}
+}
+
+vec::fixed<6> Floater::CoGPos() const
+{
+	return join_cols(m_CoG, zeros(3,1)) + m_disp;
+}
+
+vec::fixed<6> Floater::CoGPos_1stOrd() const
+{
+	if (m_instantSD)
+	{
+		return join_cols(m_CoG, zeros(3, 1)) + m_disp_sd;
+	}
+	return join_cols(m_CoG, zeros(3, 1)) + m_disp_sd + m_disp_1stOrd;
+}
+
+vec::fixed<6> Floater::CoGPos_sd() const
+{
+	return join_cols(m_CoG, zeros(3, 1)) + m_disp_sd;
 }
 
 
@@ -211,13 +235,13 @@ void Floater::update(const ENVIR &envir, const vec::fixed<6> &FOWTdisp, const ve
 {
 	m_disp = FOWTdisp;
 	m_disp_sd = FOWTdisp_SD;
-	m_disp_1stOrd = FOWTdisp_1stOrd;
+	m_disp_1stOrd = FOWTdisp_1stOrd;	
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
 		// The CoG position is added to the displacements because updateMorisonElement requires the instantaneous position of the CoG of the floater
-		// The first order position is summed over the slow drift position
-		m_MorisonElements.at(ii)->updateMorisonElement(envir, FOWTdisp + join_cols(CoG(), zeros(3, 1)), FOWTvel, FOWTdisp_SD + join_cols(CoG(), zeros(3, 1)), FOWTvel_SD, FOWTdisp_SD + FOWTdisp_1stOrd + join_cols(CoG(), zeros(3, 1)), FOWTvel_1stOrd);
+		m_MorisonElements.at(ii)->updateMorisonElement(envir, CoGPos(), FOWTvel, CoGPos_sd(), FOWTvel_SD, CoGPos_1stOrd(), FOWTvel_1stOrd);
+
 	}
 }
 
@@ -248,15 +272,15 @@ mat::fixed<6, 6> Floater::addedMass(const int hydroMode) const
 	{
 		if (hydroMode == 0) // Useful to evaluate the initial added mass matrix
 		{
-			A += m_MorisonElements.at(ii)->addedMass_perp(1, CoG(), hydroMode) + m_MorisonElements.at(ii)->addedMass_paral(1, CoG(), hydroMode);
+			A += m_MorisonElements.at(ii)->addedMass_perp(1, CoG().rows(0, 2), hydroMode) + m_MorisonElements.at(ii)->addedMass_paral(1, CoG().rows(0, 2), hydroMode);
 		}
 		else if(hydroMode == 1)
 		{
-			A += m_MorisonElements.at(ii)->addedMass_perp(1, m_disp_sd.rows(0, 2) + CoG(), hydroMode) + m_MorisonElements.at(ii)->addedMass_paral(1, m_disp_sd.rows(0, 2) + CoG(), hydroMode);
+			A += m_MorisonElements.at(ii)->addedMass_perp(1, CoGPos_sd().rows(0,2), hydroMode) + m_MorisonElements.at(ii)->addedMass_paral(1, CoGPos_sd().rows(0, 2), hydroMode);
 		}
 		else
 		{
-			A += m_MorisonElements.at(ii)->addedMass_perp(1, m_disp_sd.rows(0,2) + m_disp_1stOrd.rows(0, 2) + CoG(), hydroMode) + m_MorisonElements.at(ii)->addedMass_paral(1, m_disp_sd.rows(0, 2) + m_disp_1stOrd.rows(0, 2) + CoG(), hydroMode);
+			A += m_MorisonElements.at(ii)->addedMass_perp(1, CoGPos_1stOrd().rows(0, 2), hydroMode) + m_MorisonElements.at(ii)->addedMass_paral(1, CoGPos_1stOrd().rows(0, 2), hydroMode);
 		}
 	}
 	return A;
@@ -305,7 +329,7 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 		// Force acting on each element
 		for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 		{
-			df = m_MorisonElements.at(ii)->hydrodynamicForce_1stOrd(envir, (m_disp_sd.rows(0, 2) + CoG()), df_drag, df_1, df_drag_ext, df_1_ext);
+			df = m_MorisonElements.at(ii)->hydrodynamicForce_1stOrd(envir, CoGPos_sd().rows(0, 2), df_drag, df_1, df_drag_ext, df_1_ext);
 			force += df;
 
 			force_drag += df_drag;
@@ -326,7 +350,7 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 	{
 		for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 		{
-			df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, (m_disp_sd.rows(0, 2) + m_disp_1stOrd.rows(0, 2) + CoG()), (m_disp_sd.rows(0, 2) + CoG()), df_drag, df_1, df_2, df_3, df_4, df_eta, df_rem, df_drag_ext, df_1_ext, df_2_ext, df_3_ext, df_rem_ext);
+			df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, CoGPos_1stOrd().rows(0, 2), CoGPos_sd().rows(0, 2), df_drag, df_1, df_2, df_3, df_4, df_eta, df_rem, df_drag_ext, df_1_ext, df_2_ext, df_3_ext, df_rem_ext);
 
 			// Add to the forces acting on the whole floater
 			force += df;
@@ -379,7 +403,7 @@ vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir, const int hydroMode)
 
 			// The moments acting on the cylinders were calculated with respect to the first node
 			// We need to change the fulcrum to the CoG
-			df.rows(3, 5) = df.rows(3, 5) + cross(m_MorisonElements.at(ii)->node1Pos_1stOrd() - (m_disp_sd.rows(0, 2) + m_disp_1stOrd.rows(0, 2) + CoG()), df.rows(0, 2));
+			df.rows(3, 5) = df.rows(3, 5) + cross(m_MorisonElements.at(ii)->node1Pos_1stOrd() - CoGPos_1stOrd().rows(0, 2), df.rows(0, 2));
 			force += df;
 		}
 		IO::print2outLine(IO::OUTFLAG_HS_FORCE_1ST, force);
@@ -389,7 +413,7 @@ vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir, const int hydroMode)
 		for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 		{
 			df = m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity());
-			df.rows(3, 5) = df.rows(3, 5) + cross(m_MorisonElements.at(ii)->node1Pos() - (m_disp.rows(0, 2) + CoG()), df.rows(0, 2));			
+			df.rows(3, 5) = df.rows(3, 5) + cross(m_MorisonElements.at(ii)->node1Pos() - CoGPos().rows(0, 2), df.rows(0, 2));
 			force += df;
 		}
 		IO::print2outLine(IO::OUTFLAG_HS_FORCE, force);		

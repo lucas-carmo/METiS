@@ -62,6 +62,11 @@ void FOWT::setFilderSD(const double omega, const double zeta)
 void FOWT::setFloater(Floater &floater)
 {
 	m_floater = floater;
+
+	if (m_filterSD_omega < 0)
+	{
+		m_floater.setInstantSD(true);
+	}
 }
 
 void FOWT::setRNA(RNA &rna)
