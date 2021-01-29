@@ -577,11 +577,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		// that is perpendicular to the axis of the cylinder
 		lambda = norm(n_ii - n1, 2) / L;
 		acc_ii = a1 + lambda * (a2 - a1);
-		acc_ii = arma::dot(acc_ii, xvec_sd)*xvec + arma::dot(acc_ii, yvec_sd)*yvec;
+		acc_ii = arma::dot(acc_ii, xvec)*xvec + arma::dot(acc_ii, yvec)*yvec;
 
 		// Component of the fluid acceleration at the integration point that is perpendicular to the axis of the cylinder.
 		du1dt = envir.du1dt(n_ii, eta);
-		du1dt = arma::dot(du1dt, xvec_sd) * xvec+ arma::dot(du1dt, yvec_sd) * yvec;
+		du1dt = arma::dot(du1dt, xvec) * xvec+ arma::dot(du1dt, yvec) * yvec;
 
 		// Force due to first-order acceleration integrated considering the instantaneous position of the cylinder		
 		force_1_ii = aux * Cm * du1dt;
@@ -726,7 +726,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		n_ii = (n2 - n1) * (0 - n1.at(2)) / (n2.at(2) - n1.at(2)) + n1; // Coordinates of the intersection with the still water line;				
 		n_ii.at(2) = 0; // Since envir.du1dt returns 0 for z > 0, this line is necessary to make sure that the z coordinate of n_ii is exactly 0, and not slightly above due to roundoff errors.
 		du1dt = envir.du1dt(n_ii, 0);
-		du1dt = arma::dot(du1dt, xvec_sd) * xvec + arma::dot(du1dt, yvec_sd) * yvec;
+		du1dt = arma::dot(du1dt, xvec) * xvec + arma::dot(du1dt, yvec) * yvec;
 		eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
 		force_eta.rows(0, 2) = (datum::pi * D*D / 4.) * rho * Cm * du1dt * eta;
 		force_eta.rows(3, 5) = cross(n_ii - refPt, force_eta.rows(0, 2));
@@ -740,7 +740,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	if (n1.at(2) <= zwl)
 	{
 		// Kinematics
-		du1dt = arma::dot(envir.du1dt(n1, 0), zvec_sd) * zvec;
+		du1dt = arma::dot(envir.du1dt(n1, 0), zvec) * zvec;
 		u1 = envir.u1(n1_sd, 0);
 		a_c.zeros();
 		du2dt.zeros();
@@ -818,7 +818,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	if (n2.at(2) <= zwl)
 	{
 		// Kinematics
-		du1dt = arma::dot(envir.du1dt(n2, 0), zvec_sd) * zvec;
+		du1dt = arma::dot(envir.du1dt(n2, 0), zvec) * zvec;
 		u1 = envir.u1(n2_sd, 0);
 		a_c.zeros();
 		du2dt.zeros();
@@ -920,9 +920,9 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 	// Nodes position and vectors of the local coordinate system vectors
 	vec::fixed<3> n1 = node1Pos_1stOrd();
 	vec::fixed<3> n2 = node2Pos_1stOrd();
-	vec::fixed<3> xvec = m_xvec_1stOrd;
+	vec::fixed<3> xvec = m_xvec_1stOrd; // xvec and yvec are used to project the acceleration. They are analogous to the normal vector, which should consider the slow or fixed position
 	vec::fixed<3> yvec = m_yvec_1stOrd;
-	vec::fixed<3> zvec = m_zvec_1stOrd;
+	vec::fixed<3> zvec = m_zvec_1stOrd; // While zvec is used only to evaluate the nodes position, and hence should be first-order position
 	if (hydroMode == 0)
 	{
 		n1 = node1Pos_t0();
@@ -1165,23 +1165,17 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const vec::fixed
 	// Nodes position and vectors of the local coordinate system vectors
 	vec::fixed<3> n1 = node1Pos_1stOrd();
 	vec::fixed<3> n2 = node2Pos_1stOrd();
-	vec::fixed<3> xvec = m_xvec_1stOrd;
-	vec::fixed<3> yvec = m_yvec_1stOrd;
 	vec::fixed<3> zvec = m_zvec_1stOrd;
 	if (hydroMode == 0)
 	{
 		n1 = node1Pos_t0();
 		n2 = node2Pos_t0();
-		xvec = m_xvec_t0;
-		yvec = m_yvec_t0;
 		zvec = m_zvec_t0;
 	}
 	else if(hydroMode == 1)
 	{
 		n1 = node1Pos_sd();
 		n2 = node2Pos_sd();
-		xvec = m_xvec_sd;
-		yvec = m_yvec_sd;
 		zvec = m_zvec_sd;
 	}
 
