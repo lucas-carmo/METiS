@@ -6,13 +6,13 @@
 #include "FOWT.h"
 #include "ENVIR.h"
 #include "analyses.h"
+#include <omp.h>
 
 // METiS Version
 extern const std::string g_METIS_VERSION{ "0.0.1" };
 
 int main(int argc, char *argv[])
 {
-
 	// Timer for measuring the elapsed time
 	arma::wall_clock timer;
 	timer.tic();
