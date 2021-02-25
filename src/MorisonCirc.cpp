@@ -1,5 +1,7 @@
 #include "MorisonCirc.h"
 #include <cmath>
+#include <omp.h>
+#include <ppl.h>
 
 
 using namespace arma;
@@ -199,14 +201,14 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce_1stOrd(const ENVIR &envir, const ve
 	force_1_ext.zeros();
 
 	// Use a more friendly notation
-	double D = m_diam;
-	double Cd = m_CD;
-	double Cm = m_CM;
+	const double D = m_diam;
+	const double Cd = m_CD;
+	const double Cm = m_CM;
 	double CdV_1 = m_axialCD_1;
 	double CaV_1 = m_axialCa_1;
 	double CdV_2 = m_axialCD_2;
 	double CaV_2 = m_axialCa_2;
-	double rho = envir.watDensity();
+	const double rho = envir.watDensity();
 
 	// Nodes position and vectors of the local coordinate system
 	vec::fixed<3> n1 = node1Pos_sd();
@@ -241,26 +243,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce_1stOrd(const ENVIR &envir, const ve
 
 	double L = arma::norm(n2 - n1, 2); // Total cylinder length
 
-	// Initialization of some variables
-	vec::fixed<3> n_ii(fill::zeros); // Coordinates of the integration point
-	vec::fixed<3> vel_ii(fill::zeros); // Velocity of the integration point
-
-	vec::fixed<3> u1(fill::zeros); // Fluid velocity at the integration point
-	vec::fixed<3> du1dt(fill::zeros); // Fluid acceleration at the integration point
-
-	// Forces acting at the integration point and moment (with relation to n1) due to the force acting at the integration point
-	// TODO: quase certeza que todas essas variaveis moment sao desnecessarias
-	vec::fixed<3> force_drag_ii(fill::zeros); // Drag component
-	vec::fixed<3> moment_drag_ii(fill::zeros);
-	vec::fixed<3> force_1_ii(fill::zeros); // First part - Forces due to 1st order potential
-	vec::fixed<3> moment_1_ii(fill::zeros);	
-
 	// Component of the velocity that is parallel to the axis of the cylinder
 	vec::fixed<3> v_axial = arma::dot(v1, zvec) * zvec;
-
-	// Useful auxilliary variables to avoid recalculating things
-	vec::fixed<3> aux_force(fill::zeros);
-	double aux{ 0 };
 
 	/*=================================
 		Forces along the length of the cylinder
@@ -277,10 +261,13 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce_1stOrd(const ENVIR &envir, const ve
 		ncyl += 1;
 	}
 	double dL = Lw / (ncyl - 1); // length of each interval between points
-
-	for (int ii = 1; ii <= ncyl; ++ii)
+	
+	vec::fixed<6> aux_force_1(fill::zeros);
+	vec::fixed<6> aux_force_drag(fill::zeros);
+	
+	Concurrency::parallel_for(int(1), ncyl, [&](int ii)
 	{
-		n_ii = n1 + dL * (ii - 1) * zvec; // Coordinates of the integration point
+		vec::fixed<3> n_ii = n1 + dL * (ii - 1) * zvec; // Coordinates of the integration point
 		if (n_ii[2] >= 0 && ii == ncyl)
 		{
 			n_ii[2] = 0;
@@ -289,41 +276,44 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce_1stOrd(const ENVIR &envir, const ve
 		// Component of the velocity of the integration point
 		// that is perpendicular to the axis of the cylinder
 		double lambda = norm(n_ii - n1, 2) / L;
-		vel_ii = v1 + lambda * (v2 - v1);
+		vec::fixed<3> vel_ii = v1 + lambda * (v2 - v1);
 
 		// Component of the fluid velocity at the integration point that is perpendicular to the axis of the cylinder
-		u1 = envir.u1(n_ii, 0);
-		u1 -= arma::dot(u1, zvec) * zvec;		
+		vec::fixed<3> u1 = envir.u1(n_ii, 0);
+		u1 -= arma::dot(u1, zvec) * zvec;
 
 		// Component of the fluid acceleration at the integration point that is perpendicular to the axis of the cylinder.
-		du1dt = envir.du1dt(n_ii, 0);
+		vec::fixed<3> du1dt = envir.du1dt(n_ii, 0);
 		du1dt -= arma::dot(du1dt, zvec) * zvec;
 
 		// Quadratic drag force
-		force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - (vel_ii - v_axial), 2) * (u1 - (vel_ii - v_axial));
-		moment_drag_ii = cross(n_ii - refPt, force_drag_ii);
+		vec::fixed<3> force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - (vel_ii - v_axial), 2) * (u1 - (vel_ii - v_axial));
+		vec::fixed<3> moment_drag_ii = cross(n_ii - refPt, force_drag_ii);
 
 		// Force due to first-order acceleration
-		force_1_ii = datum::pi * D*D / 4. * rho * Cm * du1dt;
-		moment_1_ii = cross(n_ii - refPt, force_1_ii);
+		vec::fixed<3> force_1_ii = datum::pi * D*D / 4. * rho * Cm * du1dt;
+		vec::fixed<3> moment_1_ii = cross(n_ii - refPt, force_1_ii);
 
 		// Integrate the forces along the cylinder using Simpson's Rule
 		if (ii == 1 || ii == ncyl)
 		{
-			force_1 += (dL / 3.0) * join_cols(force_1_ii, moment_1_ii);
-			force_drag += (dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
+			aux_force_1 += (dL / 3.0) * join_cols(force_1_ii, moment_1_ii);
+			aux_force_drag += (dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
 		}
 		else if (ii % 2 == 0)
 		{
-			force_1 += (4 * dL / 3.0) * join_cols(force_1_ii, moment_1_ii);
-			force_drag += (4 * dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
+			aux_force_1 += (4 * dL / 3.0) * join_cols(force_1_ii, moment_1_ii);
+			aux_force_drag += (4 * dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
 		}
 		else
 		{
-			force_1 += (2 * dL / 3.0) * join_cols(force_1_ii, moment_1_ii);
-			force_drag += 2 * (dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
+			aux_force_1 += (2 * dL / 3.0) * join_cols(force_1_ii, moment_1_ii);
+			aux_force_drag += 2 * (dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
 		}
-	}
+	});
+
+	force_1 = aux_force_1;
+	force_drag = aux_force_drag;
 
 
 	/*=================================
@@ -333,11 +323,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce_1stOrd(const ENVIR &envir, const ve
 	if (n1.at(2) <= 0)
 	{
 		// Kinematics
-		du1dt = arma::dot(envir.du1dt(n1, 0), zvec) * zvec;
-		u1 = arma::dot(envir.u1(n1, 0), zvec) * zvec;
+		vec::fixed<3> du1dt = arma::dot(envir.du1dt(n1, 0), zvec) * zvec;
+		vec::fixed<3> u1 = arma::dot(envir.u1(n1, 0), zvec) * zvec;
 		
 		// Drag force		
-		aux_force = 0.5 * rho * CdV_1 * datum::pi * (D*D / 4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
+		vec::fixed<3> aux_force = 0.5 * rho * CdV_1 * datum::pi * (D*D / 4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
 		force_drag_ext.rows(0, 2) += aux_force;
 		force_drag_ext.rows(3, 5) += cross(n1 - refPt, aux_force);
 
@@ -361,11 +351,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce_1stOrd(const ENVIR &envir, const ve
 	if (n2.at(2) <= 0)
 	{
 		// Kinematics
-		du1dt = arma::dot(envir.du1dt(n2, 0), zvec) * zvec;
-		u1 = arma::dot(envir.u1(n2, 0), zvec) * zvec;
+		vec::fixed<3> du1dt = arma::dot(envir.du1dt(n2, 0), zvec) * zvec;
+		vec::fixed<3> u1 = arma::dot(envir.u1(n2, 0), zvec) * zvec;
 		
 		// Drag force		
-		aux_force = 0.5 * rho * CdV_2 * datum::pi * (D*D / 4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
+		vec::fixed<3> aux_force = 0.5 * rho * CdV_2 * datum::pi * (D*D / 4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
 		force_drag_ext.rows(0, 2) += aux_force;
 		force_drag_ext.rows(3, 5) += cross(n2 - refPt, aux_force);
 
@@ -559,6 +549,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	double dL = Lw / (ncyl - 1); // length of each interval between points
 
 	aux = datum::pi * D*D / 4. * rho;
+	/*omp_set_num_threads(4);
+	#pragma omp parallel for*/
 	for (int ii = 1; ii <= ncyl; ++ii)
 	{
 		n_ii = n1 + dL * (ii - 1) * zvec; // Coordinates of the integration point
@@ -626,6 +618,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 
 	force_rem_ii.zeros();
 	moment_rem_ii.zeros();
+	//omp_set_num_threads(4);
+	//#pragma omp parallel for
 	for (int ii = 1; ii <= ncyl; ++ii)
 	{
 		n_ii_sd = n1_sd + dL * (ii - 1) * zvec_sd;
@@ -908,7 +902,7 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 
 	// Use a more friendly notation
 	double Lambda = datum::pi * pow(m_diam / 2., 2) * rho * (m_CM - 1);
-	double ncyl = m_numIntPoints;
+	int ncyl = m_numIntPoints;
 	
 	// Get vertical coordinate of the intersection with the waterline
 	double zwl = 0;
@@ -981,6 +975,8 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 
 	vec::fixed<3> n_ii;
 	double step{ 0 }; // Used for Simpson's rule. See below.
+	//omp_set_num_threads(4);
+	//#pragma omp parallel for
 	for (int ii = 1; ii <= ncyl; ++ii)
 	{
 		n_ii = (n2 - n1) * (ii - 1) / (ncyl - 1) + n1; // Coordinates of the integration point
