@@ -68,6 +68,12 @@ This process will be conducted with CMake in the future (I don't know when).
     7. Finally, you need to go to **Linker** -> **Input** -> **Additional Dependencies** and add *mkl_core.lib*, *mkl_sequential.lib*, and *mkl_intel_lp64.lib* (if 32bits, replace *mkl_intel_lp64.lib* by ** mkl_intel_c_dll.lib**).
 
 
+### Running
+Open a PowerShell window and run:
+
+`& "Path\to\METis\executable.exe" "Path\to\test_case.txt"`
+
+with the paths replaced by the ones specific to your case.
 
 
 
@@ -100,3 +106,11 @@ Disable all **DoFs** + choose the **forces** that you want to include in the ana
 
     DOFS 0 0 0 0 0 0
 ```    
+
+
+# **Tools**
+The following MATLAB routines are included in folder **tools**:
+- **readOutFl**: out = readOutFl(flNm) reads a METiS _out file with the results of a time domain simulation. It assumes that the file consists of columns with headers in the first line and the data in the rest of the file (which is the format of the _out file).
+- **readInputFile**: reads a METiS input file to structures. Currently, it only reads the characteristics that are necessary for the next routine
+- **viewFOWT**: plots the geommetry of the FOWT of a given input file. The input is the path to the input file.
+- **postProc**: simple routine, under development, to plot the outputs of a simmulation
