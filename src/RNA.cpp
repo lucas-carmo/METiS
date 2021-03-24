@@ -435,9 +435,13 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 		****/
 		aeroForce.rows(0,2) += rotatMatrix_deg(m_blades.at(iiBlades).initialAzimuth(), m_blades.at(iiBlades).precone(), 0) * bladeForce.rows(0,2);
 		aeroForce.rows(3,5) += rotatMatrix_deg(m_blades.at(iiBlades).initialAzimuth(), m_blades.at(iiBlades).precone(), 0) * bladeForce.rows(3,5);
-	}
+	}	
 	IO::print2outLine(IO::OUTFLAG_AD_HUB_FORCE, aeroForce);
 
+	// As rotor dynamics is not modelled yet, it would be wrong to consider the moment along 
+	// the shaft as if it was acting on the structure modelled as as rigid body
+	aeroForce.at(4) = 0;
+	
 	// Need to write aeroForce in the global reference plane + change the fulcrum to the FOWT CoG
 	// 1) Write aeroForce in the shaft coordinate system
 	aeroForce.rows(0, 2) = rotatMatrix_deg(deltaAzimuth, 0, 0) * aeroForce.rows(0, 2);
@@ -454,7 +458,7 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 
 	// 4) Write aeroForce in the global coordinate system
 	aeroForce.rows(0, 2) = rotatMatrix(FOWTpos.rows(3, 5)) * aeroForce.rows(0, 2);
-	aeroForce.rows(3, 5) = rotatMatrix(FOWTpos.rows(3, 5)) * aeroForce.rows(3, 5);	
+	//aeroForce.rows(3, 5) = rotatMatrix(FOWTpos.rows(3, 5)) * aeroForce.rows(3, 5);	
 
 	return aeroForce;
 }
