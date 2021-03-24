@@ -53,34 +53,11 @@ double MorisonRect::A_paral(const int ii, const int jj, const vec::fixed<3> &x, 
 	return 0;
 }
 
-
-vec::fixed<6> MorisonRect::hydrostaticForce_basic(const double rho, const double g,
-	const vec::fixed<3> &node1, const vec::fixed<3> &node2,
-	const vec::fixed<3> &in_xvec, const vec::fixed<3> &in_yvec, const vec::fixed<3> &in_zvec) const
-{
-	vec::fixed<6> force(fill::zeros);
-	return force;
-}
-
-vec::fixed<6> MorisonRect::hydrostaticForce_1stOrd(const double rho, const double g) const
-{
-	vec::fixed<6> force(fill::zeros);
-	return force;
-}
-
 vec::fixed<6> MorisonRect::hydrostaticForce(const double rho, const double g) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;
 }
-
-
-vec::fixed<6> MorisonRect::hydrodynamicForce_1stOrd(const ENVIR &envir, const vec::fixed<3> &refPt, vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_drag_ext, vec::fixed<6> &force_1_ext) const
-{
-	vec::fixed<6> force(fill::zeros);
-	return force;
-}
-
 
 vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir, const int hydroMode, const vec::fixed<3> &refPt, const vec::fixed<3> &refPt_sd,
 	vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_2,

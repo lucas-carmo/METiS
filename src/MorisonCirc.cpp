@@ -60,9 +60,7 @@ void MorisonCirc::make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed
 }
 
 
-vec::fixed<6> MorisonCirc::hydrostaticForce_basic(const double rho, const double g, 
-												  const vec::fixed<3> &node1, const vec::fixed<3> &node2,
-												  const vec::fixed<3> &in_xvec, const vec::fixed<3> &in_yvec, const vec::fixed<3> &in_zvec) const
+vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
@@ -70,28 +68,15 @@ vec::fixed<6> MorisonCirc::hydrostaticForce_basic(const double rho, const double
 	// Use a more friendly notation
 	double D = m_diam;
 
-	vec::fixed<3> n1 = node1;
-	vec::fixed<3> n2 = node2;
+	// Nodes position
+	vec::fixed<3> n1 = node1Pos();
+	vec::fixed<3> n2 = node2Pos();
 
-	// Make local basis in such a way that the rotation is around the local y axis
-	vec::fixed<3> zvec = (n2 - n1) / arma::norm(n2 - n1, 2);
-	vec::fixed<3> xvec(fill::zeros);
-	vec::fixed<3> yvec(fill::zeros);
-	vec::fixed<3> z_global{ 0,0,1 };
-	if (arma::approx_equal(zvec, z_global, "absdiff", arma::datum::eps))
-	{
-		xvec = { 1, 0, 0 };
-		yvec = { 0, 1, 0 };
-	}
-	else
-	{
-		yvec = arma::cross(z_global, zvec);
-		yvec = yvec / arma::norm(yvec, 2);		
+	// Vectors of the local coordinate system vectors
+	vec::fixed<3> xvec = m_xvec;
+	vec::fixed<3> yvec = m_yvec;
+	vec::fixed<3> zvec = m_zvec;
 
-		xvec = arma::cross(yvec, zvec);
-		xvec = xvec / arma::norm(xvec, 2);
-	}
-	
 	// Make sure that node1 is below node2 (or at the same height, at least).
 	// Otherwise, need to swap them.
 	if (n1[2] > n2[2])
@@ -112,7 +97,7 @@ vec::fixed<6> MorisonCirc::hydrostaticForce_basic(const double rho, const double
 
 	// Calculation of the inclination of the cylinder (with respect to the
 	// vertical), which is used in the calculation of the center of buoyoancy
-	double alpha = std::acos(arma::dot(zvec, arma::vec::fixed<3> {0, 0, 1})); // zvec and {0, 0, 1} are both unit vectors
+	double alpha = acos(arma::dot(zvec, arma::vec::fixed<3> {0, 0, 1})); // zvec and {0, 0, 1} are both unit vectors
 	double tanAlpha{ 0 };
 
 	// Check if the angle is 90 degrees
@@ -172,215 +157,10 @@ vec::fixed<6> MorisonCirc::hydrostaticForce_basic(const double rho, const double
 
 	// The moment was calculated with relation to n1, which may be different from node1.
 	// We need to change the fulcrum to node1
-	force.rows(3, 5) = force.rows(3, 5) + cross(n1 - node1, force.rows(0, 2));
+	force.rows(3, 5) = force.rows(3, 5) + cross(n1 - node1Pos(), force.rows(0, 2));
 
 	return force;
 }
-
-vec::fixed<6> MorisonCirc::hydrostaticForce_1stOrd(const double rho, const double g) const
-{
-	return hydrostaticForce_basic(rho, g, node1Pos_1stOrd(), node2Pos_1stOrd(), m_xvec_1stOrd, m_yvec_1stOrd, m_zvec_1stOrd);
-}
-
-vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) const
-{
-	return hydrostaticForce_basic(rho, g, node1Pos(), node2Pos(), m_xvec, m_yvec, m_zvec);
-}
-
-
-
-vec::fixed<6> MorisonCirc::hydrodynamicForce_1stOrd(const ENVIR &envir, const vec::fixed<3> &refPt, vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_drag_ext, vec::fixed<6> &force_1_ext) const
-{
-	// Forces and moments acting at the Morison Element
-	vec::fixed<6> force(fill::zeros);
-
-	// Make sure that the force components that are passed as reference are set to zero
-	force_drag.zeros();
-	force_1.zeros();
-	force_drag_ext.zeros();
-	force_1_ext.zeros();
-
-	// Use a more friendly notation
-	const double D = m_diam;
-	const double Cd = m_CD;
-	const double Cm = m_CM;
-	double CdV_1 = m_axialCD_1;
-	double CaV_1 = m_axialCa_1;
-	double CdV_2 = m_axialCD_2;
-	double CaV_2 = m_axialCa_2;
-	const double rho = envir.watDensity();
-
-	// Nodes position and vectors of the local coordinate system
-	vec::fixed<3> n1 = node1Pos_sd();
-	vec::fixed<3> n2 = node2Pos_sd();
-	vec::fixed<3> xvec = m_xvec_sd;
-	vec::fixed<3> yvec = m_yvec_sd;
-	vec::fixed<3> zvec = m_zvec_sd;	
-
-	// Velocity of the cylinder nodes
-	vec::fixed<3> v1 = node1Vel_1stOrd();
-	vec::fixed<3> v2 = node2Vel_1stOrd();
-
-	// Make sure that node1 is below node2 (or at the same height, at least).
-	// Otherwise, need to swap them. This is useful for a check below that speeds up the calculation
-	// by ignoring the nodes above the free surface.
-	if (n1[2] > n2[2])
-	{
-		n1.swap(n2);
-		v1.swap(v2);
-
-		// If the nodes position is reversed, we need to reverse the local base as well
-		xvec = -xvec;
-		yvec = -yvec;
-		zvec = -zvec;
-
-		// Axial coefficients must be swapped as well
-		CdV_1 = m_axialCD_2;
-		CaV_1 = m_axialCa_2;
-		CdV_2 = m_axialCD_1;
-		CaV_2 = m_axialCa_1;
-	}
-
-	double L = arma::norm(n2 - n1, 2); // Total cylinder length
-
-	// Component of the velocity that is parallel to the axis of the cylinder
-	vec::fixed<3> v_axial = arma::dot(v1, zvec) * zvec;
-
-	/*=================================
-		Forces along the length of the cylinder
-	==================================*/
-	double Lw = L;
-	int ncyl = m_numIntPoints;
-	if (n2.at(2) > 0)
-	{
-		Lw = L * (0 - n1.at(2)) / (n2.at(2) - n1.at(2));
-		ncyl = static_cast<int>(std::ceil(Lw / L * (m_numIntPoints - 1))) + 1;
-	}
-	if (ncyl % 2 == 0)
-	{
-		ncyl += 1;
-	}
-	double dL = Lw / (ncyl - 1); // length of each interval between points
-	
-	vec::fixed<6> aux_force_1(fill::zeros);
-	vec::fixed<6> aux_force_drag(fill::zeros);
-	
-	Concurrency::parallel_for(int(1), ncyl, [&](int ii)
-	{
-		vec::fixed<3> n_ii = n1 + dL * (ii - 1) * zvec; // Coordinates of the integration point
-		if (n_ii[2] >= 0 && ii == ncyl)
-		{
-			n_ii[2] = 0;
-		}
-
-		// Component of the velocity of the integration point
-		// that is perpendicular to the axis of the cylinder
-		double lambda = norm(n_ii - n1, 2) / L;
-		vec::fixed<3> vel_ii = v1 + lambda * (v2 - v1);
-
-		// Component of the fluid velocity at the integration point that is perpendicular to the axis of the cylinder
-		vec::fixed<3> u1 = envir.u1(n_ii, 0);
-		u1 -= arma::dot(u1, zvec) * zvec;
-
-		// Component of the fluid acceleration at the integration point that is perpendicular to the axis of the cylinder.
-		vec::fixed<3> du1dt = envir.du1dt(n_ii, 0);
-		du1dt -= arma::dot(du1dt, zvec) * zvec;
-
-		// Quadratic drag force
-		vec::fixed<3> force_drag_ii = 0.5 * rho * Cd * D * norm(u1 - (vel_ii - v_axial), 2) * (u1 - (vel_ii - v_axial));
-		vec::fixed<3> moment_drag_ii = cross(n_ii - refPt, force_drag_ii);
-
-		// Force due to first-order acceleration
-		vec::fixed<3> force_1_ii = datum::pi * D*D / 4. * rho * Cm * du1dt;
-		vec::fixed<3> moment_1_ii = cross(n_ii - refPt, force_1_ii);
-
-		// Integrate the forces along the cylinder using Simpson's Rule
-		if (ii == 1 || ii == ncyl)
-		{
-			aux_force_1 += (dL / 3.0) * join_cols(force_1_ii, moment_1_ii);
-			aux_force_drag += (dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
-		}
-		else if (ii % 2 == 0)
-		{
-			aux_force_1 += (4 * dL / 3.0) * join_cols(force_1_ii, moment_1_ii);
-			aux_force_drag += (4 * dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
-		}
-		else
-		{
-			aux_force_1 += (2 * dL / 3.0) * join_cols(force_1_ii, moment_1_ii);
-			aux_force_drag += 2 * (dL / 3.0) * join_cols(force_drag_ii, moment_drag_ii);
-		}
-	});
-
-	force_1 = aux_force_1;
-	force_drag = aux_force_drag;
-
-
-	/*=================================
-		Forces at the extremities of the cylinder
-	==================================*/
-	// Calculate the force acting on the bottom of the cylinder
-	if (n1.at(2) <= 0)
-	{
-		// Kinematics
-		vec::fixed<3> du1dt = arma::dot(envir.du1dt(n1, 0), zvec) * zvec;
-		vec::fixed<3> u1 = arma::dot(envir.u1(n1, 0), zvec) * zvec;
-		
-		// Drag force		
-		vec::fixed<3> aux_force = 0.5 * rho * CdV_1 * datum::pi * (D*D / 4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
-		force_drag_ext.rows(0, 2) += aux_force;
-		force_drag_ext.rows(3, 5) += cross(n1 - refPt, aux_force);
-
-		// Inertial force - pt1
-		aux_force = rho * CaV_1 * (4 / 3.) * datum::pi * (D*D*D / 8.) * du1dt;
-		force_1_ext.rows(0, 2) += aux_force;
-		force_1_ext.rows(3, 5) += cross(n1 - refPt, aux_force);	
-
-		if (m_botPressFlag)
-		{
-			// Force due to 1st order Froude-Krylov pressure
-			aux_force = datum::pi * 0.25 * D*D * envir.wavePressure(n1) * zvec;
-			force_1_ext.rows(0, 2) += aux_force;
-			force_1_ext.rows(3, 5) += cross(n1 - refPt, aux_force);			
-		}
-	}
-
-
-
-	// Calculate the force acting on the top of the cylinder
-	if (n2.at(2) <= 0)
-	{
-		// Kinematics
-		vec::fixed<3> du1dt = arma::dot(envir.du1dt(n2, 0), zvec) * zvec;
-		vec::fixed<3> u1 = arma::dot(envir.u1(n2, 0), zvec) * zvec;
-		
-		// Drag force		
-		vec::fixed<3> aux_force = 0.5 * rho * CdV_2 * datum::pi * (D*D / 4.) * norm(u1 - v_axial, 2) * (u1 - v_axial);
-		force_drag_ext.rows(0, 2) += aux_force;
-		force_drag_ext.rows(3, 5) += cross(n2 - refPt, aux_force);
-
-		// Inertial force - pt1
-		aux_force = rho * CaV_2 * (4 / 3.) * datum::pi * (D*D*D / 8.) * du1dt;
-		force_1_ext.rows(0, 2) += aux_force;
-		force_1_ext.rows(3, 5) += cross(n2 - refPt, aux_force);	
-
-		if (m_botPressFlag)
-		{
-			// Force due to 1st order Froude-Krylov pressure
-			aux_force = -datum::pi * 0.25 * D*D * envir.wavePressure(n2) * zvec;
-			force_1_ext.rows(0, 2) += aux_force;
-			force_1_ext.rows(3, 5) += cross(n2 - refPt, aux_force);			
-		}
-	}
-
-	/*
-		Total force
-	*/
-	force = force_drag + force_1 + force_drag_ext + force_1_ext;
-
-	return force;
-}
-
 
 
 // The vectors passed as reference are used to return the different components of the hydrodynamic force acting on the cylinder,
@@ -420,11 +200,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	double rho = envir.watDensity();
 
 	// Nodes position and vectors of the local coordinate system
-	vec::fixed<3> n1 = node1Pos_1stOrd();
-	vec::fixed<3> n2 = node2Pos_1stOrd();
-	vec::fixed<3> xvec = m_xvec_1stOrd;
-	vec::fixed<3> yvec = m_yvec_1stOrd;
-	vec::fixed<3> zvec = m_zvec_1stOrd;
+	vec::fixed<3> n1 = node1Pos();
+	vec::fixed<3> n2 = node2Pos();
+	vec::fixed<3> xvec = m_xvec;
+	vec::fixed<3> yvec = m_yvec;
+	vec::fixed<3> zvec = m_zvec;
 
 	// Same thing, but considering only the mean and slow drift displacements of the FOWT.
 	// These ones are used to evaluate forces due to second order quantities (second order potential,
@@ -438,8 +218,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	// Velocity and acceleration of the cylinder nodes
 	vec::fixed<3> v1 = node1Vel();
 	vec::fixed<3> v2 = node2Vel();
-	vec::fixed<3> v1_1st = node1Vel_1stOrd();
-	vec::fixed<3> v2_1st = node2Vel_1stOrd();
 	vec::fixed<3> a1 = node1AccCentrip();
 	vec::fixed<3> a2 = node2AccCentrip();
 
@@ -494,7 +272,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> n_ii(fill::zeros); // Coordinates of the integration point
 	vec::fixed<3> n_ii_sd(fill::zeros); // Coordinates of the integration point - considering the body fixed at the initial position
 	vec::fixed<3> vel_ii(fill::zeros); // Velocity of the integration point
-	vec::fixed<3> vel_ii_1st(fill::zeros);
 	vec::fixed<3> acc_ii(fill::zeros); // Acceleration of the integration point - Only centripetal part
 
 	vec::fixed<3> u1(fill::zeros); // Fluid velocity at the integration point
@@ -637,7 +414,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		// Velocity of the integration point
 		lambda = norm(n_ii_sd - n1_sd, 2) / L;
 		vel_ii = v1 + lambda * (v2 - v1);
-		vel_ii_1st = v1_1st + lambda * (v2_1st - v1_1st);
 
 		// Fluid velocity at the integration point.		
 		u1 = envir.u1(n_ii_sd, eta);
@@ -669,11 +445,11 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 
 			// 4th component: Force due to axial-divergence acceleration
 			double dwdz = arma::dot(du1dx, zvec_sd) * zvec_sd.at(0) + arma::dot(du1dy, zvec_sd) * zvec_sd.at(1) + arma::dot(du1dz, zvec_sd) * zvec_sd.at(2);
-			a_a = dwdz * (arma::dot(u1 - vel_ii_1st, xvec_sd)*xvec_sd + arma::dot(u1 - vel_ii_1st, yvec_sd)*yvec_sd);
+			a_a = dwdz * (arma::dot(u1 - vel_ii, xvec_sd)*xvec_sd + arma::dot(u1 - vel_ii, yvec_sd)*yvec_sd);
 			force_4_ii = aux * (Cm - 1) * a_a;
 
 			// Add to remaining forces: Force due to cylinder rotation				
-			a_r = 2 * arma::dot(u1 - vel_ii_1st, zvec_sd) * (1 / L) * (arma::dot(v2_1st - v1_1st, xvec_sd) * xvec_sd + arma::dot(v2_1st - v1_1st, yvec_sd) * yvec_sd);
+			a_r = 2 * arma::dot(u1 - vel_ii, zvec_sd) * (1 / L) * (arma::dot(v2 - v1, xvec_sd) * xvec_sd + arma::dot(v2 - v1, yvec_sd) * yvec_sd);
 			force_rem_ii = -aux * (Cm - 1) * a_r;
 		}
 
@@ -912,12 +688,12 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 	}
 
 	// Nodes position and vectors of the local coordinate system vectors
-	vec::fixed<3> n1 = node1Pos_1stOrd();
-	vec::fixed<3> n2 = node2Pos_1stOrd();
-	vec::fixed<3> xvec = m_xvec_1stOrd; // xvec and yvec are used to project the acceleration. They are analogous to the normal vector, which should consider the slow or fixed position
-	vec::fixed<3> yvec = m_yvec_1stOrd;
-	vec::fixed<3> zvec = m_zvec_1stOrd; // While zvec is used only to evaluate the nodes position, and hence should be first-order position
-	if (hydroMode == 0)
+	vec::fixed<3> n1 = node1Pos();
+	vec::fixed<3> n2 = node2Pos();
+	vec::fixed<3> xvec = m_xvec; // xvec and yvec are used to project the acceleration. They are analogous to the normal vector, which should consider the slow or fixed position
+	vec::fixed<3> yvec = m_yvec;
+	vec::fixed<3> zvec = m_zvec; // While zvec is used only to evaluate the nodes position, and hence should be first-order position
+	if (hydroMode < 2)
 	{
 		n1 = node1Pos_t0();
 		n2 = node2Pos_t0();
@@ -925,14 +701,6 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 		yvec = m_yvec_t0;
 		zvec = m_zvec_t0;
 	}
-	else if(hydroMode == 1)
-	{
-		n1 = node1Pos_sd();
-		n2 = node2Pos_sd();
-		xvec = m_xvec_sd;
-		yvec = m_yvec_sd;
-		zvec = m_zvec_sd;
-	}	
 
 	// Make sure that node1 is below node2 (or at the same height, at least).
 	// Otherwise, need to swap them.
@@ -1159,20 +927,14 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const vec::fixed
 	mat::fixed<6, 6> A(fill::zeros);
 
 	// Nodes position and vectors of the local coordinate system vectors
-	vec::fixed<3> n1 = node1Pos_1stOrd();
-	vec::fixed<3> n2 = node2Pos_1stOrd();
-	vec::fixed<3> zvec = m_zvec_1stOrd;
-	if (hydroMode == 0)
+	vec::fixed<3> n1 = node1Pos();
+	vec::fixed<3> n2 = node2Pos();
+	vec::fixed<3> zvec = m_zvec;
+	if (hydroMode < 2)
 	{
 		n1 = node1Pos_t0();
 		n2 = node2Pos_t0();
 		zvec = m_zvec_t0;
-	}
-	else if(hydroMode == 1)
-	{
-		n1 = node1Pos_sd();
-		n2 = node2Pos_sd();
-		zvec = m_zvec_sd;
 	}
 
 	// Center of Gravity

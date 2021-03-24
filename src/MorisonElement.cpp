@@ -40,9 +40,9 @@ void MorisonElement::calcPosVel(const vec::fixed<6> &pos, const vec::fixed<6> &v
 	zvec = RotatMatrix * m_zvec_t0;
 }
 
-void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD, const vec::fixed<6> &floaterCoGpos_1stOrd, const vec::fixed<6> &floaterVel_1stOrd)
+void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD)
 {
-	updateMorisonElement(floaterCoGpos, floaterVel, floaterCoGpos_SD, floaterVel_SD, floaterCoGpos_1stOrd, floaterVel_1stOrd);
+	updateMorisonElement(floaterCoGpos, floaterVel, floaterCoGpos_SD, floaterVel_SD);
 
 	// Find the intersection with the instantaneous waterline
 	// Used in Wheeler stretching and in the calculation of the added mass matrix.
@@ -50,7 +50,7 @@ void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6
 	m_intersectWL = findIntersectWL(envir);
 }
 
-void MorisonElement::updateMorisonElement(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD, const vec::fixed<6> &floaterCoGpos_1stOrd, const vec::fixed<6> &floaterVel_1stOrd)
+void MorisonElement::updateMorisonElement(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD)
 {
 	// Considering total body motion
 	calcPosVel(floaterCoGpos, floaterVel, m_node1Pos, m_node2Pos, m_node1Vel, m_node2Vel, m_xvec, m_yvec, m_zvec);
@@ -60,10 +60,6 @@ void MorisonElement::updateMorisonElement(const vec::fixed<6> &floaterCoGpos, co
 
 	// Considering only the mean and slow drift motions
 	calcPosVel(floaterCoGpos_SD, floaterVel_SD, m_node1Pos_sd, m_node2Pos_sd, m_node1Vel_sd, m_node2Vel_sd, m_xvec_sd, m_yvec_sd, m_zvec_sd);
-
-	// Considering only motions due to firt-order wave forces
-	// The position is summed with the slow position
-	calcPosVel(floaterCoGpos_1stOrd, floaterVel_1stOrd, m_node1Pos_1stOrd, m_node2Pos_1stOrd, m_node1Vel_1stOrd, m_node2Vel_1stOrd, m_xvec_1stOrd, m_yvec_1stOrd, m_zvec_1stOrd);
 }
 
 vec::fixed<3> MorisonElement::node1Pos_t0() const
@@ -86,16 +82,6 @@ vec::fixed<3> MorisonElement::node2Pos_sd() const
 	return m_node2Pos_sd;
 }
 
-vec::fixed<3> MorisonElement::node1Pos_1stOrd() const
-{
-	return m_node1Pos_1stOrd;
-}
-
-vec::fixed<3> MorisonElement::node2Pos_1stOrd() const
-{
-	return m_node2Pos_1stOrd;
-}
-
 vec::fixed<3> MorisonElement::node1Pos() const
 {
 	return m_node1Pos;
@@ -114,16 +100,6 @@ vec::fixed<3> MorisonElement::node1Vel_sd() const
 vec::fixed<3> MorisonElement::node2Vel_sd() const
 {
 	return m_node2Vel_sd;
-}
-
-vec::fixed<3> MorisonElement::node1Vel_1stOrd() const
-{
-	return m_node1Vel_1stOrd;
-}
-
-vec::fixed<3> MorisonElement::node2Vel_1stOrd() const
-{
-	return m_node2Vel_1stOrd;
 }
 
 vec::fixed<3> MorisonElement::node1Vel() const
