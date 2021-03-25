@@ -337,7 +337,7 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 	// If the analysis is second-order, it is reevaluated at each time step at the instantaneous position.
 	//
 	// However, if the slow position is fixed, just use the value that was evaluated at the beginning of the simulation
-	if (m_filterSD_omega == 0)
+	if (m_filterSD_omega == 0 && m_hydroMode == 1)
 	{
 		addedMass = m_floater.addedMass_t0();
 	}
