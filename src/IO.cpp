@@ -731,9 +731,18 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 	fowt.setFloater(floater);
 	fowt.setRNA(rna);	
 
-	// Need to initialize the vectors that constitute the basis of each cylinder
+	// Set initial state.
+	//
+	// The slow drift position is always necessary, even when the filter frequency is taken as 0,
+	// in which case it is equal to the initial fixed position though the whole simulation. 
+	// However, in this condition the filter is skipepd in fowt_updata_sd, hence we change the frequency 
+	// before calling it and them restore it back to its original value.
+	double wf = fowt.filterSD_omega();
+	fowt.setFilderSD(1, fowt.filterSD_zeta());
+	fowt.update_sd(disp0, envir.timeStep());
 	fowt.update(envir, disp0, vel0);
-	floater.setAddedMass_t0(envir.watDensity());
+	fowt.setAddedMass_t0(envir.watDensity());
+	fowt.setFilderSD(wf, fowt.filterSD_zeta());
 }
 
 

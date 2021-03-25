@@ -68,14 +68,29 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 	// Use a more friendly notation
 	double D = m_diam;
 
-	// Nodes position
 	vec::fixed<3> n1 = node1Pos();
 	vec::fixed<3> n2 = node2Pos();
 
-	// Vectors of the local coordinate system vectors
-	vec::fixed<3> xvec = m_xvec;
-	vec::fixed<3> yvec = m_yvec;
-	vec::fixed<3> zvec = m_zvec;
+	// Make local basis in such a way that the rotation is around the local y axis
+	// DO NOT CHANGE REPLACE THEM m_xvec, m_yvec and m_zvec BECAUSE THE ROTATION 
+	// WON'T BE AROUND THE LOCAL Y AXIS
+	vec::fixed<3> zvec = (n2 - n1) / arma::norm(n2 - n1, 2);
+	vec::fixed<3> xvec(fill::zeros);
+	vec::fixed<3> yvec(fill::zeros);
+	vec::fixed<3> z_global{ 0,0,1 };
+	if (arma::approx_equal(zvec, z_global, "absdiff", arma::datum::eps))
+	{
+		xvec = { 1, 0, 0 };
+		yvec = { 0, 1, 0 };
+	}
+	else
+	{
+		yvec = arma::cross(z_global, zvec);
+		yvec = yvec / arma::norm(yvec, 2);
+
+		xvec = arma::cross(yvec, zvec);
+		xvec = xvec / arma::norm(xvec, 2);
+	}
 
 	// Make sure that node1 is below node2 (or at the same height, at least).
 	// Otherwise, need to swap them.
@@ -97,7 +112,7 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 
 	// Calculation of the inclination of the cylinder (with respect to the
 	// vertical), which is used in the calculation of the center of buoyoancy
-	double alpha = acos(arma::dot(zvec, arma::vec::fixed<3> {0, 0, 1})); // zvec and {0, 0, 1} are both unit vectors
+	double alpha = std::acos(arma::dot(zvec, arma::vec::fixed<3> {0, 0, 1})); // zvec and {0, 0, 1} are both unit vectors
 	double tanAlpha{ 0 };
 
 	// Check if the angle is 90 degrees
@@ -326,8 +341,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	double dL = Lw / (ncyl - 1); // length of each interval between points
 
 	aux = datum::pi * D*D / 4. * rho;
-	/*omp_set_num_threads(4);
-	#pragma omp parallel for*/
 	for (int ii = 1; ii <= ncyl; ++ii)
 	{
 		n_ii = n1 + dL * (ii - 1) * zvec; // Coordinates of the integration point
@@ -394,9 +407,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	dL = Lw / (ncyl - 1); // length of each interval between points
 
 	force_rem_ii.zeros();
-	moment_rem_ii.zeros();
-	//omp_set_num_threads(4);
-	//#pragma omp parallel for
+	moment_rem_ii.zeros();	
 	for (int ii = 1; ii <= ncyl; ++ii)
 	{
 		n_ii_sd = n1_sd + dL * (ii - 1) * zvec_sd;
@@ -695,11 +706,11 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 	vec::fixed<3> zvec = m_zvec; // While zvec is used only to evaluate the nodes position, and hence should be first-order position
 	if (hydroMode < 2)
 	{
-		n1 = node1Pos_t0();
-		n2 = node2Pos_t0();
-		xvec = m_xvec_t0;
-		yvec = m_yvec_t0;
-		zvec = m_zvec_t0;
+		n1 = node1Pos_sd();
+		n2 = node2Pos_sd();
+		xvec = m_xvec_sd;
+		yvec = m_yvec_sd;
+		zvec = m_zvec_sd;
 	}
 
 	// Make sure that node1 is below node2 (or at the same height, at least).
@@ -932,9 +943,9 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const vec::fixed
 	vec::fixed<3> zvec = m_zvec;
 	if (hydroMode < 2)
 	{
-		n1 = node1Pos_t0();
-		n2 = node2Pos_t0();
-		zvec = m_zvec_t0;
+		n1 = node1Pos_sd();
+		n2 = node2Pos_sd();
+		zvec = m_zvec_sd;
 	}
 
 	// Center of Gravity

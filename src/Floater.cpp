@@ -233,9 +233,10 @@ void Floater::update(const ENVIR &envir, const vec::fixed<6> &FOWTdisp, const ve
 	}
 }
 
+// Needed this function to evaluate the added mass at the beginning of the simulation
 void Floater::setAddedMass_t0(const double density)
 {
-	m_addedMass_t0 = density*addedMass(0);
+	m_addedMass_t0 = density*addedMass(1);
 }
 
 mat::fixed<6, 6> Floater::addedMass(const double density, const int hydroMode) 
@@ -243,12 +244,6 @@ mat::fixed<6, 6> Floater::addedMass(const double density, const int hydroMode)
 	mat::fixed<6, 6> A(fill::zeros);
 
 	A = density*addedMass(hydroMode);
-
-	if (!m_addedMass_t0.is_finite())
-	{
-		m_addedMass_t0 = A;
-	}
-
 	return A;
 }
 
@@ -262,7 +257,7 @@ mat::fixed<6, 6> Floater::addedMass(const int hydroMode) const
 		// Evaluated at the fixed initial position
 		if (hydroMode < 2)
 		{
-			refPt = CoG().rows(0, 2);
+			refPt = CoGPos_sd().rows(0, 2);
 		}
 		else
 		{
