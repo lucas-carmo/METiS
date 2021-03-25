@@ -1,7 +1,5 @@
 #include "MorisonCirc.h"
 #include <cmath>
-#include <omp.h>
-#include <ppl.h>
 
 
 using namespace arma;
