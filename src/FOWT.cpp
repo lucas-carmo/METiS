@@ -82,6 +82,11 @@ void FOWT::setRNA(RNA &rna)
 	m_rna.setHubHeight2CoG(CoG().at(2));
 }
 
+void FOWT::setAddedMass_t0(const double density)
+{
+	m_floater.setAddedMass_t0(density);
+}
+
 
 
 
@@ -284,7 +289,15 @@ void FOWT::update_sd(const vec::fixed<6> &disp, const double dt)
 	double wf = m_filterSD_omega;
 	double zeta = m_filterSD_zeta;
 
-	if (wf >= 0)
+	// If the filtering frequency is zero, there is nothing to be done here
+	if (wf == 0)
+	{
+		return;
+	}
+
+	// If the filtering frequency is below zero, the slow drift position is actually 
+	// equal to the instantaneous position, and it is updated in FOWT::update()
+	if (wf > 0)
 	{
 		// Integrated using RK4. However, since the simulation time step must be small enough to 
 		// capture wave frequency motions, which are way faster than slow drift motions, even an
@@ -317,9 +330,22 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 
 	mat::fixed<6, 6> addedMass(fill::zeros);
 
-	// Fixed added mass matrix if the analysis is first-order
-	// Otherwise, it is reevaluated at each time step at the instantaneous position
-	addedMass = m_floater.addedMass(envir.watDensity(), m_hydroMode);
+	// Added mass matrix at the evaluated at slow position if the analysis is first-order. This
+	// is mostly because the expressions are all expressed in terms of slow-drift variables (the ones 
+	// with '_sd' in their names), since a real first-order analysis needs to consider the fixed mean position.
+	//
+	// If the analysis is second-order, it is reevaluated at each time step at the instantaneous position.
+	//
+	// However, if the slow position is fixed, just use the value that was evaluated at the beginning of the simulation
+	if (m_filterSD_omega == 0)
+	{
+		addedMass = m_floater.addedMass_t0();
+	}
+	else
+	{
+		addedMass = m_floater.addedMass(envir.watDensity(), m_hydroMode);
+	}
+	
 	IO::print2outLine(IO::OUTFLAG_ADDED_MASS_DIAG, addedMass.diag());
 
 	mat::fixed<6, 6> inertiaMatrix = addedMass + m_floater.inertiaMatrix();	

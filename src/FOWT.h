@@ -70,6 +70,8 @@ public:
 	void setFloater(Floater &floater);
 	void setRNA(RNA &rna);
 
+	void setAddedMass_t0(const double density);
+
 	/*****************************************************
 		Getters
 	*****************************************************/
@@ -104,6 +106,7 @@ public:
 	vec::fixed<6> calcAcceleration(const ENVIR &envir);
 	void update(const ENVIR &envir, const vec::fixed<6> &disp, const vec::fixed<6> &vel);
 	void update_sd(const vec::fixed<6> &disp, const double dt);
+	void update_sd(const vec::fixed<6> &disp, const double dt, const double wf, const double zeta);
 
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir);
 	vec::fixed<6> hydrostaticForce(const ENVIR &envir);
