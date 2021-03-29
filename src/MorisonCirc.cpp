@@ -13,7 +13,7 @@ MorisonCirc::MorisonCirc(const vec &node1Pos, const vec &node2Pos, const vec &co
 	: MorisonElement(node1Pos, node2Pos, cog, numIntPoints, botPressFlag, axialCD_1, axialCa_1, axialCD_2, axialCa_2),
 	m_diam(diam), m_CD(CD), m_CM(CM)
 {
-	make_local_base_t0(m_xvec_t0, m_yvec_t0, m_zvec_t0);
+	make_local_base(m_xvec_t0, m_yvec_t0, m_zvec_t0, node1Pos, node2Pos);
 
 	m_xvec_sd = m_xvec_t0;
 	m_yvec_sd = m_yvec_t0;
@@ -30,11 +30,11 @@ MorisonCirc::MorisonCirc(const vec &node1Pos, const vec &node2Pos, const vec &co
 	Forces acting on the Morison Element
 *****************************************************/
 // Make the local base of the cylinder at t = 0
-void MorisonCirc::make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const
+void MorisonCirc::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec, const arma::vec::fixed<3> &n1, const arma::vec::fixed<3> &n2) const
 {
 	xvec.zeros();
 	yvec.zeros();
-	zvec = (m_node2Pos_t0 - m_node1Pos_t0) / arma::norm(m_node2Pos_t0 - m_node1Pos_t0, 2);
+	zvec = (n2 - n1) / arma::norm(n2 - n1, 2);
 
 	// if Zlocal == Zglobal, REFlocal = REFglobal
 	arma::vec::fixed<3> z_global = { 0,0,1 };
@@ -47,10 +47,6 @@ void MorisonCirc::make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed
 	{
 		yvec = arma::cross(z_global, zvec);
 		yvec = yvec / arma::norm(yvec, 2);
-		if (zvec(0) < 0)
-		{
-			yvec = -yvec;
-		}
 
 		xvec = arma::cross(yvec, zvec);
 		xvec = xvec / arma::norm(xvec, 2);
@@ -68,40 +64,17 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 
 	vec::fixed<3> n1 = node1Pos();
 	vec::fixed<3> n2 = node2Pos();
-
-	// Make local basis in such a way that the rotation is around the local y axis
-	// DO NOT CHANGE REPLACE THEM m_xvec, m_yvec and m_zvec BECAUSE THE ROTATION 
-	// WON'T BE AROUND THE LOCAL Y AXIS
-	vec::fixed<3> zvec = (n2 - n1) / arma::norm(n2 - n1, 2);
-	vec::fixed<3> xvec(fill::zeros);
-	vec::fixed<3> yvec(fill::zeros);
-	vec::fixed<3> z_global{ 0,0,1 };
-	if (arma::approx_equal(zvec, z_global, "absdiff", arma::datum::eps))
-	{
-		xvec = { 1, 0, 0 };
-		yvec = { 0, 1, 0 };
-	}
-	else
-	{
-		yvec = arma::cross(z_global, zvec);
-		yvec = yvec / arma::norm(yvec, 2);
-
-		xvec = arma::cross(yvec, zvec);
-		xvec = xvec / arma::norm(xvec, 2);
-	}
+	vec::fixed<3> xvec(m_xvec), yvec(m_yvec), zvec(m_zvec);
 
 	// Make sure that node1 is below node2 (or at the same height, at least).
 	// Otherwise, need to swap them.
 	if (n1[2] > n2[2])
 	{
 		n1.swap(n2);
-
-		// If the nodes position is reversed, we need to reverse the local base as well
-		xvec = -xvec;
-		yvec = -yvec;
-		zvec = -zvec;
-	}
-
+		xvec *= -1; yvec *= -1; zvec *= -1;
+	}	
+	
+	
 	// If the cylinder is above the waterline, then the hydrostatic force is zero
 	if (n1[2] >= 0)
 	{
@@ -325,6 +298,15 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	/*=================================
 		Forces along the length of the cylinder - Considering the instantaneous position
 	==================================*/
+
+	// Force due to first-order acceleration integrated considering the instantaneous position of the cylinder
+	// Integrated analytically
+
+	vec::fixed<6> auxForce1 = morisonForce_inertia(envir, hydroMode);
+	force_1 += auxForce1;
+	force_1.rows(3, 5) += cross(n1-refPt, auxForce1.rows(0, 2));
+	
+
 	double Lw = L;
 	int ncyl = m_numIntPoints;
 	if (n2.at(2) > zwl)
@@ -339,55 +321,46 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	double dL = Lw / (ncyl - 1); // length of each interval between points
 
 	aux = datum::pi * D*D / 4. * rho;
-	for (int ii = 1; ii <= ncyl; ++ii)
+	if (hydroMode > 1)
 	{
-		n_ii = n1 + dL * (ii - 1) * zvec; // Coordinates of the integration point
-
-		if (n_ii[2] >= zwl && ii == ncyl)
+		for (int ii = 1; ii <= ncyl; ++ii)
 		{
-			n_ii[2] = zwl;
-		}
+			n_ii = n1 + dL * (ii - 1) * zvec; // Coordinates of the integration point
 
-		if (envir.waveStret() == 2 && hydroMode == 2)
-		{
-			eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
-		}
+			if (n_ii[2] >= zwl && ii == ncyl)
+			{
+				n_ii[2] = zwl;
+			}
 
-		// Component of the acceleration of the integration point
-		// that is perpendicular to the axis of the cylinder
-		lambda = norm(n_ii - n1, 2) / L;
-		acc_ii = a1 + lambda * (a2 - a1);
-		acc_ii = arma::dot(acc_ii, xvec)*xvec + arma::dot(acc_ii, yvec)*yvec;
+			if (envir.waveStret() == 2 && hydroMode == 2)
+			{
+				eta = envir.waveElev(n_ii.at(0), n_ii.at(1));
+			}
 
-		// Component of the fluid acceleration at the integration point that is perpendicular to the axis of the cylinder.
-		du1dt = envir.du1dt(n_ii, eta);
-		du1dt = arma::dot(du1dt, xvec) * xvec+ arma::dot(du1dt, yvec) * yvec;
+			// Component of the acceleration of the integration point
+			// that is perpendicular to the axis of the cylinder
+			lambda = norm(n_ii - n1, 2) / L;
+			acc_ii = a1 + lambda * (a2 - a1);
+			acc_ii = arma::dot(acc_ii, xvec)*xvec + arma::dot(acc_ii, yvec)*yvec;
 
-		// Force due to first-order acceleration integrated considering the instantaneous position of the cylinder		
-		force_1_ii = aux * Cm * du1dt;
-		moment_1_ii = cross(n_ii - refPt, force_1_ii);
+			force_rem_ii = -aux * (Cm - 1) * acc_ii;
+			moment_rem_ii = cross(n_ii - refPt, force_rem_ii);
 
-		force_rem_ii = -aux * (Cm - 1) * acc_ii;
-		moment_rem_ii = cross(n_ii - refPt, force_rem_ii);
-
-		// Integrate the forces along the cylinder using Simpson's Rule
-		if (ii == 1 || ii == ncyl)
-		{
-			force_1 += (dL / 3.0) * join_cols(force_1_ii, moment_1_ii);
-			force_rem += (dL / 3.0) * join_cols(force_rem_ii, moment_rem_ii);
-		}
-		else if (ii % 2 == 0)
-		{
-			force_1 += (4 * dL / 3.0) * join_cols(force_1_ii, moment_1_ii);
-			force_rem += (4 * dL / 3.0) * join_cols(force_rem_ii, moment_rem_ii);
-		}
-		else
-		{
-			force_1 += (2 * dL / 3.0) * join_cols(force_1_ii, moment_1_ii);
-			force_rem += (2 * dL / 3.0) * join_cols(force_rem_ii, moment_rem_ii);
+			// Integrate the forces along the cylinder using Simpson's Rule
+			if (ii == 1 || ii == ncyl)
+			{
+				force_rem += (dL / 3.0) * join_cols(force_rem_ii, moment_rem_ii);
+			}
+			else if (ii % 2 == 0)
+			{
+				force_rem += (4 * dL / 3.0) * join_cols(force_rem_ii, moment_rem_ii);
+			}
+			else
+			{
+				force_rem += (2 * dL / 3.0) * join_cols(force_rem_ii, moment_rem_ii);
+			}
 		}
 	}
-
 	/*=================================
 		Forces along the length of the cylinder - Considering the slow (or fixed) position
 	==================================*/
@@ -678,6 +651,245 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		force_drag_ext + force_1_ext + force_2_ext + force_3_ext + force_rem_ext;
 
 	return force;
+}
+
+
+vec::fixed<6> MorisonCirc::morisonForce_inertia(const ENVIR &envir, const int hydroMode) const
+{
+	vec::fixed<6> force(fill::zeros);
+
+	double t = envir.time();
+	double rho = envir.watDensity();
+	double h = envir.watDepth();
+	double g = envir.gravity();
+	double R = m_diam/2.;
+	double Cm = m_CM;
+	double pi = arma::datum::pi;
+	vec::fixed<3> Zvec{ 0, 0, 1 }; // Vectors of the global basis
+	vec::fixed<3> Xvec{ 1, 0, 0 };
+
+
+	vec::fixed<3> n1{ node1Pos() }, n2{ node2Pos() };
+	vec::fixed<3> xvec{ m_xvec }, yvec{ m_yvec }, zvec{ m_zvec };
+
+	// If only first-order forces are going to be calculated, consider the slow.
+	if (hydroMode == 1)
+	{
+		n1 = node1Pos_sd(); n2 = node2Pos_sd();
+		xvec = m_xvec_sd; yvec = m_yvec_sd; zvec = m_zvec_sd;
+	}
+
+	// Make sure that node1 is below node2 (or at the same height, at least).
+	// Otherwise, need to swap them.
+	if (n1[2] > n2[2])
+	{
+		n1.swap(n2);
+		xvec *= -1; yvec *= -1; zvec *= -1;
+	}
+
+	if (n2[2] > 0)
+	{
+		n2 = n1 + (abs(0 - n1(2)) / (n2(2) - n1(2))) * arma::norm(n2 - n1) * zvec;
+	}
+
+	double x1(n1[0]), y1(n1[1]), z1(n1[2]);
+	double x2(n2[0]), y2(n2[1]), z2(n2[2]);
+	double L = norm(n2 - n1);
+
+	// Calculation of the inclination of the cylinder with respect to the vertical
+	double alpha = std::acos(arma::dot(zvec, arma::vec::fixed<3> {0, 0, 1})); // zvec and {0, 0, 1} are both unit vectors
+	double tanAlpha{ 0 }, cosAlpha{ 0 }, sinAlpha{ 0 };
+
+	// Check if the angle is 90 degrees
+	if (std::abs(alpha - arma::datum::pi / 2) > datum::eps)
+	{
+		tanAlpha = tan(alpha);
+		cosAlpha = cos(alpha);
+		sinAlpha = sin(alpha);
+	}
+	else
+	{
+		tanAlpha = arma::datum::inf;
+		sinAlpha = 1;
+	}
+
+	// Calculate the angle that the cylinder makes with the global x axis
+	// Different method than the one used for tanAlpha because in here we need the sign of the angle
+	double psi{ 0 };
+	if (std::abs(alpha) > datum::eps)
+	{
+		vec::fixed<3> zproj = zvec - dot(zvec, Zvec)*Zvec;
+		zproj = zproj / norm(zproj);
+
+		psi = -atan2(dot(cross(zproj, Xvec), Zvec), dot(zproj, Xvec));
+	}
+
+
+	for (unsigned int ii = 0; ii < envir.numberOfWaveComponents(); ++ii)
+	{
+		const Wave &wave(envir.getWave(ii));
+
+		double w{ wave.angFreq() }, k{ wave.waveNumber() }, A{wave.amp()};
+		double cosBeta{wave.cosBeta()}, sinBeta{wave.sinBeta()};
+		double beta = wave.direction() * pi / 180.;
+		double phase = wave.phase() * pi / 180.;
+		double cosT(cos(-w * t + phase)), sinT(sin(-w * t + phase));		
+
+		// Avoid recalculting cossine and sine functions
+		double cosBetaPsi = cos(beta - psi); 
+		double sinBetaPsi = sin(beta - psi);
+
+		// The integration is different for a horizontal cylinder, as the integration variable
+		// along the cylinder is not related to the vertical position. This special case is treated separately.
+		double factor1_x(0), factor2_x(0), factor1_z(0), factor2_z(0), mult_h(0), mult_v(0);
+
+		/* 
+			FORCES
+		*/
+		if (arma::is_finite(tanAlpha))
+		{
+			// Contribution of the horizontal acceleration
+			factor1_x = k * sin(k*cosBeta*x1 + k * sinBeta*y1 + (z2 - z1)*k*tanAlpha*cosBetaPsi) * sinh(k*(z2 + h))
+				- k * tanAlpha*cosBetaPsi*cos(k*cosBeta*x1 + k*sinBeta*y1 + (z2 - z1)*k*tanAlpha*cosBetaPsi) * cosh(k*(z2 + h));
+			factor1_x = factor1_x - k * sin(k*cosBeta*x1 + k*sinBeta*y1) * sinh(k*(z1 + h))
+				+ k * tanAlpha*cosBetaPsi*cos(k*cosBeta*x1 + k*sinBeta*y1) * cosh(k*(z1 + h));
+			factor1_x = factor1_x / (k*tanAlpha*cosBetaPsi*k*tanAlpha*cosBetaPsi + k*k);
+
+			factor2_x = k * cos(k*cosBeta*x1 + k*sinBeta*y1 + (z2 - z1)*k*tanAlpha*cosBetaPsi) * sinh(k*(z2 + h))
+				+ k * tanAlpha*cosBetaPsi*sin(k*cosBeta*x1 + k * sinBeta*y1 + (z2 - z1)*k*tanAlpha*cosBetaPsi) * cosh(k*(z2 + h));
+			factor2_x = factor2_x - k * cos(k*cosBeta*x1 + k*sinBeta*y1) * sinh(k*(z1 + h))
+				- k * tanAlpha*cosBetaPsi*sin(k*cosBeta*x1 + k * sinBeta*y1) * cosh(k*(z1 + h));
+			factor2_x = factor2_x / (k*tanAlpha*cosBetaPsi*k*tanAlpha*cosBetaPsi + k*k);
+
+			mult_h = factor1_x * cosT + factor2_x * sinT;
+
+			// Contribution of the vertical acceleration
+			factor1_z = k * cos(k*cosBeta*x1 + k * sinBeta*y1 + (z2 - z1)*k*tanAlpha*cosBetaPsi) * cosh(k*(z2 + h))
+				+ k * tanAlpha*cosBetaPsi*sin(k*cosBeta*x1 + k * sinBeta*y1 + (z2 - z1)*k*tanAlpha*cosBetaPsi) * sinh(k*(z2 + h));
+			factor1_z = factor1_z - k * cos(k*cosBeta*x1 + k * sinBeta*y1) * cosh(k*(z1 + h))
+				- k * tanAlpha*cosBetaPsi*sin(k*cosBeta*x1 + k * sinBeta*y1) * sinh(k*(z1 + h));
+			factor1_z = factor1_z / (k*tanAlpha*cosBetaPsi*k*tanAlpha*cosBetaPsi + k*k);
+
+			factor2_z = k * sin(k*cosBeta*x1 + k * sinBeta*y1 + (z2 - z1)*k*tanAlpha*cosBetaPsi) * cosh(k*(z2 + h))
+				- k * tanAlpha*cosBetaPsi*cos(k*cosBeta*x1 + k*sinBeta*y1 + (z2 - z1)*k*tanAlpha*cosBetaPsi) * sinh(k*(z2 + h));
+			factor2_z = factor2_z - k * sin(k*cosBeta*x1 + k*sinBeta*y1) * cosh(k*(z1 + h))
+				+ k * tanAlpha*cosBetaPsi*cos(k*cosBeta*x1 + k*sinBeta*y1) * sinh(k*(z1 + h));
+			factor2_z = factor2_z / (k*tanAlpha*cosBetaPsi*k*tanAlpha*cosBetaPsi + k*k);
+
+			mult_v = factor1_z * cosT - factor2_z * sinT;
+
+			// This is due to the change of integration variable.
+			// We know cosAlpha !=0 because horizontal cylinders are treated separately
+			mult_h = mult_h / cosAlpha;
+			mult_v = mult_v / cosAlpha;
+		}
+		else
+		{			
+			// Contribution of the horizontal acceleration
+			factor1_x = -cos(k*cosBeta*x2 + k*sinBeta*y2) + cos(k*cosBeta*x1 + k*sinBeta*y1);
+			factor1_x = L * factor1_x / (k*cosBeta*(x2 - x1) + k*sinBeta*(y2 - y1));
+
+			factor2_x = sin(k*cosBeta*x2 + k*sinBeta*y2) - sin(k*cosBeta*x1 + k*sinBeta*y1);
+			factor2_x = L * factor2_x / (k*cosBeta*(x2 - x1) + k*sinBeta*(y2 - y1));
+
+			mult_h = factor1_x * cos(-w * t + phase) + factor2_x * sin(-w * t + phase);
+
+			// Contribution of the vertical acceleration
+			mult_v = factor2_x * cos(-w * t + phase) - factor1_x * sin(-w * t + phase);
+
+			// There is also the term related to the z position 
+			mult_h = mult_h * cosh(k*(z1 + h));
+			mult_v = mult_v * sinh(k*(z1 + h));
+		}
+			
+		// Forces along the local x and y axes
+		double fx = w * w * A * (cosBetaPsi * cosAlpha * mult_h + sinAlpha * mult_v) / sinh(k*h);
+		double fy = w * w * A * sinBetaPsi * mult_h / sinh(k*h);
+
+
+		/*
+			MOMENTS
+		*/
+		if (arma::is_finite(tanAlpha))
+		{
+			double b = k * cosBeta*x1 + k * sinBeta*y1;
+			double q = k * tanAlpha*cosBetaPsi;
+
+			// Contribution of the horizontal acceleration
+			factor1_x = k * sinh(k*(z2 + h)) * ((k*k + q*q)*(z2 - z1)*sin(q*(z2 - z1) + b) + 2*q*cos(q*(z2 - z1) + b))
+				+ cosh(k*(z2 + h)) * (-q * (k*k + q*q)*(z2 - z1)*cos(q*(z2 - z1) + b) + (q*q - k*k)*sin(q*(z2 - z1) + b));
+			factor1_x = factor1_x - k * sinh(k*(z1 + h)) * 2 * q*cos(b)
+				- cosh(k*(z1 + h)) * (q*q - k*k)*sin(b);
+			factor1_x = factor1_x / (q*q + k*k) / (q*q + k * k);
+
+			factor2_x = k * sinh(k*(z2 + h)) * ((k*k + q*q)*(z2 - z1)*cos(q*(z2 - z1) + b) - 2*q*sin(q*(z2 - z1) + b))
+				+ cosh(k*(z2 + h)) * (q*(k*k+ q*q)*(z2 - z1)*sin(q*(z2 - z1) + b) + (q*q - k*k)*cos(q*(z2 - z1) + b));
+			factor2_x = factor2_x + k * sinh(k*(z1 + h)) * 2*q*sin(b)
+				- cosh(k*(z1 + h)) * (q*q - k*k)*cos(b);
+			factor2_x = factor2_x / (q*q + k * k) / (q*q + k * k);
+
+			mult_h = factor1_x * cos(-w * t + phase) + factor2_x * sin(-w * t + phase);
+
+			// Contribution of the vertical acceleration
+			factor1_z = k * cosh(k*(z2 + h)) * ((k*k + q*q)*(z2 - z1)*cos(q*(z2 - z1) + b) - 2*q*sin(q*(z2 - z1) + b))
+				+ sinh(k*(z2 + h)) * (q*(k*k + q*q)*(z2 - z1)*sin(q*(z2 - z1) + b) + (q*q - k*k)*cos(q*(z2 - z1) + b));
+			factor1_z = factor1_z + k * cosh(k*(z1 + h)) * 2*q*sin(b)
+				- sinh(k*(z1 + h)) * (q*q - k*k)*cos(b);
+			factor1_z = factor1_z / (q*q + k * k) / (q*q + k * k);
+
+			factor2_z = k * cosh(k*(z2 + h)) * ((k*k + q*q)*(z2 - z1)*sin(q*(z2 - z1) + b) + 2*q*cos(q*(z2 - z1) + b))
+				+ sinh(k*(z2 + h)) * (-q * (k*k + q*q)*(z2 - z1)*cos(q*(z2 - z1) + b) + (q*q - k*k)*sin(q*(z2 - z1) + b));
+			factor2_z = factor2_z - k * cosh(k*(z1 + h)) * 2 * q*cos(b)
+				- sinh(k*(z1 + h)) * (q*q - k*k)*sin(b);
+			factor2_z = factor2_z / (q*q + k * k) / (q*q + k * k);
+
+			mult_v = factor1_z * cosT - factor2_z * sinT;
+
+			// This is due to the change of integration variable
+			mult_h = mult_h / cosAlpha / cosAlpha;
+			mult_v = mult_v / cosAlpha/ cosAlpha;
+		}
+		else
+		{
+			double aux = (k*cosBeta*(x2 - x1) + k*sinBeta*(y2 - y1)) / L;
+
+			// Contribution of the horizontal acceleration
+			factor1_x = -aux * L*cos(k*cosBeta*x2 + k*sinBeta*y2) + sin(k*cosBeta*x2 + k*sinBeta*y2)
+				- sin(k*cosBeta*x1 + k * sinBeta*y1);
+			factor1_x = factor1_x / (aux*aux);
+
+			factor2_x = aux * L*sin(k*cosBeta*x2 + k*sinBeta*y2) + cos(k*cosBeta*x2 + k*sinBeta*y2)
+				- cos(k*cosBeta*x1 + k*sinBeta*y1);
+			factor2_x = factor2_x / (aux*aux);;
+
+			mult_h = factor1_x * cos(-w * t + phase) + factor2_x * sin(-w * t + phase);
+
+			// Contribution of the vertical acceleration
+			mult_v = factor2_x * cos(-w * t + phase) - factor1_x * sin(-w * t + phase);
+
+			// There is also the term related to the z position 
+			mult_h = mult_h * cosh(k*(z1 + h));
+			mult_v = mult_v * sinh(k*(z1 + h));
+		}
+
+		// Forces along the local x and y axes
+		double mx = -w * w * A * sinBetaPsi * mult_h / sinh(k*h);
+		double my = w * w * A * (cosBetaPsi * cosAlpha * mult_h + sinAlpha * mult_v) / sinh(k*h);		
+
+
+		force.at(0) += fx * xvec(0) + fy * yvec(0);
+		force.at(1) += fx * xvec(1) + fy * yvec(1);
+		force.at(2) += fx * xvec(2) + fy * yvec(2);
+
+		force.at(3) += mx * xvec(0) + my * yvec(0);
+		force.at(4) += mx * xvec(1) + my * yvec(1);
+		force.at(5) += mx * xvec(2) + my * yvec(2);
+	}
+
+
+
+
+	return rho * pi* R * R * Cm * force * envir.ramp();
 }
 
 

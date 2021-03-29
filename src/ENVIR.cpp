@@ -355,6 +355,16 @@ double ENVIR::windExp() const
 	return m_windExp;
 }
 
+unsigned int ENVIR::numberOfWaveComponents() const
+{
+	return m_wave.size();
+}
+
+const Wave& ENVIR::getWave(unsigned int waveIndex) const
+{
+	return m_wave.at(waveIndex);
+}
+
 /*****************************************************
 	Printing
 *****************************************************/

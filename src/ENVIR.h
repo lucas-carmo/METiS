@@ -92,7 +92,9 @@ public:
 	double windRefHeight() const;
 	double windDir() const;
 	double windExp() const;
-
+	
+	unsigned int numberOfWaveComponents() const;
+	const Wave& getWave(unsigned int waveIndex) const;
 
 	/*****************************************************
 		Printing

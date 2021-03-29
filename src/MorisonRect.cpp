@@ -15,14 +15,14 @@ MorisonRect::MorisonRect(const vec &node1Pos, const vec &node2Pos, const vec &no
               m_diam_Y(diam_Y), m_CD_Y(CD_Y), m_CM_Y(CM_Y)
 {
 	m_cog2node3 = node3Pos - cog;
-	make_local_base_t0(m_xvec_t0, m_yvec_t0, m_zvec_t0);
+	make_local_base(m_xvec, m_yvec_t0, m_zvec_t0, node1Pos, node2Pos);
 }
 
 
 /*****************************************************
 	Forces acting on the Morison Element
 *****************************************************/
-void MorisonRect::make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const
+void MorisonRect::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec, const arma::vec::fixed<3> &n1, const arma::vec::fixed<3> &n2) const
 {
 }
 
@@ -64,6 +64,12 @@ vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<6> &force_3, vec::fixed<6> &force_4, vec::fixed<6> &force_eta, vec::fixed<6> &force_rem,
 	vec::fixed<6> &force_drag_ext, vec::fixed<6> &force_1_ext, vec::fixed<6> &force_2_ext,
 	vec::fixed<6> &force_3_ext, vec::fixed<6> &force_rem_ext) const
+{
+	vec::fixed<6> force(fill::zeros);
+	return force;
+}
+
+vec::fixed<6> MorisonRect::morisonForce_inertia(const ENVIR &envir, const int hydroMode) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;

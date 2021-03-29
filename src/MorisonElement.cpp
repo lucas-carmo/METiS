@@ -35,9 +35,7 @@ void MorisonElement::calcPosVel(const vec::fixed<6> &pos, const vec::fixed<6> &v
 	node1Vel = vel.rows(0, 2) + arma::cross(vel.rows(3, 5), R1);
 	node2Vel = vel.rows(0, 2) + arma::cross(vel.rows(3, 5), R2);
 
-	xvec = RotatMatrix * m_xvec_t0;
-	yvec = RotatMatrix * m_yvec_t0;
-	zvec = RotatMatrix * m_zvec_t0;
+	make_local_base(xvec, yvec, zvec, node1Pos, node2Pos);
 }
 
 void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD)

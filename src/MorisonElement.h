@@ -85,7 +85,7 @@ public:
 	vec::fixed<3> node1AccCentrip() const;
 	vec::fixed<3> node2AccCentrip() const;
 
-	virtual void make_local_base_t0(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec) const = 0;
+	virtual void make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3> &yvec, arma::vec::fixed<3> &zvec, const arma::vec::fixed<3> &n1, const arma::vec::fixed<3> &n2) const = 0;
 
 	// Contribution to the added mass
 	virtual mat::fixed<6, 6> addedMass_perp(const double rho, const vec::fixed<3> &refPt, const int hydroMode) const = 0;
@@ -100,6 +100,13 @@ public:
 											vec::fixed<6> &force_3, vec::fixed<6> &force_4, vec::fixed<6> &force_eta, vec::fixed<6> &force_rem,
 											vec::fixed<6> &force_drag_ext, vec::fixed<6> &force_1_ext, vec::fixed<6> &force_2_ext,
 											vec::fixed<6> &force_3_ext, vec::fixed<6> &force_rem_ext) const = 0;
+	
+	// Analytical evaluation of the integration along the cylinder's length
+	// of the term due to fluid acceleration in Morison's Equation.
+	//
+	// Written in the global coordinate system.
+	// Moments are given with respect to node1.
+	virtual vec::fixed<6> morisonForce_inertia(const ENVIR &envir, const int hydroMode) const = 0;
 
 	// Printers and getters
 	virtual std::string print() const = 0;
