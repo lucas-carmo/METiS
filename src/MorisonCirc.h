@@ -40,6 +40,7 @@ public:
 	vec::fixed<6> &force_3_ext, vec::fixed<6> &force_rem_ext) const override;
 
 	virtual vec::fixed<6> morisonForce_inertia(const ENVIR &envir, const int hydroMode) const override;
+	vec::fixed<6> morisonForce_inertia2nd(const ENVIR &envir) const;
 
 	/*****************************************************
 		Printing
