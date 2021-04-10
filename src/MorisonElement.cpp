@@ -13,6 +13,16 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 	  m_cog2node1(fill::zeros), m_cog2node2(fill::zeros), m_node1Vel(fill::zeros), m_node2Vel(fill::zeros),
 	  m_node1Pos_t0(node1Pos), m_node2Pos_t0(node2Pos), m_node1Pos_sd(node1Pos), m_node2Pos_sd(node2Pos)
 {
+	// Make sure that node1 is below node2 (or at the same height, at least).
+	// Otherwise, need to swap them.
+	if (node1Pos[2] > node2Pos[2])
+	{
+		m_node1Pos.swap(m_node2Pos);
+		m_node1Pos_t0.swap(m_node2Pos_t0);
+		std::swap(m_axialCD_1, m_axialCD_2);
+		std::swap(m_axialCa_1, m_axialCa_2);
+	}
+			
 	m_cog2node1 = m_node1Pos - cog;
 	m_cog2node2 = m_node2Pos - cog;		
 }

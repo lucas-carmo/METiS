@@ -66,14 +66,6 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 	vec::fixed<3> n2 = node2Pos();
 	vec::fixed<3> xvec(m_xvec), yvec(m_yvec), zvec(m_zvec);
 
-	// Make sure that node1 is below node2 (or at the same height, at least).
-	// Otherwise, need to swap them.
-	if (n1[2] > n2[2])
-	{
-		n1.swap(n2);
-		xvec *= -1; yvec *= -1; zvec *= -1;
-	}	
-	
 	
 	// If the cylinder is above the waterline, then the hydrostatic force is zero
 	if (n1[2] >= 0)
@@ -215,35 +207,6 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		xvec = xvec_sd;
 		yvec = yvec_sd;
 		zvec = zvec_sd;
-	}
-
-	// Make sure that node1 is below node2 (or at the same height, at least).
-	// Otherwise, need to swap them. This is useful for a check below that speeds up the calculation
-	// by ignoring the nodes above the free surface.
-	//
-	// There are some (rare) cases where this procedure causes n2_sd to be BELOW n1_sd, while n1 is
-	// guaranteed to be below n2, but this is OK because it is taken in account when the aforementioned check is done.
-	if (n1[2] > n2[2])
-	{
-		n1.swap(n2);
-		n1_sd.swap(n2_sd);
-		v1.swap(v2);
-		a1.swap(a2);
-
-		// If the nodes position is reversed, we need to reverse the local base as well
-		xvec = -xvec;
-		yvec = -yvec;
-		zvec = -zvec;
-
-		xvec_sd = -xvec_sd;
-		yvec_sd = -yvec_sd;
-		zvec_sd = -zvec_sd;
-
-		// Axial coefficients must be swapped as well
-		CdV_1 = m_axialCD_2;
-		CaV_1 = m_axialCa_2;
-		CdV_2 = m_axialCD_1;
-		CaV_2 = m_axialCa_1;
 	}
 
 	double L = arma::norm(n2 - n1, 2); // Total cylinder length
@@ -678,14 +641,6 @@ vec::fixed<6> MorisonCirc::morisonForce_inertia(const ENVIR &envir, const int hy
 		xvec = m_xvec_sd; yvec = m_yvec_sd; zvec = m_zvec_sd;
 	}
 
-	// Make sure that node1 is below node2 (or at the same height, at least).
-	// Otherwise, need to swap them.
-	if (n1[2] > n2[2])
-	{
-		n1.swap(n2);
-		xvec *= -1; yvec *= -1; zvec *= -1;
-	}
-
 	if (n2[2] > 0)
 	{
 		n2 = n1 + (abs(0 - n1(2)) / (n2(2) - n1(2))) * arma::norm(n2 - n1) * zvec;
@@ -897,14 +852,6 @@ vec::fixed<6> MorisonCirc::morisonForce_inertia2nd(const ENVIR &envir) const
 
 	vec::fixed<3> n1{ node1Pos_sd() }, n2{ node2Pos_sd() };
 	vec::fixed<3> xvec{ m_xvec_sd }, yvec{ m_yvec_sd }, zvec{ m_zvec_sd };
-
-	// Make sure that node1 is below node2 (or at the same height, at least).
-	// Otherwise, need to swap them.
-	if (n1[2] > n2[2])
-	{
-		n1.swap(n2);
-		xvec *= -1; yvec *= -1; zvec *= -1;
-	}
 
 	if (n2[2] > 0)
 	{
@@ -1144,18 +1091,6 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 		xvec = m_xvec_sd;
 		yvec = m_yvec_sd;
 		zvec = m_zvec_sd;
-	}
-
-	// Make sure that node1 is below node2 (or at the same height, at least).
-	// Otherwise, need to swap them.
-	if (n1[2] > n2[2])
-	{
-		n1.swap(n2);
-
-		// If the nodes position is reversed, we need to reverse the local base as well
-		xvec = -xvec;
-		yvec = -yvec;
-		zvec = -zvec;
 	}
 
 	// Since n2 is above n1, if n1[2] > zwl, the cylinder is above the waterline
@@ -1545,6 +1480,8 @@ std::string MorisonCirc::print() const
 
 	output = output + "CoG_2_node1:\t(" + std::to_string(m_cog2node1(0)) + ", " + std::to_string(m_cog2node1(1)) + ", " + std::to_string(m_cog2node1(2)) + ")\n";
 	output = output + "CoG_2_node1:\t(" + std::to_string(m_cog2node2(0)) + ", " + std::to_string(m_cog2node2(1)) + ", " + std::to_string(m_cog2node2(2)) + ")\n";
+	output = output + "node1 at t=0:\t(" + std::to_string(m_node1Pos(0)) + ", " + std::to_string(m_node1Pos(1)) + ", " + std::to_string(m_node1Pos(2)) + ")\n";
+	output = output + "node2 at t=0:\t(" + std::to_string(m_node2Pos(0)) + ", " + std::to_string(m_node2Pos(1)) + ", " + std::to_string(m_node2Pos(2)) + ")\n";
 	output = output + "Diameter:\t" + std::to_string(m_diam) + '\n';
 	output = output + "Drag Coeff.:\t" + std::to_string(m_CD) + '\n';
 	output = output + "Inert. Coeff.:\t" + std::to_string(m_CM) + '\n';
