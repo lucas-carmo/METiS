@@ -38,8 +38,7 @@ protected:
 	vec::fixed<3> m_node2Pos_sd;
 	vec::fixed<3> m_node1Vel_sd;
 	vec::fixed<3> m_node2Vel_sd;
-
-
+	
 	// Vectors of the local base
 	// They could be calculated every time from the nodes' position,
 	// but as members they can be calculated only once when the cylinder is updated
@@ -56,6 +55,15 @@ protected:
 	// Intersection with the instantaneous waterline
 	vec::fixed<3> m_intersectWL;
 
+	// Need the Z coordinate of the point that intersects the mean waterline at t=0
+	// for the evaluation of the second-order wave forces considering the fixed body position
+	vec::fixed<3> m_nodeWL;
+	vec::fixed<3> m_cog2nodeWL;
+	double m_Zwl{ 0 };
+
+	// Rotation matrix from the body coordinate system to the global coordinate system
+	// Used to evaluate the first-order normal vector
+	mat::fixed<3, 3> m_RotatMatrix;
 
 public:
 	MorisonElement(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints, 
@@ -97,16 +105,8 @@ public:
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const = 0;
 	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, const vec::fixed<3> &refPt, const vec::fixed<3> &refPt_sd,
 											vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_2, 
-											vec::fixed<6> &force_3, vec::fixed<6> &force_4, vec::fixed<6> &force_eta, vec::fixed<6> &force_rem,
-											vec::fixed<6> &force_drag_ext, vec::fixed<6> &force_1_ext, vec::fixed<6> &force_2_ext,
-											vec::fixed<6> &force_3_ext, vec::fixed<6> &force_rem_ext) const = 0;
+											vec::fixed<6> &force_3, vec::fixed<6> &force_4, vec::fixed<6> &force_eta, vec::fixed<6> &force_rem) const = 0;
 	
-	// Analytical evaluation of the integration along the cylinder's length
-	// of the term due to fluid acceleration in Morison's Equation.
-	//
-	// Written in the global coordinate system.
-	// Moments are given with respect to node1.
-	virtual vec::fixed<6> morisonForce_inertia(const ENVIR &envir, const int hydroMode) const = 0;
 
 	// Printers and getters
 	virtual std::string print() const = 0;

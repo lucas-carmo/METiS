@@ -24,7 +24,11 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 	}
 			
 	m_cog2node1 = m_node1Pos - cog;
-	m_cog2node2 = m_node2Pos - cog;		
+	m_cog2node2 = m_node2Pos - cog;
+
+	m_nodeWL = m_node1Pos + (m_node2Pos - m_node1Pos) * (0 - m_node1Pos.at(2)) / (m_node2Pos.at(2) - m_node1Pos.at(2));
+	m_cog2nodeWL = m_nodeWL - cog;
+	m_Zwl = m_nodeWL.at(2);
 }
 
 /*****************************************************
@@ -62,12 +66,17 @@ void MorisonElement::updateMorisonElement(const vec::fixed<6> &floaterCoGpos, co
 {
 	// Considering total body motion
 	calcPosVel(floaterCoGpos, floaterVel, m_node1Pos, m_node2Pos, m_node1Vel, m_node2Vel, m_xvec, m_yvec, m_zvec);
-	mat::fixed<3, 3> RotatMatrix(rotatMatrix(floaterCoGpos.rows(3, 5)));
-	m_node1AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), RotatMatrix * m_cog2node1));
-	m_node2AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), RotatMatrix * m_cog2node2));
+	m_RotatMatrix = rotatMatrix(floaterCoGpos.rows(3, 5));
+	m_node1AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), m_RotatMatrix * m_cog2node1));
+	m_node2AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), m_RotatMatrix * m_cog2node2));
+
+	m_nodeWL = floaterCoGpos.rows(0, 2) + m_RotatMatrix * m_cog2nodeWL;
+	m_Zwl = m_nodeWL.at(2);
 
 	// Considering only the mean and slow drift motions
 	calcPosVel(floaterCoGpos_SD, floaterVel_SD, m_node1Pos_sd, m_node2Pos_sd, m_node1Vel_sd, m_node2Vel_sd, m_xvec_sd, m_yvec_sd, m_zvec_sd);
+	
+
 }
 
 vec::fixed<3> MorisonElement::node1Pos_t0() const

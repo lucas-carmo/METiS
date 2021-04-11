@@ -34,12 +34,17 @@ public:
 	// Forces up to second order - to be used in the evaluation of the total acceleration
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const override;
 	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, const vec::fixed<3> &refPt, const vec::fixed<3> &refPt_sd,
-	vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_2,
-	vec::fixed<6> &force_3, vec::fixed<6> &force_4, vec::fixed<6> &force_eta, vec::fixed<6> &force_rem,
-	vec::fixed<6> &force_drag_ext, vec::fixed<6> &force_1_ext, vec::fixed<6> &force_2_ext,
-	vec::fixed<6> &force_3_ext, vec::fixed<6> &force_rem_ext) const override;
+											vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_2,
+											vec::fixed<6> &force_3, vec::fixed<6> &force_4, vec::fixed<6> &force_eta, vec::fixed<6> &force_rem) const override;
 
-	virtual vec::fixed<6> morisonForce_inertia(const ENVIR &envir, const int hydroMode) const override;
+	// Analytical evaluation of the integration along the cylinder's length
+	// of the term due to fluid acceleration in Morison's Equation.
+	//
+	// Written in the global coordinate system.
+	// Moments are given with respect to node1.
+	vec::fixed<6> hydroForce_1st(const ENVIR &envir, const int hydroMode) const;
+	mat::fixed<6,2> hydroForce_1st_components(const Wave &wave, double watDensity, double watDepth, double gravity) const; // Each row is a dof; Col 1 is the factor multiplying cos(-w*t), while factor 2 is the one multiplying sin(-w*t)
+
 	vec::fixed<6> morisonForce_inertia2nd(const ENVIR &envir) const;
 
 	/*****************************************************

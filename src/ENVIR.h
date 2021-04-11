@@ -47,6 +47,9 @@ private:
 	vec::fixed<3> du1dx_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 	vec::fixed<3> du1dy_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 	vec::fixed<3> du1dz_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> dadx_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> dady_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> dadz_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 
 public:
 	ENVIR();
@@ -136,6 +139,9 @@ public:
 	vec::fixed<3> du1dz(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> du2dt(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
 	vec::fixed<3> du2dt(const vec::fixed<3> &coord) const;	
+	vec::fixed<3> dadx(const vec::fixed<3> &coord, const double zwl) const;
+	vec::fixed<3> dady(const vec::fixed<3> &coord, const double zwl) const;
+	vec::fixed<3> dadz(const vec::fixed<3> &coord, const double zwl) const;
 
 	double windVel_X(const vec::fixed<3> &coord) const;
 	double windVel_Y(const vec::fixed<3> &coord) const;

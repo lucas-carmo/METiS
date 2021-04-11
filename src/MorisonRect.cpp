@@ -61,15 +61,7 @@ vec::fixed<6> MorisonRect::hydrostaticForce(const double rho, const double g) co
 
 vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir, const int hydroMode, const vec::fixed<3> &refPt, const vec::fixed<3> &refPt_sd,
 	vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_2,
-	vec::fixed<6> &force_3, vec::fixed<6> &force_4, vec::fixed<6> &force_eta, vec::fixed<6> &force_rem,
-	vec::fixed<6> &force_drag_ext, vec::fixed<6> &force_1_ext, vec::fixed<6> &force_2_ext,
-	vec::fixed<6> &force_3_ext, vec::fixed<6> &force_rem_ext) const
-{
-	vec::fixed<6> force(fill::zeros);
-	return force;
-}
-
-vec::fixed<6> MorisonRect::morisonForce_inertia(const ENVIR &envir, const int hydroMode) const
+	vec::fixed<6> &force_3, vec::fixed<6> &force_4, vec::fixed<6> &force_eta, vec::fixed<6> &force_rem) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;

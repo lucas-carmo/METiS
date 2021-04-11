@@ -889,28 +889,24 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	if (caseInsCompare(keyword, "hd_drag_force"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_DRAG) = true;
-		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_DRAG_EXT) = true;
 		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_force1"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_1) = true;
-		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_1_EXT) = true;
 		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_force2"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_2) = true;
-		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_2_EXT) = true;
 		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "hd_force3"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_3) = true;
-		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_3_EXT) = true;
 		isOutput = true;
 	}
 
@@ -929,7 +925,6 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	if (caseInsCompare(keyword, "hd_forceRem"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_REM) = true;
-		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_REM_EXT) = true;
 		isOutput = true;
 	}
 
@@ -1122,8 +1117,6 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 		(flag != IO::OUTFLAG_TOTAL_FORCE) && (flag != IO::OUTFLAG_HD_FORCE) && (flag != IO::OUTFLAG_HS_FORCE) && (flag != IO::OUTFLAG_MOOR_FORCE) &&
 		(flag != IO::OUTFLAG_HD_FORCE_DRAG) && (flag != IO::OUTFLAG_HD_FORCE_1) && (flag != IO::OUTFLAG_HD_FORCE_2) &&
 		(flag != IO::OUTFLAG_HD_FORCE_3) && (flag != IO::OUTFLAG_HD_FORCE_4) && (flag != IO::OUTFLAG_HD_FORCE_ETA) && (flag != IO::OUTFLAG_HD_FORCE_REM) &&
-		(flag != IO::OUTFLAG_HD_FORCE_DRAG_EXT) && (flag != IO::OUTFLAG_HD_FORCE_1_EXT) && (flag != IO::OUTFLAG_HD_FORCE_2_EXT) &&
-		(flag != IO::OUTFLAG_HD_FORCE_3_EXT) && (flag != IO::OUTFLAG_HD_FORCE_REM_EXT) &&
 		(flag != IO::OUTFLAG_HD_ADD_MASS_FORCE) && (flag != IO::OUTFLAG_AD_HUB_FORCE) && (flag != IO::OUTFLAG_ADDED_MASS_DIAG) && (flag != OUTFLAG_DEBUG_VEC_6)
 	   )
 	{
@@ -1149,26 +1142,12 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 				print2outLineHeader("hd_drag_force_" + std::to_string(ii));
 			}
 		}
-		if (flag == OUTFLAG_HD_FORCE_DRAG_EXT)
-		{
-			for (int ii = 1; ii <= 6; ++ii)
-			{
-				print2outLineHeader("hd_drag_force_ext_" + std::to_string(ii));
-			}
-		}
 
 		if (flag == OUTFLAG_HD_FORCE_1)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
 				print2outLineHeader("hd_force1_" + std::to_string(ii));
-			}
-		}
-		if (flag == OUTFLAG_HD_FORCE_1_EXT)
-		{
-			for (int ii = 1; ii <= 6; ++ii)
-			{
-				print2outLineHeader("hd_force1_ext_" + std::to_string(ii));
 			}
 		}
 
@@ -1179,26 +1158,12 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 				print2outLineHeader("hd_force2_" + std::to_string(ii));
 			}
 		}
-		if (flag == OUTFLAG_HD_FORCE_2_EXT)
-		{
-			for (int ii = 1; ii <= 6; ++ii)
-			{
-				print2outLineHeader("hd_force2_ext_" + std::to_string(ii));
-			}
-		}
 
 		if (flag == OUTFLAG_HD_FORCE_3)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
 				print2outLineHeader("hd_force3_" + std::to_string(ii));
-			}
-		}
-		if (flag == OUTFLAG_HD_FORCE_3_EXT)
-		{
-			for (int ii = 1; ii <= 6; ++ii)
-			{
-				print2outLineHeader("hd_force3_ext_" + std::to_string(ii));
 			}
 		}
 
@@ -1223,13 +1188,6 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			for (int ii = 1; ii <= 6; ++ii)
 			{
 				print2outLineHeader("hd_forceRem_" + std::to_string(ii));
-			}
-		}
-		if (flag == OUTFLAG_HD_FORCE_REM_EXT)
-		{
-			for (int ii = 1; ii <= 6; ++ii)
-			{
-				print2outLineHeader("hd_forceRem_ext_" + std::to_string(ii));
 			}
 		}
 
@@ -1685,7 +1643,6 @@ std::string IO::printOutVar()
 			break;
 
 		// Options that are not printted to the sum file:
-		// - Forces at the extremities, since they are activated with their respective forces along the length of the cylinder
 		// - Debug options, as they are for development usage
 		case IO::OUTFLAG_DEBUG_NUM:
 			printFlag = false;
@@ -1696,27 +1653,6 @@ std::string IO::printOutVar()
 			break;
 
 		case OUTFLAG_DEBUG_VEC_6:
-			printFlag = false;
-			break;
-
-		case IO::OUTFLAG_HD_FORCE_DRAG_EXT:
-			printFlag = false;
-			break;
-
-
-		case IO::OUTFLAG_HD_FORCE_1_EXT:
-			printFlag = false;
-			break;	
-
-		case IO::OUTFLAG_HD_FORCE_2_EXT:
-			printFlag = false;
-			break;
-
-		case IO::OUTFLAG_HD_FORCE_3_EXT:
-			printFlag = false;
-			break;
-
-		case IO::OUTFLAG_HD_FORCE_REM_EXT:
 			printFlag = false;
 			break;
 
