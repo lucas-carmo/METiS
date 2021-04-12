@@ -139,6 +139,12 @@ public:
 
 	// Other printing functions
 	static std::string printOutVar();
+
+	// Quantites evaluated at wave probes are not always necessary to the simulation,
+	// hence it is better to assess them only if required. For doing that, we need a function
+	// that outputs the state of the outputs
+	static bool isOutputActive(const OutFlag &flag);
+
 };
 
 

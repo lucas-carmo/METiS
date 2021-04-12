@@ -1667,6 +1667,11 @@ std::string IO::printOutVar()
 	return output;
 }
 
+bool IO::isOutputActive(const OutFlag &flag)
+{
+	return m_whichResult2Output.at(flag);
+}
+
 
 
 
