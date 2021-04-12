@@ -42,6 +42,15 @@ private:
 	double m_timeRamp;
 	double m_time = 0;
 
+
+	// Members that store variables evaluated using IFFT at the beginning of the simulation
+	vec m_timeIFFT;
+	mat m_waveElevIFFT;
+
+	// Functions to evaluate properties of each wave
+	cx_double waveElev_coef(const double x, const double y, const unsigned int waveIndex) const;
+	double wavePressure(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	double wavePressure_2ndOrd(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
 	vec::fixed<3> u1_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 	vec::fixed<3> du1dt_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 	vec::fixed<3> du1dx_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
@@ -77,6 +86,7 @@ public:
 	void addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh, const int numberOfRegularWaves, const double dwMax);
 
 	void addWaveProbe(const unsigned int ID);
+	void setWaveProbesWithIFFT();
 
 	/*****************************************************
 		Getters
@@ -95,9 +105,11 @@ public:
 	double windRefHeight() const;
 	double windDir() const;
 	double windExp() const;
-	
+
 	unsigned int numberOfWaveComponents() const;
 	const Wave& getWave(unsigned int waveIndex) const;
+
+	double waveElevAtProbe(const unsigned int ID) const;
 
 	/*****************************************************
 		Printing
@@ -126,11 +138,8 @@ public:
 	void stepTime(double const step);
 
 	double ramp() const;
-	double waveElev(const double x, const double y, const unsigned int waveIndex) const;
 	double waveElev(const double x, const double y) const;
-	double wavePressure(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 	double wavePressure(const vec::fixed<3> &coord) const;
-	double wavePressure_2ndOrd(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
 	double wavePressure_2ndOrd(const vec::fixed<3> &coord) const;
 	vec::fixed<3> u1(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> du1dt(const vec::fixed<3> &coord, const double zwl) const;
@@ -138,7 +147,7 @@ public:
 	vec::fixed<3> du1dy(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> du1dz(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> du2dt(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
-	vec::fixed<3> du2dt(const vec::fixed<3> &coord) const;	
+	vec::fixed<3> du2dt(const vec::fixed<3> &coord) const;
 	vec::fixed<3> dadx(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> dady(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> dadz(const vec::fixed<3> &coord, const double zwl) const;

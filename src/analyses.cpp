@@ -86,9 +86,14 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	double safFact = 0.8;
 	double factor{ 1 };
 	bool condition = true;
+	
 
 	// make sure that the members of FOWT are updated
 	fowt.update(envir, disp0, vel0);
+
+	// If the filter frequency is 0, all quantities are evaluated at the fixed body position,
+	// hence they can be evaluate previously with an IFFT
+	envir.setWaveProbesWithIFFT();
 
 	// The header of the formatted output file is written during the first time step and is then turned off
 	IO::print2outLineHeader_turnOn();

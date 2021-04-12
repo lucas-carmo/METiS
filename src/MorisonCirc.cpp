@@ -191,7 +191,8 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	vec::fixed<3> a1 = node1AccCentrip();
 	vec::fixed<3> a2 = node2AccCentrip();
 
-
+	// TODO: this should be the difference between m_RotatMatrix and the one due to the mean body position Since this should not be used
+	// when the filter is active, could use m_RotatMatrix - m_RotatMatrix_sd
 	mat::fixed<6, 6> R(fill::eye);
 	R *= -1;
 	R.rows(0, 2).cols(0, 2) += m_RotatMatrix;
@@ -616,6 +617,27 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 	return force;
 }
 
+// TODO: Implement Wheeler stretching in this component
+vec::fixed<6> MorisonCirc::hydroForce_1st(const ENVIR &envir, const int hydroMode) const
+{
+	vec::fixed<6> force(fill::zeros);
+
+	double t = envir.time();
+
+	for (unsigned int ii = 0; ii < envir.numberOfWaveComponents(); ++ii)
+	{
+		const Wave &wave(envir.getWave(ii));
+		double w{ wave.angFreq() };
+		vec::fixed<2> sinCos({ cos(-w * t), sin(-w * t) });
+
+		if (wave.waveNumber() != 0)
+		{
+			force += hydroForce_1st_components(wave, envir.watDensity(), envir.watDepth(), envir.gravity()) * sinCos;
+		}
+	}
+
+	return force * envir.ramp();
+}
 
 mat::fixed<6, 2> MorisonCirc::hydroForce_1st_components(const Wave &wave, double watDensity, double watDepth, double gravity) const
 {
@@ -863,24 +885,6 @@ mat::fixed<6, 2> MorisonCirc::hydroForce_1st_components(const Wave &wave, double
 	return coef;
 }
 
-// TODO: Implement Wheeler stretching in this component
-vec::fixed<6> MorisonCirc::hydroForce_1st(const ENVIR &envir, const int hydroMode) const
-{
-	vec::fixed<6> force(fill::zeros);
-
-	double t = envir.time();
-
-	for (unsigned int ii = 0; ii < envir.numberOfWaveComponents(); ++ii)
-	{
-		const Wave &wave(envir.getWave(ii));
-		double w{ wave.angFreq() };
-		vec::fixed<2> sinCos( { cos(-w * t), sin(-w * t) } );
-
-		force += hydroForce_1st_components(wave, envir.watDensity(), envir.watDepth(), envir.gravity()) * sinCos;
-	}
-
-	return force * envir.ramp();
-}
 
 // TODO: this function has many similarities with its 1st order counterpart. It would be better to group 
 // common code in an auxiliary function.
@@ -954,6 +958,9 @@ vec::fixed<6> MorisonCirc::morisonForce_inertia2nd(const ENVIR &envir) const
 			double cosBeta_jj{ wave_jj.cosBeta() }, sinBeta_jj{ wave_jj.sinBeta() };
 			double beta_ii{ wave_ii.direction() * pi / 180. }, beta_jj{ wave_jj.direction() * pi / 180. };
 			double phase_ii{ wave_ii.phase() * pi / 180. }, phase_jj{ wave_jj.phase() * pi / 180. };
+
+			if (k_ii == 0 || k_jj == 0)
+				continue;
 
 			double cosT(cos(-(w_ii - w_jj) * t + phase_ii - phase_jj)), sinT(sin(-(w_ii - w_jj) * t + phase_ii - phase_jj));
 
