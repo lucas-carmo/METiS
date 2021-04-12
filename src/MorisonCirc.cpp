@@ -517,31 +517,23 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		force_rem.rows(0, 2) += aux_force;
 		force_rem.rows(3, 5) += cross(n1 - refPt, aux_force);
 
-		if (m_botPressFlag)
-		{
-			// Force due to 1st order Froude-Krylov pressure is part of the first component
+		if (m_botPressFlag && hydroMode == 2)
+		{			
 			aux = datum::pi * 0.25 * D*D;
-			aux_force = R.rows(0, 2).cols(0, 2) * aux * envir.wavePressure(n1) * zvec;
-			force_1.rows(0, 2) += aux_force;
-			force_1.rows(3, 5) += cross(n1 - refPt, aux_force);
+			// Inertial force - pt2 - 2nd order Froude-Krylov pressure
+			aux_force = aux * envir.wavePressure_2ndOrd(n1_sd) * zvec_sd;
+			force_2.rows(0, 2) += aux_force;
+			force_2.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
 
-			if (hydroMode == 2)
-			{
-				// Inertial force - pt2 - 2nd order Froude-Krylov pressure
-				aux_force = aux * envir.wavePressure_2ndOrd(n1_sd) * zvec_sd;
-				force_2.rows(0, 2) += aux_force;
-				force_2.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
+			// Inertial force - pt3 - Quadratic pressure drop from Rainey's formulation
+			aux_force = -0.5 * aux * rho * (Cm - 1) * (pow(arma::dot(envir.u1(n1_sd, 0) - v1, xvec_sd), 2) + pow(arma::dot(envir.u1(n1_sd, 0) - v1, yvec_sd), 2)) * zvec_sd;
+			force_3.rows(0, 2) += aux_force;
+			force_3.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
 
-				// Inertial force - pt3 - Quadratic pressure drop from Rainey's formulation
-				aux_force = -0.5 * aux * rho * (Cm - 1) * (pow(arma::dot(envir.u1(n1_sd, 0) - v1, xvec_sd), 2) + pow(arma::dot(envir.u1(n1_sd, 0) - v1, yvec_sd), 2)) * zvec_sd;
-				force_3.rows(0, 2) += aux_force;
-				force_3.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
-
-				// Inertial force - Remaining - Point load from Rainey's formulation that results in a Munk moment
-				aux_force = aux * (Cm - 1) * cdot(u1 - v_axial, zvec_sd) * ((envir.u1(n1_sd, 0) - u1) - (v1 - v_axial));
-				force_rem.rows(0, 2) += aux_force;
-				force_rem.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
-			}
+			// Inertial force - Remaining - Point load from Rainey's formulation that results in a Munk moment
+			aux_force = aux * (Cm - 1) * cdot(u1 - v_axial, zvec_sd) * ((envir.u1(n1_sd, 0) - u1) - (v1 - v_axial));
+			force_rem.rows(0, 2) += aux_force;
+			force_rem.rows(3, 5) += cross(n1_sd - refPt_sd, aux_force);
 		}
 	}
 
@@ -595,31 +587,24 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		force_rem.rows(0, 2) += aux_force;
 		force_rem.rows(3, 5) += cross(n2 - refPt, aux_force);
 
-		if (m_botPressFlag)
-		{
-			// Force due to 1st order Froude-Krylov pressure is part of the first component
+		if (m_botPressFlag && hydroMode == 2)
+		{						
 			aux = datum::pi * 0.25 * D*D;
-			aux_force = -R.rows(0, 2).cols(0, 2) * aux * envir.wavePressure(n2) * zvec;
-			force_1.rows(0, 2) += aux_force;
-			force_1.rows(3, 5) += cross(n2 - refPt, aux_force);
 
-			if (hydroMode == 2)
-			{
-				// Inertial force - pt2 - 2nd order Froude-Krylov pressure
-				aux_force = -aux * envir.wavePressure_2ndOrd(n2_sd) * zvec_sd;
-				force_2.rows(0, 2) += aux_force;
-				force_2.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
+			// Inertial force - pt2 - 2nd order Froude-Krylov pressure
+			aux_force = -aux * envir.wavePressure_2ndOrd(n2_sd) * zvec_sd;
+			force_2.rows(0, 2) += aux_force;
+			force_2.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
 
-				// Inertial force - pt3 - Quadratic pressure drop from Rainey's formulation
-				aux_force = 0.5 * aux * rho * (Cm - 1) * pow(norm((envir.u1(n2_sd, 0) - u1) - (v1 - v_axial)), 2) * zvec_sd;
-				force_3.rows(0, 2) += aux_force;
-				force_3.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
+			// Inertial force - pt3 - Quadratic pressure drop from Rainey's formulation
+			aux_force = 0.5 * aux * rho * (Cm - 1) * pow(norm((envir.u1(n2_sd, 0) - u1) - (v1 - v_axial)), 2) * zvec_sd;
+			force_3.rows(0, 2) += aux_force;
+			force_3.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
 
-				// Inertial force - Remaining - Point load from Rainey's formulation that results in a Munk moment
-				aux_force = -aux * (Cm - 1) * cdot(u1 - v_axial, zvec_sd) * ((envir.u1(n2_sd, 0) - u1) - (v1 - v_axial));
-				force_rem.rows(0, 2) += aux_force;
-				force_rem.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
-			}
+			// Inertial force - Remaining - Point load from Rainey's formulation that results in a Munk moment
+			aux_force = -aux * (Cm - 1) * cdot(u1 - v_axial, zvec_sd) * ((envir.u1(n2_sd, 0) - u1) - (v1 - v_axial));
+			force_rem.rows(0, 2) += aux_force;
+			force_rem.rows(3, 5) += cross(n2_sd - refPt_sd, aux_force);
 		}
 	}
 
