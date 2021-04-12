@@ -282,8 +282,13 @@ void ENVIR::addWaveProbe(const unsigned int ID)
 		throw std::runtime_error("Nodes should be specified before adding wave locations. In: ENVIR::addWaveProbe");
 	}
 
+	std::vector<unsigned int>::const_iterator iter = std::find(m_waveProbeID.begin(), m_waveProbeID.end(), ID); // Check if this wave probe was already included
+
+	if (iter == m_waveProbeID.end())
+	{
 	m_waveProbe.push_back(this->getNode(ID)); // Get the node coordinate and add it to m_waveProbe
 	m_waveProbeID.push_back(ID);
+}
 }
 
 
