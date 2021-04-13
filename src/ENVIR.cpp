@@ -20,6 +20,7 @@ ENVIR::ENVIR()
 	m_watDepth = arma::datum::nan;
 	m_timeStep = arma::datum::nan;
 	m_timeTotal = arma::datum::nan;
+	m_timeRamp = arma::datum::nan;
 }
 
 void ENVIR::setCurrentTime(const double time)
@@ -136,7 +137,7 @@ void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, con
 	// If the number of frequencies is not specified, the frequency resolution is determined by the total simulation time.
 	// A Harmonic Deterministic Amplitude Scheme (HDAS) is used.
 	// See Merigaud, A. and Ringwood, John V. - Free-Surface Time-Series Generation for Wave Energy Applications - IEEE J. of Oceanic Eng. - 2018
-	if (!is_finite(m_timeTotal) || !is_finite(m_timeStep))
+	if (!is_finite(m_timeTotal) || !is_finite(m_timeStep) || !is_finite(m_timeRamp))
 	{
 		throw std::runtime_error("The total simulation time and time step must be specified before the irregular waves. In ENVIR::addJonswap.");
 	}
@@ -145,14 +146,30 @@ void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, con
 
 	if (numberOfRegularWaves <= 0)
 	{
+		if (m_wave.size() != 0)
+		{
+			throw std::runtime_error("Wave options that use IFFT to evaluate wave kinematics, such as JONSWAP without specifying the number of components or externally generated wave elevation, can not be specified with other waves. In ENVIR::addJonswap.");
+		}
+
 		w = arma::regspace(0, dw0, 2 * arma::datum::pi /m_timeStep);
 		dw = dw0 * arma::ones<arma::vec>(w.size());
 		m_timeIFFT = arma::regspace(0, m_timeStep, m_timeTotal);
+
+		m_timeRampIFFT = zeros(m_timeIFFT.size(), 1);
+		for (int it = 0; it < m_timeIFFT.size(); ++it)
+		{
+			m_timeRampIFFT.at(it) = ramp(m_timeIFFT.at(it));
+		}
 	}
 
 	// Otherwise, use the Equal Area Deterministic Amplitude Scheme (EADAS)
 	else
 	{
+		if (m_timeIFFT.size() != 0)
+		{
+			throw std::runtime_error("Wave options that use IFFT to evaluate wave kinematics, such as JONSWAP without specifying the number of components or externally generated wave elevation, can not be specified with other waves. In ENVIR::addJonswap.");
+		}
+
 		double dE = Hs * Hs / 16. / numberOfRegularWaves; // m0 = (Hs/4)^2 divided by the number of strips, which is equal to the number of wave components		
 
 		// The final size of w (and dw) is probably different from numberOfRegularWaves due to the limitations given by dwMax
@@ -297,8 +314,11 @@ void ENVIR::addWaveProbe(const unsigned int ID)
 
 void ENVIR::setWaveProbesWithIFFT()
 {
+	if (m_timeIFFT.size() == 0)
+		return;
+
 	for (int iProbe = 0; iProbe < m_waveProbeID.size(); ++iProbe)
-	{		
+	{			
 		if (IO::isOutputActive(IO::OUTFLAG_WAVE_ELEV))
 		{
 			m_waveElevIFFT = zeros(m_timeIFFT.size(), m_waveProbeID.size());
@@ -308,7 +328,8 @@ void ENVIR::setWaveProbesWithIFFT()
 			{
 				amp.at(iWave) = waveElev_coef(m_waveProbe.at(iProbe).at(0), m_waveProbe.at(iProbe).at(1), iWave);				
 			}
-			m_waveElevIFFT.col(iProbe) = m_wave.size() * real(arma::ifft(amp));
+			m_waveElevIFFT.col(iProbe) = m_wave.size() * (real(arma::ifft(amp)));
+			m_waveElevIFFT.col(iProbe) %= m_timeRampIFFT;
 		}
 	}
 }
@@ -405,6 +426,11 @@ double ENVIR::waveElevAtProbe(const unsigned int ID) const
 		arma::interp1(m_timeIFFT, m_waveElevIFFT, time, out, "*linear");
 		return out.at(0,0);
 	}
+}
+
+const vec& ENVIR::getTimeIFFT() const
+{
+	return m_timeIFFT;
 }
 
 /*****************************************************
@@ -560,11 +586,16 @@ void ENVIR::stepTime(double const step)
 
 double ENVIR::ramp() const
 {
+	return ramp(m_time);
+}
+
+double ENVIR::ramp(double time) const
+{
 	double ramp{ 1 };
 
-	if (m_time < m_timeRamp)
+	if (time < m_timeRamp)
 	{
-		ramp = 0.5 * (1 - cos(datum::pi * m_time / m_timeRamp));
+		ramp = 0.5 * (1 - cos(datum::pi * time / m_timeRamp));
 	}
 
 	return ramp;

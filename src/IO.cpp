@@ -162,6 +162,12 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 						throw std::runtime_error("Unable to read the wave in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
 					}
 
+					// Can not specify individual wave components if an option that uses IFFT to calculate wave kinematics was already specified
+					if (envir.getTimeIFFT().size() != 0)
+					{
+						throw std::runtime_error("Wave options that use IFFT to evaluate wave kinematics, such as JONSWAP without specifying the number of components or externally generated wave elevation, can not be specified with other waves. In ENVIR::addJonswap.");
+					}
+
 					double aux_height = string2num<double>(input.at(0));
 					double aux_freqORperiod = string2num<double>(input.at(1));
 					double aux_direction = string2num<double>(input.at(2));

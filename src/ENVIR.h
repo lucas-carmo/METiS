@@ -45,6 +45,7 @@ private:
 
 	// Members that store variables evaluated using IFFT at the beginning of the simulation
 	vec m_timeIFFT;
+	vec m_timeRampIFFT;
 	mat m_waveElevIFFT;
 
 	// Functions to evaluate properties of each wave
@@ -110,6 +111,7 @@ public:
 	const Wave& getWave(unsigned int waveIndex) const;
 
 	double waveElevAtProbe(const unsigned int ID) const;
+	const vec& getTimeIFFT() const;
 
 	/*****************************************************
 		Printing
@@ -138,6 +140,7 @@ public:
 	void stepTime(double const step);
 
 	double ramp() const;
+	double ramp(double time) const;
 	double waveElev(const double x, const double y) const;
 	double wavePressure(const vec::fixed<3> &coord) const;
 	double wavePressure_2ndOrd(const vec::fixed<3> &coord) const;
