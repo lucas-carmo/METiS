@@ -39,6 +39,7 @@ public:
 	void setInertia(const vec::fixed<6> &inertia);
 	void setCoG(const vec::fixed<3> &cog);
 	void setInstantSD(bool instantSD);
+	void setPropertiesWithIFFT(const ENVIR &envir);
 
 	void addMorisonCirc(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_coord, const double diam, const double CD, const double CM, const unsigned int numIntPoints,
 	const double botDiam, const double topDiam, const double axialCD, const double axialCa, const bool botPressFlag);

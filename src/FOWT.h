@@ -71,6 +71,7 @@ public:
 	void setRNA(RNA &rna);
 
 	void setAddedMass_t0(const double density);
+	void setPropertiesWithIFFT(const ENVIR & envir);
 
 	/*****************************************************
 		Getters

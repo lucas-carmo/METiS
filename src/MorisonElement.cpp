@@ -75,8 +75,7 @@ void MorisonElement::updateMorisonElement(const vec::fixed<6> &floaterCoGpos, co
 
 	// Considering only the mean and slow drift motions
 	calcPosVel(floaterCoGpos_SD, floaterVel_SD, m_node1Pos_sd, m_node2Pos_sd, m_node1Vel_sd, m_node2Vel_sd, m_xvec_sd, m_yvec_sd, m_zvec_sd);
-	
-
+	m_RotatMatrix_sd = rotatMatrix(floaterCoGpos_SD.rows(3, 5));	
 }
 
 vec::fixed<3> MorisonElement::node1Pos_t0() const

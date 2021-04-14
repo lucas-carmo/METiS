@@ -93,7 +93,18 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 
 	// If the filter frequency is 0, all quantities are evaluated at the fixed body position,
 	// hence they can be evaluate previously with an IFFT
-	envir.setWaveProbesWithIFFT();
+	if (!envir.getTimeIFFT().is_empty())
+	{
+		std::cout << "Began IFFT wave properties\n";
+		envir.setWaveProbesWithIFFT();
+		std::cout << "Finished IFFT wave properties\n";
+		if (fowt.filterSD_omega() == 0)
+		{
+			std::cout << "Began IFFT cylinder properties\n";
+			fowt.setPropertiesWithIFFT(envir);
+			std::cout << "Finished IFFT cylinder properties\n";
+		}
+	}
 
 	// The header of the formatted output file is written during the first time step and is then turned off
 	IO::print2outLineHeader_turnOn();

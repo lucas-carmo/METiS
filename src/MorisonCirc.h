@@ -14,7 +14,11 @@ private:
 	double m_CD;
 	double m_CM;
 
+
 public:
+	virtual void setPropertiesWithIFFT(const ENVIR &envir) override;
+
+
 	/*****************************************************
 		Constructors
 	*****************************************************/
@@ -43,7 +47,7 @@ public:
 	// Written in the global coordinate system.
 	// Moments are given with respect to node1.
 	vec::fixed<6> hydroForce_1st(const ENVIR &envir, const int hydroMode) const;
-	mat::fixed<6,2> hydroForce_1st_components(const Wave &wave, double watDensity, double watDepth, double gravity) const; // Each row is a dof; Col 1 is the factor multiplying cos(-w*t), while factor 2 is the one multiplying sin(-w*t)
+	cx_vec::fixed<6> hydroForce_1st_components(const Wave &wave, double watDensity, double watDepth, double gravity) const; // Each row is a dof; Col 1 is the factor multiplying cos(-w*t), while factor 2 is the one multiplying sin(-w*t)
 
 	vec::fixed<6> morisonForce_inertia2nd(const ENVIR &envir) const;
 

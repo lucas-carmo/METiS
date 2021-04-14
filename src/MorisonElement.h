@@ -62,13 +62,18 @@ protected:
 	double m_Zwl{ 0 };
 
 	// Rotation matrix from the body coordinate system to the global coordinate system
-	// Used to evaluate the first-order normal vector
 	mat::fixed<3, 3> m_RotatMatrix;
+	mat::fixed<3, 3> m_RotatMatrix_sd;
+	
+	// Quantities calculated at the beginning of the simulaion using IFFT
+	mat m_hydroForce_1st_IFFT;
 
 public:
 	MorisonElement(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints, 
 				   const bool botPressFlag, const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2);
 	
+	virtual void setPropertiesWithIFFT(const ENVIR &envir) = 0;
+
 	// Functions related to position, velocity and acceleration
 	void calcPosVel(const vec::fixed<6> &pos, const vec::fixed<6> &vel,
 		            vec::fixed<3> &node1Pos, vec::fixed<3> &node2Pos, vec::fixed<3> &node1Vel, vec::fixed<3> &node2Vel,

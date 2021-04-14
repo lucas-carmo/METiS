@@ -112,6 +112,7 @@ public:
 
 	double waveElevAtProbe(const unsigned int ID) const;
 	const vec& getTimeIFFT() const;
+	const vec& getRampIFFT() const;
 
 	/*****************************************************
 		Printing
@@ -140,7 +141,7 @@ public:
 	void stepTime(double const step);
 
 	double ramp() const;
-	double ramp(double time) const;
+	double ramp(double time) const;	
 	double waveElev(const double x, const double y) const;
 	double wavePressure(const vec::fixed<3> &coord) const;
 	double wavePressure_2ndOrd(const vec::fixed<3> &coord) const;

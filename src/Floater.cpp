@@ -85,6 +85,14 @@ void Floater::setInstantSD(bool instantSD)
 	m_instantSD = instantSD;
 }
 
+void Floater::setPropertiesWithIFFT(const ENVIR & envir)
+{
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		m_MorisonElements.at(ii)->setPropertiesWithIFFT(envir);
+	}
+}
+
 
 /*
 	Add circular cylinder Morison Element to m_MorisonElements

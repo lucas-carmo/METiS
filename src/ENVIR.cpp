@@ -433,6 +433,11 @@ const vec& ENVIR::getTimeIFFT() const
 	return m_timeIFFT;
 }
 
+const vec& ENVIR::getRampIFFT() const
+{
+	return m_timeRampIFFT;
+}
+
 /*****************************************************
 	Printing
 *****************************************************/

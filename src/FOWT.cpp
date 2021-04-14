@@ -87,6 +87,11 @@ void FOWT::setAddedMass_t0(const double density)
 	m_floater.setAddedMass_t0(density);
 }
 
+void FOWT::setPropertiesWithIFFT(const ENVIR &envir)
+{
+	m_floater.setPropertiesWithIFFT(envir);
+}
+
 
 
 
