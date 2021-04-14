@@ -20,7 +20,7 @@ ENVIR::ENVIR()
 	m_watDepth = arma::datum::nan;
 	m_timeStep = arma::datum::nan;
 	m_timeTotal = arma::datum::nan;
-	m_timeRamp = arma::datum::nan;
+	m_timeRamp = arma::datum::nan;	
 }
 
 void ENVIR::setCurrentTime(const double time)
@@ -153,19 +153,13 @@ void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, con
 
 		w = arma::regspace(0, dw0, 2 * arma::datum::pi /m_timeStep);
 		dw = dw0 * arma::ones<arma::vec>(w.size());
-		m_timeIFFT = arma::regspace(0, m_timeStep, m_timeTotal);
-
-		m_timeRampIFFT = zeros(m_timeIFFT.size(), 1);
-		for (int it = 0; it < m_timeIFFT.size(); ++it)
-		{
-			m_timeRampIFFT.at(it) = ramp(m_timeIFFT.at(it));
-		}
+		m_flagIFFT = true;
 	}
 
 	// Otherwise, use the Equal Area Deterministic Amplitude Scheme (EADAS)
 	else
 	{
-		if (m_timeIFFT.size() != 0)
+		if (getFlagIFFT())
 		{
 			throw std::runtime_error("Wave options that use IFFT to evaluate wave kinematics, such as JONSWAP without specifying the number of components or externally generated wave elevation, can not be specified with other waves. In ENVIR::addJonswap.");
 		}
@@ -312,24 +306,38 @@ void ENVIR::addWaveProbe(const unsigned int ID)
 	}
 }
 
-void ENVIR::setWaveProbesWithIFFT()
+void ENVIR::evaluateWaveKinematics()
 {
-	if (m_timeIFFT.size() == 0)
-		return;
+	m_timeArray = arma::regspace(0, m_timeStep, m_timeTotal);
+
+	m_timeRampArray = zeros(m_timeArray.size(), 1);
+	for (int it = 0; it < m_timeArray.size(); ++it)
+	{
+		m_timeRampArray.at(it) = ramp(m_timeArray.at(it));
+	}
 
 	for (int iProbe = 0; iProbe < m_waveProbeID.size(); ++iProbe)
 	{			
 		if (IO::isOutputActive(IO::OUTFLAG_WAVE_ELEV))
 		{
-			m_waveElevIFFT = zeros(m_timeIFFT.size(), m_waveProbeID.size());
-
-			cx_vec amp{zeros(m_wave.size()), zeros(m_wave.size())}; // Complex amplitude
-			for (int iWave = 0; iWave < m_wave.size(); ++iWave)
-			{
-				amp.at(iWave) = waveElev_coef(m_waveProbe.at(iProbe).at(0), m_waveProbe.at(iProbe).at(1), iWave);				
+			m_waveElevArray = zeros(m_timeArray.size(), m_waveProbeID.size());
+			if (getFlagIFFT())
+			{				
+				cx_vec amp{zeros(m_wave.size()), zeros(m_wave.size())}; // Complex amplitude
+				for (int iWave = 0; iWave < m_wave.size(); ++iWave)
+				{
+					amp.at(iWave) = waveElev_coef(m_waveProbe.at(iProbe).at(0), m_waveProbe.at(iProbe).at(1), iWave);
+				}
+				m_waveElevArray.col(iProbe) = m_wave.size() * (real(arma::ifft(amp)));
 			}
-			m_waveElevIFFT.col(iProbe) = m_wave.size() * (real(arma::ifft(amp)));
-			m_waveElevIFFT.col(iProbe) %= m_timeRampIFFT;
+			else
+			{
+				for (int it = 0; it < m_timeArray.size(); ++it)
+				{
+					m_waveElevArray.at(it, iProbe) = waveElev(m_waveProbe.at(iProbe).at(0), m_waveProbe.at(iProbe).at(1), m_timeArray.at(it));
+				}
+			}
+			m_waveElevArray.col(iProbe) %= m_timeRampArray;
 		}
 	}
 }
@@ -413,9 +421,15 @@ const Wave& ENVIR::getWave(unsigned int waveIndex) const
 	return m_wave.at(waveIndex);
 }
 
+bool ENVIR::getFlagIFFT() const
+{
+	return m_flagIFFT;
+}
+
 double ENVIR::waveElevAtProbe(const unsigned int ID) const
 {
-	if (m_timeIFFT.size() == 0)
+	// This should never occur in production code, but may be useful for debugging
+	if (m_timeArray.size() == 0)
 	{
 		return waveElev(m_waveProbe[ID][0], m_waveProbe[ID][1]);
 	}
@@ -423,19 +437,19 @@ double ENVIR::waveElevAtProbe(const unsigned int ID) const
 	{
 		vec::fixed<1> out;
 		vec::fixed<1> time{ m_time };
-		arma::interp1(m_timeIFFT, m_waveElevIFFT, time, out, "*linear");
+		arma::interp1(m_timeArray, m_waveElevArray, time, out, "*linear");
 		return out.at(0,0);
 	}
 }
 
-const vec& ENVIR::getTimeIFFT() const
+const vec& ENVIR::getTimeArray() const
 {
-	return m_timeIFFT;
+	return m_timeArray;
 }
 
-const vec& ENVIR::getRampIFFT() const
+const vec& ENVIR::getRampArray() const
 {
-	return m_timeRampIFFT;
+	return m_timeRampArray;
 }
 
 /*****************************************************
@@ -619,7 +633,7 @@ cx_double ENVIR::waveElev_coef(const double x, const double y, const unsigned in
 	return { A*cos(k*cos(beta)*x + k * sin(beta)*y + phase) , -A*sin(k*cos(beta)*x + k * sin(beta)*y + phase) };
 }
 
-double ENVIR::waveElev(const double x, const double y) const
+double ENVIR::waveElev(const double x, const double y, const double time) const
 {
 	double elev{ 0 };
 
@@ -628,11 +642,16 @@ double ENVIR::waveElev(const double x, const double y) const
 		if (m_wave.at(ii).amp() != 0)
 		{
 			double w = m_wave.at(ii).angFreq();
-			elev += (waveElev_coef(x, y, ii) * cx_double { cos(w * m_time), sin(w * m_time) }).real();
+			elev += (waveElev_coef(x, y, ii) * cx_double { cos(w * time), sin(w * time) }).real();
 		}
 	}
 
-	return ramp() * elev;
+	return elev;
+}
+
+double ENVIR::waveElev(const double x, const double y) const
+{	
+	return ramp() * waveElev(x, y, m_time);
 }
 
 

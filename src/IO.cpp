@@ -163,7 +163,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 					}
 
 					// Can not specify individual wave components if an option that uses IFFT to calculate wave kinematics was already specified
-					if (envir.getTimeIFFT().size() != 0)
+					if (envir.getFlagIFFT())
 					{
 						throw std::runtime_error("Wave options that use IFFT to evaluate wave kinematics, such as JONSWAP without specifying the number of components or externally generated wave elevation, can not be specified with other waves. In ENVIR::addJonswap.");
 					}

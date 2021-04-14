@@ -45,7 +45,7 @@ public:
 	// of the term due to fluid acceleration in Morison's Equation.
 	//
 	// Written in the global coordinate system.
-	// Moments are given with respect to node1.
+	// Moments are given with respect to node1.	
 	vec::fixed<6> hydroForce_1st(const ENVIR &envir, const int hydroMode) const;
 	cx_vec::fixed<6> hydroForce_1st_components(const Wave &wave, double watDensity, double watDepth, double gravity) const; // Each row is a dof; Col 1 is the factor multiplying cos(-w*t), while factor 2 is the one multiplying sin(-w*t)
 

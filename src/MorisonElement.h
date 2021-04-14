@@ -66,7 +66,9 @@ protected:
 	mat::fixed<3, 3> m_RotatMatrix_sd;
 	
 	// Quantities calculated at the beginning of the simulaion using IFFT
-	mat m_hydroForce_1st_IFFT;
+	bool m_flagFixed{ false }; // Flag used to specify whether things will be evaluated about the mean position of the cylinder
+	mat m_hydroForce_1st_Array;
+
 
 public:
 	MorisonElement(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints, 

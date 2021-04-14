@@ -43,13 +43,15 @@ private:
 	double m_time = 0;
 
 
-	// Members that store variables evaluated using IFFT at the beginning of the simulation
-	vec m_timeIFFT;
-	vec m_timeRampIFFT;
-	mat m_waveElevIFFT;
+	// Members that store variables evaluated at the beginning of the simulation, using IFFT or simple summation.
+	bool m_flagIFFT{false};
+	vec m_timeArray;
+	vec m_timeRampArray;
+	mat m_waveElevArray;
 
 	// Functions to evaluate properties of each wave
 	cx_double waveElev_coef(const double x, const double y, const unsigned int waveIndex) const;
+	double waveElev(const double x, const double y, const double time) const;
 	double wavePressure(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 	double wavePressure_2ndOrd(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
 	vec::fixed<3> u1_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
@@ -87,7 +89,7 @@ public:
 	void addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh, const int numberOfRegularWaves, const double dwMax);
 
 	void addWaveProbe(const unsigned int ID);
-	void setWaveProbesWithIFFT();
+	void evaluateWaveKinematics();
 
 	/*****************************************************
 		Getters
@@ -109,10 +111,11 @@ public:
 
 	unsigned int numberOfWaveComponents() const;
 	const Wave& getWave(unsigned int waveIndex) const;
-
+	
+	bool getFlagIFFT() const;
 	double waveElevAtProbe(const unsigned int ID) const;
-	const vec& getTimeIFFT() const;
-	const vec& getRampIFFT() const;
+	const vec& getTimeArray() const;
+	const vec& getRampArray() const;
 
 	/*****************************************************
 		Printing

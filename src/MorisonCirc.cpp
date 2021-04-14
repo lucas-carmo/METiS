@@ -27,19 +27,33 @@ MorisonCirc::MorisonCirc(const vec &node1Pos, const vec &node2Pos, const vec &co
 
 void MorisonCirc::setPropertiesWithIFFT(const ENVIR &envir)
 {
-	const vec &t = envir.getTimeIFFT();
+	m_flagFixed = true;
 
-	if (t.size() == 0)
-		return;
+	const vec &t = envir.getTimeArray();
+	// m_hydroForce_1st_Array = zeros(t.size(), 6);
 
-	cx_mat amp(envir.numberOfWaveComponents(), 6, fill::zeros); // Complex amplitude
+	cx_mat amp(envir.numberOfWaveComponents(), 6, fill::zeros); // Complex amplitude	
+	mat w{ zeros(envir.numberOfWaveComponents(), 6) };
 	for (unsigned int iWave = 0; iWave < envir.numberOfWaveComponents(); ++iWave)
 	{
 		const Wave &wave(envir.getWave(iWave));
+		w.row(iWave).fill(wave.angFreq());
 		amp.row(iWave) = hydroForce_1st_components(wave, envir.watDensity(), envir.watDepth(), envir.gravity()).st();
 	}
-	m_hydroForce_1st_IFFT = envir.numberOfWaveComponents() * (real(arma::ifft(amp)));
-	//m_hydroForce_1st_IFFT %= repmat(envir.getRampIFFT(), 1, 6);
+
+	if (envir.getFlagIFFT())
+	{						
+		m_hydroForce_1st_Array = envir.numberOfWaveComponents() * (real(arma::ifft(amp)));
+		m_hydroForce_1st_Array %= repmat(envir.getRampArray(), 1, 6);
+	}
+	else
+	{	
+		for (unsigned int it = 0; it < t.size(); ++it)
+		{
+			cx_mat sinCos{ cos(w * t.at(it)), sin(w * t.at(it)) };
+			// m_hydroForce_1st_Array.row(it) = sum(real(amp % sinCos), 0); // Removed this component because the interpolation was slower than summing at each time step. Remember that the integration along the length is analytical.
+		}
+	}	
 }
 
 /*****************************************************
@@ -617,7 +631,7 @@ vec::fixed<6> MorisonCirc::hydroForce_1st(const ENVIR &envir, const int hydroMod
 
 	double t = envir.time();
 
-	if (m_hydroForce_1st_IFFT.is_empty())
+	if (m_hydroForce_1st_Array.is_empty())
 	{
 		for (unsigned int ii = 0; ii < envir.numberOfWaveComponents(); ++ii)
 		{
@@ -625,21 +639,21 @@ vec::fixed<6> MorisonCirc::hydroForce_1st(const ENVIR &envir, const int hydroMod
 			double w{ wave.angFreq() };
 			cx_double sinCos({ cos(w * t), sin(w * t) });
 
-			cx_vec::fixed<6> dbg = hydroForce_1st_components(wave, envir.watDensity(), envir.watDepth(), envir.gravity());
-			force += real(hydroForce_1st_components(wave, envir.watDensity(), envir.watDepth(), envir.gravity()) * sinCos);
+			force += real(hydroForce_1st_components(wave, envir.watDensity(), envir.watDepth(), envir.gravity()) * sinCos) * envir.ramp();
 		}
 	}
 	else
 	{
+		// Need this loop because arma::interp1 works with vectors only. Perhaps they will improve it in newer versions
 		for (unsigned int idof = 0; idof < 6; ++idof)
 		{
 			vec::fixed<1> aux;
-			arma::interp1(envir.getTimeIFFT(), m_hydroForce_1st_IFFT.col(idof), vec::fixed<1> {t}, aux, "*linear");
+			arma::interp1(envir.getTimeArray(), m_hydroForce_1st_Array.col(idof), vec::fixed<1> {t}, aux, "*linear");
 			force.at(idof) = aux.at(0,0);
 		}
 	}
 
-	return force * envir.ramp();
+	return force;
 }
 
 cx_vec::fixed<6> MorisonCirc::hydroForce_1st_components(const Wave &wave, double watDensity, double watDepth, double gravity) const
@@ -661,8 +675,10 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_components(const Wave &wave, double
 
 	vec::fixed<3> n1{ node1Pos_sd() }, n2{ node2Pos_sd() };
 	vec::fixed<3> xvec{ m_xvec_sd }, yvec{ m_yvec_sd }, zvec{ m_zvec_sd };
-
-	// TODO: Se o filtro for diferente de 0, i.e. se não tiver calculado cinemáica das ondas antes, trocar pela posicao instantanea
+	if (!m_flagFixed)
+	{
+		n1 = node1Pos(); n2 = node2Pos(); xvec = m_xvec; yvec = m_yvec; zvec = m_zvec;
+	}
 
 	if (n1.at(2) >= 0)
 	{
