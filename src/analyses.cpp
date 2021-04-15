@@ -109,7 +109,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	double currentPrintStep{ 0 };
 	double nextPrintStep{ 0 };
 	bool h_from_aux{ false };
-	while (envir.time() <= envir.timeTotal())
+	while (envir.time() + envir.printStep() <= envir.timeTotal())
 	{
 		double remainder = std::fmod(envir.time(), envir.printStep());
 		bool flagPrintStep(almostEqual(remainder, 0, epsAbs) || almostEqual(remainder, envir.printStep(), epsAbs));
