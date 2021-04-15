@@ -42,26 +42,14 @@ private:
 	double m_timeRamp;
 	double m_time = 0;
 
-
 	// Members that store variables evaluated at the beginning of the simulation, using IFFT or simple summation.
 	bool m_flagIFFT{false};
 	vec m_timeArray;
 	vec m_timeRampArray;
 	mat m_waveElevArray;
-
-	// Functions to evaluate properties of each wave
-	cx_double waveElev_coef(const double x, const double y, const unsigned int waveIndex) const;
-	double waveElev(const double x, const double y, const double time) const;
-	double wavePressure(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
-	double wavePressure_2ndOrd(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
-	vec::fixed<3> u1_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
-	vec::fixed<3> du1dt_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
-	vec::fixed<3> du1dx_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
-	vec::fixed<3> du1dy_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
-	vec::fixed<3> du1dz_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
-	vec::fixed<3> dadx_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
-	vec::fixed<3> dady_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
-	vec::fixed<3> dadz_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	mat m_waveVel1stArray_x; // Component x of the first-order wave velocity
+	mat m_waveVel1stArray_y;
+	mat m_waveVel1stArray_z;	
 
 public:
 	ENVIR();
@@ -111,9 +99,11 @@ public:
 
 	unsigned int numberOfWaveComponents() const;
 	const Wave& getWave(unsigned int waveIndex) const;
-	
-	bool getFlagIFFT() const;
+
 	double waveElevAtProbe(const unsigned int ID) const;
+	vec::fixed<3> waveVelAtProbe(const unsigned int ID) const;
+	
+	bool getFlagIFFT() const;	
 	const vec& getTimeArray() const;
 	const vec& getRampArray() const;
 
@@ -158,6 +148,20 @@ public:
 	vec::fixed<3> dadx(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> dady(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> dadz(const vec::fixed<3> &coord, const double zwl) const;
+
+	// Functions to evaluate properties of each wave
+	cx_double waveElev_coef(const double x, const double y, const unsigned int waveIndex) const;
+	cx_vec::fixed<3> u1_coef(const double x, const double y, const double z, const unsigned int waveIndex) const;
+	double waveElev(const double x, const double y, const double time) const;
+	double wavePressure(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	double wavePressure_2ndOrd(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const;
+	vec::fixed<3> du1dt_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> du1dx_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> du1dy_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> du1dz_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> dadx_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> dady_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
+	vec::fixed<3> dadz_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const;
 
 	double windVel_X(const vec::fixed<3> &coord) const;
 	double windVel_Y(const vec::fixed<3> &coord) const;

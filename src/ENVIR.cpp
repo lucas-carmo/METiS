@@ -309,39 +309,84 @@ void ENVIR::addWaveProbe(const unsigned int ID)
 void ENVIR::evaluateWaveKinematics()
 {
 	m_timeArray = arma::regspace(0, m_timeStep, m_timeTotal);
-
 	m_timeRampArray = zeros(m_timeArray.size(), 1);
 	for (int it = 0; it < m_timeArray.size(); ++it)
 	{
 		m_timeRampArray.at(it) = ramp(m_timeArray.at(it));
 	}
 
-	for (int iProbe = 0; iProbe < m_waveProbeID.size(); ++iProbe)
-	{			
-		if (IO::isOutputActive(IO::OUTFLAG_WAVE_ELEV))
+	vec w{ zeros(m_wave.size()) };
+	for (int iWave = 0; iWave < m_wave.size(); ++iWave)
+	{
+		w.at(iWave) = m_wave.at(iWave).angFreq();
+	}
+	
+	if (IO::isOutputActive(IO::OUTFLAG_WAVE_ELEV))
+	{
+		m_waveElevArray = zeros(m_timeArray.size(), m_waveProbeID.size());
+		for (int iProbe = 0; iProbe < m_waveProbeID.size(); ++iProbe)
 		{
-			m_waveElevArray = zeros(m_timeArray.size(), m_waveProbeID.size());
+			cx_vec amp{zeros(m_wave.size()), zeros(m_wave.size())}; // Complex amplitude			
+			for (int iWave = 0; iWave < m_wave.size(); ++iWave)
+			{
+				amp.at(iWave) = waveElev_coef(m_waveProbe.at(iProbe).at(0), m_waveProbe.at(iProbe).at(1), iWave);
+			}
+
 			if (getFlagIFFT())
-			{				
-				cx_vec amp{zeros(m_wave.size()), zeros(m_wave.size())}; // Complex amplitude
-				for (int iWave = 0; iWave < m_wave.size(); ++iWave)
-				{
-					amp.at(iWave) = waveElev_coef(m_waveProbe.at(iProbe).at(0), m_waveProbe.at(iProbe).at(1), iWave);
-				}
+			{
 				m_waveElevArray.col(iProbe) = m_wave.size() * (real(arma::ifft(amp)));
 			}
 			else
 			{
 				for (int it = 0; it < m_timeArray.size(); ++it)
 				{
-					m_waveElevArray.at(it, iProbe) = waveElev(m_waveProbe.at(iProbe).at(0), m_waveProbe.at(iProbe).at(1), m_timeArray.at(it));
+					cx_vec sinCos{ cos(w * m_timeArray.at(it)), sin(w * m_timeArray.at(it)) };
+					m_waveElevArray.at(it, iProbe) = arma::accu(real(amp % sinCos));
 				}
 			}
+
 			m_waveElevArray.col(iProbe) %= m_timeRampArray;
 		}
 	}
-}
 
+	if (IO::isOutputActive(IO::OUTFLAG_WAVE_VEL))
+	{
+		m_waveVel1stArray_x = zeros(m_timeArray.size(), m_waveProbeID.size());
+		m_waveVel1stArray_z = zeros(m_timeArray.size(), m_waveProbeID.size());
+		m_waveVel1stArray_y = zeros(m_timeArray.size(), m_waveProbeID.size());
+
+		for (int iProbe = 0; iProbe < m_waveProbeID.size(); ++iProbe)
+		{
+			cx_mat amp(m_wave.size(), 3); // Complex amplitude
+			for (int iWave = 0; iWave < m_wave.size(); ++iWave)
+			{
+				amp.row(iWave) = u1_coef(m_waveProbe.at(iProbe).at(0), m_waveProbe.at(iProbe).at(1), m_waveProbe.at(iProbe).at(2), iWave).st();
+			}
+			
+			if (getFlagIFFT())
+			{
+				mat aux = m_wave.size() * (real(arma::ifft(amp)));
+				m_waveVel1stArray_x.col(iProbe) = aux.col(0);
+				m_waveVel1stArray_y.col(iProbe) = aux.col(1);
+				m_waveVel1stArray_z.col(iProbe) = aux.col(2);
+			}
+			else
+			{
+				for (int it = 0; it < m_timeArray.size(); ++it)
+				{
+					cx_vec sinCos{ cos(w * m_timeArray.at(it)), sin(w * m_timeArray.at(it)) };
+					m_waveVel1stArray_x.at(it, iProbe) = arma::accu(real(amp.col(0) % sinCos));
+					m_waveVel1stArray_y.at(it, iProbe) = arma::accu(real(amp.col(1) % sinCos));
+					m_waveVel1stArray_z.at(it, iProbe) = arma::accu(real(amp.col(2) % sinCos));
+				}
+			}
+
+			m_waveVel1stArray_x.col(iProbe) %= m_timeRampArray;
+			m_waveVel1stArray_y.col(iProbe) %= m_timeRampArray;
+			m_waveVel1stArray_z.col(iProbe) %= m_timeRampArray;
+		}
+	}
+}
 
 /*****************************************************
 	Getters
@@ -421,11 +466,6 @@ const Wave& ENVIR::getWave(unsigned int waveIndex) const
 	return m_wave.at(waveIndex);
 }
 
-bool ENVIR::getFlagIFFT() const
-{
-	return m_flagIFFT;
-}
-
 double ENVIR::waveElevAtProbe(const unsigned int ID) const
 {
 	// This should never occur in production code, but may be useful for debugging
@@ -437,10 +477,36 @@ double ENVIR::waveElevAtProbe(const unsigned int ID) const
 	{
 		vec::fixed<1> out;
 		vec::fixed<1> time{ m_time };
-		arma::interp1(m_timeArray, m_waveElevArray, time, out, "*linear");
-		return out.at(0,0);
+		arma::interp1(m_timeArray, m_waveElevArray.col(ID), time, out, "*linear");
+		return out.at(0, 0);
 	}
 }
+
+vec::fixed<3> ENVIR::waveVelAtProbe(const unsigned int ID) const
+{
+	// This should never occur in production code, but may be useful for debugging
+	if (m_timeArray.size() == 0)
+	{		
+		return u1(m_waveProbe.at(ID), 0);
+	}
+	else
+	{
+		vec::fixed<1> out_x; // There must be a better way to use this interp1 function
+		vec::fixed<1> out_y;
+		vec::fixed<1> out_z;
+		vec::fixed<1> time{ m_time };		
+		arma::interp1(m_timeArray, m_waveVel1stArray_x.col(ID), time, out_x, "*linear");
+		arma::interp1(m_timeArray, m_waveVel1stArray_y.col(ID), time, out_y, "*linear");
+		arma::interp1(m_timeArray, m_waveVel1stArray_z.col(ID), time, out_z, "*linear");
+		return { {out_x.at(0,0)}, {out_y.at(0,0)}, {out_z.at(0,0)} };
+	}
+}
+
+bool ENVIR::getFlagIFFT() const
+{
+	return m_flagIFFT;
+}
+
 
 const vec& ENVIR::getTimeArray() const
 {
@@ -543,7 +609,7 @@ void ENVIR::printWaveCharact() const
 				IO::print2outLine(IO::OUTFLAG_WAVE_ELEV, m_waveProbeID[ii], waveElevAtProbe(ii));
 
 			if (IO::isOutputActive(IO::OUTFLAG_WAVE_VEL))
-				IO::print2outLine(IO::OUTFLAG_WAVE_VEL, m_waveProbeID[ii], u1(m_waveProbe[ii], 0));
+				IO::print2outLine(IO::OUTFLAG_WAVE_VEL, m_waveProbeID[ii], waveVelAtProbe(ii));
 
 			if (IO::isOutputActive(IO::OUTFLAG_WAVE_ACC))
 				IO::print2outLine(IO::OUTFLAG_WAVE_ACC, m_waveProbeID[ii], du1dt(m_waveProbe[ii], 0));
@@ -709,15 +775,9 @@ double ENVIR::wavePressure(const vec::fixed<3> &coord) const
 	return p;
 }
 
-
-vec::fixed<3> ENVIR::u1_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const
+cx_vec::fixed<3> ENVIR::u1_coef(const double x, const double y, const double z, const unsigned int waveIndex) const
 {
-	arma::vec::fixed<3> vel = { 0,0,0 };
-
-	// More friendly notation
-	double x = coord[0];
-	double y = coord[1];
-	double z = coord[2];
+	cx_vec::fixed<3> vel(fill::zeros);
 	double h = m_watDepth;
 	double t = m_time;
 	double w = m_wave.at(waveIndex).angFreq();
@@ -743,14 +803,13 @@ vec::fixed<3> ENVIR::u1_eachWave(const vec::fixed<3> &coord, const unsigned int 
 			khz_z = sinh(k * (z + h)) / sinh(k*h);
 		}
 
-		vel[0] = w * A * cosBeta * khz_xy * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
-		vel[1] = w * A * sinBeta * khz_xy * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
-		vel[2] = w * A * khz_z * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		vel.row(0) = { cosBeta * khz_xy * cos(k*cosBeta*x + k * sinBeta*y + phase), -cosBeta * khz_xy * sin(k*cosBeta*x + k * sinBeta*y + phase) };
+		vel.row(1) = { sinBeta * khz_xy * cos(k*cosBeta*x + k * sinBeta*y + phase), -sinBeta * khz_xy * sin(k*cosBeta*x + k * sinBeta*y + phase) };
+		vel.row(2) = { khz_z * sin(k*cosBeta*x + k * sinBeta*y + phase), khz_z * cos(k*cosBeta*x + k * sinBeta*y + phase) };
 	}
 
-	return vel * ramp();
+	return w * A * vel;
 }
-
 
 vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord, const double zwl) const
 {
@@ -774,11 +833,14 @@ vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord, const double zwl) const
 
 	for (int ii = 0; ii < m_wave.size(); ++ii)
 	{
-		vel += ENVIR::u1_eachWave(vec::fixed<3>({ coord.at(0), coord.at(1), z }), ii);
+		if (m_wave.at(ii).amp() != 0)
+		{
+			double w = m_wave.at(ii).angFreq();
+			vel += real(u1_coef(coord.at(0), coord.at(1), z, ii) * cx_double { cos(w * m_time), sin(w * m_time) });
+		}
 	}
-	return vel;
+	return vel * ramp();
 }
-
 
 vec::fixed<3> ENVIR::du1dt_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const
 {
@@ -1179,7 +1241,6 @@ double ENVIR::wavePressure_2ndOrd(const vec::fixed<3> &coord, const unsigned int
 
 	return p * ramp();
 }
-
 
 double ENVIR::wavePressure_2ndOrd(const vec::fixed<3> &coord) const
 {
