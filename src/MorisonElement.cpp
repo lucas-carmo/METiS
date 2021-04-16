@@ -149,58 +149,67 @@ vec::fixed<3> MorisonElement::node2AccCentrip() const
 }
 
 // Calculate the intersection between the cylinder and waterline, considering the wave elevation.
-// Returns arma::datum::nan if no intersection is found.
+// Returns arma::datum::nan if no intersection is found
+// For computational speed, it assumes that the waves are all so long and the cylinder is almost vertical, so that 
+// the wave elevation is uniform across the cylinder's length.
 vec::fixed<3> MorisonElement::findIntersectWL(const ENVIR &envir) const
 {
 	// Nodes position
 	vec::fixed<3> n1 = node1Pos();
 	vec::fixed<3> n2 = node2Pos();
 
-	// Find the intersection between the cylinder and the waterline.
-	//
-	// The equation we want to solve is s[2] - eta(s[0], s[1]) = 0, i.e. we want to find
-	// when the 'z' coordinate of a point 's' along the cylinder is equal to the wave elevation
-	// at the 'x' and 'y' coordinates of the same point 's'.		
-	//
-	// The first thing we do is to check if there is a solution.
-	// This is not perfectly acurate, since there can be more than one intersection with the waterline.
-	// However, this would be a pathological case that we do not want to deal with (at least by now).
-	if ((n1[2] - envir.waveElev(n1[0], n1[1])) * (n2[2] - envir.waveElev(n2[0], n2[1])) >= 0)
+	double zwl = 0;
+	if (!m_waveElevAtWL.is_empty())
 	{
-		return vec::fixed<3> {datum::nan, datum::nan, datum::nan};
-	}
+		uword ind1 = envir.getInd4interp1();		
+		const vec &t = envir.getTimeArray();
 
-	// Brackets for solving the equation using the coordinate along the cylinder length
-	vec::fixed<3> a = n1;
-	vec::fixed<3> b = n2;
-
-	// x is the coordinate along the cylinder length, 
-	// with x = 0 corresponding to s = n1 and x = 1 to s = n2
-	// s_i is the guess in the previous step and s_j in the current
-	vec::fixed<3> s_i = n1;
-	vec::fixed<3> s_j = n1;
-
-	double eps = 0.001;
-	while (std::abs(s_j[2] - envir.waveElev(s_j[0], s_j[1])) > eps)
-	{
-		s_i = s_j;
-		if ((a[2] - envir.waveElev(a[0], a[1])) * (s_i[2] - envir.waveElev(s_i[0], s_i[1])) < 0) // Test with limit a
+		zwl = m_waveElevAtWL.at(envir.getInd4interp1());
+		if (envir.shouldInterp())
 		{
-			s_j = (a + s_i) / 2;
-			b = s_i;
-		}
-
-		else if ((b[2] - envir.waveElev(b[0], b[1])) * (s_i[2] - envir.waveElev(s_i[0], s_i[1])) < 0) // Test with limit b
-		{
-			s_j = (b + s_i) / 2;
-			a = s_i;
-		}
-
-		else // It is very unlikely that s_i will be the zero, but this possibility will be covered anyway
-		{
-			return s_i;
+			uword ind2 = envir.getInd4interp2();
+			zwl += (m_waveElevAtWL.at(ind2) - m_waveElevAtWL.at(ind1)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
 		}
 	}
+	else
+	{
+		vec::fixed<3> nodeAtMeanWL = n1 + (std::abs(0 - n1[2]) / (n2[2] - n1[2])) * norm(n2 - n1) * m_zvec;
+		zwl = envir.waveElev(nodeAtMeanWL.at(0), nodeAtMeanWL.at(1));
+	}
 
-	return s_j;
+	return n1 + (std::abs(zwl - n1[2]) / (n2[2] - n1[2])) * norm(n2 - n1) * m_zvec;
+}
+
+void MorisonElement::calculateImmersedLengthProperties(double &Lw, int &ncyl, double &dL) const
+{
+	double L{ norm(m_node2Pos - m_node1Pos) };
+	Lw = L;
+	ncyl = m_numIntPoints;
+	if (m_node2Pos.at(2) > 0)
+	{
+		Lw = L * (0 - m_node1Pos.at(2)) / (m_node2Pos.at(2) - m_node1Pos.at(2));
+		ncyl = static_cast<int>(std::ceil(Lw / L * (m_numIntPoints - 1))) + 1; // Number of points to discretize the part of the cylinder that is below the water		
+	}
+	if (ncyl % 2 == 0)
+	{
+		ncyl += 1;
+	}
+	dL = Lw / (ncyl - 1); // length of each interval between points
+}
+
+void MorisonElement::calculateImmersedLengthProperties_sd(double &Lw, int &ncyl, double &dL) const
+{
+	double L{ norm(m_node2Pos_sd - m_node1Pos_sd) };
+	Lw = L;
+	ncyl = m_numIntPoints;
+	if (m_node2Pos_sd.at(2) > 0)
+	{
+		Lw = L * (0 - m_node1Pos_sd.at(2)) / (m_node2Pos_sd.at(2) - m_node1Pos_sd.at(2));
+		ncyl = static_cast<int>(std::ceil(Lw / L * (m_numIntPoints - 1))) + 1; // Number of points to discretize the part of the cylinder that is below the water		
+	}
+	if (ncyl % 2 == 0)
+	{
+		ncyl += 1;
+	}
+	dL = Lw / (ncyl - 1); // length of each interval between points
 }
