@@ -338,13 +338,13 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 
 	mat::fixed<6, 6> addedMass(fill::zeros);
 
-	// Added mass matrix at the evaluated at slow position if the analysis is first-order. This
+	// Added mass matrix evaluated at slow position if the analysis is first-order. This
 	// is mostly because the expressions are all expressed in terms of slow-drift variables (the ones 
 	// with '_sd' in their names), since a real first-order analysis needs to consider the fixed mean position.
 	//
-	// If the analysis is second-order, it is reevaluated at each time step at the instantaneous position.
-	//
 	// However, if the slow position is fixed, just use the value that was evaluated at the beginning of the simulation
+	//
+	// If the analysis is second-order, it is reevaluated at each time step at the instantaneous position.	
 	if (m_filterSD_omega == 0 && m_hydroMode == 1)
 	{
 		addedMass = m_floater.addedMass_t0();
