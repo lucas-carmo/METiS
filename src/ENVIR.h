@@ -43,7 +43,10 @@ private:
 	double m_time = 0;
 
 	// Members that store variables evaluated at the beginning of the simulation, using IFFT or simple summation.
-	bool m_flagIFFT{false};
+	bool m_flagIFFT{ false };
+	bool m_shouldInterp{ false };
+	uword m_ind4interp1;
+	uword m_ind4interp2;
 	vec m_timeArray;
 	vec m_timeRampArray;
 	mat m_waveElevArray;
@@ -104,6 +107,9 @@ public:
 	vec::fixed<3> waveVelAtProbe(const unsigned int ID) const;
 	
 	bool getFlagIFFT() const;	
+	bool shouldInterp() const;
+	uword getInd4interp1() const;
+	uword getInd4interp2() const;
 	const vec& getTimeArray() const;
 	const vec& getRampArray() const;
 

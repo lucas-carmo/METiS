@@ -45,9 +45,14 @@ public:
 	// of the term due to fluid acceleration in Morison's Equation.
 	//
 	// Written in the global coordinate system.
-	// Moments are given with respect to node1.	
+	// Moments are given with respect to node1.
+	// TODO: Once things are finished, put these functions in MorisonElement
 	vec::fixed<6> hydroForce_1st(const ENVIR &envir, const int hydroMode) const;
-	cx_vec::fixed<6> hydroForce_1st_components(const Wave &wave, double watDensity, double watDepth, double gravity) const; // Each row is a dof; Col 1 is the factor multiplying cos(-w*t), while factor 2 is the one multiplying sin(-w*t)
+	cx_vec::fixed<6> hydroForce_1st_components(const Wave &wave, double watDensity, double watDepth, double gravity) const;
+	vec::fixed<6> hydroForce_drag(const ENVIR &envir) const;
+	vec::fixed<6> hydroForce_drag_fromIFFT(const ENVIR &envir) const;
+	vec::fixed<6> hydroForce_drag_withoutIFFT(const ENVIR &envir) const;
+	
 
 	vec::fixed<6> morisonForce_inertia2nd(const ENVIR &envir) const;
 

@@ -304,15 +304,9 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 	// Force acting on each element
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)	
 	{
-		if (hydroMode == 1)
-		{
-			df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, CoGPos_sd().rows(0, 2), CoGPos_sd().rows(0, 2), df_drag, df_1, df_2, df_3, df_4, df_eta, df_rem);
-		}
 
-		else
-		{
-			df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, CoGPos_sd().rows(0, 2), CoGPos_sd().rows(0, 2), df_drag, df_1, df_2, df_3, df_4, df_eta, df_rem);
-		}
+		df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, CoGPos_sd().rows(0, 2), CoGPos_sd().rows(0, 2), df_drag, df_1, df_2, df_3, df_4, df_eta, df_rem);
+
 
 		// Add to the forces acting on the whole floater
 		force += df;

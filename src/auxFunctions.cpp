@@ -1,6 +1,7 @@
 #include "auxFunctions.h"
 #include <cctype> // This header declares a set of functions to classify and transform individual characters, like toupper
 #include <cwctype> // Same thing for wide characters
+#include <mkl.h>
 
 /*****************************************************
     Useful math/geometric operations
@@ -235,6 +236,48 @@ std::string getFileName(const std::string& path)
 	return flNm;
 }
 
+
+// IFFT using MKL - Faster than using Armadillo
+// Code from https://stackoverflow.com/questions/29805767/is-there-any-simple-c-example-on-how-to-use-intel-mkl-fft
+std::vector<std::complex<double>> mkl_ifft(std::vector<std::complex<double>>& in)
+{
+	std::vector<std::complex<double>> out(in.size());
+
+	DFTI_DESCRIPTOR_HANDLE descriptor;
+	MKL_LONG status;
+
+	status = DftiCreateDescriptor(&descriptor, DFTI_SINGLE, DFTI_COMPLEX, 1, in.size()); //Specify size and precision
+	status = DftiSetValue(descriptor, DFTI_PLACEMENT, DFTI_NOT_INPLACE); //Out of place FFT
+	status = DftiSetValue(descriptor, DFTI_BACKWARD_SCALE, 1.0f / in.size()); //Scale down the output
+	status = DftiCommitDescriptor(descriptor); //Finalize the descriptor
+	status = DftiComputeBackward(descriptor, in.data(), out.data()); //Compute the Forward FFT
+	status = DftiFreeDescriptor(&descriptor); //Free the descriptor
+
+	return out;
+}
+
+std::vector<double> mkl_ifft_real(std::vector<std::complex<double>>& in)
+{
+	std::vector<std::complex<double>> out(in.size());
+
+	DFTI_DESCRIPTOR_HANDLE descriptor;
+	MKL_LONG status;
+
+	status = DftiCreateDescriptor(&descriptor, DFTI_DOUBLE, DFTI_COMPLEX, 1, in.size()); //Specify size and precision
+	status = DftiSetValue(descriptor, DFTI_PLACEMENT, DFTI_NOT_INPLACE); // Do not overwrite the input data with the output
+	status = DftiSetValue(descriptor, DFTI_BACKWARD_SCALE, 1.0 / in.size()); //Scale down the output
+	status = DftiCommitDescriptor(descriptor); //Finalize the descriptor
+	status = DftiComputeBackward(descriptor, in.data(), out.data()); //Compute the backward FFT (i.e. IFFT)
+	status = DftiFreeDescriptor(&descriptor); //Free the descriptor
+
+	std::vector<double> output(out.size());
+
+	for (std::size_t i = 0; i < out.size(); ++i) {
+		output[i] = out[i].real();
+	}
+
+	return output;
+}
 
 /*****************************************************
 	Spline implementation

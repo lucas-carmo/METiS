@@ -109,7 +109,8 @@ inline T string2num(const std::string& string)
 	return tX;
 }
 
-
+std::vector<std::complex<double>> mkl_ifft(std::vector<std::complex<double>>& in);
+std::vector<double> mkl_ifft_real(std::vector<std::complex<double>>& in);
 
 
 /*****************************************************

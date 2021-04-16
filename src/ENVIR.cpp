@@ -308,6 +308,8 @@ void ENVIR::addWaveProbe(const unsigned int ID)
 
 void ENVIR::evaluateWaveKinematics()
 {
+	typedef std::vector<cx_double> cx_stdvec;
+
 	m_timeArray = arma::regspace(0, m_timeStep, m_timeTotal);
 	m_timeRampArray = zeros(m_timeArray.size(), 1);
 	for (int it = 0; it < m_timeArray.size(); ++it)
@@ -326,7 +328,7 @@ void ENVIR::evaluateWaveKinematics()
 		m_waveElevArray = zeros(m_timeArray.size(), m_waveProbeID.size());
 		for (int iProbe = 0; iProbe < m_waveProbeID.size(); ++iProbe)
 		{
-			cx_vec amp{zeros(m_wave.size()), zeros(m_wave.size())}; // Complex amplitude			
+			cx_stdvec amp(m_wave.size()); // Complex amplitude			
 			for (int iWave = 0; iWave < m_wave.size(); ++iWave)
 			{
 				amp.at(iWave) = waveElev_coef(m_waveProbe.at(iProbe).at(0), m_waveProbe.at(iProbe).at(1), iWave);
@@ -334,14 +336,17 @@ void ENVIR::evaluateWaveKinematics()
 
 			if (getFlagIFFT())
 			{
-				m_waveElevArray.col(iProbe) = m_wave.size() * (real(arma::ifft(amp)));
+				m_waveElevArray.col(iProbe) = m_wave.size() * mat(mkl_ifft_real(amp));
 			}
 			else
 			{
 				for (int it = 0; it < m_timeArray.size(); ++it)
 				{
 					cx_vec sinCos{ cos(w * m_timeArray.at(it)), sin(w * m_timeArray.at(it)) };
-					m_waveElevArray.at(it, iProbe) = arma::accu(real(amp % sinCos));
+					for (int iWave = 0; iWave < m_wave.size(); ++iWave)
+					{
+						m_waveElevArray.at(it, iProbe) += (amp.at(iWave) * sinCos.at(iWave)).real();
+					}					
 				}
 			}
 
@@ -365,10 +370,17 @@ void ENVIR::evaluateWaveKinematics()
 			
 			if (getFlagIFFT())
 			{
-				mat aux = m_wave.size() * (real(arma::ifft(amp)));
-				m_waveVel1stArray_x.col(iProbe) = aux.col(0);
-				m_waveVel1stArray_y.col(iProbe) = aux.col(1);
-				m_waveVel1stArray_z.col(iProbe) = aux.col(2);
+				for (int idof = 0; idof < 3; ++idof)
+				{
+					cx_stdvec aux = conv_to<cx_stdvec>::from(amp.col(0));
+					m_waveVel1stArray_x.col(iProbe) = m_wave.size() * mat(mkl_ifft_real(aux));
+
+					aux = conv_to<cx_stdvec>::from(amp.col(1));
+					m_waveVel1stArray_y.col(iProbe) = m_wave.size() * mat(mkl_ifft_real(aux));
+
+					aux = conv_to<cx_stdvec>::from(amp.col(2));
+					m_waveVel1stArray_z.col(iProbe) = m_wave.size() * mat(mkl_ifft_real(aux));
+				}
 			}
 			else
 			{
@@ -475,10 +487,14 @@ double ENVIR::waveElevAtProbe(const unsigned int ID) const
 	}
 	else
 	{
-		vec::fixed<1> out;
-		vec::fixed<1> time{ m_time };
-		arma::interp1(m_timeArray, m_waveElevArray.col(ID), time, out, "*linear");
-		return out.at(0, 0);
+		uword ind1 = m_ind4interp1;
+		double eta = m_waveElevArray.at(ind1, ID);
+		if (shouldInterp())
+		{
+			uword ind2 = getInd4interp2();
+			eta += (m_waveElevArray.at(ind2, ID) - m_waveElevArray.at(ind1, ID)) * (m_time - m_timeArray.at(ind1)) / (m_timeArray.at(ind2) - m_timeArray.at(ind1));
+		}
+		return eta;
 	}
 }
 
@@ -491,20 +507,39 @@ vec::fixed<3> ENVIR::waveVelAtProbe(const unsigned int ID) const
 	}
 	else
 	{
-		vec::fixed<1> out_x; // There must be a better way to use this interp1 function
-		vec::fixed<1> out_y;
-		vec::fixed<1> out_z;
-		vec::fixed<1> time{ m_time };		
-		arma::interp1(m_timeArray, m_waveVel1stArray_x.col(ID), time, out_x, "*linear");
-		arma::interp1(m_timeArray, m_waveVel1stArray_y.col(ID), time, out_y, "*linear");
-		arma::interp1(m_timeArray, m_waveVel1stArray_z.col(ID), time, out_z, "*linear");
-		return { {out_x.at(0,0)}, {out_y.at(0,0)}, {out_z.at(0,0)} };
+		uword ind1 = m_ind4interp1;
+		double vel_x = m_waveVel1stArray_x.at(ind1, ID);
+		double vel_y = m_waveVel1stArray_y.at(ind1, ID);
+		double vel_z = m_waveVel1stArray_z.at(ind1, ID);
+		if (shouldInterp())
+		{
+			uword ind2 = getInd4interp2();
+			vel_x += (m_waveVel1stArray_x.at(ind2, ID) - m_waveVel1stArray_x.at(ind1, ID)) * (m_time - m_timeArray.at(ind1)) / (m_timeArray.at(ind2) - m_timeArray.at(ind1));
+			vel_y += (m_waveVel1stArray_y.at(ind2, ID) - m_waveVel1stArray_y.at(ind1, ID)) * (m_time - m_timeArray.at(ind1)) / (m_timeArray.at(ind2) - m_timeArray.at(ind1));
+			vel_z += (m_waveVel1stArray_z.at(ind2, ID) - m_waveVel1stArray_z.at(ind1, ID)) * (m_time - m_timeArray.at(ind1)) / (m_timeArray.at(ind2) - m_timeArray.at(ind1));
+		}
+		return { vel_x, vel_y, vel_z };
 	}
 }
 
 bool ENVIR::getFlagIFFT() const
 {
 	return m_flagIFFT;
+}
+
+bool ENVIR::shouldInterp() const
+{
+	return m_shouldInterp;
+}
+
+uword ENVIR::getInd4interp1() const
+{
+	return m_ind4interp1;
+}
+
+uword ENVIR::getInd4interp2() const
+{
+	return m_ind4interp2;
 }
 
 
@@ -660,12 +695,35 @@ bool ENVIR::isWaveProbeEmpty() const
 
 void ENVIR::stepTime()
 {
-	m_time += m_timeStep;
+	stepTime(m_timeStep);
 }
 
 void ENVIR::stepTime(double const step)
 {
 	m_time += step;
+
+	// Find indices for interpolation of the time vector
+	m_ind4interp1 = index_min(abs(m_timeArray - m_time));	
+
+	m_shouldInterp = true ;
+	double t1 = m_timeArray.at(m_ind4interp1);
+	if (abs(t1 - m_time) < arma::datum::eps)
+	{
+		m_shouldInterp = false;
+	}
+	else
+	{
+		(t1 < m_time) ? (m_ind4interp2 = m_ind4interp1 + 1) : (m_ind4interp2 = m_ind4interp1, m_ind4interp1 = m_ind4interp2 - 1);
+	}
+
+	// Sometimes at the end of the simulation ind2 may be larger than the size of the array
+	// due to a time step that is slightly larger than it should. It is ok to set both ind1 to the last index
+	// and avoid interpolations in this case
+	if (m_ind4interp1 > m_timeArray.size() - 1 || m_ind4interp2 > m_timeArray.size() - 1)
+	{
+		m_ind4interp1 = m_timeArray.size() - 1;
+		m_shouldInterp = false;
+	}
 }
 
 

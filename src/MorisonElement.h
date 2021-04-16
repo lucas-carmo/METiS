@@ -67,7 +67,13 @@ protected:
 	
 	// Quantities calculated at the beginning of the simulaion using IFFT
 	bool m_flagFixed{ false }; // Flag used to specify whether things will be evaluated about the mean position of the cylinder
+	double m_dL;
+	mat m_waveElevAtWL;
 	mat m_hydroForce_1st_Array;
+	mat m_nodesArray;
+	mat m_u1_Array_x;
+	mat m_u1_Array_y;
+	mat m_u1_Array_z;
 
 
 public:
@@ -120,6 +126,8 @@ public:
 
 	// Others
 	virtual vec::fixed<3> findIntersectWL(const ENVIR &envir) const;
+	void calculateImmersedLengthProperties(double &Lw, int &ncyl, double &dL) const;
+	void calculateImmersedLengthProperties_sd(double &Lw, int &ncyl, double &dL) const;
 
 	/*****************************************************
 		Clone for creating copies of the Morison Element
