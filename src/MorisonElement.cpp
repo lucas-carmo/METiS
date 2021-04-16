@@ -29,6 +29,16 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 	m_nodeWL = m_node1Pos + (m_node2Pos - m_node1Pos) * (0 - m_node1Pos.at(2)) / (m_node2Pos.at(2) - m_node1Pos.at(2));
 	m_cog2nodeWL = m_nodeWL - cog;
 	m_Zwl = m_nodeWL.at(2);
+
+	// Don't know why, but without declaring the following sizes the code crashes due to lack of memory when compiling
+	// the debug version in Visual Studio 2017
+	m_waveElevAtWL = zeros(0, 0);
+	m_hydroForce_1st_Array = zeros(0, 0);
+	m_nodesArray = zeros(0, 0);
+	m_u1_Array_x = zeros(0, 0);
+	m_u1_Array_y = zeros(0, 0);
+	m_u1_Array_z = zeros(0, 0);
+	m_hydroForce_1st_Array = zeros(0, 0);
 }
 
 /*****************************************************
