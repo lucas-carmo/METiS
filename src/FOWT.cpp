@@ -87,12 +87,12 @@ void FOWT::setAddedMass_t0(const double density)
 	m_floater.setAddedMass_t0(density);
 }
 
-void FOWT::setPropertiesWithIFFT(const ENVIR &envir)
+void FOWT::evaluateQuantitiesAtBegin(const ENVIR &envir)
 {
 	if (envir.getTimeArray().size() == 0)
 		throw std::runtime_error("Time array should be set before calling FOWT::setPropertiesWithIFFT.");
 
-	m_floater.setPropertiesWithIFFT(envir);
+	m_floater.evaluateQuantitiesAtBegin(envir);
 }
 
 

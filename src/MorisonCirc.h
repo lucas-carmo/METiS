@@ -16,7 +16,7 @@ private:
 
 
 public:
-	virtual void setPropertiesWithIFFT(const ENVIR &envir) override;
+	virtual void evaluateQuantitiesAtBegin(const ENVIR &envir) override;
 
 
 	/*****************************************************
@@ -50,8 +50,8 @@ public:
 	vec::fixed<6> hydroForce_1st(const ENVIR &envir, const int hydroMode) const;
 	cx_vec::fixed<6> hydroForce_1st_components(const Wave &wave, double watDensity, double watDepth, double gravity) const;
 	vec::fixed<6> hydroForce_drag(const ENVIR &envir) const;
-	vec::fixed<6> hydroForce_drag_fromIFFT(const ENVIR &envir) const;
-	vec::fixed<6> hydroForce_drag_withoutIFFT(const ENVIR &envir) const;
+	vec::fixed<6> hydroForce_drag_already_calculated(const ENVIR &envir) const;
+	vec::fixed<6> hydroForce_drag_calculate(const ENVIR &envir) const;
 	
 
 	vec::fixed<6> morisonForce_inertia2nd(const ENVIR &envir) const;

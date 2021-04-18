@@ -100,7 +100,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	if (fowt.filterSD_omega() == 0)
 	{
 		std::cout << "Began evaluating body quantities related to wave kinematics\n";
-		fowt.setPropertiesWithIFFT(envir);
+		fowt.evaluateQuantitiesAtBegin(envir);
 		std::cout << "Finished\n\n";
 	}	
 

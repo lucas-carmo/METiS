@@ -328,7 +328,7 @@ void ENVIR::evaluateWaveKinematics()
 		m_waveElevArray = zeros(m_timeArray.size(), m_waveProbeID.size());
 		for (int iProbe = 0; iProbe < m_waveProbeID.size(); ++iProbe)
 		{
-			cx_stdvec amp(m_wave.size()); // Complex amplitude			
+			cx_mat amp(m_wave.size(), 1); // Complex amplitude			
 			for (int iWave = 0; iWave < m_wave.size(); ++iWave)
 			{
 				amp.at(iWave) = waveElev_coef(m_waveProbe.at(iProbe).at(0), m_waveProbe.at(iProbe).at(1), iWave);
@@ -336,17 +336,14 @@ void ENVIR::evaluateWaveKinematics()
 
 			if (getFlagIFFT())
 			{
-				m_waveElevArray.col(iProbe) = m_wave.size() * mat(mkl_ifft_real(amp));
+				m_waveElevArray.col(iProbe) = m_wave.size() * mkl_ifft_real(amp);
 			}
 			else
 			{
 				for (int it = 0; it < m_timeArray.size(); ++it)
 				{
 					cx_vec sinCos{ cos(w * m_timeArray.at(it)), sin(w * m_timeArray.at(it)) };
-					for (int iWave = 0; iWave < m_wave.size(); ++iWave)
-					{
-						m_waveElevArray.at(it, iProbe) += (amp.at(iWave) * sinCos.at(iWave)).real();
-					}					
+					m_waveElevArray.at(it, iProbe) = arma::accu(real(amp % sinCos));
 				}
 			}
 

@@ -18,7 +18,7 @@ MorisonRect::MorisonRect(const vec &node1Pos, const vec &node2Pos, const vec &no
 	make_local_base(m_xvec, m_yvec_t0, m_zvec_t0, node1Pos, node2Pos);
 }
 
-void MorisonRect::setPropertiesWithIFFT(const ENVIR & envir)
+void MorisonRect::evaluateQuantitiesAtBegin(const ENVIR & envir)
 {
 }
 

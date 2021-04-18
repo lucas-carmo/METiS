@@ -80,7 +80,8 @@ public:
 	MorisonElement(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints, 
 				   const bool botPressFlag, const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2);
 	
-	virtual void setPropertiesWithIFFT(const ENVIR &envir) = 0;
+	// If the body is fixed, most of the computationally expensive calculations can be performed only once at the beginning of the simulation
+	virtual void evaluateQuantitiesAtBegin(const ENVIR &envir) = 0;
 
 	// Functions related to position, velocity and acceleration
 	void calcPosVel(const vec::fixed<6> &pos, const vec::fixed<6> &vel,

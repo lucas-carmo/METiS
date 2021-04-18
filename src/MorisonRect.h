@@ -27,7 +27,7 @@ public:
 		const double diam_X, const double CD_X, const double CM_X,
 		const double diam_Y, const double CD_Y, const double CM_Y);
 
-	virtual void setPropertiesWithIFFT(const ENVIR &envir) override;
+	virtual void evaluateQuantitiesAtBegin(const ENVIR &envir) override;
 
 	/*****************************************************
 		Forces acting on the Morison Element and functions for node position/velocity/acceleration)

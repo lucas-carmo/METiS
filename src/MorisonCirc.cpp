@@ -26,7 +26,7 @@ MorisonCirc::MorisonCirc(const vec &node1Pos, const vec &node2Pos, const vec &co
 }
 
 
-void MorisonCirc::setPropertiesWithIFFT(const ENVIR &envir)
+void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir)
 {
 	typedef std::vector<cx_double> cx_stdvec;
 	m_flagFixed = true;
@@ -38,12 +38,12 @@ void MorisonCirc::setPropertiesWithIFFT(const ENVIR &envir)
 
 	// Calculate immersed length and its discretization
 	double Lw;
-	int ncyl;
-	calculateImmersedLengthProperties_sd(Lw, ncyl, m_dL);
+	int npts;
+	calculateImmersedLengthProperties_sd(Lw, npts, m_dL);
 
 	// Position of each node along the cylinder length
-	m_nodesArray = zeros(3, ncyl);
-	for (int iNode = 0; iNode < ncyl; ++iNode)
+	m_nodesArray = zeros(3, npts);
+	for (int iNode = 0; iNode < npts; ++iNode)
 	{
 		m_nodesArray.col(iNode) = m_node1Pos_sd + iNode * m_dL * m_zvec_sd;
 	}
@@ -51,75 +51,63 @@ void MorisonCirc::setPropertiesWithIFFT(const ENVIR &envir)
 	// Wave kinematics for each node at each time step
 	m_hydroForce_1st_Array = zeros(t.size(), 6);
 	m_waveElevAtWL = zeros(t.size(), 1);
-	m_u1_Array_x = zeros(t.size(), ncyl);
-	m_u1_Array_y = zeros(t.size(), ncyl);
-	m_u1_Array_z = zeros(t.size(), ncyl);
+	m_u1_Array_x = zeros(t.size(), npts);
+	m_u1_Array_y = zeros(t.size(), npts);
+	m_u1_Array_z = zeros(t.size(), npts);
 
-	// Need to store the frequency of each wave in case the IFFT wont be used
+	// Need to store the frequency of each wave in case the IFFT won't be used
 	vec w{ zeros(envir.numberOfWaveComponents(), 1) };
 
 	// Complex amplitudes	
 	cx_mat amp_hydroForce_1st(envir.numberOfWaveComponents(), 6, fill::zeros);
-	cx_mat amp_waveElevAtWL(envir.numberOfWaveComponents(), 1, fill::zeros);
-	cx_mat aux_amp(envir.numberOfWaveComponents(), 3, fill::zeros); // Aux variable for the functions that output coeficients in the x, y and z directions	
-	cx_mat amp_u1_x(envir.numberOfWaveComponents(), ncyl, fill::zeros);
-	cx_mat amp_u1_y(envir.numberOfWaveComponents(), ncyl, fill::zeros);
-	cx_mat amp_u1_z(envir.numberOfWaveComponents(), ncyl, fill::zeros);
+	cx_vec amp_waveElevAtWL(envir.numberOfWaveComponents(), 1, fill::zeros);
+	cx_mat amp_u1_x(envir.numberOfWaveComponents(), npts, fill::zeros);
+	cx_mat amp_u1_y(envir.numberOfWaveComponents(), npts, fill::zeros);
+	cx_mat amp_u1_z(envir.numberOfWaveComponents(), npts, fill::zeros);
 	for (unsigned int iWave = 0; iWave < envir.numberOfWaveComponents(); ++iWave)
 	{
 		const Wave &wave(envir.getWave(iWave));
 		w.row(iWave).fill(wave.angFreq());
 		amp_hydroForce_1st.row(iWave) = hydroForce_1st_components(wave, envir.watDensity(), envir.watDepth(), envir.gravity()).st();
-		amp_waveElevAtWL.row(iWave) = envir.waveElev_coef(m_nodesArray.at(0, ncyl-1), m_nodesArray.at(1, ncyl - 1), iWave);
+		amp_waveElevAtWL.at(iWave) = envir.waveElev_coef(m_nodesArray.at(0, npts-1), m_nodesArray.at(1, npts - 1), iWave); // Wave elevation is evaluated at the last node, which is the intersection with the water line
 
-		for (int iNode = 0; iNode < ncyl; ++iNode)
+		for (int iNode = 0; iNode < npts; ++iNode)
 		{
-			aux_amp.row(iWave) = envir.u1_coef(m_nodesArray.at(0, iNode), m_nodesArray.at(1, iNode), m_nodesArray.at(2, iNode), iWave).st();
-			amp_u1_x.at(iWave, iNode) = aux_amp.at(iWave, 0);
-			amp_u1_y.at(iWave, iNode) = aux_amp.at(iWave, 1);
-			amp_u1_z.at(iWave, iNode) = aux_amp.at(iWave, 2);
+			cx_vec::fixed<3> aux = envir.u1_coef(m_nodesArray.at(0, iNode), m_nodesArray.at(1, iNode), m_nodesArray.at(2, iNode), iWave);
+			amp_u1_x.at(iWave, iNode) = aux.at(0);
+			amp_u1_y.at(iWave, iNode) = aux.at(1);
+			amp_u1_z.at(iWave, iNode) = aux.at(2);
 		}		
 	}
 
 	if (envir.getFlagIFFT())
 	{						
-		cx_stdvec aux = conv_to<cx_stdvec>::from(amp_waveElevAtWL);
-		m_waveElevAtWL = envir.numberOfWaveComponents() * mat(mkl_ifft_real(aux)) % envir.getRampArray();
+		// These conversions between std::vector and Armadillo types are cumbersome, but it is better alternative 
+		// than working with matrices made of std::vector all 
+		auto dbg = mkl_ifft_real(amp_waveElevAtWL);
+		m_waveElevAtWL = envir.numberOfWaveComponents() * mkl_ifft_real(amp_waveElevAtWL) % envir.getRampArray();
 
-		for (int idof = 0; idof < 6; ++idof)
-		{
-			aux = conv_to<cx_stdvec>::from(amp_hydroForce_1st.col(idof));
-			m_hydroForce_1st_Array.col(idof) = envir.numberOfWaveComponents() * mat(mkl_ifft_real(aux)) % envir.getRampArray();
-		}		
+		m_hydroForce_1st_Array = envir.numberOfWaveComponents() * mkl_ifft_real(amp_hydroForce_1st) % repmat( envir.getRampArray(), 1, 6);
 
-		for (int iNode = 0; iNode < ncyl; ++iNode)
-		{
-			aux = conv_to<cx_stdvec>::from(amp_u1_x.col(iNode));
-			m_u1_Array_x.col(iNode) = envir.numberOfWaveComponents() * mat(mkl_ifft_real(aux)) % envir.getRampArray();
-
-			aux = conv_to<cx_stdvec>::from(amp_u1_y.col(iNode));
-			m_u1_Array_y.col(iNode) = envir.numberOfWaveComponents() * mat(mkl_ifft_real(aux)) % envir.getRampArray();
-
-			aux = conv_to<cx_stdvec>::from(amp_u1_z.col(iNode));
-			m_u1_Array_z.col(iNode) = envir.numberOfWaveComponents() * mat(mkl_ifft_real(aux)) % envir.getRampArray();
-		}
+		m_u1_Array_x = envir.numberOfWaveComponents() * mkl_ifft_real(amp_u1_x) % repmat(envir.getRampArray(), 1, npts);
+		m_u1_Array_y = envir.numberOfWaveComponents() * mkl_ifft_real(amp_u1_y) % repmat(envir.getRampArray(), 1, npts);
+		m_u1_Array_z = envir.numberOfWaveComponents() * mkl_ifft_real(amp_u1_z) % repmat(envir.getRampArray(), 1, npts);
 	}
 	else
 	{	
-		m_hydroForce_1st_Array = zeros(0); // Removed this component because the interpolation was slower than summing at each time step. Remember that the integration along the length is analytical.
 		for (unsigned int it = 0; it < t.size(); ++it)
 		{
 			cx_vec sinCos{ cos(w * t.at(it)), sin(w * t.at(it)) };
 
-			//m_hydroForce_1st_Array.row(it) = sum(real(amp_hydroForce_1st % sinCos), 0);
+			m_hydroForce_1st_Array.row(it) = sum(real(amp_hydroForce_1st % repmat(sinCos, 1, 6)), 0);
 			m_waveElevAtWL.at(it) = accu(real(amp_waveElevAtWL % sinCos));
-			m_u1_Array_x.row(it) = sum(real(amp_u1_x % repmat(sinCos, 1, ncyl)), 0);
-			m_u1_Array_y.row(it) = sum(real(amp_u1_y % repmat(sinCos, 1, ncyl)), 0);
-			m_u1_Array_z.row(it) = sum(real(amp_u1_z % repmat(sinCos, 1, ncyl)), 0);
+			m_u1_Array_x.row(it) = sum(real(amp_u1_x % repmat(sinCos, 1, npts)), 0);
+			m_u1_Array_y.row(it) = sum(real(amp_u1_y % repmat(sinCos, 1, npts)), 0);
+			m_u1_Array_z.row(it) = sum(real(amp_u1_z % repmat(sinCos, 1, npts)), 0);
 		}
-		m_u1_Array_x %= repmat(envir.getRampArray(), 1, ncyl);
-		m_u1_Array_y %= repmat(envir.getRampArray(), 1, ncyl);
-		m_u1_Array_z %= repmat(envir.getRampArray(), 1, ncyl);
+		m_u1_Array_x %= repmat(envir.getRampArray(), 1, npts);
+		m_u1_Array_y %= repmat(envir.getRampArray(), 1, npts);
+		m_u1_Array_z %= repmat(envir.getRampArray(), 1, npts);
 	}
 }
 
@@ -699,16 +687,16 @@ vec::fixed<6> MorisonCirc::hydroForce_drag(const ENVIR &envir) const
 	vec::fixed<6> force;
 	if (m_u1_Array_x.is_empty())
 	{		
-		force = hydroForce_drag_withoutIFFT(envir);
+		force = hydroForce_drag_calculate(envir); 
 	}
 	else
 	{
-		force = hydroForce_drag_fromIFFT(envir);
+		force = hydroForce_drag_already_calculated(envir);
 	}	
 	return force;
 }
 
-vec::fixed<6> MorisonCirc::hydroForce_drag_fromIFFT(const ENVIR & envir) const
+vec::fixed<6> MorisonCirc::hydroForce_drag_already_calculated(const ENVIR & envir) const
 {
 	vec::fixed<6> force(fill::zeros);
 
@@ -774,7 +762,7 @@ vec::fixed<6> MorisonCirc::hydroForce_drag_fromIFFT(const ENVIR & envir) const
 	return force;
 }
 
-vec::fixed<6> MorisonCirc::hydroForce_drag_withoutIFFT(const ENVIR &envir) const
+vec::fixed<6> MorisonCirc::hydroForce_drag_calculate(const ENVIR &envir) const
 {
 	vec::fixed<6> force(fill::zeros);
 	vec::fixed<3> n1{ m_node1Pos_sd }, n2{ m_node2Pos_sd }, n_ii(fill::zeros);
