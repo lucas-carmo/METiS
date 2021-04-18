@@ -17,6 +17,8 @@ const std::string filesep =
 	"/";
 #endif
 
+typedef std::vector<std::complex<double>> cx_stdvec;
+
 
 /*****************************************************
     Useful math/geometric operations
@@ -109,8 +111,11 @@ inline T string2num(const std::string& string)
 	return tX;
 }
 
-std::vector<std::complex<double>> mkl_ifft(std::vector<std::complex<double>>& in);
-std::vector<double> mkl_ifft_real(std::vector<std::complex<double>>& in);
+
+// FFT and IFFT functions
+cx_stdvec mkl_ifft(cx_stdvec &in);
+std::vector<double> mkl_ifft_real(cx_stdvec &in);
+arma::mat mkl_ifft_real(arma::cx_mat &in);
 
 
 /*****************************************************

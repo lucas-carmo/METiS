@@ -239,26 +239,9 @@ std::string getFileName(const std::string& path)
 
 // IFFT using MKL - Faster than using Armadillo
 // Code from https://stackoverflow.com/questions/29805767/is-there-any-simple-c-example-on-how-to-use-intel-mkl-fft
-std::vector<std::complex<double>> mkl_ifft(std::vector<std::complex<double>>& in)
+cx_stdvec mkl_ifft(cx_stdvec &in)
 {
-	std::vector<std::complex<double>> out(in.size());
-
-	DFTI_DESCRIPTOR_HANDLE descriptor;
-	MKL_LONG status;
-
-	status = DftiCreateDescriptor(&descriptor, DFTI_SINGLE, DFTI_COMPLEX, 1, in.size()); //Specify size and precision
-	status = DftiSetValue(descriptor, DFTI_PLACEMENT, DFTI_NOT_INPLACE); //Out of place FFT
-	status = DftiSetValue(descriptor, DFTI_BACKWARD_SCALE, 1.0f / in.size()); //Scale down the output
-	status = DftiCommitDescriptor(descriptor); //Finalize the descriptor
-	status = DftiComputeBackward(descriptor, in.data(), out.data()); //Compute the Forward FFT
-	status = DftiFreeDescriptor(&descriptor); //Free the descriptor
-
-	return out;
-}
-
-std::vector<double> mkl_ifft_real(std::vector<std::complex<double>>& in)
-{
-	std::vector<std::complex<double>> out(in.size());
+	cx_stdvec out(in.size());
 
 	DFTI_DESCRIPTOR_HANDLE descriptor;
 	MKL_LONG status;
@@ -270,13 +253,31 @@ std::vector<double> mkl_ifft_real(std::vector<std::complex<double>>& in)
 	status = DftiComputeBackward(descriptor, in.data(), out.data()); //Compute the backward FFT (i.e. IFFT)
 	status = DftiFreeDescriptor(&descriptor); //Free the descriptor
 
-	std::vector<double> output(out.size());
+	return out;
+}
 
+std::vector<double> mkl_ifft_real(cx_stdvec &in)
+{
+	cx_stdvec out = mkl_ifft(in);
+
+	std::vector<double> output(out.size());
 	for (std::size_t i = 0; i < out.size(); ++i) {
 		output[i] = out[i].real();
 	}
 
 	return output;
+}
+
+arma::mat mkl_ifft_real(arma::cx_mat &in)
+{
+	arma::mat out(in.n_rows, in.n_cols, arma::fill::zeros);
+	for (arma::uword ii = 0; ii < in.n_cols; ++ii)
+	{
+		cx_stdvec aux = arma::conv_to<cx_stdvec>::from(in.col(ii));
+		out.col(ii) = arma::mat(mkl_ifft_real(aux));
+	}
+
+	return out;
 }
 
 /*****************************************************
