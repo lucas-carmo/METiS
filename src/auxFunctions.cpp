@@ -236,9 +236,33 @@ std::string getFileName(const std::string& path)
 	return flNm;
 }
 
-
-// IFFT using MKL - Faster than using Armadillo
+// FFT and IFFT using MKL - Faster than using Armadillo
 // Code from https://stackoverflow.com/questions/29805767/is-there-any-simple-c-example-on-how-to-use-intel-mkl-fft
+cx_stdvec mkl_fft(cx_stdvec &in)
+{
+	cx_stdvec out(in.size());
+
+	DFTI_DESCRIPTOR_HANDLE descriptor;
+	MKL_LONG status;
+
+	status = DftiCreateDescriptor(&descriptor, DFTI_DOUBLE, DFTI_COMPLEX, 1, in.size()); //Specify size and precision
+	status = DftiSetValue(descriptor, DFTI_PLACEMENT, DFTI_NOT_INPLACE); //Out of place FFT
+	status = DftiCommitDescriptor(descriptor); //Finalize the descriptor
+	status = DftiComputeForward(descriptor, in.data(), out.data()); //Compute the Forward FFT
+	status = DftiFreeDescriptor(&descriptor); //Free the descriptor
+
+	return out;
+}
+
+cx_stdvec mkl_fft_real(std::vector<double> &in_real)
+{
+	cx_stdvec in(in_real.size());
+
+	std::copy(in_real.begin(), in_real.end(), in.begin());
+
+	return mkl_fft(in);
+}
+
 cx_stdvec mkl_ifft(cx_stdvec &in)
 {
 	cx_stdvec out(in.size());

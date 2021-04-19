@@ -113,6 +113,8 @@ inline T string2num(const std::string& string)
 
 
 // FFT and IFFT functions
+cx_stdvec mkl_fft(cx_stdvec &in);
+cx_stdvec mkl_fft_real(std::vector<double> &in_real);
 cx_stdvec mkl_ifft(cx_stdvec &in);
 std::vector<double> mkl_ifft_real(cx_stdvec &in);
 arma::mat mkl_ifft_real(arma::cx_mat &in);

@@ -242,7 +242,6 @@ void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, con
 			w(ii) = w_a + 0.5*dw(ii); // The frequency is taken at the midpoint between the boundaries
 			E_sum += dw(ii) * JONSWAP(w(ii), Tp, Hs, gamma);
 
-
 			if ((w(ii) >= whigh) || (E_sum >= Hs * Hs / 16))
 			{
 				// There may be cases that ii is smaller than numberOfRegularWaves.
@@ -266,7 +265,6 @@ void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, con
 		}
 	}
 
-
 	// Wave parameters that will be calculated using the JONSWAP spectrum
 	double height(0);
 	double phase(0);
@@ -286,6 +284,79 @@ void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, con
 		phase = 360 * arma::randu(1, 1).at(0, 0);
 		addRegularWave("TRWave", height, 2 * arma::datum::pi / w.at(ii), direction, phase);
 	}
+}
+
+void ENVIR::addWaveElevSeries(const std::string &elevFlPath, const double direction)
+{
+	// Open input file
+	std::ifstream elevFl;
+	elevFl.open(elevFlPath);
+	if (!elevFl)
+	{
+		throw std::runtime_error("Unable to open file " + elevFlPath + " for reading.");
+	}
+
+	// Check if other waves were already specified 
+	if (m_wave.size() != 0)
+	{
+		throw std::runtime_error("Wave options that use IFFT to evaluate wave kinematics, such as JONSWAP without specifying the number of components or externally generated wave elevation, can not be specified with other waves. In ENVIR::addWaveElevSeries.");
+	}
+
+	// Count number of lines in file
+	std::string line;
+	int nlines{ 0 };
+	while (std::getline(elevFl, line))
+	{
+		++nlines;
+	}
+
+	elevFl.clear(); // Clear and return to the beginning
+	elevFl.seekg(0);
+
+	// Create vectors to store the time and wave elevation, which must be arranged as two columns in the input file
+	std::vector<double> time(nlines), elev(nlines);
+	int ii = 0;
+	while (std::getline(elevFl, line))
+	{
+		std::vector<std::string> input = stringTokenize(line, " \t");
+		if (input.size() != 2)
+		{
+			throw std::runtime_error("Unable to read time series of wave elevation from file " + elevFlPath + ". Wrong number of parameters in line " + std::to_string(ii+1) + ".");
+		}
+		
+		time.at(ii) = string2num<double>(input.at(0));
+		elev.at(ii) = string2num<double>(input.at(1));
+
+		++ii;
+	}
+	
+	if (time.at(0) != 0)
+	{
+		throw std::runtime_error("Time series of wave elevation provided in " + elevFlPath + " should start at t = 0.");
+	}
+
+	// Frequency vector 
+	double dw = 2 * arma::datum::pi / time.at(time.size()-1);
+	vec w = arma::regspace(0, dw, (time.size()-1) * dw);
+	m_flagIFFT = true;
+
+	// FFT and assignment of the computed values to the vector of waves
+	cx_vec amp(mkl_fft_real(elev));
+	amp *= 1. / time.size(); 
+	amp.rows(std::floor(amp.size()/2), amp.size()-1).zeros();
+	amp.rows(1, amp.size() - 1) *= 2;
+	for (int ii = 0; ii < w.size(); ++ii)
+	{
+		addRegularWave("TRWave", 2*std::abs(amp.at(ii)), 2 * arma::datum::pi / w.at(ii), direction, -std::arg(amp.at(ii)) * 180. / arma::datum::pi);
+	}
+
+	// Make sure that the time step and total simulation time are equal to the wave elevation file
+	double newTimeStep = (time.at(time.size() - 1) - time.at(0)) / (time.size()-1);
+	IO::print2log("Setting time step to " + std::to_string(newTimeStep) + "s to match the one from the the wave elevation file. Previous value was " + std::to_string(m_timeStep) + ".");
+	m_timeStep = newTimeStep;
+
+	IO::print2log("Setting total simulation time to " + std::to_string(time.at(time.size() - 1)) + "s to match the one from the the wave elevation file. Previous value was " + std::to_string(m_timeTotal) + ".");
+	m_timeTotal = time.at(time.size() - 1);
 }
 
 
@@ -310,7 +381,7 @@ void ENVIR::evaluateWaveKinematics()
 {
 	typedef std::vector<cx_double> cx_stdvec;
 
-	m_timeArray = arma::regspace(0, m_timeStep, m_timeTotal);
+	m_timeArray = arma::linspace(0, m_timeTotal, std::ceil(m_timeTotal / m_timeStep) + 1);
 	m_timeRampArray = zeros(m_timeArray.size(), 1);
 	for (int it = 0; it < m_timeArray.size(); ++it)
 	{
