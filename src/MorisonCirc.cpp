@@ -84,7 +84,6 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir)
 	{						
 		// These conversions between std::vector and Armadillo types are cumbersome, but it is better alternative 
 		// than working with matrices made of std::vector all 
-		auto dbg = mkl_ifft_real(amp_waveElevAtWL);
 		m_waveElevAtWL = envir.numberOfWaveComponents() * mkl_ifft_real(amp_waveElevAtWL) % envir.getRampArray();
 
 		m_hydroForce_1st_Array = envir.numberOfWaveComponents() * mkl_ifft_real(amp_hydroForce_1st) % repmat( envir.getRampArray(), 1, 6);
