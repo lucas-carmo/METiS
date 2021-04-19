@@ -105,6 +105,10 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir)
 			m_u1_Array_y.row(it) = sum(real(amp_u1_y % repmat(sinCos, 1, npts)), 0);
 			m_u1_Array_z.row(it) = sum(real(amp_u1_z % repmat(sinCos, 1, npts)), 0);
 		}
+
+		m_hydroForce_1st_Array %= repmat(envir.getRampArray(), 1 ,6);
+		m_waveElevAtWL %= envir.getRampArray();
+
 		m_u1_Array_x %= repmat(envir.getRampArray(), 1, npts);
 		m_u1_Array_y %= repmat(envir.getRampArray(), 1, npts);
 		m_u1_Array_z %= repmat(envir.getRampArray(), 1, npts);
