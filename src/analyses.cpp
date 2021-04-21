@@ -75,9 +75,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	// Fifth-order Runge-Kutta method with adaptive stepsize
 	//
 	// If the error 'err' between the RK5 and the embedded 4th order method is 
-	// greater than what is required by delta0, the time step is reduced. Otherwise, it is increased.
-	double h = envir.timeStep();
-	double h_aux = h; // Extra time step used to print every print step without losing the time step calculated by the adaptive stepsize algorithm
+	// greater than what is required by delta0, the time step is reduced. Otherwise, it is increased.	
 	double epsRel{ 0.005 };
 	double epsAbs{ 1e-6 };
 	vec::fixed<6> delta0{ 0 };
@@ -87,19 +85,22 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	double factor{ 1 };
 	bool condition = true;
 	
+	// Avoid the first time step to be larger than the print step
+	double h = (envir.timeStep() < envir.printStep() ? envir.timeStep() : envir.printStep());
+	double h_aux = h; // Extra time step used to print every print step without losing the time step calculated by the adaptive stepsize algorithm
 
 	// make sure that the members of FOWT are updated
 	fowt.update(envir, disp0, vel0);
 
 	// If the filter frequency is 0, all quantities are evaluated at the fixed body position,
 	// hence they can be evaluate previously with an IFFT
-	std::cout << "Began evaluating wave kinematics at wave probes\n";
+	std::cout << "\nBegan evaluating wave kinematics at wave probes\n";
 	envir.evaluateWaveKinematics();
-	std::cout << "Finished\n\n";
+	std::cout << "Finished\n";
 
 	if (fowt.filterSD_omega() == 0)
 	{
-		std::cout << "Began evaluating body quantities related to wave kinematics\n";
+		std::cout << "\nBegan evaluating body quantities related to wave kinematics\n";
 		fowt.evaluateQuantitiesAtBegin(envir);
 		std::cout << "Finished\n\n";
 	}	
