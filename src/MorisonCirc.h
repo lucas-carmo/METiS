@@ -54,7 +54,6 @@ public:
 	vec::fixed<6> hydroForce_drag_calculate(const ENVIR &envir) const;	
 
 	vec::fixed<6> morisonForce_2ndPot(const ENVIR &envir) const;
-	vec::fixed<6> morisonForce_inertia2nd(const ENVIR &envir) const;
 
 	/*****************************************************
 		Printing

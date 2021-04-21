@@ -69,7 +69,7 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir)
 		const Wave &wave(envir.getWave(iWave));
 		w.row(iWave).fill(wave.angFreq());
 		amp_hydroForce_1st.row(iWave) = hydroForce_1st_coefs(wave, envir.watDensity(), envir.watDepth(), envir.gravity()).st();
-		amp_waveElevAtWL.at(iWave) = envir.waveElev_coef(m_nodesArray.at(0, npts-1), m_nodesArray.at(1, npts - 1), iWave); // Wave elevation is evaluated at the last node, which is the intersection with the water line
+		amp_waveElevAtWL.at(iWave) = envir.waveElev_coef(m_nodesArray.at(0, npts - 1), m_nodesArray.at(1, npts - 1), iWave); // Wave elevation is evaluated at the last node, which is the intersection with the water line
 
 		for (int iNode = 0; iNode < npts; ++iNode)
 		{
@@ -77,21 +77,21 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir)
 			amp_u1_x.at(iWave, iNode) = aux.at(0);
 			amp_u1_y.at(iWave, iNode) = aux.at(1);
 			amp_u1_z.at(iWave, iNode) = aux.at(2);
-		}		
+		}
 	}
 
 	if (envir.getFlagIFFT())
-	{						
+	{
 		m_waveElevAtWL = envir.numberOfWaveComponents() * mkl_ifft_real(amp_waveElevAtWL) % envir.getRampArray();
 
-		m_hydroForce_1st_Array = envir.numberOfWaveComponents() * mkl_ifft_real(amp_hydroForce_1st) % repmat( envir.getRampArray(), 1, 6);
+		m_hydroForce_1st_Array = envir.numberOfWaveComponents() * mkl_ifft_real(amp_hydroForce_1st) % repmat(envir.getRampArray(), 1, 6);
 
 		m_u1_Array_x = envir.numberOfWaveComponents() * mkl_ifft_real(amp_u1_x) % repmat(envir.getRampArray(), 1, npts);
 		m_u1_Array_y = envir.numberOfWaveComponents() * mkl_ifft_real(amp_u1_y) % repmat(envir.getRampArray(), 1, npts);
 		m_u1_Array_z = envir.numberOfWaveComponents() * mkl_ifft_real(amp_u1_z) % repmat(envir.getRampArray(), 1, npts);
 	}
 	else
-	{	
+	{
 		for (unsigned int it = 0; it < t.size(); ++it)
 		{
 			cx_vec sinCos{ cos(w * t.at(it)), sin(w * t.at(it)) };
@@ -103,7 +103,7 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir)
 			m_u1_Array_z.row(it) = sum(real(amp_u1_z % repmat(sinCos, 1, npts)), 0);
 		}
 
-		m_hydroForce_1st_Array %= repmat(envir.getRampArray(), 1 ,6);
+		m_hydroForce_1st_Array %= repmat(envir.getRampArray(), 1, 6);
 		m_waveElevAtWL %= envir.getRampArray();
 
 		m_u1_Array_x %= repmat(envir.getRampArray(), 1, npts);
@@ -457,7 +457,7 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		// Velocity of the integration point
 		lambda = norm(n_ii_sd - n1_sd, 2) / L;
 		vel_ii = v1 + lambda * (v2 - v1);
-		
+
 		// If required, calculate the other second-order forces,
 		if (hydroMode == 2)
 		{
@@ -664,7 +664,7 @@ vec::fixed<6> MorisonCirc::hydroForce_1st(const ENVIR &envir, const int hydroMod
 			cx_double sinCos({ cos(w * envir.time()), sin(w * envir.time()) });
 
 			force += real(hydroForce_1st_coefs(wave, envir.watDensity(), envir.watDepth(), envir.gravity()) * sinCos) * envir.ramp();
-		}		
+		}
 	}
 	else
 	{
@@ -687,13 +687,13 @@ vec::fixed<6> MorisonCirc::hydroForce_drag(const ENVIR &envir) const
 {
 	vec::fixed<6> force;
 	if (m_u1_Array_x.is_empty())
-	{		
-		force = hydroForce_drag_calculate(envir); 
+	{
+		force = hydroForce_drag_calculate(envir);
 	}
 	else
 	{
 		force = hydroForce_drag_already_calculated(envir);
-	}	
+	}
 	return force;
 }
 
@@ -738,7 +738,7 @@ vec::fixed<6> MorisonCirc::hydroForce_drag_already_calculated(const ENVIR & envi
 		else if (ii == ncyl - 1)
 		{
 			force.rows(0, 2) += 0.5 * envir.watDensity() * m_axialCD_2 * datum::pi * (m_diam*m_diam / 4.) * norm(u1_axial - v_axial, 2) * (u1_axial - v_axial);
-		}		
+		}
 
 		// Quadratic drag forcealong the length
 		u1 -= u1_axial;
@@ -746,7 +746,7 @@ vec::fixed<6> MorisonCirc::hydroForce_drag_already_calculated(const ENVIR & envi
 
 
 		// Integrate the forces along the cylinder using Simpson's Rule
-		if (ii == 0 || ii == ncyl-1)
+		if (ii == 0 || ii == ncyl - 1)
 		{
 			force += (m_dL / 3.0) * join_cols(force_ii, cross(m_nodesArray.col(ii) - m_node1Pos_sd, force_ii));
 		}
@@ -759,7 +759,7 @@ vec::fixed<6> MorisonCirc::hydroForce_drag_already_calculated(const ENVIR & envi
 			force += (2 * m_dL / 3.0) * join_cols(force_ii, cross(m_nodesArray.col(ii) - m_node1Pos_sd, force_ii));
 		}
 	}
-	
+
 	return force;
 }
 
@@ -796,7 +796,7 @@ vec::fixed<6> MorisonCirc::hydroForce_drag_calculate(const ENVIR &envir) const
 		// Velocity of the integration point
 		double lambda = norm(n_ii - n1, 2) / norm(n2 - n1);
 		vec::fixed<3> vel_ii = m_node1Vel + lambda * (m_node2Vel - m_node1Vel);
-		
+
 		// Fluid velocity at the integration point.		
 		vec::fixed<3> u1 = envir.u1(n_ii, eta);
 		u1 -= arma::dot(u1, zvec) * zvec;
@@ -807,12 +807,12 @@ vec::fixed<6> MorisonCirc::hydroForce_drag_calculate(const ENVIR &envir) const
 		// Integrate the forces along the cylinder using Simpson's Rule
 		if (ii == 1 || ii == ncyl)
 		{
-			force += (dL / 3.0) * join_cols(force_ii, cross(n_ii - n1, force_ii));		
+			force += (dL / 3.0) * join_cols(force_ii, cross(n_ii - n1, force_ii));
 		}
 		else if (ii % 2 == 0)
 		{
 			force += (4 * dL / 3.0) * join_cols(force_ii, cross(n_ii - n1, force_ii));
-		} 
+		}
 		else
 		{
 			force += (2 * dL / 3.0) * join_cols(force_ii, cross(n_ii - n1, force_ii));
@@ -954,11 +954,11 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 	{
 		// Contribution of the horizontal acceleration
 		mult_h_cos = k * sin(p2) * sinh_sinh_2 - I * cos(p2) * cosh_sinh_2;
-		mult_h_cos += - k * sin(p1) * sinh_sinh_1 + I * cos(p1) * cosh_sinh_1;
+		mult_h_cos += -k * sin(p1) * sinh_sinh_1 + I * cos(p1) * cosh_sinh_1;
 		mult_h_cos *= 1 / (I*I + k * k);
 
 		mult_h_sin = k * cos(p2) * sinh_sinh_2 + I * sin(p2) * cosh_sinh_2;
-		mult_h_sin += - k * cos(p1) * sinh_sinh_1 - I * sin(p1) * cosh_sinh_1;
+		mult_h_sin += -k * cos(p1) * sinh_sinh_1 - I * sin(p1) * cosh_sinh_1;
 		mult_h_sin *= 1 / (I*I + k * k);
 
 		// This cosAlpha is due to the change of integration variable.
@@ -968,11 +968,11 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 
 		// Contribution of the vertical acceleration
 		mult_v_cos = k * cos(p2) * cosh_sinh_2 + I * sin(p2) * sinh_sinh_2;
-		mult_v_cos += - k * cos(p1) * cosh_sinh_1 - I * sin(p1) * sinh_sinh_1;
+		mult_v_cos += -k * cos(p1) * cosh_sinh_1 - I * sin(p1) * sinh_sinh_1;
 		mult_v_cos *= 1 / (I*I + k * k);
 
 		mult_v_sin = k * sin(p2) * cosh_sinh_2 - I * cos(p2) * sinh_sinh_2;
-		mult_v_sin += - k * sin(p1) * cosh_sinh_1 + I * cos(p1) * sinh_sinh_1;
+		mult_v_sin += -k * sin(p1) * cosh_sinh_1 + I * cos(p1) * sinh_sinh_1;
 		mult_v_sin *= 1 / (I*I + k * k);
 
 		mult_v_cos *= 1 / cosAlpha;
@@ -986,10 +986,10 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 
 		mult_h_sin = sin(p2) - sin(p1);
 		mult_h_sin *= 1 / Ih;
-		
+
 		// Contribution of the vertical acceleration
 		mult_v_cos = mult_h_sin * sinh_sinh_1;
-		mult_v_sin = - mult_h_cos * sinh_sinh_1;
+		mult_v_sin = -mult_h_cos * sinh_sinh_1;
 
 		// Need the factor of the water depth in the horizontal acceleration as well
 		mult_h_cos *= cosh_sinh_1;
@@ -1004,10 +1004,10 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 
 	// Forces along the local z axis. Factor 4*R/3. due to this force being acceleration * volume, while in the end 
 	// of this function things are multiplied by the area of the circle
-	double fz_cos = (4*R/3.) * cosBetaPsi * sinAlpha * (Qz1 * cosh_sinh_1 * sin(p1) - Qz2 * cosh_sinh_2 * sin(p2)); // Contribution of horizontal acceleration
-	double fz_sin = (4*R/3.) * cosBetaPsi * sinAlpha * (-Qz1 * cosh_sinh_1 * cos(p1) + Qz2 * cosh_sinh_2 * cos(p2));
-	fz_cos += -(4*R/3.) * cosAlpha * (Qz1 * sinh_sinh_1 * cos(p1) - Qz2 * sinh_sinh_2 * cos(p2)); // Contribution of vertical acceleration
-	fz_sin += (4*R/3.) * cosAlpha * (Qz1 * sinh_sinh_1 * sin(p1) - Qz2 * sinh_sinh_2 * sin(p2));
+	double fz_cos = (4 * R / 3.) * cosBetaPsi * sinAlpha * (Qz1 * cosh_sinh_1 * sin(p1) - Qz2 * cosh_sinh_2 * sin(p2)); // Contribution of horizontal acceleration
+	double fz_sin = (4 * R / 3.) * cosBetaPsi * sinAlpha * (-Qz1 * cosh_sinh_1 * cos(p1) + Qz2 * cosh_sinh_2 * cos(p2));
+	fz_cos += -(4 * R / 3.) * cosAlpha * (Qz1 * sinh_sinh_1 * cos(p1) - Qz2 * sinh_sinh_2 * cos(p2)); // Contribution of vertical acceleration
+	fz_sin += (4 * R / 3.) * cosAlpha * (Qz1 * sinh_sinh_1 * sin(p1) - Qz2 * sinh_sinh_2 * sin(p2));
 
 	/*
 		MOMENTS
@@ -1017,9 +1017,9 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 		// Contribution of the horizontal acceleration
 		mult_h_cos = k * sinh_sinh_2 * ((k*k + I * I)*(z2 - z1)*sin(p2) + 2 * I*cos(p2))
 			+ cosh_sinh_2 * (-I * (k*k + I * I)*(z2 - z1)*cos(p2) + (I*I - k * k)*sin(p2));
-		mult_h_cos += - k * sinh_sinh_1 * 2 * I*cos(p1)
+		mult_h_cos += -k * sinh_sinh_1 * 2 * I*cos(p1)
 			- cosh_sinh_1 * (I*I - k * k)*sin(p1);
-		mult_h_cos *= 1/(I*I + k * k) / (I*I + k * k);
+		mult_h_cos *= 1 / (I*I + k * k) / (I*I + k * k);
 
 		mult_h_sin = k * sinh_sinh_2 * ((k*k + I * I)*(z2 - z1)*cos(p2) - 2 * I*sin(p2))
 			+ cosh_sinh_2 * (I*(k*k + I * I)*(z2 - z1)*sin(p2) + (I*I - k * k)*cos(p2));
@@ -1039,12 +1039,12 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 
 		mult_v_sin = k * cosh_sinh_2 * ((k*k + I * I)*(z2 - z1)*sin(p2) + 2 * I*cos(p2))
 			+ sinh_sinh_2 * (-I * (k*k + I * I)*(z2 - z1)*cos(p2) + (I*I - k * k)*sin(p2));
-		mult_v_sin += - k * cosh_sinh_1 * 2 * I*cos(p1)
+		mult_v_sin += -k * cosh_sinh_1 * 2 * I*cos(p1)
 			- sinh_sinh_1 * (I*I - k * k)*sin(p1);
-		mult_v_sin *= 1/ (I*I + k * k) / (I*I + k * k);
+		mult_v_sin *= 1 / (I*I + k * k) / (I*I + k * k);
 
 		mult_v_cos *= 1 / cosAlpha / cosAlpha;
-		mult_v_sin *= - 1/ cosAlpha / cosAlpha;
+		mult_v_sin *= -1 / cosAlpha / cosAlpha;
 	}
 	else
 	{
@@ -1053,11 +1053,11 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 		mult_h_cos *= 1 / (Ih*Ih);
 
 		mult_h_sin = Ih * L*sin(p2) + cos(p2) - cos(p1);
-		mult_h_sin *= 1 / (Ih*Ih);;		
+		mult_h_sin *= 1 / (Ih*Ih);;
 
 		// Contribution of the vertical acceleration
 		mult_v_cos = mult_h_sin * sinh_sinh_1;
-		mult_v_sin = - mult_h_cos* sinh_sinh_1;
+		mult_v_sin = -mult_h_cos * sinh_sinh_1;
 
 		// Need the factor of the water depth in the horizontal acceleration as well
 		mult_h_cos *= cosh_sinh_1;
@@ -1073,7 +1073,7 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 	if (m_botPressFlag)
 	{
 		fz_cos += g * A * cos(p1) * cosh_cosh_1;
-		fz_sin += - g * A * sin(p1) * cosh_cosh_1;
+		fz_sin += -g * A * sin(p1) * cosh_cosh_1;
 		if (evaluateTopNode)
 		{
 			fz_cos -= g * A * cos(p2) * cosh_cosh_2;
@@ -1094,7 +1094,7 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 	// Moments have to be with respect to the slow n1 position, as this is assumed by the other functions
 	if (!m_flagFixed)
 	{
-		cx_vec::fixed<3> aux = {cross(n1 - node1Pos_sd(), real(coef.rows(0,2))), cross(n1 - node1Pos_sd(), imag(coef.rows(0,2)))};
+		cx_vec::fixed<3> aux = { cross(n1 - node1Pos_sd(), real(coef.rows(0,2))), cross(n1 - node1Pos_sd(), imag(coef.rows(0,2))) };
 		coef.rows(3, 5) += aux;
 	}
 
@@ -1179,7 +1179,7 @@ vec::fixed<6> MorisonCirc::morisonForce_2ndPot(const ENVIR &envir) const
 			if (k_ii == 0 || k_jj == 0)
 				continue;
 
-			double cosT(cos(-(w_ii - w_jj) * t + phase_ii - phase_jj)), sinT(sin(-(w_ii - w_jj) * t + phase_ii - phase_jj));
+			double cosT(cos(-(w_ii - w_jj) * t)), sinT(sin(-(w_ii - w_jj) * t));
 
 			// Avoid recalculting cossine and sine functions
 			double cosBetaPsi_ii{ cos(beta_ii - psi) }, cosBetaPsi_jj{ cos(beta_jj - psi) };
@@ -1187,14 +1187,14 @@ vec::fixed<6> MorisonCirc::morisonForce_2ndPot(const ENVIR &envir) const
 
 			// The integration is different for a horizontal cylinder, as the integration variable
 			// along the cylinder is not related to the vertical position. This special case is treated separately.
-			double factor1_x(0), factor2_x(0), factor1_z(0), factor2_z(0), mult_h(0), mult_v(0);
+			double mult_h_cos(0), mult_h_sin(0), mult_v_cos(0), mult_v_sin(0);;
 
 			vec::fixed<2> km = { k_ii * cosBeta_ii - k_jj * cosBeta_jj, k_ii * sinBeta_ii - k_jj * sinBeta_jj };
 			double k = arma::norm(km);
 			double w = w_ii - w_jj;
 			double I = tanAlpha * (k_ii*cosBetaPsi_ii - k_jj * cosBetaPsi_jj);
-			double p1 = (k_ii*cosBeta_ii - k_jj * cosBeta_jj)*x1 + (k_ii*sinBeta_ii - k_jj * sinBeta_jj)*y1;
-			double p2 = (k_ii*cosBeta_ii - k_jj * cosBeta_jj)*x2 + (k_ii*sinBeta_ii - k_jj * sinBeta_jj)*y2;
+			double p1 = (k_ii*cosBeta_ii - k_jj * cosBeta_jj)*x1 + (k_ii*sinBeta_ii - k_jj * sinBeta_jj)*y1 + phase_ii - phase_jj;
+			double p2 = (k_ii*cosBeta_ii - k_jj * cosBeta_jj)*x2 + (k_ii*sinBeta_ii - k_jj * sinBeta_jj)*y2 + phase_ii - phase_jj;
 			double Ih = ((k_ii*cosBeta_ii - k_jj * cosBeta_jj)*(x2 - x1) + (k_ii*sinBeta_ii - k_jj * sinBeta_jj)*(y2 - y1)) / L;
 
 			double aux = ((w_jj - w_ii) / (w_ii * w_jj)) * k_ii * k_jj * (std::cos(beta_ii - beta_jj) + std::tanh(k_ii*h) * std::tanh(k_jj*h))
@@ -1208,55 +1208,54 @@ vec::fixed<6> MorisonCirc::morisonForce_2ndPot(const ENVIR &envir) const
 			if (arma::is_finite(tanAlpha))
 			{
 				// Contribution of the horizontal acceleration
-				factor1_x = k * sin(p2) * sinh(k*(z2 + h)) - I * cos(p2) * cosh(k*(z2 + h));
-				factor1_x = factor1_x - k * sin(p1) * sinh(k*(z1 + h)) + I * cos(p1) * cosh(k*(z1 + h));
-				factor1_x = factor1_x / (I*I + k * k);
+				mult_h_cos = k * sin(p2) * sinh(k*(z2 + h)) - I * cos(p2) * cosh(k*(z2 + h));
+				mult_h_cos += -k * sin(p1) * sinh(k*(z1 + h)) + I * cos(p1) * cosh(k*(z1 + h));
+				mult_h_cos *= 1 / (I*I + k * k);
 
-				factor2_x = k * cos(p2) * sinh(k*(z2 + h)) + I * sin(p2) * cosh(k*(z2 + h));
-				factor2_x = factor2_x - k * cos(p1) * sinh(k*(z1 + h)) - I * sin(p1) * cosh(k*(z1 + h));
-				factor2_x = factor2_x / (I*I + k * k);
-
-				mult_h = factor1_x * cosT + factor2_x * sinT;
-
-				// Contribution of the vertical acceleration
-				factor1_z = k * cos(p2) * cosh(k*(z2 + h)) + I * sin(p2) * sinh(k*(z2 + h));
-				factor1_z = factor1_z - k * cos(p1) * cosh(k*(z1 + h)) - I * sin(p1) * sinh(k*(z1 + h));
-				factor1_z = factor1_z / (I*I + k * k);
-
-				factor2_z = k * sin(p2) * cosh(k*(z2 + h)) - I * cos(p2) * sinh(k*(z2 + h));
-				factor2_z = factor2_z - k * sin(p1) * cosh(k*(z1 + h)) + I * cos(p1) * sinh(k*(z1 + h));
-				factor2_z = factor2_z / (I*I + k * k);
-
-				mult_v = factor1_z * cosT - factor2_z * sinT;
+				mult_h_sin = k * cos(p2) * sinh(k*(z2 + h)) + I * sin(p2) * cosh(k*(z2 + h));
+				mult_h_sin += -k * cos(p1) * sinh(k*(z1 + h)) - I * sin(p1) * cosh(k*(z1 + h));
+				mult_h_sin *= 1 / (I*I + k * k);
 
 				// This is due to the change of integration variable.
 				// We know cosAlpha !=0 because horizontal cylinders are treated separately
-				mult_h = mult_h / cosAlpha;
-				mult_v = mult_v / cosAlpha;
+				mult_h_cos *= 1 / cosAlpha;
+				mult_h_sin *= 1 / cosAlpha;
+
+				// Contribution of the vertical acceleration
+				mult_v_cos = k * cos(p2) * cosh(k*(z2 + h)) + I * sin(p2) * sinh(k*(z2 + h));
+				mult_v_cos += -k * cos(p1) * cosh(k*(z1 + h)) - I * sin(p1) * sinh(k*(z1 + h));
+				mult_v_cos *= 1 / (I*I + k * k);
+
+				mult_v_sin = k * sin(p2) * cosh(k*(z2 + h)) - I * cos(p2) * sinh(k*(z2 + h));
+				mult_v_sin += -k * sin(p1) * cosh(k*(z1 + h)) + I * cos(p1) * sinh(k*(z1 + h));
+				mult_v_sin *= 1 / (I*I + k * k);
+
+				mult_v_cos *= 1 / cosAlpha;
+				mult_v_sin *= -1 / cosAlpha;
 			}
 			else
 			{
 				// Contribution of the horizontal acceleration
-				factor1_x = -cos(p2) + cos(p1);
-				factor1_x = factor1_x / Ih;
+				mult_h_cos = -cos(p2) + cos(p1);
+				mult_h_cos *= 1 / Ih;
 
-				factor2_x = sin(p2) - sin(p1);
-				factor2_x = factor2_x / Ih;
-
-				mult_h = factor1_x * cosT + factor2_x * sinT;
+				mult_h_sin = sin(p2) - sin(p1);
+				mult_h_sin *= 1 / Ih;
 
 				// Contribution of the vertical acceleration
-				mult_v = factor2_x * cosT - factor1_x * sinT;
+				mult_v_cos = mult_h_sin * sinh(k*(z1 + h));
+				mult_v_sin = -mult_h_cos * sinh(k*(z1 + h));
 
-				// There is also the term related to the z position 
-				mult_h = mult_h * cosh(k*(z1 + h));
-				mult_v = mult_v * sinh(k*(z1 + h));
+				// Need the factor of the water depth in the horizontal acceleration as well
+				mult_h_cos *= cosh(k*(z1 + h));
+				mult_h_sin *= cosh(k*(z1 + h));
 			}
 
 			// Forces along the local x and y axes
-			double fx = Q * ((k_ii*cosBetaPsi_ii - k_jj * cosBetaPsi_jj) * cosAlpha * mult_h + k * sinAlpha * mult_v);
-			double fy = Q * (k_ii*sinBetaPsi_ii - k_jj * sinBetaPsi_jj) * mult_h;
-
+			double fx_cos = Q * ((k_ii*cosBetaPsi_ii - k_jj * cosBetaPsi_jj) * cosAlpha * mult_h_cos + k * sinAlpha * mult_v_cos);
+			double fx_sin = Q * ((k_ii*cosBetaPsi_ii - k_jj * cosBetaPsi_jj) * cosAlpha * mult_h_sin + k * sinAlpha * mult_v_sin);
+			double fy_cos = Q * (k_ii*sinBetaPsi_ii - k_jj * sinBetaPsi_jj) * mult_h_cos;
+			double fy_sin = Q * (k_ii*sinBetaPsi_ii - k_jj * sinBetaPsi_jj) * mult_h_sin;
 
 			/*
 				MOMENTS
@@ -1264,70 +1263,69 @@ vec::fixed<6> MorisonCirc::morisonForce_2ndPot(const ENVIR &envir) const
 			if (arma::is_finite(tanAlpha))
 			{
 				// Contribution of the horizontal acceleration
-				factor1_x = k * sinh(k*(z2 + h)) * ((k*k + I * I)*(z2 - z1)*sin(p2) + 2 * I*cos(p2))
+				mult_h_cos = k * sinh(k*(z2 + h)) * ((k*k + I * I)*(z2 - z1)*sin(p2) + 2 * I*cos(p2))
 					+ cosh(k*(z2 + h)) * (-I * (k*k + I * I)*(z2 - z1)*cos(p2) + (I*I - k * k)*sin(p2));
-				factor1_x = factor1_x - k * sinh(k*(z1 + h)) * 2 * I*cos(p1)
+				mult_h_cos += -k * sinh(k*(z1 + h)) * 2 * I*cos(p1)
 					- cosh(k*(z1 + h)) * (I*I - k * k)*sin(p1);
-				factor1_x = factor1_x / (I*I + k * k) / (I*I + k * k);
+				mult_h_cos *= 1 / (I*I + k * k) / (I*I + k * k);
 
-				factor2_x = k * sinh(k*(z2 + h)) * ((k*k + I * I)*(z2 - z1)*cos(p2) - 2 * I*sin(p2))
+				mult_h_sin = k * sinh(k*(z2 + h)) * ((k*k + I * I)*(z2 - z1)*cos(p2) - 2 * I*sin(p2))
 					+ cosh(k*(z2 + h)) * (I*(k*k + I * I)*(z2 - z1)*sin(p2) + (I*I - k * k)*cos(p2));
-				factor2_x = factor2_x + k * sinh(k*(z1 + h)) * 2 * I*sin(p1)
+				mult_h_sin += k * sinh(k*(z1 + h)) * 2 * I*sin(p1)
 					- cosh(k*(z1 + h)) * (I*I - k * k)*cos(p1);
-				factor2_x = factor2_x / (I*I + k * k) / (I*I + k * k);
+				mult_h_sin *= 1 / (I*I + k * k) / (I*I + k * k);
 
-				mult_h = factor1_x * cosT + factor2_x * sinT;
+				mult_h_cos *= 1 / cosAlpha / cosAlpha;
+				mult_h_sin *= 1 / cosAlpha / cosAlpha;
 
 				// Contribution of the vertical acceleration
-				factor1_z = k * cosh(k*(z2 + h)) * ((k*k + I * I)*(z2 - z1)*cos(p2) - 2 * I*sin(p2))
+				mult_v_cos = k * cosh(k*(z2 + h)) * ((k*k + I * I)*(z2 - z1)*cos(p2) - 2 * I*sin(p2))
 					+ sinh(k*(z2 + h)) * (I*(k*k + I * I)*(z2 - z1)*sin(p2) + (I*I - k * k)*cos(p2));
-				factor1_z = factor1_z + k * cosh(k*(z1 + h)) * 2 * I*sin(p1)
+				mult_v_cos += k * cosh(k*(z1 + h)) * 2 * I*sin(p1)
 					- sinh(k*(z1 + h)) * (I*I - k * k)*cos(p1);
-				factor1_z = factor1_z / (I*I + k * k) / (I*I + k * k);
+				mult_v_cos *= 1 / (I*I + k * k) / (I*I + k * k);
 
-				factor2_z = k * cosh(k*(z2 + h)) * ((k*k + I * I)*(z2 - z1)*sin(p2) + 2 * I*cos(p2))
+				mult_v_sin = k * cosh(k*(z2 + h)) * ((k*k + I * I)*(z2 - z1)*sin(p2) + 2 * I*cos(p2))
 					+ sinh(k*(z2 + h)) * (-I * (k*k + I * I)*(z2 - z1)*cos(p2) + (I*I - k * k)*sin(p2));
-				factor2_z = factor2_z - k * cosh(k*(z1 + h)) * 2 * I*cos(p1)
+				mult_v_sin += -k * cosh(k*(z1 + h)) * 2 * I*cos(p1)
 					- sinh(k*(z1 + h)) * (I*I - k * k)*sin(p1);
-				factor2_z = factor2_z / (I*I + k * k) / (I*I + k * k);
-
-				mult_v = factor1_z * cosT - factor2_z * sinT;
+				mult_v_sin *= 1 / (I*I + k * k) / (I*I + k * k);
 
 				// This is due to the change of integration variable
-				mult_h = mult_h / cosAlpha / cosAlpha;
-				mult_v = mult_v / cosAlpha / cosAlpha;
+				mult_v_cos *= 1 / cosAlpha / cosAlpha;
+				mult_v_sin *= -1 / cosAlpha / cosAlpha;
 			}
 			else
 			{
 				// Contribution of the horizontal acceleration
-				factor1_x = -Ih * L*cos(p2) + sin(p2) - sin(p1);
-				factor1_x = factor1_x / (Ih*Ih);
+				mult_h_cos = -Ih * L*cos(p2) + sin(p2) - sin(p1);
+				mult_h_cos *= 1 / (Ih*Ih);
 
-				factor2_x = Ih * L*sin(p2) + cos(p2) - cos(p1);
-				factor2_x = factor2_x / (Ih*Ih);;
-
-				mult_h = factor1_x * cosT + factor2_x * sinT;
+				mult_h_sin = Ih * L*sin(p2) + cos(p2) - cos(p1);
+				mult_h_sin *= 1 / (Ih*Ih);;
 
 				// Contribution of the vertical acceleration
-				mult_v = factor2_x * cosT - factor1_x * sinT;
+				mult_v_cos = mult_h_sin * sinh(k*(z1 + h));
+				mult_v_sin = -mult_h_cos * sinh(k*(z1 + h));
 
-				// There is also the term related to the z position 
-				mult_h = mult_h * cosh(k*(z1 + h));
-				mult_v = mult_v * sinh(k*(z1 + h));
+				// Need the factor of the water depth in the horizontal acceleration as well
+				mult_h_cos *= cosh(k*(z1 + h));
+				mult_h_sin *= cosh(k*(z1 + h));
 			}
 
 			// Forces along the local x and y axes
-			double mx = -Q * (k_ii*sinBetaPsi_ii - k_jj * sinBetaPsi_jj) * mult_h;
-			double my = Q * ((k_ii*cosBetaPsi_ii - k_jj * cosBetaPsi_jj) * cosAlpha * mult_h + k * sinAlpha * mult_v);
+			double mx_cos = -Q * (k_ii*sinBetaPsi_ii - k_jj * sinBetaPsi_jj) * mult_h_cos;
+			double mx_sin = -Q * (k_ii*sinBetaPsi_ii - k_jj * sinBetaPsi_jj) * mult_h_sin;
+			double my_cos = Q * ((k_ii*cosBetaPsi_ii - k_jj * cosBetaPsi_jj) * cosAlpha * mult_h_cos + k * sinAlpha * mult_v_cos);
+			double my_sin = Q * ((k_ii*cosBetaPsi_ii - k_jj * cosBetaPsi_jj) * cosAlpha * mult_h_sin + k * sinAlpha * mult_v_sin);
 
+			force.at(0) += (fx_cos*cosT + fx_sin * sinT) * xvec(0) + (fy_cos*cosT + fy_sin * sinT) * yvec(0);
+			force.at(1) += (fx_cos*cosT + fx_sin * sinT) * xvec(1) + (fy_cos*cosT + fy_sin * sinT) * yvec(1);
+			force.at(2) += (fx_cos*cosT + fx_sin * sinT) * xvec(2) + (fy_cos*cosT + fy_sin * sinT) * yvec(2);
 
-			force.at(0) += fx * xvec(0) + fy * yvec(0);
-			force.at(1) += fx * xvec(1) + fy * yvec(1);
-			force.at(2) += fx * xvec(2) + fy * yvec(2);
-
-			force.at(3) += mx * xvec(0) + my * yvec(0);
-			force.at(4) += mx * xvec(1) + my * yvec(1);
-			force.at(5) += mx * xvec(2) + my * yvec(2);
+			force.at(3) += (mx_cos*cosT + mx_sin * sinT) * xvec(0) + (my_cos*cosT + my_sin * sinT) * yvec(0);
+			force.at(4) += (mx_cos*cosT + mx_sin * sinT) * xvec(1) + (my_cos*cosT + my_sin * sinT) * yvec(1);
+			force.at(5) += (mx_cos*cosT + mx_sin * sinT) * xvec(2) + (my_cos*cosT + my_sin * sinT) * yvec(2);
 		}
 	}
 
