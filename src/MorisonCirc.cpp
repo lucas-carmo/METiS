@@ -976,7 +976,7 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 		mult_v_sin *= 1 / (I*I + k * k);
 
 		mult_v_cos *= 1 / cosAlpha;
-		mult_v_sin *= 1 / cosAlpha;
+		mult_v_sin *= -1 / cosAlpha;
 	}
 	else
 	{
