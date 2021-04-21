@@ -7,7 +7,7 @@ clc
 
 flNm = { 
             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Cilindro\spar_ma_and_patel\mts\BIC02_out.txt'
-            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Cilindro\spar_ma_and_patel\mts\BIC02_out_6.txt'
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Cilindro\spar_ma_and_patel\mts\BIC02_out_2.txt'
         };
     
 %===== Choose the output

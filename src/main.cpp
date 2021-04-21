@@ -6,13 +6,13 @@
 #include "FOWT.h"
 #include "ENVIR.h"
 #include "analyses.h"
+#include <omp.h>
 
 // METiS Version
 extern const std::string g_METIS_VERSION{ "0.0.1" };
 
 int main(int argc, char *argv[])
 {
-
 	// Timer for measuring the elapsed time
 	arma::wall_clock timer;
 	timer.tic();
@@ -37,9 +37,7 @@ int main(int argc, char *argv[])
 		IO::printSumFile(fowt, envir);	// Print the summary file for later verification of the input by the user
 
 		// All the time domain calculation is done inside this function
-		timeDomainAnalysis(fowt, envir);
-	
-
+		timeDomainAnalysis(fowt, envir);	
 	}
 
 	catch(std::exception &exception)

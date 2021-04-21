@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>    // std::binary_search
 #include <utility> // For std::move
+#include <complex> 
 
 using namespace arma;
 
@@ -17,246 +18,455 @@ ENVIR::ENVIR()
 	// Initialize with NaN so we can check whether they were defined later
 	m_gravity = arma::datum::nan;
 	m_watDepth = arma::datum::nan;
+	m_timeStep = arma::datum::nan;
+	m_timeTotal = arma::datum::nan;
+	m_timeRamp = arma::datum::nan;	
+}
+
+void ENVIR::setCurrentTime(const double time)
+{
+	m_time = time;
 }
 
 /*****************************************************
 	Setters
 *****************************************************/
-void ENVIR::readTimeStep(const std::string &data)
+void ENVIR::setTimeStep(const double timeStep)
 {
-    readDataFromString(data, m_timeStep);
+	m_timeStep = timeStep;
 }
 
-void ENVIR::readTimeTotal(const std::string &data)
+void ENVIR::setPrintStep(const double printStep)
 {
-    readDataFromString(data, m_timeTotal);
+	m_printStep = printStep;
 }
 
-void ENVIR::readTimeRamp(const std::string &data)
+void ENVIR::setTimeTotal(const double timeTotal)
 {
-    readDataFromString(data, m_timeRamp);
+	m_timeTotal = timeTotal;
 }
 
-void ENVIR::readUseTipLoss(const std::string &data)
+void ENVIR::setTimeRamp(const double timeRamp)
 {
-	readDataFromString(data, m_useTipLoss);
+	m_timeRamp = timeRamp;
 }
 
-void ENVIR::readUseHubLoss(const std::string &data)
+void ENVIR::setGravity(const double gravity)
 {
-	readDataFromString(data, m_useHubLoss);
+	m_gravity = gravity;
 }
 
-void ENVIR::readUseSkewCorr(const std::string &data)
+void ENVIR::setWatDens(const double watDens)
 {
-	readDataFromString(data, m_useSkewCorr);
+	m_watDens = watDens;
 }
 
-void ENVIR::readGrav(const std::string &data)
+void ENVIR::setWatDepth(const double watDepth)
 {
-	readDataFromString(data, m_gravity);
+	m_watDepth = watDepth;
 }
 
-void ENVIR::readWatDens(const std::string &data)
+void ENVIR::setWaveStret(const unsigned int waveStret)
 {
-	readDataFromString(data, m_watDens);
+	m_waveStret = waveStret;
 }
 
-void ENVIR::readAirDens(const std::string &data)
+void ENVIR::setAirDens(const double airDens)
 {
-	readDataFromString(data, m_airDens);
+	m_airDens = airDens;
 }
 
-void ENVIR::readWindRefVel(const std::string &data)
+void ENVIR::setWindRefVel(const double windRefVel)
 {
-	readDataFromString(data, m_windRefVel);
+	m_windRefVel = windRefVel;
 }
 
-void ENVIR::readWindRefHeight(const std::string &data)
+void ENVIR::setWindDir(const double windDir)
 {
-	readDataFromString(data, m_windRefHeight);
+	m_windDir = windDir;
 }
 
-void ENVIR::readWindExp(const std::string &data)
+void ENVIR::setWindRefHeight(const double windRefHeight)
 {
-	readDataFromString(data, m_windExp);
+	m_windRefHeight = windRefHeight;
 }
 
-void ENVIR::readWatDepth(const std::string &data)
+void ENVIR::setWindExp(const double windExp)
 {
-	readDataFromString(data, m_watDepth);
+	m_windExp = windExp;
 }
 
-void ENVIR::addWave(const std::string &wholeWaveLine)
+void ENVIR::addNode(const unsigned int nodeID, const double nodeCoordX, const double nodeCoordY, const double nodeCoordZ)
+{
+	if (m_nodesID.size() != 0) // If this is not the first node that will be added to m_nodesID
+	{
+		if (nodeID <= m_nodesID.back()) // Then verify if its ID is larger than the previous one, thus garanteeing that m_nodesID is in ascending order (this is needed to use binary search to find nodes IDs)
+		{
+			throw std::runtime_error("Nodes must be provided in ascending order, but node " + std::to_string(nodeID) + " was specified after node " + std::to_string(m_nodesID.back()) + ". In ENVIR::addNode");
+		}
+	}
+
+	m_nodesID.push_back(nodeID);
+	m_nodesCoord.push_back(vec::fixed<3> {nodeCoordX, nodeCoordY, nodeCoordZ});
+}
+
+
+void ENVIR::addRegularWave(const std::string &waveType, const double height, const double freqORperiod, const double direction, const double phase)
 {
 	// Check whether the water depth was defined
 	if (!is_finite(m_watDepth))
 	{
-		throw std::runtime_error("You should specify the water depth before the waves. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+		throw std::runtime_error("The water depth must be specified before the waves. In ENVIR::addRegularWave.");
 	}
 
 	// Check whether the acceleration of gravity was defined
 	if (!is_finite(m_gravity))
 	{
-		throw std::runtime_error("You should specify the gravity before the waves. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+		throw std::runtime_error("The acceleration of gravity must be specified before the waves. In ENVIR::addRegularWave.");
 	}
 
-	// Test if the keyword is related to regular waves
-	if (caseInsCompare(getKeyword(wholeWaveLine), "TRWave")
-		|| caseInsCompare(getKeyword(wholeWaveLine), "FRWave")
-		|| caseInsCompare(getKeyword(wholeWaveLine), "WRWave"))
-	{
-		Wave tempWave(wholeWaveLine);
-		m_wave.push_back(Wave(tempWave.height(), tempWave.period(), tempWave.direction(), tempWave.phase(), m_watDepth, m_gravity));
-	}
-
-	// Check if it is a JONSWAP spectrum
-	else if (caseInsCompare(getKeyword(wholeWaveLine), "JONSW"))
-	{
-		jonswap(wholeWaveLine);
-	}
-
-	else
-	{
-		throw std::runtime_error("Unknown keyword '" + getKeyword(wholeWaveLine) + "' in input line " + std::to_string(IO::getInLineNumber()) + ".");
-	}
+	m_wave.push_back(Wave(waveType, height, freqORperiod, direction, phase, m_watDepth, m_gravity));
 }
 
-void ENVIR::jonswap(const std::string &wholeWaveLine)
+
+void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh, const int numberOfRegularWaves, const double dwMax)
 {
-	// JONSWAP characteristics are divided by a space or a tab.
-	// The characteristics are 
-	// 1) Wave significant height
-	// 2) Wave peark period
-	// 3) Gamma
-	// 4) Direction (in degrees)
-	// 5) Lowest frequency for the spectrum (rad/s)
-	// 6) Highest frequency for the spectrum (rad/s)
-	std::vector<std::string> input = stringTokenize(getData(wholeWaveLine), " \t");
+	arma::vec w{ 0 };
+	arma::vec dw{ 0 };
 
-	// Check if there are exactly six outputs
-	if (input.size() != 6)
+	// If the number of frequencies is not specified, the frequency resolution is determined by the total simulation time.
+	// A Harmonic Deterministic Amplitude Scheme (HDAS) is used.
+	// See Merigaud, A. and Ringwood, John V. - Free-Surface Time-Series Generation for Wave Energy Applications - IEEE J. of Oceanic Eng. - 2018
+	if (!is_finite(m_timeTotal) || !is_finite(m_timeStep) || !is_finite(m_timeRamp))
 	{
-		throw std::runtime_error("Unable to read JONSWAP spectrum in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+		throw std::runtime_error("The total simulation time and time step must be specified before the irregular waves. In ENVIR::addJonswap.");
 	}
-	
-	double Hs;
-	double Tp;
-	double gamma;
-	double dir;
-	double wlow;
-	double whigh;
 
-	// Finally, read data
-	readDataFromString(input.at(0), Hs);
-	readDataFromString(input.at(1), Tp);
-	readDataFromString(input.at(2), gamma);
-	readDataFromString(input.at(3), dir);
-	readDataFromString(input.at(4), wlow);
-	readDataFromString(input.at(5), whigh);
+	double dw0 = 2 * arma::datum::pi / m_timeTotal;
 
-	// Frequency resolution and maximum possible frequency are determined by the total time simulation and time step
-	// See Mérigaud, A. and Ringwood, John V. - Free-Surface Time-Series Generation for Wave Energy Applications - IEEE J. of Oceanic Eng. - 2018
-	double dw = 2 * arma::datum::pi / m_timeTotal;
-	double wmax = arma::datum::pi / m_timeStep;
+	if (numberOfRegularWaves <= 0)
+	{
+		if (m_wave.size() != 0)
+		{
+			throw std::runtime_error("Wave options that use IFFT to evaluate wave kinematics, such as JONSWAP without specifying the number of components or externally generated wave elevation, can not be specified with other waves. In ENVIR::addJonswap.");
+		}
+
+		w = arma::regspace(0, dw0, 2 * arma::datum::pi /m_timeStep);
+		dw = dw0 * arma::ones<arma::vec>(w.size());
+		m_flagIFFT = true;
+	}
+
+	// Otherwise, use the Equal Area Deterministic Amplitude Scheme (EADAS)
+	else
+	{
+		if (getFlagIFFT())
+		{
+			throw std::runtime_error("Wave options that use IFFT to evaluate wave kinematics, such as JONSWAP without specifying the number of components or externally generated wave elevation, can not be specified with other waves. In ENVIR::addJonswap.");
+		}
+
+		double dE = Hs * Hs / 16. / numberOfRegularWaves; // m0 = (Hs/4)^2 divided by the number of strips, which is equal to the number of wave components		
+
+		// The final size of w (and dw) is probably different from numberOfRegularWaves due to the limitations given by dwMax
+		// and the high cut-off frequency (whigh). There can be both fewer or more frequencies than what was originally asked by the used.
+		// In any case, this first guess of vector size is used to reduce the calls of insert_rows.
+		w = arma::zeros<arma::vec>(numberOfRegularWaves);
+		dw = w;
+
+		// Find the frequencies that bound each strip		
+		//
+		// The objective is to find dw such that the area between w[ii] and w[ii-1] is equal to dE.
+		// By considering a trapezoidal integration, this is equivalent to solving
+		// f(x) = x * (S(w_a+x) + S(w_a)) - 2*dE = 0
+		// For doing so, the bissection method is used (it would be nice to implement a general function for solving this kind o problem instead of implementing it directly here)
+		// However, this leads to a very coarse discretization in the parts of the spectrum where there is little energy.
+		// Hence, if the x found is too big, i.e. larger than dwMax, it is break down in steps equal do dwMax
+		double w_a = wlow;
+		int ii = 0;
+		double E_sum = 0;
+		while (true)
+		{
+			// Need to bracket the solution first
+			double a = 0; // It is clear that f(0) has a negative value
+			double b = dw0; // First guess for a positive value is the dw obtained from a harmonic scheme
+
+			// Increase b until f(b) > 0			
+			while ((b * (JONSWAP(w_a + b, Tp, Hs, gamma) + JONSWAP(w_a, Tp, Hs, gamma)) - 2 * dE) < 0)
+			{
+				b = b + dw0; // Use steps of dw0
+			}
+
+			double x_j = (a + b) / 2;
+			double eps4dw = 1e-6*dE;
+			while (std::abs(x_j * (JONSWAP(w_a + x_j, Tp, Hs, gamma) + JONSWAP(w_a, Tp, Hs, gamma)) - 2 * dE) > eps4dw)
+			{
+				// Test with limit a
+				if ((a * (JONSWAP(w_a + a, Tp, Hs, gamma) + JONSWAP(w_a, Tp, Hs, gamma)) - 2 * dE)
+					* (x_j * (JONSWAP(w_a + x_j, Tp, Hs, gamma) + JONSWAP(w_a, Tp, Hs, gamma)) - 2 * dE) < 0)
+				{
+					b = x_j;
+				}
+
+				// Test with limit b
+				else if ((b * (JONSWAP(w_a + b, Tp, Hs, gamma) + JONSWAP(w_a, Tp, Hs, gamma)) - 2 * dE)
+					* (x_j * (JONSWAP(w_a + x_j, Tp, Hs, gamma) + JONSWAP(w_a, Tp, Hs, gamma)) - 2 * dE) < 0)
+				{
+					a = x_j;
+				}
+
+				// It is very unlikely that this product will be exactly zero, which means that x_j is the exact solution, but this will be covered anywawy
+				else
+				{
+					break;
+				}
+
+				// New guess for next step
+				x_j = (a + b) / 2;
+			}
+
+			if (x_j == 0)
+			{
+				throw std::runtime_error("Something went wrong in the frequency discretization in ENVIR::addJonswap for frequency w = " + std::to_string(w_a) + "rad/s");
+			}
+
+			// x_j is the frequency discretization that leads to an energy dE between w_a and w_a+x_j		
+			if (x_j > dwMax)
+			{
+				x_j = dwMax;
+			}
+			if (x_j < 0)
+			{
+				break;
+			}
+
+			dw(ii) = x_j;
+			w(ii) = w_a + 0.5*dw(ii); // The frequency is taken at the midpoint between the boundaries
+			E_sum += dw(ii) * JONSWAP(w(ii), Tp, Hs, gamma);
+
+			if ((w(ii) >= whigh) || (E_sum >= Hs * Hs / 16))
+			{
+				// There may be cases that ii is smaller than numberOfRegularWaves.
+				// These extra elements are excluded from the vector.
+				if (ii < w.size() - 1)
+				{
+					w.shed_rows(ii + 1, w.size() - 1);
+				}
+				break;
+			}
+
+			w_a += dw(ii);
+			ii = ii + 1;
+
+			if (ii > w.size() - 1)
+			{
+				w.insert_rows(ii, 1);
+				dw.insert_rows(ii, 1);
+			}
+
+		}
+	}
 
 	// Wave parameters that will be calculated using the JONSWAP spectrum
 	double height(0);
 	double phase(0);
 
-	// JONSWAP parameters
-	double wp = 2* arma::datum::pi /Tp;
-	double sigma(0);
-	double A(0);
-	double Sw(0);
-
 	// Loop to create the waves
 	int ii = 0;
-	for (double w = wlow; w <= whigh; w += dw)
-	{
-		if (w <= wp)
+	double Sw = 0;
+	for (int ii = 0; ii < w.size(); ++ii)
+	{	
+		Sw = 0;
+		if (w.at(ii) > wlow && w.at(ii) < whigh)
 		{
-			sigma = 0.07;
-		}
-		else
-		{
-			sigma = 0.09;
+			Sw = JONSWAP(w.at(ii), Tp, Hs, gamma);
 		}
 
-		A = std::exp(-0.5 * std::pow((w / wp - 1) / sigma, 2));
-		Sw = 0.3125 * std::pow(Hs, 2) * Tp * std::pow(w / wp, -5) * std::exp(-1.25 * std::pow(wp / w, 4)) * (1 - 0.287*std::log(gamma)) * std::pow(gamma, A);
-
-		height = 2 * std::sqrt(2 * Sw * dw);
-		phase = -360 + (360 + 360) * randu(1, 1).at(0, 0);
-		m_wave.push_back(Wave(height, 2*arma::datum::pi/w, dir, phase, m_watDepth, m_gravity));
+		height = 2 * std::sqrt(2 * Sw * dw(ii));
+		phase = 360 * arma::randu(1, 1).at(0, 0);
+		addRegularWave("TRWave", height, 2 * arma::datum::pi / w.at(ii), direction, phase);
 	}
 }
 
-void ENVIR::addWaveLocation(const std::string &data)
+void ENVIR::addWaveElevSeries(const std::string &elevFlPath, const double direction)
 {
-	// The wave locations are specified by node IDs separated by tabs or white-spaces	
-	std::vector<std::string> input = stringTokenize(data, " \t");	
-	
-	// Check whether input is not empty
-	if (input.empty())
+	// Open input file
+	std::ifstream elevFl;
+	elevFl.open(elevFlPath);
+	if (!elevFl)
 	{
-		throw std::runtime_error("You should specify at least one node ID for defining a wave location. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+		throw std::runtime_error("Unable to open file " + elevFlPath + " for reading.");
 	}
 
+	// Check if other waves were already specified 
+	if (m_wave.size() != 0)
+	{
+		throw std::runtime_error("Wave options that use IFFT to evaluate wave kinematics, such as JONSWAP without specifying the number of components or externally generated wave elevation, can not be specified with other waves. In ENVIR::addWaveElevSeries.");
+	}
+
+	// Count number of lines in file
+	std::string line;
+	int nlines{ 0 };
+	while (std::getline(elevFl, line))
+	{
+		++nlines;
+	}
+
+	elevFl.clear(); // Clear and return to the beginning
+	elevFl.seekg(0);
+
+	// Create vectors to store the time and wave elevation, which must be arranged as two columns in the input file
+	std::vector<double> time(nlines), elev(nlines);
+	int ii = 0;
+	while (std::getline(elevFl, line))
+	{
+		std::vector<std::string> input = stringTokenize(line, " \t");
+		if (input.size() != 2)
+		{
+			throw std::runtime_error("Unable to read time series of wave elevation from file " + elevFlPath + ". Wrong number of parameters in line " + std::to_string(ii+1) + ".");
+		}
+		
+		time.at(ii) = string2num<double>(input.at(0));
+		elev.at(ii) = string2num<double>(input.at(1));
+
+		++ii;
+	}
+	
+	if (time.at(0) != 0)
+	{
+		throw std::runtime_error("Time series of wave elevation provided in " + elevFlPath + " should start at t = 0.");
+	}
+
+	// Frequency vector 
+	double dw = 2 * arma::datum::pi / time.at(time.size()-1);
+	vec w = arma::regspace(0, dw, (time.size()-1) * dw);
+	m_flagIFFT = true;
+
+	// FFT and assignment of the computed values to the vector of waves
+	cx_vec amp(mkl_fft_real(elev));
+	amp *= 1. / time.size(); 
+	amp.rows(std::floor(amp.size()/2), amp.size()-1).zeros();
+	amp.rows(1, amp.size() - 1) *= 2;
+	for (int ii = 0; ii < w.size(); ++ii)
+	{
+		addRegularWave("TRWave", 2*std::abs(amp.at(ii)), 2 * arma::datum::pi / w.at(ii), direction, -std::arg(amp.at(ii)) * 180. / arma::datum::pi);
+	}
+
+	// Make sure that the time step and total simulation time are equal to the wave elevation file
+	double newTimeStep = (time.at(time.size() - 1) - time.at(0)) / (time.size()-1);
+	IO::print2log("Setting time step to " + std::to_string(newTimeStep) + "s to match the one from the the wave elevation file. Previous value was " + std::to_string(m_timeStep) + ".");
+	m_timeStep = newTimeStep;
+
+	IO::print2log("Setting total simulation time to " + std::to_string(time.at(time.size() - 1)) + "s to match the one from the the wave elevation file. Previous value was " + std::to_string(m_timeTotal) + ".");
+	m_timeTotal = time.at(time.size() - 1);
+}
+
+
+void ENVIR::addWaveProbe(const unsigned int ID)
+{
 	// Check whether nodes were specified
 	if (this->isNodeEmpty())
-	{		
-		throw std::runtime_error("Nodes should be specified before adding wave locations. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+	{
+		throw std::runtime_error("Nodes should be specified before adding wave locations. In: ENVIR::addWaveProbe");
 	}
 
-	// For each of the node IDs:
-	for (int ii = 0; ii < input.size(); ++ii)
+	std::vector<unsigned int>::const_iterator iter = std::find(m_waveProbeID.begin(), m_waveProbeID.end(), ID); // Check if this wave probe was already included
+
+	if (iter == m_waveProbeID.end())
 	{
-		unsigned int nodeID(0); // Initialize a variable to read the node ID
-		readDataFromString(input.at(ii), nodeID); // Read the node ID specified as a string to the nodeID variable
-		m_waveLocation.push_back( this->getNode(nodeID) ); // Get the node coordinate and add it to m_waveLocation
-		m_waveLocation.back().at(2) = 0; // Set z=0
-		m_waveLocationID.push_back(nodeID);
+		m_waveProbe.push_back(this->getNode(ID)); // Get the node coordinate and add it to m_waveProbe
+		m_waveProbeID.push_back(ID);
 	}
 }
 
-void ENVIR::addNode(const std::string &data)
+void ENVIR::evaluateWaveKinematics()
 {
-	// Nodes are specified by a vec with four components: ID, X coord, Y coord, and Z coord. 
-	// They are separated by commas in the input string.
-	std::vector<std::string> input = stringTokenize(data, ",");
+	typedef std::vector<cx_double> cx_stdvec;
 
-	if (input.size() != 4)
+	m_timeArray = arma::linspace(0, m_timeTotal, std::ceil(m_timeTotal / m_timeStep) + 1);
+	m_timeRampArray = zeros(m_timeArray.size(), 1);
+	for (int it = 0; it < m_timeArray.size(); ++it)
 	{
-		throw std::runtime_error("Unable to read the node in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-		return;
+		m_timeRampArray.at(it) = ramp(m_timeArray.at(it));
 	}
 
-	// Read node ID
-	unsigned int nodeID{0};
-	readDataFromString( input.at(0), nodeID );
-
-	if (m_nodesID.size() != 0) // If this is not the first node that will be added to m_nodesID
+	vec w{ zeros(m_wave.size()) };
+	for (int iWave = 0; iWave < m_wave.size(); ++iWave)
 	{
-		if (nodeID <= m_nodesID.back()) // Then verify if its ID is larger than the previous one, thus garanteeing that m_nodesID is in ascending order (this is needed to use binary search to find nodes IDs)
+		w.at(iWave) = m_wave.at(iWave).angFreq();
+	}
+	
+	if (IO::isOutputActive(IO::OUTFLAG_WAVE_ELEV))
+	{
+		m_waveElevArray = zeros(m_timeArray.size(), m_waveProbeID.size());
+		for (int iProbe = 0; iProbe < m_waveProbeID.size(); ++iProbe)
 		{
-			throw std::runtime_error( "Nodes must be organized in ascending order. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+			cx_mat amp(m_wave.size(), 1); // Complex amplitude			
+			for (int iWave = 0; iWave < m_wave.size(); ++iWave)
+			{
+				amp.at(iWave) = waveElev_coef(m_waveProbe.at(iProbe).at(0), m_waveProbe.at(iProbe).at(1), iWave);
+			}
+
+			if (getFlagIFFT())
+			{
+				m_waveElevArray.col(iProbe) = m_wave.size() * mkl_ifft_real(amp);
+			}
+			else
+			{
+				for (int it = 0; it < m_timeArray.size(); ++it)
+				{
+					cx_vec sinCos{ cos(w * m_timeArray.at(it)), sin(w * m_timeArray.at(it)) };
+					m_waveElevArray.at(it, iProbe) = arma::accu(real(amp % sinCos));
+				}
+			}
+
+			m_waveElevArray.col(iProbe) %= m_timeRampArray;
 		}
 	}
 
-	m_nodesID.push_back( nodeID );
-
-
-	// Read node coord
-	vec::fixed<3> nodeCoord(fill::zeros);
-	for (int ii = 0; ii < nodeCoord.n_elem; ++ii)
+	if (IO::isOutputActive(IO::OUTFLAG_WAVE_VEL))
 	{
-		readDataFromString( input.at(ii+1), nodeCoord(ii) );
+		m_waveVel1stArray_x = zeros(m_timeArray.size(), m_waveProbeID.size());
+		m_waveVel1stArray_z = zeros(m_timeArray.size(), m_waveProbeID.size());
+		m_waveVel1stArray_y = zeros(m_timeArray.size(), m_waveProbeID.size());
+
+		for (int iProbe = 0; iProbe < m_waveProbeID.size(); ++iProbe)
+		{
+			cx_mat amp(m_wave.size(), 3); // Complex amplitude
+			for (int iWave = 0; iWave < m_wave.size(); ++iWave)
+			{
+				amp.row(iWave) = u1_coef(m_waveProbe.at(iProbe).at(0), m_waveProbe.at(iProbe).at(1), m_waveProbe.at(iProbe).at(2), iWave).st();
+			}
+			
+			if (getFlagIFFT())
+			{
+				for (int idof = 0; idof < 3; ++idof)
+				{
+					cx_stdvec aux = conv_to<cx_stdvec>::from(amp.col(0));
+					m_waveVel1stArray_x.col(iProbe) = m_wave.size() * mat(mkl_ifft_real(aux));
+
+					aux = conv_to<cx_stdvec>::from(amp.col(1));
+					m_waveVel1stArray_y.col(iProbe) = m_wave.size() * mat(mkl_ifft_real(aux));
+
+					aux = conv_to<cx_stdvec>::from(amp.col(2));
+					m_waveVel1stArray_z.col(iProbe) = m_wave.size() * mat(mkl_ifft_real(aux));
+				}
+			}
+			else
+			{
+				for (int it = 0; it < m_timeArray.size(); ++it)
+				{
+					cx_vec sinCos{ cos(w * m_timeArray.at(it)), sin(w * m_timeArray.at(it)) };
+					m_waveVel1stArray_x.at(it, iProbe) = arma::accu(real(amp.col(0) % sinCos));
+					m_waveVel1stArray_y.at(it, iProbe) = arma::accu(real(amp.col(1) % sinCos));
+					m_waveVel1stArray_z.at(it, iProbe) = arma::accu(real(amp.col(2) % sinCos));
+				}
+			}
+
+			m_waveVel1stArray_x.col(iProbe) %= m_timeRampArray;
+			m_waveVel1stArray_y.col(iProbe) %= m_timeRampArray;
+			m_waveVel1stArray_z.col(iProbe) %= m_timeRampArray;
+		}
 	}
-
-	m_nodesCoord.push_back( nodeCoord );
 }
-
 
 /*****************************************************
 	Getters
@@ -264,6 +474,11 @@ void ENVIR::addNode(const std::string &data)
 double ENVIR::timeStep() const
 {
 	return m_timeStep;
+}
+
+double ENVIR::printStep() const
+{
+	return m_printStep;
 }
 
 double ENVIR::timeTotal() const
@@ -274,21 +489,6 @@ double ENVIR::timeTotal() const
 double ENVIR::time() const
 {
 	return m_time;
-}
-
-bool ENVIR::useTipLoss() const
-{
-	return m_useTipLoss;
-}
-
-bool ENVIR::useHubLoss() const
-{
-	return m_useHubLoss;
-}
-
-bool ENVIR::useSkewCorr() const
-{
-	return m_useSkewCorr;
 }
 
 double ENVIR::gravity() const
@@ -306,6 +506,11 @@ double ENVIR::watDepth() const
 	return m_watDepth;
 }
 
+unsigned int ENVIR::waveStret() const
+{
+	return m_waveStret;
+}
+
 double ENVIR::airDensity() const
 {
 	return m_airDens;
@@ -321,9 +526,99 @@ double ENVIR::windRefHeight() const
 	return m_windRefHeight;
 }
 
+double ENVIR::windDir() const
+{
+	return m_windDir;
+}
+
 double ENVIR::windExp() const
 {
 	return m_windExp;
+}
+
+unsigned int ENVIR::numberOfWaveComponents() const
+{
+	return m_wave.size();
+}
+
+const Wave& ENVIR::getWave(unsigned int waveIndex) const
+{
+	return m_wave.at(waveIndex);
+}
+
+double ENVIR::waveElevAtProbe(const unsigned int ID) const
+{
+	// This should never occur in production code, but may be useful for debugging
+	if (m_timeArray.size() == 0)
+	{
+		return waveElev(m_waveProbe[ID][0], m_waveProbe[ID][1]);
+	}
+	else
+	{
+		uword ind1 = m_ind4interp1;
+		double eta = m_waveElevArray.at(ind1, ID);
+		if (shouldInterp())
+		{
+			uword ind2 = getInd4interp2();
+			eta += (m_waveElevArray.at(ind2, ID) - m_waveElevArray.at(ind1, ID)) * (m_time - m_timeArray.at(ind1)) / (m_timeArray.at(ind2) - m_timeArray.at(ind1));
+		}
+		return eta;
+	}
+}
+
+vec::fixed<3> ENVIR::waveVelAtProbe(const unsigned int ID) const
+{
+	// This should never occur in production code, but may be useful for debugging
+	if (m_timeArray.size() == 0)
+	{		
+		return u1(m_waveProbe.at(ID), 0);
+	}
+	else
+	{
+		uword ind1 = m_ind4interp1;
+		double vel_x = m_waveVel1stArray_x.at(ind1, ID);
+		double vel_y = m_waveVel1stArray_y.at(ind1, ID);
+		double vel_z = m_waveVel1stArray_z.at(ind1, ID);
+		if (shouldInterp())
+		{
+			uword ind2 = getInd4interp2();
+			vel_x += (m_waveVel1stArray_x.at(ind2, ID) - m_waveVel1stArray_x.at(ind1, ID)) * (m_time - m_timeArray.at(ind1)) / (m_timeArray.at(ind2) - m_timeArray.at(ind1));
+			vel_y += (m_waveVel1stArray_y.at(ind2, ID) - m_waveVel1stArray_y.at(ind1, ID)) * (m_time - m_timeArray.at(ind1)) / (m_timeArray.at(ind2) - m_timeArray.at(ind1));
+			vel_z += (m_waveVel1stArray_z.at(ind2, ID) - m_waveVel1stArray_z.at(ind1, ID)) * (m_time - m_timeArray.at(ind1)) / (m_timeArray.at(ind2) - m_timeArray.at(ind1));
+		}
+		return { vel_x, vel_y, vel_z };
+	}
+}
+
+bool ENVIR::getFlagIFFT() const
+{
+	return m_flagIFFT;
+}
+
+bool ENVIR::shouldInterp() const
+{
+	return m_shouldInterp;
+}
+
+uword ENVIR::getInd4interp1() const
+{
+	return m_ind4interp1;
+}
+
+uword ENVIR::getInd4interp2() const
+{
+	return m_ind4interp2;
+}
+
+
+const vec& ENVIR::getTimeArray() const
+{
+	return m_timeArray;
+}
+
+const vec& ENVIR::getRampArray() const
+{
+	return m_timeRampArray;
 }
 
 /*****************************************************
@@ -332,6 +627,11 @@ double ENVIR::windExp() const
 std::string ENVIR::printTimeStep() const
 {
 	return std::to_string(m_timeStep);
+}
+
+std::string ENVIR::printPrintStep() const
+{
+	return std::to_string(m_printStep);
 }
 
 std::string ENVIR::printTimeTotal() const
@@ -349,10 +649,10 @@ std::string ENVIR::printNodes() const
 	std::string output = "";
 	for (int ii = 0; ii < m_nodesID.size(); ++ii)
 	{
-		output = output + "( " + std::to_string( m_nodesID.at(ii) ) + 
-						  ", " + std::to_string( m_nodesCoord.at(ii)(0) ) +
-			              ", " + std::to_string( m_nodesCoord.at(ii)(1) ) +
-			              ", " + std::to_string( m_nodesCoord.at(ii)(2) ) + " )\n";
+		output = output + "( " + std::to_string(m_nodesID.at(ii)) +
+			", " + std::to_string(m_nodesCoord.at(ii)(0)) +
+			", " + std::to_string(m_nodesCoord.at(ii)(1)) +
+			", " + std::to_string(m_nodesCoord.at(ii)(2)) + " )\n";
 	}
 	return output;
 }
@@ -375,12 +675,16 @@ std::string ENVIR::printWatDepth() const
 std::string ENVIR::printWave() const
 {
 	std::string output = "";
+	output = output + "Number of waves: " + std::to_string(m_wave.size()) + "\n";
+	output = output + "Wave characteristics (printing up to 100 components): " + std::to_string(m_wave.size()) + "\n";
 	for (int ii = 0; ii < m_wave.size(); ++ii)
 	{
+		if (ii == 100)
+			break;
 		output = output + "Wave #" + std::to_string(ii) + "\n";
-		output = output + "Height: " + std::to_string( m_wave.at(ii).height() ) + "\n";
-		output = output + "Period: " + std::to_string( m_wave.at(ii).period() ) + "\n";
-		output = output + "Wave number: " + std::to_string( m_wave.at(ii).waveNumber() ) + "\n";
+		output = output + "Height: " + std::to_string(m_wave.at(ii).height()) + "\n";
+		output = output + "Period: " + std::to_string(m_wave.at(ii).period()) + "\n";
+		output = output + "Wave number: " + std::to_string(m_wave.at(ii).waveNumber()) + "\n";
 		output = output + "Length: " + std::to_string(m_wave.at(ii).length()) + "\n";
 		output = output + "Direction: " + std::to_string(m_wave.at(ii).direction()) + "\n";
 		output = output + "Phase: " + std::to_string(m_wave.at(ii).phase()) + "\n\n";
@@ -388,13 +692,13 @@ std::string ENVIR::printWave() const
 	return output;
 }
 
-std::string ENVIR::printWaveLocation() const
+std::string ENVIR::printWaveProbe() const
 {
 	std::string output = "";
-	for (int ii = 0; ii < m_waveLocation.size(); ++ii)
+	for (int ii = 0; ii < m_waveProbe.size(); ++ii)
 	{
-		output = output + "Location #" + std::to_string(ii) + ": (" + std::to_string(m_waveLocation.at(ii).at(0)) 
-						+ "," + std::to_string(m_waveLocation.at(ii).at(1)) + "," + std::to_string(m_waveLocation.at(ii).at(2)) + ")\n";
+		output = output + "Location #" + std::to_string(ii) + ": (" + std::to_string(m_waveProbe.at(ii).at(0))
+			+ "," + std::to_string(m_waveProbe.at(ii).at(1)) + "," + std::to_string(m_waveProbe.at(ii).at(2)) + ")\n";
 	}
 	return output;
 }
@@ -402,12 +706,25 @@ std::string ENVIR::printWaveLocation() const
 
 void ENVIR::printWaveCharact() const
 {
-	for (int ii = 0; ii < m_waveLocation.size(); ++ii)
+	for (int ii = 0; ii < m_waveProbe.size(); ++ii)
 	{
-		IO::print2outLine(IO::OUTFLAG_WAVE_ELEV, m_waveLocationID[ii], waveElev(m_waveLocation[ii][0], m_waveLocation[ii][1]));
-		IO::print2outLine(IO::OUTFLAG_WAVE_VEL, m_waveLocationID[ii], u1(m_waveLocation[ii]));
-		IO::print2outLine(IO::OUTFLAG_WAVE_ACC, m_waveLocationID[ii], du1dt(m_waveLocation[ii]));
-		IO::print2outLine(IO::OUTFLAG_WAVE_PRES, m_waveLocationID[ii], wavePressure(m_waveLocation[ii]));
+			if (IO::isOutputActive(IO::OUTFLAG_WAVE_ELEV))
+				IO::print2outLine(IO::OUTFLAG_WAVE_ELEV, m_waveProbeID[ii], waveElevAtProbe(ii));
+
+			if (IO::isOutputActive(IO::OUTFLAG_WAVE_VEL))
+				IO::print2outLine(IO::OUTFLAG_WAVE_VEL, m_waveProbeID[ii], waveVelAtProbe(ii));
+
+			if (IO::isOutputActive(IO::OUTFLAG_WAVE_ACC))
+				IO::print2outLine(IO::OUTFLAG_WAVE_ACC, m_waveProbeID[ii], du1dt(m_waveProbe[ii], 0));
+
+			if (IO::isOutputActive(IO::OUTFLAG_WAVE_ACC_2ND))
+				IO::print2outLine(IO::OUTFLAG_WAVE_ACC_2ND, m_waveProbeID[ii], du2dt(m_waveProbe[ii]));
+
+			if (IO::isOutputActive(IO::OUTFLAG_WAVE_PRES))
+				IO::print2outLine(IO::OUTFLAG_WAVE_PRES, m_waveProbeID[ii], wavePressure(m_waveProbe[ii]));
+
+			if (IO::isOutputActive(IO::OUTFLAG_WAVE_PRES_2ND))
+				IO::print2outLine(IO::OUTFLAG_WAVE_PRES_2ND, m_waveProbeID[ii], wavePressure_2ndOrd(m_waveProbe[ii]));
 	}
 }
 
@@ -439,157 +756,98 @@ bool ENVIR::isNodeEmpty() const
 	return m_nodesID.empty();
 }
 
-bool ENVIR::isWaveLocationEmpty() const
+bool ENVIR::isWaveProbeEmpty() const
 {
-	return m_waveLocation.empty();
+	return m_waveProbe.empty();
 }
 
 void ENVIR::stepTime()
 {
-	m_time += m_timeStep;
+	stepTime(m_timeStep);
 }
 
 void ENVIR::stepTime(double const step)
 {
 	m_time += step;
+
+	// Find indices for interpolation of the time vector
+	m_ind4interp1 = index_min(abs(m_timeArray - m_time));	
+
+	m_shouldInterp = true ;
+	double t1 = m_timeArray.at(m_ind4interp1);
+	if (abs(t1 - m_time) < arma::datum::eps)
+	{
+		m_shouldInterp = false;
+	}
+	else
+	{
+		(t1 < m_time) ? (m_ind4interp2 = m_ind4interp1 + 1) : (m_ind4interp2 = m_ind4interp1, m_ind4interp1 = m_ind4interp2 - 1);
+	}
+
+	// Sometimes at the end of the simulation ind2 may be larger than the size of the array
+	// due to a time step that is slightly larger than it should. It is ok to set both ind1 to the last index
+	// and avoid interpolations in this case
+	if (m_ind4interp1 > m_timeArray.size() - 1 || m_ind4interp2 > m_timeArray.size() - 1)
+	{
+		m_ind4interp1 = m_timeArray.size() - 1;
+		m_shouldInterp = false;
+	}
 }
 
 
 double ENVIR::ramp() const
 {
-	double ramp{1};
+	return ramp(m_time);
+}
 
-	if (m_time < m_timeRamp)
+double ENVIR::ramp(double time) const
+{
+	double ramp{ 1 };
+
+	if (time < m_timeRamp)
 	{
-		ramp = 0.5 * ( 1 - cos(datum::pi * m_time / m_timeRamp) );
+		ramp = 0.5 * (1 - cos(datum::pi * time / m_timeRamp));
 	}
 
 	return ramp;
 }
 
 
-double ENVIR::waveElev(const double x, const double y) const
+// We consider linear Airy waves, with velocity potential:
+// phi = g*A/w * cosh(k(z+h))/cosh(k*h) * sin(k*x - w*t)
+cx_double ENVIR::waveElev_coef(const double x, const double y, const unsigned int waveIndex) const
+{
+	double A = m_wave.at(waveIndex).amp();
+	double k = m_wave.at(waveIndex).waveNumber();
+	double beta = m_wave.at(waveIndex).direction() * arma::datum::pi / 180.;
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
+
+	return { A*cos(k*cos(beta)*x + k * sin(beta)*y + phase) , -A*sin(k*cos(beta)*x + k * sin(beta)*y + phase) };
+}
+
+double ENVIR::waveElev(const double x, const double y, const double time) const
 {
 	double elev{ 0 };
 
-	// Variables that are used for each wave
-	double w(0), A(0), k(0), beta(0), phase(0);
-
-	// We consider linear Airy waves, with velocity potential:
-	// phi = g*A/w * cosh(k(z+h))/cosh(k*h) * sin(k*x - w*t)
 	for (int ii = 0; ii < m_wave.size(); ++ii)
 	{
-		w = m_wave.at(ii).angFreq();
-		A = m_wave.at(ii).amp();
-		k = m_wave.at(ii).waveNumber();
-		beta = m_wave.at(ii).direction() * arma::datum::pi / 180.;
-		phase = m_wave.at(ii).phase();
-
-		elev += A * cos(k*cos(beta)*x + k * sin(beta)*y - w * m_time + phase);
-	}
-
-	return elev * ramp();
-}
-
-
-vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord) const
-{
-	arma::vec::fixed<3> vel = {0,0,0};
-
-	double x = coord[0];
-	double y = coord[1];
-	double z = coord[2];
-	double h = m_watDepth;
-	double t = m_time;
-
-	// Variables that are used for each wave
-	double w(0), A(0), k(0), beta(0), phase(0);
-	double khz_xy(0), khz_z(0);
-
-	// This formulation is valid only below the mean water level, i.e. z <= 0
-	if (z <= 0)
-	{
-		for (int ii = 0; ii < m_wave.size(); ++ii)
+		if (m_wave.at(ii).amp() != 0)
 		{
-			w = m_wave.at(ii).angFreq();
-			A = m_wave.at(ii).amp();
-			k = m_wave.at(ii).waveNumber();
-			beta = m_wave.at(ii).direction() * arma::datum::pi / 180.;
-			phase = m_wave.at(ii).phase();
-
-			// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
-			// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
-			if (k*h >= 10)
-			{
-				khz_xy = exp(k*z);
-				khz_z = khz_xy;
-			}
-			else
-			{
-				khz_xy = cosh(k * (z + h)) / sinh(k*h);
-				khz_z = sinh(k * (z + h)) / sinh(k*h);
-			}
-
-			vel[0] += w * A * khz_xy * cos(beta) * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
-			vel[1] += w * A * khz_xy * sin(beta) * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
-			vel[2] += w * A * khz_z * sin(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
+			double w = m_wave.at(ii).angFreq();
+			elev += (waveElev_coef(x, y, ii) * cx_double { cos(w * time), sin(w * time) }).real();
 		}
 	}
 
-	return vel * ramp();
+	return elev;
 }
 
-vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord) const
-{
-	arma::vec::fixed<3> acc = {0,0,0};
-
-	double x = coord[0];
-	double y = coord[1];
-	double z = coord[2];
-	double h = m_watDepth;
-	double t = m_time;
-
-	// Variables that are used for each wave
-	double w(0), A(0), k(0), beta(0), phase(0);
-	double khz_xy(0), khz_z(0);
-
-	// We consider linear Airy waves, with velocity potential:
-	// phi = g*A/w * cosh(k(z+h))/cosh(k*h) * sin(k*x - w*t)
-	// This formulation is valid only below the mean water level, i.e. z <= 0
-	if (z <= 0)
-	{
-		for (int ii = 0; ii < m_wave.size(); ++ii)
-		{
-			w = m_wave.at(ii).angFreq();
-			A = m_wave.at(ii).amp();
-			k = m_wave.at(ii).waveNumber();
-			beta = m_wave.at(ii).direction() * arma::datum::pi / 180.;
-			phase = m_wave.at(ii).phase();
-
-			// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
-			// Hence, we chose a threshold of 10, above which the deep water approximation is employed.			
-			if (k*h >= 10)
-			{
-				khz_xy = exp(k*z);
-				khz_z = khz_xy;
-			}
-			else
-			{
-				khz_xy = cosh(k * (z + h)) / sinh(k*h);
-				khz_z = sinh(k * (z + h)) / sinh(k*h);
-			}
-
-			acc[0] += pow(w, 2) * A * khz_xy * cos(beta) * sin(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
-			acc[1] += pow(w, 2) * A * khz_xy * sin(beta) * sin(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
-			acc[2] += -pow(w, 2) * A * khz_z * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
-		}
-	}
-
-	return acc * ramp();
+double ENVIR::waveElev(const double x, const double y) const
+{	
+	return ramp() * waveElev(x, y, m_time);
 }
 
 
-double ENVIR::wavePressure(const vec::fixed<3> &coord) const
+double ENVIR::wavePressure(const vec::fixed<3> &coord, const unsigned int waveIndex) const
 {
 	double p(0);
 
@@ -600,45 +858,779 @@ double ENVIR::wavePressure(const vec::fixed<3> &coord) const
 	double t = m_time;
 	double rho = m_watDens;
 	double g = m_gravity;
+	double w = m_wave.at(waveIndex).angFreq();
+	double A = m_wave.at(waveIndex).amp();
+	double k = m_wave.at(waveIndex).waveNumber();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
 
-	// Variables that are used for each wave
-	double w(0), A(0), k(0), beta(0), phase(0);
-
-	// We consider linear Airy waves, with velocity potential:
-	// phi = g*A/w * cosh(k(z+h))/cosh(k*h) * sin(k*x - w*t)
 	// This formulation is valid only below the mean water level, i.e. z <= 0
 	if (z <= 0)
 	{
-		for (int ii = 0; ii < m_wave.size(); ++ii)
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		double khz(0);
+		if (k*h >= 10)
 		{
-			w = m_wave.at(ii).angFreq();
-			A = m_wave.at(ii).amp();
-			k = m_wave.at(ii).waveNumber();
-			beta = m_wave.at(ii).direction() * arma::datum::pi / 180.;
-			phase = m_wave.at(ii).phase();
-
-			// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
-			// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
-			double khz(0);
-			if (k*h >= 10)
-			{
-				khz = exp(k*z);
-			}
-			else
-			{
-				khz = cosh(k * (z + h)) / cosh(k*h);
-			}
-
-			p += rho * g * A * khz * cos(k*cos(beta)*x + k * sin(beta)*y - w * t + phase);
+			khz = exp(k*z);
 		}
+		else
+		{
+			khz = cosh(k * (z + h)) / cosh(k*h);
+		}
+
+		return ramp() * rho * g * A * khz * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+	}
+
+	else
+	{
+		return 0;
+	}
+}
+
+double ENVIR::wavePressure(const vec::fixed<3> &coord) const
+{
+	double p(0);
+
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		p += ENVIR::wavePressure(coord, ii);
+	}
+
+	return p;
+}
+
+cx_vec::fixed<3> ENVIR::u1_coef(const double x, const double y, const double z, const unsigned int waveIndex) const
+{
+	cx_vec::fixed<3> vel(fill::zeros);
+	double h = m_watDepth;
+	double t = m_time;
+	double w = m_wave.at(waveIndex).angFreq();
+	double A = m_wave.at(waveIndex).amp();
+	double k = m_wave.at(waveIndex).waveNumber();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
+	double khz_xy(0), khz_z(0);
+
+	if (z <= 0 && k > 0)
+	{
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
+		}
+
+		vel.row(0) = { cosBeta * khz_xy * cos(k*cosBeta*x + k * sinBeta*y + phase), -cosBeta * khz_xy * sin(k*cosBeta*x + k * sinBeta*y + phase) };
+		vel.row(1) = { sinBeta * khz_xy * cos(k*cosBeta*x + k * sinBeta*y + phase), -sinBeta * khz_xy * sin(k*cosBeta*x + k * sinBeta*y + phase) };
+		vel.row(2) = { khz_z * sin(k*cosBeta*x + k * sinBeta*y + phase), khz_z * cos(k*cosBeta*x + k * sinBeta*y + phase) };
+	}
+
+	return w * A * vel;
+}
+
+vec::fixed<3> ENVIR::u1(const vec::fixed<3> &coord, const double zwl) const
+{
+	arma::vec::fixed<3> vel = { 0,0,0 };
+
+	if (m_waveStret <= 1 && zwl != 0)
+	{
+		throw std::runtime_error("zwl = " + std::to_string(zwl) + "is incompatible with wave streching mode " + std::to_string(m_waveStret));
+	}
+
+	double z = coord.at(2);
+	if (z > zwl)
+	{
+		return vel;
+	}
+
+	if (m_waveStret == 2)
+	{
+		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
+	}
+
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		if (m_wave.at(ii).amp() != 0)
+		{
+			double w = m_wave.at(ii).angFreq();
+			vel += real(u1_coef(coord.at(0), coord.at(1), z, ii) * cx_double { cos(w * m_time), sin(w * m_time) });
+		}
+	}
+	return vel * ramp();
+}
+
+vec::fixed<3> ENVIR::du1dt_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	// More friendly notation
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+	double w = m_wave.at(waveIndex).angFreq();
+	double A = m_wave.at(waveIndex).amp();
+	double k = m_wave.at(waveIndex).waveNumber();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
+	double khz_xy(0), khz_z(0);
+
+	if (z <= 0 && k > 0)
+	{
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
+		}
+
+		acc[0] = w * w * A * khz_xy * cosBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[1] = w * w * A * khz_xy * sinBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[2] = -w * w * A * khz_z * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+	}
+
+	return acc * ramp();
+}
+
+
+vec::fixed<3> ENVIR::du1dt(const vec::fixed<3> &coord, const double zwl) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	if (m_waveStret <= 1 && zwl != 0)
+	{
+		throw std::runtime_error("zwl = " + std::to_string(zwl) + "is incompatible with wave streching mode " + std::to_string(m_waveStret));
+	}
+
+	double z = coord.at(2);
+	if (z > zwl)
+	{
+		return acc;
+	}
+
+	if (m_waveStret == 2)
+	{
+		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
+	}
+
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		acc += ENVIR::du1dt_eachWave(vec::fixed<3>({ coord.at(0), coord.at(1), z }), ii);
+	}
+
+	return acc;
+}
+
+vec::fixed<3> ENVIR::du1dx_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	// More friendly notation
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+	double w = m_wave.at(waveIndex).angFreq();
+	double A = m_wave.at(waveIndex).amp();
+	double k = m_wave.at(waveIndex).waveNumber();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
+	double khz_xy(0), khz_z(0);
+
+	if (z <= 0 && k > 0)
+	{
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
+		}
+
+		acc[0] = -w * A * k * khz_xy * cosBeta * cosBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[1] = -w * A * k * khz_xy * sinBeta * cosBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[2] = w * A * k * khz_z * cosBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+	}
+
+	return acc * ramp();
+}
+
+vec::fixed<3> ENVIR::du1dx(const vec::fixed<3> &coord, const double zwl) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	if (m_waveStret <= 1 && zwl != 0)
+	{
+		throw std::runtime_error("zwl = " + std::to_string(zwl) + "is incompatible with wave streching mode " + std::to_string(m_waveStret));
+	}
+
+	double z = coord.at(2);
+	if (z > zwl)
+	{
+		return acc;
+	}
+
+	if (m_waveStret == 2)
+	{
+		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
+	}
+
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		acc += ENVIR::du1dx_eachWave(vec::fixed<3>({ coord.at(0), coord.at(1), z }), ii);
+	}
+	return acc;
+}
+
+vec::fixed<3> ENVIR::du1dy_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	// More friendly notation
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+	double w = m_wave.at(waveIndex).angFreq();
+	double A = m_wave.at(waveIndex).amp();
+	double k = m_wave.at(waveIndex).waveNumber();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
+	double khz_xy(0), khz_z(0);
+
+	if (z <= 0 && k > 0)
+	{
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
+		}
+
+		acc[0] = -w * A * k * khz_xy * cosBeta * sinBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[1] = -w * A * k * khz_xy * sinBeta * sinBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[2] = w * A * k * khz_z * sinBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+	}
+
+	return acc * ramp();
+}
+
+vec::fixed<3> ENVIR::du1dy(const vec::fixed<3> &coord, const double zwl) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	if (m_waveStret <= 1 && zwl != 0)
+	{
+		throw std::runtime_error("zwl = " + std::to_string(zwl) + "is incompatible with wave streching mode " + std::to_string(m_waveStret));
+	}
+
+	double z = coord.at(2);
+	if (z > zwl)
+	{
+		return acc;
+	}
+
+	if (m_waveStret == 2)
+	{
+		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
+	}
+
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		acc += ENVIR::du1dy_eachWave(vec::fixed<3>({ coord.at(0), coord.at(1), z }), ii);
+	}
+	return acc;
+}
+
+vec::fixed<3> ENVIR::du1dz_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	// More friendly notation
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+	double w = m_wave.at(waveIndex).angFreq();
+	double A = m_wave.at(waveIndex).amp();
+	double k = m_wave.at(waveIndex).waveNumber();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
+	double khz_xy(0), khz_z(0);
+
+	if (z <= 0 && k > 0)
+	{
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
+		}
+
+		acc[0] = w * A * k * khz_z * cosBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[1] = w * A * k * khz_z * sinBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[2] = w * A * k * khz_xy * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+	}
+
+	return acc * ramp();
+}
+
+vec::fixed<3> ENVIR::du1dz(const vec::fixed<3> &coord, const double zwl) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	if (m_waveStret <= 1 && zwl != 0)
+	{
+		throw std::runtime_error("zwl = " + std::to_string(zwl) + "is incompatible with wave streching mode " + std::to_string(m_waveStret));
+	}
+
+	double z = coord.at(2);
+	if (z > zwl)
+	{
+		return acc;
+	}
+
+	if (m_waveStret == 2)
+	{
+		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
+	}
+
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		acc += ENVIR::du1dz_eachWave(vec::fixed<3>({ coord.at(0), coord.at(1), z }), ii);
+	}
+	return acc;
+}
+
+vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	// In this case, the calculation below would lead to 0/0, but the limit is actually 0. This is fine, as the second order potential should not contribute to the mean drift.
+	if (waveIndex1 == waveIndex2)
+	{
+		return acc;
+	}
+
+	// More friendly notation
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+	double g = m_gravity;
+
+	double w1 = m_wave.at(waveIndex1).angFreq();
+	double A1 = m_wave.at(waveIndex1).amp();
+	double k1 = m_wave.at(waveIndex1).waveNumber();
+	double b1 = m_wave.at(waveIndex1).direction() * arma::datum::pi / 180.;
+	double p1 = m_wave.at(waveIndex1).phase() * arma::datum::pi / 180.;
+	double cosB1 = m_wave.at(waveIndex1).cosBeta();
+	double sinB1 = m_wave.at(waveIndex1).sinBeta();
+
+	double A2 = m_wave.at(waveIndex2).amp();
+	double w2 = m_wave.at(waveIndex2).angFreq();
+	double k2 = m_wave.at(waveIndex2).waveNumber();
+	double b2 = m_wave.at(waveIndex2).direction() * arma::datum::pi / 180.;
+	double p2 = m_wave.at(waveIndex2).phase() * arma::datum::pi / 180.;
+	double cosB2 = m_wave.at(waveIndex2).cosBeta();
+	double sinB2 = m_wave.at(waveIndex2).sinBeta();
+
+	// This formulation is valid only below the mean water level, i.e. z <= 0
+	if (z <= 0 && k1 > 0 && k2 > 0)
+	{
+		arma::vec::fixed<3> k1_k2 = { k1 * cosB1 - k2 * cosB2, k1 * sinB1 - k2 * sinB2, 0 };
+		double norm_k1_k2 = arma::norm(k1_k2);
+
+		// Isso aqui soh depende das propriedades das ondas e da profundidades. Da pra calcular previamente uma vez soh.
+		double aux = ((w2 - w1) / (w1 * w2)) * k1 * k2 * (std::cos(b1 - b2) + std::tanh(k1*h) * std::tanh(k2*h))
+			- 0.5 * (k1*k1 / (w1 * pow(std::cosh(k1*h), 2)) - k2 * k2 / (w2 * pow(std::cosh(k2*h), 2)));
+		aux = aux / (g * norm_k1_k2 * std::tanh(norm_k1_k2 * h) - (w1 - w2)*(w1 - w2));
+
+		double khz_xy = std::cosh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h);
+		double khz_z = std::sinh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h);
+
+		acc[0] = 0.5 * A1 * A2 * (w1 - w2) * (k1 * cosB1 - k2 * cosB2) * g*g * aux * khz_xy
+			* std::sin(dot(k1_k2, coord) - (w1 - w2) * t + p1 - p2);
+
+		acc[1] = 0.5 * A1 * A2 * (w1 - w2) * (k1 * sinB1 - k2 * sinB2) * g*g * aux * khz_xy
+			* std::sin(dot(k1_k2, coord) - (w1 - w2) * t + p1 - p2);
+
+		acc[2] = -0.5 * A1 * A2 * (w1 - w2) * g*g * aux * norm_k1_k2 * khz_z
+			* std::cos(dot(k1_k2, coord) - (w1 - w2) * t + p1 - p2);
+	}
+
+	return acc * ramp();
+}
+
+vec::fixed<3> ENVIR::du2dt(const vec::fixed<3> &coord) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	// When i == j, du2dt = {0,0,0}, so it is safe to skip this part of the loop.
+	// Besides, as only the real part of the second-order difference-frequency potential is used,
+	// the acceleration due to a pair ij is equal to ji.
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		for (int jj = ii + 1; jj < m_wave.size(); ++jj)
+		{
+			acc += 2 * ENVIR::du2dt(coord, ii, jj);
+		}
+	}
+	return acc;
+}
+
+double ENVIR::wavePressure_2ndOrd(const vec::fixed<3> &coord, const unsigned int waveIndex1, const unsigned int waveIndex2) const
+{
+	double p{ 0 };
+
+	// In this case, the calculation below would lead to 0/0, but the limit is actually 0. This is fine, as the second order potential should not contribute to the mean drift.
+	if (waveIndex1 == waveIndex2)
+	{
+		return p;
+	}
+
+	// More friendly notation
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+	double g = m_gravity;
+
+	double w1 = m_wave.at(waveIndex1).angFreq();
+	double A1 = m_wave.at(waveIndex1).amp();
+	double k1 = m_wave.at(waveIndex1).waveNumber();
+	double b1 = m_wave.at(waveIndex1).direction() * arma::datum::pi / 180.;
+	double phase1 = m_wave.at(waveIndex1).phase() * arma::datum::pi / 180.;
+	double cosB1 = m_wave.at(waveIndex1).cosBeta();
+	double sinB1 = m_wave.at(waveIndex1).sinBeta();
+
+	double A2 = m_wave.at(waveIndex2).amp();
+	double w2 = m_wave.at(waveIndex2).angFreq();
+	double k2 = m_wave.at(waveIndex2).waveNumber();
+	double b2 = m_wave.at(waveIndex2).direction() * arma::datum::pi / 180.;
+	double phase2 = m_wave.at(waveIndex2).phase() * arma::datum::pi / 180.;
+	double cosB2 = m_wave.at(waveIndex2).cosBeta();
+	double sinB2 = m_wave.at(waveIndex2).sinBeta();
+
+	// This formulation is valid only below the mean water level, i.e. z <= 0
+	if (z <= 0 && k1 > 0 && k2 > 0)
+	{
+		arma::vec::fixed<3> k1_k2 = { k1 * cosB1 - k2 * cosB2, k1 * sinB1 - k2 * sinB2, 0 };
+		double norm_k1_k2 = arma::norm(k1_k2);
+
+		// Isso aqui soh depende das propriedades das ondas e da profundidades. Da pra calcular previamente uma vez soh.
+		double aux = ((w2 - w1) / (w1 * w2)) * k1 * k2 * (std::cos(b1 - b2) + std::tanh(k1*h) * std::tanh(k2*h))
+			- 0.5 * (k1*k1 / (w1 * pow(std::cosh(k1*h), 2)) - k2 * k2 / (w2 * pow(std::cosh(k2*h), 2)));
+		aux = aux / (g * norm_k1_k2 * std::tanh(norm_k1_k2 * h) - (w1 - w2)*(w1 - w2));
+
+		p = 0.5 * m_watDens * A1 * A2 * (w1 - w2) * g*g * aux * std::cosh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h)
+			* std::cos(dot(k1_k2, coord) - (w1 - w2) * t + phase1 - phase2);
 	}
 
 	return p * ramp();
+}
+
+double ENVIR::wavePressure_2ndOrd(const vec::fixed<3> &coord) const
+{
+	double p{ 0 };
+
+	// When i == j, p = 0, so it is safe to skip this part of the loop.
+	// Besides, as only the real part of the second-order difference-frequency potential is used,
+	// the acceleration due to a pair ij is equal to ji.
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		for (int jj = ii + 1; jj < m_wave.size(); ++jj)
+		{
+			p += 2 * ENVIR::wavePressure_2ndOrd(coord, ii, jj);
+		}
+	}
+	return p;
+}
+
+vec::fixed<3> ENVIR::dadx_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	// More friendly notation
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+	double w = m_wave.at(waveIndex).angFreq();
+	double A = m_wave.at(waveIndex).amp();
+	double k = m_wave.at(waveIndex).waveNumber();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
+	double khz_xy(0), khz_z(0);
+
+	if (z <= 0 && k > 0)
+	{
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
+		}
+
+		acc[0] = w * w * A * khz_xy * k * cosBeta * cosBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[1] = w * w * A * khz_xy * k * cosBeta * sinBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[2] = -w * w * A * khz_z * k * cosBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+	}
+
+	return acc * ramp();
+}
+
+vec::fixed<3> ENVIR::dadx(const vec::fixed<3> &coord, const double zwl) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	if (m_waveStret <= 1 && zwl != 0)
+	{
+		throw std::runtime_error("zwl = " + std::to_string(zwl) + "is incompatible with wave streching mode " + std::to_string(m_waveStret));
+	}
+
+	double z = coord.at(2);
+	if (z > zwl)
+	{
+		return acc;
+	}
+
+	if (m_waveStret == 2)
+	{
+		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
+	}
+
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		acc += ENVIR::dadx_eachWave(vec::fixed<3>({ coord.at(0), coord.at(1), z }), ii);
+	}
+	return acc;
+}
+
+vec::fixed<3> ENVIR::dady_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	// More friendly notation
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+	double w = m_wave.at(waveIndex).angFreq();
+	double A = m_wave.at(waveIndex).amp();
+	double k = m_wave.at(waveIndex).waveNumber();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
+	double khz_xy(0), khz_z(0);
+
+	if (z <= 0 && k > 0)
+	{
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
+		}
+
+		acc[0] = w * w * A * khz_xy * k * sinBeta * cosBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[1] = w * w * A * khz_xy * k * sinBeta * sinBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[2] = -w * w * A * khz_z * k * sinBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+	}
+
+
+	return acc * ramp();
+}
+
+vec::fixed<3> ENVIR::dady(const vec::fixed<3> &coord, const double zwl) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	if (m_waveStret <= 1 && zwl != 0)
+	{
+		throw std::runtime_error("zwl = " + std::to_string(zwl) + "is incompatible with wave streching mode " + std::to_string(m_waveStret));
+	}
+
+	double z = coord.at(2);
+	if (z > zwl)
+	{
+		return acc;
+	}
+
+	if (m_waveStret == 2)
+	{
+		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
+	}
+
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		acc += ENVIR::dady_eachWave(vec::fixed<3>({ coord.at(0), coord.at(1), z }), ii);
+	}
+	return acc;
+}
+
+vec::fixed<3> ENVIR::dadz_eachWave(const vec::fixed<3> &coord, const unsigned int waveIndex) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	// More friendly notation
+	double x = coord[0];
+	double y = coord[1];
+	double z = coord[2];
+	double h = m_watDepth;
+	double t = m_time;
+	double w = m_wave.at(waveIndex).angFreq();
+	double A = m_wave.at(waveIndex).amp();
+	double k = m_wave.at(waveIndex).waveNumber();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
+	double khz_xy(0), khz_z(0);
+
+	if (z <= 0 && k > 0)
+	{
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = sinh(k * (z + h)) / sinh(k*h);
+			khz_z = cosh(k * (z + h)) / sinh(k*h);
+		}
+
+		acc[0] = w * w * k * A * khz_xy * cosBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[1] = w * w * k * A * khz_xy * sinBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[2] = -w * w * k * A * khz_z * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+	}
+
+	return acc * ramp();
+}
+
+vec::fixed<3> ENVIR::dadz(const vec::fixed<3> &coord, const double zwl) const
+{
+	arma::vec::fixed<3> acc = { 0,0,0 };
+
+	if (m_waveStret <= 1 && zwl != 0)
+	{
+		throw std::runtime_error("zwl = " + std::to_string(zwl) + "is incompatible with wave streching mode " + std::to_string(m_waveStret));
+	}
+
+	double z = coord.at(2);
+	if (z > zwl)
+	{
+		return acc;
+	}
+
+	if (m_waveStret == 2)
+	{
+		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
+	}
+
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		acc += ENVIR::dadz_eachWave(vec::fixed<3>({ coord.at(0), coord.at(1), z }), ii);
+	}
+	return acc;
 }
 
 
 
 double ENVIR::windVel_X(const vec::fixed<3> &coord) const
 {
-	return ( windRefVel() * pow(coord[2] / windRefHeight(), windExp()) );
+	return (ramp() * windRefVel() * std::cos(m_windDir * arma::datum::pi / 180.) * pow(coord[2] / windRefHeight(), windExp()));
+}
+
+double ENVIR::windVel_Y(const vec::fixed<3> &coord) const
+{
+	return (-ramp() * windRefVel() * std::sin(m_windDir * arma::datum::pi / 180.) * pow(coord[2] / windRefHeight(), windExp()));
+}
+
+
+
+
+
+
+
+
+// JONSWAP spectrum considering angular frequency (rad/s)
+double JONSWAP(const double w, const double Tp, const double Hs, const double gamma)
+{
+	if (w == 0)
+	{
+		return 0;
+	}
+
+	double wp = 2 * arma::datum::pi / Tp;
+	double sigma(0);
+	double A(0);
+	double Sw(0);
+
+	if (w <= wp)
+	{
+		sigma = 0.07;
+	}
+	else
+	{
+		sigma = 0.09;
+	}
+
+	A = std::exp(-0.5 * std::pow((w / wp - 1) / sigma, 2));
+	return 320 * Hs*Hs * pow(Tp, -4) * std::pow(w, -5) * std::exp(-1950 * pow(Tp, -4) * std::pow(w, -4)) * std::pow(gamma, A);
 }

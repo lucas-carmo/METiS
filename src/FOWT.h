@@ -12,35 +12,43 @@ using namespace arma; // For armadillo classes
 class FOWT
 {
 private:
-	//Physical members of the FOWT (floater, rotor nacelle assembly (RNA), tower, mooring lines, ...)
+	/*
+	Physical members of the FOWT (floater, rotor nacelle assembly (RNA), tower, mooring lines, ...)
+	*/
 	Floater m_floater;
 	//Tower m_tower;
 	RNA m_rna;
-	vec::fixed<3> m_extLinStiff;
 	vec::fixed<6> m_extConstForce;
+	mat::fixed<6,6> m_extLinStiff;
 
 	/*
-	Forces included in the analysis
+	Specification of the analysis
 	*/
 	int m_hydroMode{ 0 };
 	int m_aeroMode{ 0 };
 	int m_moorMode{ 0 };
 
-	/*
-	Flags to specify the active degrees of freedom
-	*/
+	// Flags to specify the active degrees of freedom
 	std::array<bool, 6> m_dofs = { 1, 1, 1, 1, 1, 1 };
 
-	// Properties derived from the other ones
+	/* 
+	FOWT properties derived from its subsystems
+	*/
 	double m_mass;
 	vec::fixed<3> m_CoG;
 
-	// FOWT condition
-	// m_disp(0:2) = Position with respect to the initial CoG (i.e. CoG(t) - CoG(0))
-	// m_disp(3:5) = Rotation with respect to initial configuration. For now, we are considering small rotations.
-	vec::fixed<6> m_disp;
+	/*
+	FOWT condition
+	*/
+	vec::fixed<6> m_disp; // m_disp(0:2) = Position with respect to the initial CoG (i.e. CoG(t) - CoG(0)) --- m_disp(3:5) = Rotation with respect to initial configuration. For now, we are considering small rotations
 	vec::fixed<6> m_vel;
-	vec::fixed<6> m_acc;
+
+	// Axis system that follows the mean and slow drift.
+	// They are evaluated by filtering the instantaneous position with the following parameters.
+	double m_filterSD_omega;
+	double m_filterSD_zeta;
+	vec::fixed<6> m_disp_sd;
+	vec::fixed<6> m_vel_sd;
 
 public:
 	FOWT();
@@ -49,16 +57,21 @@ public:
 	/*****************************************************
 		Setters
 	*****************************************************/
-	void readHydroMode(const std::string &data);
-	void readAeroMode(const std::string &data);
-	void readMoorMode(const std::string &data);
-	void readDOFs(const std::string &data);
+	void setHydroMode(const int hydroMode);
+	void setAeroMode(const int aeroMode);
+	void setMoorMode(const int moorMode);
+	void setDoFs(std::array<bool, 6> &dofs);
 
-	void readExtLinStiff(const std::string &data);
-	void readExtConstForce(const std::string &data);
+	void setExtLinStiff(const mat::fixed<6,6> &extLinStiff);
+	void setExtConstForce(const vec::fixed<6> &extConstForce);
+
+	void setFilderSD(const double omega, const double zeta);
 
 	void setFloater(Floater &floater);
 	void setRNA(RNA &rna);
+
+	void setAddedMass_t0(const double density);
+	void evaluateQuantitiesAtBegin(const ENVIR & envir); // If the body is fixed, most of the computationally expensive calculations can be performed only once at the beginning of the simulation
 
 	/*****************************************************
 		Getters
@@ -67,13 +80,19 @@ public:
 	int aeroMode() const;
 	int moorMode() const;
 
+	bool isDoFActive(const int index);
+
+	double filterSD_omega() const;
+	double filterSD_zeta() const;
+
 	vec::fixed<3> CoG();
 	double mass();
 
 	vec::fixed<6> disp() const;
 	vec::fixed<6> vel() const;
-	vec::fixed<6> acc() const;
+	vec::fixed<6> disp_sd() const;
  
+	vec::fixed<6> constForce() const;
 	std::string printLinStiff() const;
 	std::string printFloater() const;
 	std::string printRNA() const;
@@ -86,7 +105,9 @@ public:
 		Forces, acceleration, displacement, etc
 	*****************************************************/
 	vec::fixed<6> calcAcceleration(const ENVIR &envir);
-	void update(const vec::fixed<6> &disp, const vec::fixed<6> &vel, const vec::fixed<6> &acc);
+	void update(const ENVIR &envir, const vec::fixed<6> &disp, const vec::fixed<6> &vel);
+	void update_sd(const vec::fixed<6> &disp, const double dt);
+	void update_sd(const vec::fixed<6> &disp, const double dt, const double wf, const double zeta);
 
 	vec::fixed<6> hydrodynamicForce(const ENVIR &envir);
 	vec::fixed<6> hydrostaticForce(const ENVIR &envir);

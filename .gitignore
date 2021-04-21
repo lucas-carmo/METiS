@@ -1,2 +1,4 @@
-test/output*
+test/*_sum*
+test/*_out*
+test/*_log*
 .vscode

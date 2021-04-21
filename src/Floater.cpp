@@ -20,6 +20,7 @@ Floater::Floater()
 	m_mass = datum::nan;
 	m_CoG.fill(datum::nan);	
 	m_inertia.fill(datum::nan);
+	m_addedMass_t0.fill(datum::nan);	
 }
 
 
@@ -29,9 +30,12 @@ Floater::Floater()
 Floater& Floater::operator= (const Floater &floater)
 {
 	// Shallow copy for simple member variables
-	m_CoG = floater.m_CoG;
-	m_inertia = floater.m_inertia;
 	m_mass = floater.m_mass;
+	m_CoG = floater.m_CoG;
+	m_inertia = floater.m_inertia;	
+	m_addedMass_t0 = floater.m_addedMass_t0;
+	m_disp = floater.m_disp;
+	m_disp_sd = floater.m_disp_sd;
 
 	// The member variables that need deep copying are:
 	// - m_MorisonElements;
@@ -61,95 +65,41 @@ Floater& Floater::operator= (const Floater &floater)
 /*****************************************************
 	Setters
 *****************************************************/
-void Floater::readMass(const std::string &data)
+void Floater::setMass(const double mass)
 {
-	readDataFromString(data, m_mass);
+	m_mass = mass;
 }
 
-void Floater::readInertia(const std::string &data)
+void Floater::setInertia(const vec::fixed<6> &inertia)
 {
-	// The different components of the inertia matrix are separated by commas in the input string
-	std::vector<std::string> input = stringTokenize(data, ",");
-
-	if (input.size() != 6)
-	{
-		throw std::runtime_error("Unable to read the floater inertia matrix in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}
-
-	for (int ii = 0; ii < input.size(); ++ii)
-	{
-		readDataFromString(input.at(ii), m_inertia(ii));
-	}
+	m_inertia = inertia;
 }
 
-void Floater::readCoG(const std::string &data)
+void Floater::setCoG(const vec::fixed<3> &cog)
 {
-	// The coordinates of the center of gravity are separated by commas in the input string
-	std::vector<std::string> input = stringTokenize(data, ",");
-
-	if (input.size() != 3)
-	{
-		throw std::runtime_error("Unable to read the CoG in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}
-
-	for (int ii = 0; ii < input.size(); ++ii)
-	{
-		readDataFromString(input.at(ii), m_CoG(ii));
-	}
+	m_CoG = cog;
 }
 
+void Floater::setInstantSD(bool instantSD)
+{
+	m_instantSD = instantSD;
+}
+
+void Floater::evaluateQuantitiesAtBegin(const ENVIR & envir)
+{
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		m_MorisonElements.at(ii)->evaluateQuantitiesAtBegin(envir);
+	}
+}
 
 
 /*
 	Add circular cylinder Morison Element to m_MorisonElements
 */
-void Floater::addMorisonCirc(const std::string &data, const ENVIR &envir)
+void Floater::addMorisonCirc(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_coord, const double diam, const double CD, const double CM, const unsigned int numIntPoints,
+	const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2, const bool botPressFlag)
 {
-	// Variables to handle the data read from the input file in a more user friendly way
-	unsigned int node1_ID = 0;
-	unsigned int node2_ID = 0;
-	double diam = 0;
-	double CD = 0;
-	double CM = 0;
-	int numIntPoints = 0;
-	double botDiam = 0;
-	double topDiam = 0;
-	double axialCD = 0;
-	double axialCa = 0;
-	bool botPressFlag = false;
-
-	// The eleven properties of a circular cylinder Morison's Element are separated by white spaces in the input string.
-	std::vector<std::string> input = stringTokenize(data, " \t");
-
-	// Check number of inputs
-	if (input.size() != 11)
-	{
-		throw std::runtime_error("Unable to read the circular cylinder in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}
-
-	// Check whether nodes were specified
-	if (envir.isNodeEmpty())
-	{
-		throw std::runtime_error( "Nodes should be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()) );
-	}
-
-	// Read data
-	readDataFromString(input.at(0), node1_ID);
-	readDataFromString(input.at(1), node2_ID);
-	readDataFromString(input.at(2), diam);
-	readDataFromString(input.at(3), CD);
-	readDataFromString(input.at(4), CM);
-	readDataFromString(input.at(5), numIntPoints);
-	readDataFromString(input.at(6), botDiam);
-	readDataFromString(input.at(7), topDiam);
-	readDataFromString(input.at(8), axialCD);
-	readDataFromString(input.at(9), axialCa);
-	readDataFromString(input.at(10), botPressFlag);
-	
-	// Get coordinates of nodes based on their ID
-	vec::fixed<3> node1_coord = envir.getNode(node1_ID);
-	vec::fixed<3> node2_coord = envir.getNode(node2_ID);
-
 	// Since many times we need node1 to be below node2, it is better to swap them here in order to have less swaps in the future
 	if (node1_coord[2] > node2_coord[2])
 	{
@@ -160,86 +110,53 @@ void Floater::addMorisonCirc(const std::string &data, const ENVIR &envir)
 	// to define their relative position in the rigid body
 	if (CoG().has_nan()) // If this is true, then the CoG of the floater wasn't read yet
 	{
-		throw std::runtime_error("Floater CoG must be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()));
+		throw std::runtime_error("Floater CoG must be specified before Morison Elements.");
 	}
 
-	 // Create a circular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
-	 m_MorisonElements.push_back( std::make_unique<MorisonCirc>(node1_coord, node2_coord, CoG(), numIntPoints, 
-	 							  botPressFlag, axialCD, axialCa, diam, CD, CM, botDiam, topDiam) );
+	// Create a circular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
+	m_MorisonElements.push_back(std::make_unique<MorisonCirc>(node1_coord, node2_coord, CoG(), numIntPoints,
+		botPressFlag, axialCD_1, axialCa_1, axialCD_2, axialCa_2, diam, CD, CM));
 }
-
-
 
 /*
 	Add rectangular cylinder Morison Element to m_MorisonElements
 */
-void Floater::addMorisonRect(const std::string &data, const ENVIR &envir)
+void Floater::addMorisonRect(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_coord, vec::fixed<3> &node3_coord, const double diam_X, const double diam_Y, 
+	const double CD_X, const double CD_Y, const double CM_X, const double CM_Y, const unsigned int numIntPoints,
+	const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2, const bool botPressFlag)
 {
-	// Variables to handle the data read from the input file in a more user friendly way
-	unsigned int node1_ID = 0;
-	unsigned int node2_ID = 0;
-	unsigned int node3_ID = 0;
-	double diam_X = 0;
-	double diam_Y = 0;
-	double CD_X = 0;
-	double CD_Y = 0;
-	double CM_X = 0;
-	double CM_Y = 0;
-	int numIntPoints = 0;
-	double botArea = 0;
-	double topArea = 0;
-	double axialCD = 0;
-	double axialCa = 0;
-	bool botPressFlag = false;
-
-	// The eleven properties of a circular cylinder Morison's Element are separated by white spaces in the input string.
-	std::vector<std::string> input = stringTokenize(data, " \t");
-
-	// Check number of inputs
-	if (input.size() != 15)
-	{
-		throw std::runtime_error("Unable to read the rectangular cylinder in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
-	}
-
-	// Check whether nodes were specified
-	if (envir.isNodeEmpty())
-	{
-		throw std::runtime_error( "Nodes should be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()) );
-	}
-
-	// Read data
-	readDataFromString(input.at(0), node1_ID);
-	readDataFromString(input.at(1), node2_ID);
-	readDataFromString(input.at(2), node3_ID);
-	readDataFromString(input.at(3), diam_X);
-	readDataFromString(input.at(4), CD_X);
-	readDataFromString(input.at(5), CM_X);
-	readDataFromString(input.at(6), diam_Y);
-	readDataFromString(input.at(7), CD_Y);
-	readDataFromString(input.at(8), CM_Y);
-	readDataFromString(input.at(9), numIntPoints);
-	readDataFromString(input.at(10), botArea);
-	readDataFromString(input.at(11), topArea);
-	readDataFromString(input.at(12), axialCD);
-	readDataFromString(input.at(13), axialCa);
-	readDataFromString(input.at(14), botPressFlag);
-	
-	// Get coordinates of nodes based on their ID
-	vec::fixed<3> node1_coord = envir.getNode(node1_ID);
-	vec::fixed<3> node2_coord = envir.getNode(node2_ID);
-	vec::fixed<3> node3_coord = envir.getNode(node3_ID);
-
-
 	// Morison Elements need the position of the floater CoG
 	// to define their relative position in the rigid body
-	if ( CoG().has_nan() ) // If this is true, then the CoG of the floater wasn't read yet
+	if (CoG().has_nan()) // If this is true, then the CoG of the floater wasn't read yet
 	{
-		throw std::runtime_error( "Floater CoG must be specified before Morison Elements. Error in input line " + std::to_string(IO::getInLineNumber()) );
+		throw std::runtime_error("Floater CoG must be specified before Morison Elements.");
 	}
-			
+
 	// Create a rectangular cylinder Morison Element using the following constructor and add it to m_MorisonElements.
-	m_MorisonElements.push_back( std::make_unique<MorisonRect>(node1_coord, node2_coord, node3_coord, CoG(), numIntPoints,
-	  							  botPressFlag, axialCD, axialCa, diam_X, CD_X, CM_X, diam_Y, CD_Y, CM_Y, botArea, topArea) );
+	m_MorisonElements.push_back(std::make_unique<MorisonRect>(node1_coord, node2_coord, node3_coord, CoG(), numIntPoints,
+		botPressFlag, axialCD_1, axialCa_1, axialCD_2, axialCa_2, diam_X, CD_X, CM_X, diam_Y, CD_Y, CM_Y));
+}
+
+mat::fixed<6, 6> Floater::addedMass_t0() const
+{
+	if (m_addedMass_t0.is_finite())
+	{
+		return m_addedMass_t0;
+	}
+	else
+	{
+		throw std::runtime_error("Tried to call Floater::addedMass_t0(), but it was not calculated yet. Try calling Floater::addedMass(const double density, const int hydroMode) first.");
+	}
+}
+
+vec::fixed<6> Floater::CoGPos() const
+{
+	return join_cols(m_CoG, zeros(3,1)) + m_disp;
+}
+
+vec::fixed<6> Floater::CoGPos_sd() const
+{
+	return join_cols(m_CoG, zeros(3, 1)) + m_disp_sd;
 }
 
 
@@ -312,97 +229,125 @@ std::string Floater::printMorisonElements() const
 /*****************************************************
 	Forces, acceleration, displacement, etc
 *****************************************************/
-void Floater::update(const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTacc)
+void Floater::update(const ENVIR &envir, const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTdisp_SD, const vec::fixed<6> &FOWTvel_SD)
 {
 	m_disp = FOWTdisp;
+	m_disp_sd = FOWTdisp_SD;
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		m_MorisonElements.at(ii)->updateNodesPosVelAcc(FOWTdisp + join_cols(CoG(), zeros(3, 1)), FOWTvel, FOWTacc);
+		// The CoG position is added to the displacements because updateMorisonElement requires the instantaneous position of the CoG of the floater
+		m_MorisonElements.at(ii)->updateMorisonElement(envir, CoGPos(), FOWTvel, CoGPos_sd(), FOWTvel_SD);
 	}
 }
 
-mat::fixed<6, 6> Floater::addedMass(const double density, const int hydroMode) const
+// Needed this function to evaluate the added mass at the beginning of the simulation
+void Floater::setAddedMass_t0(const double density)
+{
+	m_addedMass_t0 = density*addedMass(1);
+}
+
+mat::fixed<6, 6> Floater::addedMass(const double density, const int hydroMode) 
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
-	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
-	{
-		A += m_MorisonElements.at(ii)->addedMass_perp(density, hydroMode) + m_MorisonElements.at(ii)->addedMass_paral(density, hydroMode);
-	}
-
+	A = density*addedMass(hydroMode);
 	return A;
 }
 
+mat::fixed<6, 6> Floater::addedMass(const int hydroMode) const
+{
+	mat::fixed<6, 6> A(fill::zeros);
+	vec::fixed<3> refPt(fill::zeros);
+
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		// Evaluated at the fixed initial position
+		if (hydroMode < 2)
+		{
+			refPt = CoGPos_sd().rows(0, 2);
+		}
+		else
+		{
+			refPt = CoGPos().rows(0,2);
+		}
+
+		A += m_MorisonElements.at(ii)->addedMass_perp(1, refPt, hydroMode) + m_MorisonElements.at(ii)->addedMass_paral(1, refPt, hydroMode);
+	}
+	return A;
+}
+
+// Moments are output with respect to the CoG of the floater
 vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode) const
 {	
 	vec::fixed<6> force(fill::zeros); // Total hydrodynamic force acting on the floater
 	vec::fixed<6> df(fill::zeros); // Total hydrodynamic force acting on each cylinder
 
-	// These forces below are only used to output the different components to the output files.	
-	vec::fixed<6> force_inertia(fill::zeros); // Total force acting on the floater
-	vec::fixed<6> force_drag(fill::zeros);
-	vec::fixed<6> force_froudeKrylov(fill::zeros);
+	// These forces below are used to output the different components to the output files and internally in MorisonElement.hydrodynamicForce().	
+	vec::fixed<6> force_drag(fill::zeros); // Drag force
+	vec::fixed<6> force_1(fill::zeros);	// Component due to 1st order incoming flow
+	vec::fixed<6> force_2(fill::zeros); // Component due to 2nd order incoming flow
+	vec::fixed<6> force_3(fill::zeros); // Component due to axial acceleration
+	vec::fixed<6> force_4(fill::zeros); // Component due to the axial-divergence acceleration
+	vec::fixed<6> force_eta(fill::zeros); // Component due to the wave elevation
+	vec::fixed<6> force_rem(fill::zeros); // Remaining force components
 
-	vec::fixed<6> df_inertia(fill::zeros); // Forces acting on each Morison Element
+	// Forces acting on each Morison Element. They are set to zero inside MorisonElement.hydrodynamicForce().
 	vec::fixed<6> df_drag(fill::zeros);
-	vec::fixed<6> df_froudeKrylov(fill::zeros);
+	vec::fixed<6> df_1(fill::zeros);
+	vec::fixed<6> df_2(fill::zeros);
+	vec::fixed<6> df_3(fill::zeros);
+	vec::fixed<6> df_4(fill::zeros);
+	vec::fixed<6> df_eta(fill::zeros);
+	vec::fixed<6> df_rem(fill::zeros);
 
-
-	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	// Force acting on each element
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)	
 	{
-		// Make sure that the force components acting on each Morison Element were set to zero
-		df_inertia.zeros();
-		df_drag.zeros();
-		df_froudeKrylov.zeros();
 
-		df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, df_inertia, df_drag, df_froudeKrylov);
-		
-		// The moments acting on the cylinders were calculated with respect to the first node
-		// We need to change the fulcrum to the CoG
-		df.rows(3,5) += cross( m_MorisonElements.at(ii)->node1Pos() - (m_disp.rows(0,2) + CoG()), df.rows(0,2) );		
+		df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, CoGPos_sd().rows(0, 2), CoGPos_sd().rows(0, 2), df_drag, df_1, df_2, df_3, df_4, df_eta, df_rem);
 
-		df_inertia.rows(3,5) += cross(m_MorisonElements.at(ii)->node1Pos() - (m_disp.rows(0, 2) + CoG()), df_inertia.rows(0, 2));
-		df_drag.rows(3, 5) += cross(m_MorisonElements.at(ii)->node1Pos() - (m_disp.rows(0, 2) + CoG()), df_drag.rows(0, 2));
-		df_froudeKrylov.rows(3, 5) += cross(m_MorisonElements.at(ii)->node1Pos() - (m_disp.rows(0, 2) + CoG()), df_froudeKrylov.rows(0, 2));
 
 		// Add to the forces acting on the whole floater
-		force += df;		
+		force += df;
 
-		force_inertia += df_inertia;
 		force_drag += df_drag;
-		force_froudeKrylov += df_froudeKrylov;
-	}
-	
+		force_1 += df_1;
+		force_2 += df_2;
+		force_3 += df_3;
+		force_4 += df_4;
+		force_eta += df_eta;
+		force_rem += df_rem;
+	}	
+
 	IO::print2outLine(IO::OUTFLAG_HD_FORCE, force);
-	IO::print2outLine(IO::OUTFLAG_HD_INERTIA_FORCE, force_inertia);
-	IO::print2outLine(IO::OUTFLAG_HD_DRAG_FORCE, force_drag);
-	IO::print2outLine(IO::OUTFLAG_HD_FK_FORCE, force_froudeKrylov);
+
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG, force_drag);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_1, force_1);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_2, force_2);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_3, force_3);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_4, force_4);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_ETA, force_eta);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_REM, force_rem);
 	
 	return force;
 }
 
-vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir, const int hydroMode) const
+vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir) const
 {
 	vec::fixed<6> force(fill::zeros);		
 	vec::fixed<6> df(fill::zeros);
 	
-	// Z coordinate of cylinder intersection with water line. 
-	// If hydroMode = 1, hydrostatics should be done using hydrostatics matrix. Since this is not implemented yet, it is the same as the other hydromodes.
-	// Otherwise, the hydrostatics is calculated using the instantaneous position of the cylinder.
-
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
 		df = m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity());
 
 		// The moments acting on the cylinders were calculated with respect to the first node
 		// We need to change the fulcrum to the CoG
-		df.rows(3,5) = df.rows(3,5) + cross( m_MorisonElements.at(ii)->node1Pos() - (m_disp.rows(0, 2) + CoG()), df.rows(0,2) );
-
+		df.rows(3, 5) = df.rows(3, 5) + cross(m_MorisonElements.at(ii)->node1Pos() - CoGPos().rows(0, 2), df.rows(0, 2));
 		force += df;
 	}
-
-	IO::print2outLine(IO::OUTFLAG_HS_FORCE, force);
+	IO::print2outLine(IO::OUTFLAG_HS_FORCE, force);		
 
 	return force;
 }

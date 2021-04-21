@@ -1,6 +1,6 @@
 # **Installing, compiling and running**
 
-## **Linux** 
+## **Linux**
 ### **Installing dependencies/third party tools:**
 - Ensure a C++ compiler is installed. Otherwise, a suggestion is to install g++: `sudo apt-get install g++`
 
@@ -8,7 +8,7 @@
 
 - OpenBLAS: `sudo apt-get install libopenblas-dev`    *(see the readme file provided with Armadillo for the other options, like MKL)*
 
-- Armadillo (details in the readme file provided with Armadillo): 
+- Armadillo (details in the readme file provided with Armadillo):
     1. Download at http://arma.sourceforge.net;
     2. Extract files;
     3. In a terminal window, change into the directory that was created by unpacking Armadillo, and type `cmake .` (the full stop separated from "cmake" by a space is important);
@@ -16,7 +16,7 @@
     5. Type `sudo make install`
 
 - I have run into a problem when Anaconda is installed. Armadillo could not found **libhdf5.so.101**, so I had to do one of the following:
-    1. Add this line to **~/.bashrc**: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/lib` (in my case, that was `/home/user/anaconda3/lib`). Then, I needed to reload the .bashrc by running `source ~\.bashrc`. After that, METiS compiled and linked just fine. However, this solution may affect other application, so I don't recommend it.
+    1. Add this line to **~/.bashrc**: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/lib` (in my case, that was `/home/user/anaconda3/lib`). Then, I needed to reload the .bashrc by running `source ~\.bashrc`. After that, METiS compiled and linked just fine. However, this solution may affect other applications, so I don't recommend it.
 
     OR
 
@@ -25,12 +25,12 @@
     LD_LIBRARY_PATH=/path/to/lib
     export LD_LIBRARY_PATH
 ```    
-        
 
-    
+
+
 
 ### **Compiling and running**
-After installing all the previous dependencies/third party tools listed above, METiS can be compiled, linked and run using the following commands (see the previous section in case you run in problems concerning **libhdf5.so.101**): 
+After installing all the previous dependencies/third party tools listed above, METiS can be compiled, linked and run using the following commands (see the previous section in case you run in problems concerning **libhdf5.so.101**):
 ```
     g++ -c src/*.cpp                        # Compile the source files
     g++ -o METiS -O2 *.o -larmadillo        # Link the resulting object files and Armadillo
@@ -65,9 +65,15 @@ This process will be conducted with CMake in the future (I don't know when).
     4. Locate the MKL folder. It is usually in **C:\Program Files (x86)\IntelSWTools\compiler_and_libraries_xxxx\windows\mkl**;
     5. Tell the compiler to look for header files in Armadillo's and MKL's **include** folders. In Visual Studio 2017, right click on the project name and select properties. Unfold the **C/C++** list, pick **General** -> **Additional Include Directories**, and select **Edit**. Use the yellow button to insert a new entry and paste the path to **mkl\include** directory. Do the same thing for Armadillo's **include** folder;
     6. Next, go to **Linker** -> **General** -> **Additional Library Directories** and select **mkl\lib\intel64_win** (select intel32_win if your computer is 32bits);
-    7. Finally, you need to go to **Linker** -> **Input** -> **Additional Dependencies** and add *mkl_core.lib*, *mkl_sequential.lib*, and *mkl_intel_lp64.lib*.
+    7. Finally, you need to go to **Linker** -> **Input** -> **Additional Dependencies** and add *mkl_core.lib*, *mkl_sequential.lib*, and *mkl_intel_lp64.lib* (if 32bits, replace *mkl_intel_lp64.lib* by ** mkl_intel_c_dll.lib**).
 
 
+### Running
+Open a PowerShell window and run:
+
+`& "Path\to\METis\executable.exe" "Path\to\test_case.txt"`
+
+with the paths replaced by the ones specific to your case.
 
 
 
@@ -100,3 +106,11 @@ Disable all **DoFs** + choose the **forces** that you want to include in the ana
 
     DOFS 0 0 0 0 0 0
 ```    
+
+
+# **Tools**
+The following MATLAB routines are included in folder **tools**:
+- **readOutFl**: out = readOutFl(flNm) reads a METiS _out file with the results of a time domain simulation. It assumes that the file consists of columns with headers in the first line and the data in the rest of the file (which is the format of the _out file).
+- **readInputFile**: reads a METiS input file to structures. Currently, it only reads the characteristics that are necessary for the next routine
+- **viewFOWT**: plots the geommetry of the FOWT of a given input file. The input is the path to the input file.
+- **postProc**: simple routine, under development, to plot the outputs of a simmulation

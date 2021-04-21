@@ -1,0 +1,91 @@
+%>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
+%>-<> Single fixed cylinder
+%>-<><>---<>-------<>--------<>--------<>--------<>--------<>--------<>--------<
+%
+%
+% '%' identify comments
+% Whitespaces can be either tabs ('\t') or simple space
+
+%%-----------------------------------------------------------------------------%%
+%%------------------------------- ACTIVE Forces -------------------------------%%
+%%-----------------------------------------------------------------------------%%
+Hydro   1 % 0: Disable hydrodynamic/hydrostatic calculation; 1: First-order hydrodynamic calculation; 2: Second-order hydrodynamic calculation
+Aero    0 % 0 : Disable aerodynamic calculation; 1: Use Blade Element Method to evaluate aerodynamic loads
+Moor    1 % 0 : Disable mooring calculation; 1: Use linear mooring model (stiffness matrix + constant force vector)
+DOFS 0 0 0 0 0 0 % One of the following options for each of the 6 degrees of freedom (dof) --- 0: Disable selected dof in the equations of motion (loads are still evaluated); 1: Enable selected dof in the equations of motion
+
+%%-----------------------------------------------------------------------------%%
+%%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
+%%-----------------------------------------------------------------------------%%
+PrintStep   0.25 % Print step, in seconds
+TimeStep	0.25 % Time step, in seconds
+TimeTotal	1500 % Total simulation time, in secods
+TimeRamp	500 % Numerical ramp, in seconds
+
+
+% Wave stretching model
+WaveStret 0 % 0: No stretching; 1: Vertical stretching (same as Taylor serie's from Kim and Chen, 1994. Used only for the wave elevation load associated with the fluid acceleration); 2: Wheeler's stretching
+
+
+%%-----------------------------------------------------------------------------%%
+%%------------------------------- ENVIRONMENT ---------------------------------%%
+%%-----------------------------------------------------------------------------%%
+Grav		9.81 % Acceleration of gravity
+WatDens		1025 % Water density
+WatDepth	1000 % Water depth
+
+
+% Filter for slow drift motions. Angular frequency \t Damping (in % of critical). Default values are 0.025 and 0.20.
+% To neglect it, provide a negative value to the angular frequency. In this case, the total instantaneous position is used to evaluate second order terms.
+%
+% Angular frequency \t Damping (in % of critical).
+FiltSlowDrift  0 0 % This option is the same as using the fixed initial position for evaluating second-order terms
+
+Wave
+% Any number of waves (there must be a limit, but I never tested) can be specified in this list, and the
+% resulting sea is the linear supperposition of them. The more wave components, the slower the code runs.
+%
+% Regular waves can be specified with any of the following options:
+% WRWAVE \t Height \t Angular frequency \t Direction (in degrees) \t Phase (in degrees)
+% FRWAVE \t Height \t Frequency         \t Direction (in degrees) \t Phase (in degrees)
+% TRWAVE \t Height \t Period            \t Direction (in degrees) \t Phase (in degrees)
+%
+% Irregular waves can be specified by a JONSWAP spectrum:
+% JONSW  \t Significant height \t Peak period \t Gamma \t Direction	(in degrees) \t Lowest frequency (rad/s) \t Highest frequency (rad/s) \t Seed for the random number generator algorithm that calculated the phases \t Number of components \t Maximum frequency difference allowed
+% If the number of components is specified, the Equal Area method is used to discretize the wave spectrum. Optionally, the last 2 entries can be left blank, and the number of components is calculated from the total simulation time.
+% The number of components provided here is just an indication, and the actual number of wave components is usually higher in order to ensure that the energy of the spectrum is contained in the resulting sea respecting the maximum frequency difference allowed.
+% The seed value can be any double or the char '?', which specifies that the seed should be specified by the simulation (hence, each simulation would present a different sea)
+%
+%
+% Below, a JONSWAP with Hs = 1m, Tp = 6s, gamma = 3.3, direction = 0, wlow = 0.620 rad/s, whigh = 3.140, unspecified seed and 250 wave components with a maximum of 0.01 rad/s between them
+JONSW     1     6	3.3	0	0.620	3.140	?	250 0.01
+END
+
+
+%%-----------------------------------------------------------------------------%%
+%%-------------------------- FLOATER DESCRIPTION ------------------------------%%
+%%-----------------------------------------------------------------------------%%
+FloaterMass 1.811e+07
+FloaterCoG  0,0,-58.07
+FloaterInertia 2.898e+10,2.898e+10,2.898e+10,0,0,0
+
+
+% Nodes ID must be unique and in ascending order
+Nodes                     % Node ID, X coord, Y coord, Z coord
+1,0,0,-100.00
+2,0,0,20
+END
+
+
+Morison_circ
+1  2   15.0  0.75  2.00  400  5.0  0.50  0.0  0.00  1
+END
+
+OUTPUT
+hd_force % Total hydrodynamic force/moment at each dof
+hd_drag_force % Drag force force/moment at each dof
+hd_force1 % Component 1 of the hydrodynamic loads: due to the first-order acceleration of the fluid
+hs_force % Hydrostatic forces/moments
+total_force % Total force acting on the floater
+wave_elev 1 % Output first-order wave elevation at the list of nodes (separated by whitespaces), specified by their ID. In the example, output at the location of nodes 1 and 11 (the wave elevation is output at z = 0)
+END

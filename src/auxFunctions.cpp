@@ -1,15 +1,17 @@
 #include "auxFunctions.h"
 #include <cctype> // This header declares a set of functions to classify and transform individual characters, like toupper
 #include <cwctype> // Same thing for wide characters
+#include <mkl.h>
 
 /*****************************************************
     Useful math/geometric operations
 *****************************************************/
-mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, const double rotatZ)
+arma::mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, const double rotatZ)
 {
 	/* Rotation matrix is RotatMat = RotatX * RotatY * RotatZ, i.e. a rotation around the Z axis,
-	  followed by a rotation around the new y axis, and a rotation around the new x axis. Each rotation matrix is given by:
-	
+	  followed by a rotation around the new y axis, and a rotation around the new x axis (intrinsic rotation).
+	  Each rotation matrix is given by:
+
 	  rotatX = { 	{ 1 ,        0        ,         0        },
 			     			{ 0 , cos(rotation(3)) , -sin(rotation(3)) },
 			     			{ 0 , sin(rotation(3)) ,  cos(rotation(3)) }
@@ -20,41 +22,75 @@ mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, const dou
 			     			{ -sin(rotation(4)) , 0 , cos(rotation(4)) }
 			   			};
 
-	  rotatZ = {	{ cos(rotation(5)) , -sin(rotation(5)) , 0 },			     
+	  rotatZ = {	{ cos(rotation(5)) , -sin(rotation(5)) , 0 },
 				 				{ sin(rotation(5)) ,  cos(rotation(5)) , 0 },
 			     			{        0        ,         0        , 1 },
 			   			};
 
 	  And the resulting matrix is the one below
 	*/
-	mat::fixed<3, 3> rotatMatrix = { 
-									{                          cos(rotatY) * cos(rotatZ)                               ,                          -cos(rotatY) * sin(rotatZ)                               ,            sin(rotatY)          },
-									{ cos(rotatX) * sin(rotatZ) + sin(rotatX) * sin(rotatY) * cos(rotatZ)  ,  cos(rotatX) * cos(rotatZ) - sin(rotatX) * sin(rotatY) * sin(rotatZ)  ,  -sin(rotatX) * cos(rotatY) },
-									{ sin(rotatX) * sin(rotatZ) - cos(rotatX) * sin(rotatY) * cos(rotatZ)  ,  sin(rotatX) * cos(rotatZ) + cos(rotatX) * sin(rotatY) * sin(rotatZ)  ,   cos(rotatX) * cos(rotatY) }
-								   };	
+	arma::mat::fixed<3, 3> rotatMatrix = {
+									{                          std::cos(rotatY) * std::cos(rotatZ)                                  ,                          -std::cos(rotatY) * std::sin(rotatZ)                                  ,            std::sin(rotatY)           },
+									{ std::cos(rotatX) * std::sin(rotatZ) + std::sin(rotatX) * std::sin(rotatY) * std::cos(rotatZ)       ,  std::cos(rotatX) * std::cos(rotatZ) - std::sin(rotatX) * std::sin(rotatY) * std::sin(rotatZ)  ,  -std::sin(rotatX) * std::cos(rotatY) },
+									{ std::sin(rotatX) * std::sin(rotatZ) - std::cos(rotatX) * std::sin(rotatY) * std::cos(rotatZ)  ,  std::sin(rotatX) * std::cos(rotatZ) + std::cos(rotatX) * std::sin(rotatY) * std::sin(rotatZ)  ,   std::cos(rotatX) * std::cos(rotatY) }
+								  										 };
 
 	return rotatMatrix;
 }
 
-mat::fixed<3, 3> rotatMatrix_deg(const double rotatX, const double rotatY, const double rotatZ)
+arma::mat::fixed<3, 3> rotatMatrix_deg(const double rotatX, const double rotatY, const double rotatZ)
 {
 	return rotatMatrix(deg2rad(rotatX), deg2rad(rotatY), deg2rad(rotatZ));
 }
 
 
-mat::fixed<3, 3> rotatMatrix(const vec::fixed<3> &rotation)
+arma::mat::fixed<3, 3> rotatMatrix(const arma::vec::fixed<3> &rotation)
 {
 	return rotatMatrix(rotation(0),rotation(1), rotation(2));
 }
 
-mat::fixed<3, 3> rotatMatrix_deg(const vec::fixed<3> &rotation)
+arma::mat::fixed<3, 3> rotatMatrix_deg(const arma::vec::fixed<3> &rotation)
 {
 	return rotatMatrix_deg(rotation(0), rotation(1), rotation(2));
 }
 
+arma::mat::fixed<3, 3> rotatMatrix_extrinsic(const double rotatX, const double rotatY, const double rotatZ)
+{
+	arma::mat::fixed<3, 3> rotatMatrix = {
+									{ std::cos(rotatY) * std::cos(rotatZ) , -std::cos(rotatX) * std::sin(rotatZ) + std::sin(rotatX) * std::sin(rotatY) * std::cos(rotatZ) , std::sin(rotatX) * std::sin(rotatZ) + std::cos(rotatX) * std::sin(rotatY) * std::cos(rotatZ) },
+									{ std::cos(rotatY) * std::sin(rotatZ) ,  std::cos(rotatX) * std::cos(rotatZ) + std::sin(rotatX) * std::sin(rotatY) * std::sin(rotatZ)  ,  - std::sin(rotatX) * std::sin(rotatZ) + std::cos(rotatX) * std::sin(rotatY) * std::sin(rotatZ) },
+									{ -std::sin(rotatY) ,  std::sin(rotatX) * std::cos(rotatY) ,   std::cos(rotatX) * std::cos(rotatY) }
+	};
+
+	return rotatMatrix;
+}
+
+
+arma::mat::fixed<3, 3> rotatMatrix_extrinsic(const arma::vec::fixed<3> &rotation)
+{
+	return rotatMatrix_extrinsic(rotation(0), rotation(1), rotation(2));
+}
+
+arma::mat::fixed<3, 3> smallRotatMatrix(const double rotatX, const double rotatY, const double rotatZ)
+{
+	arma::mat::fixed<3, 3> rotatMatrix = {
+									{ 1 , -rotatZ , rotatY },
+									{ rotatZ , 1 , -rotatX},
+									{ -rotatY ,  rotatX , 1}
+										};
+	return rotatMatrix;
+}
+
+
+arma::mat::fixed<3, 3> smallRotatMatrix(const arma::vec::fixed<3> &rotation)
+{
+	return smallRotatMatrix(rotation(0), rotation(1), rotation(2));
+}
+
+
 double deg2rad(const double degree)
 {
-	return degree * datum::pi / 180;
+	return degree * arma::datum::pi / 180;
 }
 
 double minimum(const double x, const double y)
@@ -64,7 +100,7 @@ double minimum(const double x, const double y)
 
 bool almostEqual(const double x, const double y, double eps)
 {
-	return (abs(x - y) < eps);
+	return (std::abs(x - y) < eps);
 }
 
 /*****************************************************
@@ -191,7 +227,7 @@ std::string getFileName(const std::string& path)
 	std::vector<std::string> str_tokenized = stringTokenize(path, filesep);
 	std::string flNm = str_tokenized.back();
 
-	// We need to exclude the file extension. We get everything until the last dot and say that 
+	// We need to exclude the file extension. We get everything until the last dot and say that
 	if (flNm.find_last_not_of(".") != std::string::npos)
 	{
 		flNm = flNm.substr(0, flNm.find_last_of("."));
@@ -200,6 +236,73 @@ std::string getFileName(const std::string& path)
 	return flNm;
 }
 
+// FFT and IFFT using MKL - Faster than using Armadillo
+// Code from https://stackoverflow.com/questions/29805767/is-there-any-simple-c-example-on-how-to-use-intel-mkl-fft
+cx_stdvec mkl_fft(cx_stdvec &in)
+{
+	cx_stdvec out(in.size());
+
+	DFTI_DESCRIPTOR_HANDLE descriptor;
+	MKL_LONG status;
+
+	status = DftiCreateDescriptor(&descriptor, DFTI_DOUBLE, DFTI_COMPLEX, 1, in.size()); //Specify size and precision
+	status = DftiSetValue(descriptor, DFTI_PLACEMENT, DFTI_NOT_INPLACE); //Out of place FFT
+	status = DftiCommitDescriptor(descriptor); //Finalize the descriptor
+	status = DftiComputeForward(descriptor, in.data(), out.data()); //Compute the Forward FFT
+	status = DftiFreeDescriptor(&descriptor); //Free the descriptor
+
+	return out;
+}
+
+cx_stdvec mkl_fft_real(std::vector<double> &in_real)
+{
+	cx_stdvec in(in_real.size());
+
+	std::copy(in_real.begin(), in_real.end(), in.begin());
+
+	return mkl_fft(in);
+}
+
+cx_stdvec mkl_ifft(cx_stdvec &in)
+{
+	cx_stdvec out(in.size());
+
+	DFTI_DESCRIPTOR_HANDLE descriptor;
+	MKL_LONG status;
+
+	status = DftiCreateDescriptor(&descriptor, DFTI_DOUBLE, DFTI_COMPLEX, 1, in.size()); //Specify size and precision
+	status = DftiSetValue(descriptor, DFTI_PLACEMENT, DFTI_NOT_INPLACE); // Do not overwrite the input data with the output
+	status = DftiSetValue(descriptor, DFTI_BACKWARD_SCALE, 1.0 / in.size()); //Scale down the output
+	status = DftiCommitDescriptor(descriptor); //Finalize the descriptor
+	status = DftiComputeBackward(descriptor, in.data(), out.data()); //Compute the backward FFT (i.e. IFFT)
+	status = DftiFreeDescriptor(&descriptor); //Free the descriptor
+
+	return out;
+}
+
+std::vector<double> mkl_ifft_real(cx_stdvec &in)
+{
+	cx_stdvec out = mkl_ifft(in);
+
+	std::vector<double> output(out.size());
+	for (std::size_t i = 0; i < out.size(); ++i) {
+		output[i] = out[i].real();
+	}
+
+	return output;
+}
+
+arma::mat mkl_ifft_real(arma::cx_mat &in)
+{
+	arma::mat out(in.n_rows, in.n_cols, arma::fill::zeros);
+	for (arma::uword ii = 0; ii < in.n_cols; ++ii)
+	{
+		cx_stdvec aux = arma::conv_to<cx_stdvec>::from(in.col(ii));
+		out.col(ii) = arma::mat(mkl_ifft_real(aux));
+	}
+
+	return out;
+}
 
 /*****************************************************
 	Spline implementation

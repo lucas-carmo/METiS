@@ -9,97 +9,58 @@ using namespace arma;
 /*****************************************************
 	Constructors
 *****************************************************/
-Wave::Wave(double height, double period, double direction, double phase, double watDepth, double gravity)
-	: m_height(height), m_period(period), m_direction(direction)
+Wave::Wave()
 {
-	if (period == 0)
+	m_height = arma::datum::nan;
+	m_period = arma::datum::nan;
+	m_direction = arma::datum::nan;
+	m_phase = arma::datum::nan;
+	m_waveNumber = arma::datum::nan;
+	m_length = arma::datum::nan;
+}
+
+// The string "waveType" must contain the keyword that specifies how to read the third input:
+// 1) TRWave for regular waves specified by their period
+// 2) FRWavefor regular waves specified by their frequency
+// 3) WRWave for regular waves specified by their angular frequency
+Wave::Wave(const std::string &waveType, const double height, const double freqORperiod, const double direction, const double phase, const double watDepth, const double gravity)
+{
+	// Neither the wave frequency nor the period can be zero
+	if (freqORperiod == 0)
 	{
-		throw std::runtime_error( "Wave period must be different from zero. Input line " + std::to_string(IO::getInLineNumber()) );
+		throw std::runtime_error("Wave period or frequency must be different from zero.");
+	}
+
+	double period;
+	if (caseInsCompare(waveType, "TRWave"))
+	{
+		period = freqORperiod;
+	}
+	else if (caseInsCompare(waveType, "FRWave"))
+	{
+		period = 1 / freqORperiod;
+	}
+	else if (caseInsCompare(waveType, "WRWave"))
+	{
+		period = 2 * datum::pi / freqORperiod;
 	}
 	else
 	{
-		m_period = period;
+		throw std::runtime_error("Unknown wave type" + waveType + " provided to Wave constructor.");
 	}
 
 	m_height = height;
+	m_period = period;
 	m_direction = direction;
 	m_phase = phase - std::floor(phase / 360) * 360; // Make sure phase is between 0 and 2pi
 
 	m_waveNumber = waveNumber(watDepth, gravity);
 	m_length = 2 * arma::datum::pi / m_waveNumber; // The function Wave::waveNumber never outputs 0, hence this division is safe
+
+	m_omega_x_A = angFreq() * amp();
+	m_cosBeta = std::cos(direction * arma::datum::pi / 180.);
+	m_sinBeta = std::sin(direction * arma::datum::pi / 180.);
 }
-
-// The string "wholeWaveLine" must contain the keyword that specifies how to read the wave data:
-// 1) TRWave for regular waves specified by their period
-// 2) FRWavefor regular waves specified by their frequency
-// 3) WRWave for regular waves specified by their angular frequency
-Wave::Wave(const std::string &wholeWaveLine)
-{	
-	// Wave characteristics are divided by a space or a tab.
-	// The characteristics are 
-	// 1) Wave height
-	// 2) Wave period OR wave frequency OR wave angular frequency
-	// 3) Direction of propagation	
-	std::vector<std::string> input = stringTokenize(getData(wholeWaveLine), " \t");
-
-	// Check if there are exactly four inputs (Wave height, period/frequency/angular frequency, direction, and phase)
-	if (input.size() != 4)
-	{
-		throw std::runtime_error("Unable to read the wave in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");				  
-	}
-
-
-	// Finally, read wave data
-	readDataFromString(input.at(0), m_height);
-	readDataFromString(input.at(2), m_direction);
-	readDataFromString(input.at(3), m_phase);
-
-	if ( caseInsCompare(getKeyword(wholeWaveLine), "TRWave") )
-	{
-		double period{0};
-		readDataFromString(input.at(1), period);			
-
-		if (period == 0)
-		{
-			throw std::runtime_error( "Wave period must be different from zero. Input line " + std::to_string(IO::getInLineNumber()) );
-		}
-		else
-		{
-			m_period = period;
-		}
-	}
-
-	if ( caseInsCompare(getKeyword(wholeWaveLine), "FRWave") )
-	{	
-		double frequency{0};
-		readDataFromString(input.at(1), frequency);	
-
-		if (frequency == 0)
-		{
-			throw std::runtime_error( "Wave frequency must be different from zero. Input line " + std::to_string(IO::getInLineNumber()) );
-		}
-		else 
-		{
-			m_period = 1/frequency;
-		}
-	}	
-
-	if ( caseInsCompare(getKeyword(wholeWaveLine), "WRWave") )
-	{	
-		double omega{0};
-		readDataFromString(input.at(1), omega);	
-
-		if (omega == 0)
-		{
-			throw std::runtime_error( "Wave frequency must be different from zero. Input line " + std::to_string(IO::getInLineNumber()) );
-		}
-		else
-		{
-			m_period = 2*datum::pi/omega;
-		}
-	}		
-}
-
 
 /*****************************************************
 	Getters
@@ -161,30 +122,29 @@ double Wave::waveNumber() const
 	if (is_finite(m_waveNumber))
 	{
 		return m_waveNumber;
-	}	
+	}
 	else
 	{
-		throw std::runtime_error("Tried to call Wave::waveNumber(), but wave number was not calculated yet. Try calling Wave::waveNumber(const double watDepth, const double gravity).");	
+		throw std::runtime_error("Tried to call Wave::waveNumber(), but wave number was not calculated yet. Try calling Wave::waveNumber(const double watDepth, const double gravity).");
 	}
 }
 
 
 double Wave::length() const
 {
-	if (is_finite(m_length))
+	if (!isnan(m_length))
 	{
 		return m_length;
-	}	
+	}
 	else
 	{
-		throw std::runtime_error("Tried to call Wave::length(), but length was not calculated yet. Try calling Wave::length(const double watDepth, const double gravity).");	
+		throw std::runtime_error("Tried to call Wave::length(), but length was not calculated yet. Try calling Wave::length(const double watDepth, const double gravity).");
 	}
 }
 
 
 double Wave::waveNumber(const double watDepth, const double gravity) const
 {
-
 	if (m_period == 0)
 	{
 		return arma::datum::inf;
@@ -215,7 +175,7 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 	while ( (pow(w,2)/g - a*tanh(a*h)) * (pow(w,2)/g - b*tanh(b*h)) > 0 )
 	{
 		a = b;
-		b = alpha*b;		
+		b = alpha*b;
 	}
 
 	// x_i is the guess in the previous step and x_j in the current
@@ -223,7 +183,7 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 	double x_j(0);
 
 	while ( std::abs(pow(w, 2) / g - x_j * tanh(x_j*h)) > m_epsWave)
-	{								
+	{
 		x_i = x_j;
 
 		if ( (pow(w,2)/g - a*tanh(a*h)) * (pow(w,2)/g - x_i*tanh(x_i*h)) < 0 ) // Test with limit a
@@ -241,12 +201,7 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 		else // It is very unlikely that x_i will be zero, but this possibility will be covered anyway
 		{
 			return x_i;
-		}	
-	}		
-
-	if (x_j == 0)
-	{
-		throw std::runtime_error("Wave with wave number k = 0. Wave period = " + std::to_string(m_period));
+		}
 	}
 
 	return x_j;
@@ -255,6 +210,22 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 
 double Wave::length(const double watDepth, const double gravity) const
 {
-	// The function Wave::waveNumber never outputs 0	
+	// The function Wave::waveNumber never outputs 0
 	return 2*arma::datum::pi / this->waveNumber(watDepth, gravity);
+}
+
+
+
+double Wave::omega_x_A() const
+{
+	return m_omega_x_A;
+}
+double Wave::cosBeta() const
+{
+	return m_cosBeta;
+}
+
+double Wave::sinBeta() const
+{
+	return m_sinBeta;
 }
