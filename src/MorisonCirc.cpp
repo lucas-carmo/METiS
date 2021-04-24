@@ -385,9 +385,9 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 			}
 
 			// Component of the fluid acceleration at the integration point that is perpendicular to the axis of the cylinder.
-			vec::fixed<3> dadx = envir.dadx(n_ii, eta);
-			vec::fixed<3> dady = envir.dady(n_ii, eta);
-			vec::fixed<3> dadz = envir.dadz(n_ii, eta);
+			vec::fixed<3> dadx = envir.da1dx(n_ii, eta);
+			vec::fixed<3> dady = envir.da1dy(n_ii, eta);
+			vec::fixed<3> dadz = envir.da1dz(n_ii, eta);
 			du1dt = envir.du1dt(n_ii, eta);
 			du1dt = arma::dot(du1dt, R.rows(0, 2).cols(0, 2) * xvec_sd) * xvec_sd + arma::dot(du1dt, R.rows(0, 2).cols(0, 2) * yvec_sd) * yvec_sd;
 			du1dt += arma::dot(dadx * xii, xvec_sd) * xvec_sd + arma::dot(dadx * xii, yvec_sd) * yvec_sd
