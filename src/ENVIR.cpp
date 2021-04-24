@@ -1420,7 +1420,7 @@ vec::fixed<3> ENVIR::dadx_eachWave(const vec::fixed<3> &coord, const unsigned in
 
 		acc[0] = w * w * A * khz_xy * k * cosBeta * cosBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
 		acc[1] = w * w * A * khz_xy * k * cosBeta * sinBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
-		acc[2] = -w * w * A * khz_z * k * cosBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[2] = w * w * A * khz_z * k * cosBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
 	}
 
 	return acc * ramp();
@@ -1488,7 +1488,7 @@ vec::fixed<3> ENVIR::dady_eachWave(const vec::fixed<3> &coord, const unsigned in
 
 		acc[0] = w * w * A * khz_xy * k * sinBeta * cosBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
 		acc[1] = w * w * A * khz_xy * k * sinBeta * sinBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
-		acc[2] = -w * w * A * khz_z * k * sinBeta * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[2] = w * w * A * khz_z * k * sinBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
 	}
 
 
@@ -1551,13 +1551,13 @@ vec::fixed<3> ENVIR::dadz_eachWave(const vec::fixed<3> &coord, const unsigned in
 		}
 		else
 		{
-			khz_xy = sinh(k * (z + h)) / sinh(k*h);
-			khz_z = cosh(k * (z + h)) / sinh(k*h);
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
 		}
 
-		acc[0] = w * w * k * A * khz_xy * cosBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
-		acc[1] = w * w * k * A * khz_xy * sinBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
-		acc[2] = -w * w * k * A * khz_z * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[0] = w * w * k * A * khz_z * cosBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[1] = w * w * k * A * khz_z * sinBeta * sin(k*cosBeta*x + k * sinBeta*y - w * t + phase);
+		acc[2] = -w * w * k * A * khz_xy * cos(k*cosBeta*x + k * sinBeta*y - w * t + phase);
 	}
 
 	return acc * ramp();
