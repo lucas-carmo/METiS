@@ -53,6 +53,7 @@ private:
 	mat m_waveVel1stArray_x; // Component x of the first-order wave velocity
 	mat m_waveVel1stArray_y;
 	mat m_waveVel1stArray_z;	
+	mat m_wavePress2ndArray;
 
 public:
 	ENVIR();
@@ -106,6 +107,7 @@ public:
 
 	double waveElevAtProbe(const unsigned int ID) const;
 	vec::fixed<3> waveVelAtProbe(const unsigned int ID) const;
+	double wavePres2ndAtProbe(const unsigned int ID) const;
 	
 	bool getFlagIFFT() const;	
 	bool shouldInterp() const;

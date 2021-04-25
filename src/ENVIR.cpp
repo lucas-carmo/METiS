@@ -476,6 +476,64 @@ void ENVIR::evaluateWaveKinematics()
 			m_waveVel1stArray_z.col(iProbe) %= m_timeRampArray;
 		}
 	}
+
+
+	// 2nd Order quantities follow a slightly different logic.
+	// If IFFT is going to be used, the frequencies are equally spaced and hence
+	// the elements of the matrix of 2nd order coefficients can be grouped in a single
+	// amplitude vector that is used as an input for the IFFT algorithm. The vector of
+	// frequencies is the vector of the difference frequencies.
+	// See 2011, Incorporating Irregular Nonlinear Waves in Coupled Simulation of Offshore Wind Turbines, Agarwal and Manuel, App. Ocean Research 
+	//
+	// If, however, IFFT is not going to be used, the wave frequencies are not necessarily
+	// equally spaced, hence we need to perform a computationally expensive double sum
+	if (IO::isOutputActive(IO::OUTFLAG_WAVE_PRES_2ND))
+	{
+		m_wavePress2ndArray = zeros(m_timeArray.size(), 1);
+		for (int iProbe = 0; iProbe < m_waveProbeID.size(); ++iProbe)
+		{			
+			if (getFlagIFFT())
+			{
+				cx_mat amp_dw(m_wave.size(), 1, fill::zeros); // Vector with the complex amplitude at the difference frequency
+				for (int iWave = 0; iWave < m_wave.size(); ++iWave)
+				{
+					for (int jWave = 0; jWave <= iWave; ++jWave)
+					{
+						cx_double aux = wavePressure_2ndOrd_coef(m_waveProbe.at(iProbe), iWave, jWave);
+						if (iWave != jWave)
+						{
+							aux *= 2; // Because we are summing only the upper part of the matrix
+						}
+						amp_dw.at(iWave - jWave) += aux;
+					}
+				}
+				m_wavePress2ndArray.col(iProbe) = m_wave.size() * mkl_ifft_real(amp_dw);
+			}
+			else
+			{
+				for (int it = 0; it < m_timeArray.size(); ++it)
+				{
+					for (int iWave = 0; iWave < m_wave.size(); ++iWave)
+					{
+						for (int jWave = 0; jWave <= iWave; ++jWave)
+						{
+							double w_ii{ m_wave.at(iWave).angFreq() }, w_jj{ m_wave.at(jWave).angFreq() };
+							cx_double sinCos{ cos((w_ii-w_jj) * m_timeArray.at(it)), sin((w_ii - w_jj) * m_timeArray.at(it)) };
+							cx_double amp_dw = wavePressure_2ndOrd_coef(m_waveProbe.at(iProbe), iWave, jWave);
+							if (iWave != jWave)
+							{
+								amp_dw *= 2;
+							}
+
+							m_wavePress2ndArray.at(it, iProbe) += real(amp_dw * sinCos);
+						}
+					}
+				}
+			}
+
+			m_waveElevArray.col(iProbe) %= m_timeRampArray;
+		}
+	}
 }
 
 /*****************************************************
@@ -597,6 +655,26 @@ vec::fixed<3> ENVIR::waveVelAtProbe(const unsigned int ID) const
 			vel_z += (m_waveVel1stArray_z.at(ind2, ID) - m_waveVel1stArray_z.at(ind1, ID)) * (m_time - m_timeArray.at(ind1)) / (m_timeArray.at(ind2) - m_timeArray.at(ind1));
 		}
 		return { vel_x, vel_y, vel_z };
+	}
+}
+
+double ENVIR::wavePres2ndAtProbe(const unsigned int ID) const
+{
+	// This should never occur in production code, but may be useful for debugging
+	if (m_timeArray.size() == 0)
+	{
+		return wavePressure_2ndOrd(m_waveProbe[ID]);
+	}
+	else
+	{
+		uword ind1 = m_ind4interp1;
+		double p = m_wavePress2ndArray.at(ind1, ID);
+		if (shouldInterp())
+		{
+			uword ind2 = getInd4interp2();
+			p += (m_wavePress2ndArray.at(ind2, ID) - m_wavePress2ndArray.at(ind1, ID)) * (m_time - m_timeArray.at(ind1)) / (m_timeArray.at(ind2) - m_timeArray.at(ind1));
+		}
+		return p;
 	}
 }
 
@@ -734,7 +812,7 @@ void ENVIR::printWaveCharact() const
 			IO::print2outLine(IO::OUTFLAG_WAVE_PRES, m_waveProbeID[ii], wavePressure(m_waveProbe[ii]));
 
 		if (IO::isOutputActive(IO::OUTFLAG_WAVE_PRES_2ND))
-			IO::print2outLine(IO::OUTFLAG_WAVE_PRES_2ND, m_waveProbeID[ii], wavePressure_2ndOrd(m_waveProbe[ii]));
+			IO::print2outLine(IO::OUTFLAG_WAVE_PRES_2ND, m_waveProbeID[ii], wavePres2ndAtProbe(ii));
 	}
 }
 
@@ -989,7 +1067,6 @@ cx_double ENVIR::wavePressure_2ndOrd_coef(const vec::fixed<3>& coord, const unsi
 	// More friendly notation
 	double z = coord[2];
 	double h = m_watDepth;
-	double t = m_time;
 	double g = m_gravity;
 
 	double w1 = m_wave.at(waveIndex1).angFreq();
@@ -1019,8 +1096,19 @@ cx_double ENVIR::wavePressure_2ndOrd_coef(const vec::fixed<3>& coord, const unsi
 			- 0.5 * (k1*k1 / (w1 * pow(std::cosh(k1*h), 2)) - k2 * k2 / (w2 * pow(std::cosh(k2*h), 2)));
 		aux = aux / (g * norm_k1_k2 * std::tanh(norm_k1_k2 * h) - (w1 - w2)*(w1 - w2));
 
+		double kh{ 0 };
+		if (norm_k1_k2 * h >= 10)
+		{
+			kh = exp(norm_k1_k2 * z);
+
+		}
+		else
+		{
+			kh = std::cosh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h);
+		}
+
 		p = cx_double(cos(dot(k1_k2, coord) + phase1 - phase2), -sin(dot(k1_k2, coord) + phase1 - phase2));
-		p *= 0.5 * m_watDens * A1 * A2 * (w1 - w2) * g*g * aux * std::cosh(norm_k1_k2 * (z + h)) / std::cosh(norm_k1_k2 * h);
+		p *= 0.5 * m_watDens * A1 * A2 * (w1 - w2) * g*g * aux * kh;
 	}
 
 	return p;

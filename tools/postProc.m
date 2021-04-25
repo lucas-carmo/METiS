@@ -6,8 +6,20 @@ clc
 
 
 flNm = { 
-            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Cilindro\spar_ma_and_patel\mts\BIC02_out.txt'
-            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Cilindro\spar_ma_and_patel\mts\BIC02_out_6.txt'
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Jappaku\metis\BIC\180DEG-teste\MOD0_BIC20_180DEG_V00_out.txt'
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Jappaku\metis\BIC\180DEG-teste\MOD0_BIC20_180DEG_V00_out_1.txt'
+
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Jappaku\metis\WHI\MOD0_WHI01_180DEG_V00_out.txt'
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Jappaku\metis\WHI\MOD0_WHI01_180DEG_V00_out_9.txt'
+            
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-2ndOrder_out.txt';
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-2ndOrder_out_4.txt';
+
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-JONSWAP_out.txt';
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-JONSWAP_out_8.txt';
+            
+            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Cilindro\teste_analitico\bic_out.txt';
+            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Cilindro\teste_analitico\bic_out_5.txt';
         };
     
 %===== Choose the output
@@ -17,26 +29,27 @@ activeDoFs = [1 1 1 1 1 1];
 analysisList = containers.Map;
 
 % FOWT position, velocity and acceleration
-analysisList('fowt_disp') = 1;
+analysisList('fowt_disp') = 0;
 analysisList('fowt_vel') = 0;
 analysisList('fowt_acc') = 0;
 
 % Forces
 analysisList('hd_inertia_force') = 0;
-analysisList('hd_drag_force') = 0;
+analysisList('hd_drag_force') = 1;
 analysisList('hd_fk_force') = 0;
 analysisList('hd_2nd_force_part1') = 0;
-analysisList('hd_force') = 0;
+analysisList('hd_force') = 1;
 analysisList('hs_force') = 0;
 analysisList('ad_hub_force') = 0;
 analysisList('total_force') = 0;
 
 % Wave outputs
-analysisList('wave_elev') = 0;
+analysisList('wave_elev') = 1;
 analysisList('wave_vel') = 0;
 analysisList('wave_acc') = 0;
 analysisList('wave_acc_2nd') = 0;
 analysisList('wave_press') = 0;
+analysisList('wave_pres_2nd') = 1;
 
 
 %===== Plot style
@@ -126,7 +139,7 @@ for ii = 1:numel(flNm)
         % below, since there can be several wave locations. Besides, some 
         % of them are scalars (elevation and pressure) while others are 
         % vectors (velocity and acceleration).
-        if strcmp(k{jj}, 'wave_elev') || strcmp(k{jj}, 'wave_press')
+        if strcmp(k{jj}, 'wave_elev') || strcmp(k{jj}, 'wave_press') || strcmp(k{jj}, 'wave_pres_2nd')
             waveLocation = find(contains(fieldsOfData, k{jj})==1);
             for ww = numel(waveLocation):-1:1
                 y(:,1,ww) = data.(fieldsOfData{waveLocation(ww)});
