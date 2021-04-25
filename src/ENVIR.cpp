@@ -352,11 +352,7 @@ void ENVIR::addWaveElevSeries(const std::string &elevFlPath, const double direct
 		addRegularWave("TRWave", 2 * std::abs(amp.at(ii)), 2 * arma::datum::pi / w.at(ii), direction, -std::arg(amp.at(ii)) * 180. / arma::datum::pi);
 	}
 
-	// Make sure that the time step and total simulation time are equal to the wave elevation file
-	double newTimeStep = (time.at(time.size() - 1) - time.at(0)) / (time.size() - 1);
-	IO::print2log("Setting time step to " + std::to_string(newTimeStep) + "s to match the one from the the wave elevation file. Previous value was " + std::to_string(m_timeStep) + ".");
-	m_timeStep = newTimeStep;
-
+	// Make sure that the total simulation time are equal to the wave elevation file
 	IO::print2log("Setting total simulation time to " + std::to_string(time.at(time.size() - 1)) + "s to match the one from the the wave elevation file. Previous value was " + std::to_string(m_timeTotal) + ".");
 	m_timeTotal = time.at(time.size() - 1);
 }
@@ -383,7 +379,19 @@ void ENVIR::evaluateWaveKinematics()
 {
 	typedef std::vector<cx_double> cx_stdvec;
 
-	m_timeArray = arma::linspace(0, m_timeTotal, std::ceil(m_timeTotal / m_timeStep) + 1);
+	m_timeArray = arma::regspace(0, m_timeStep, m_timeTotal);
+
+	// Due to roundoff errors, sometimes the size of the vector of wave components
+	// is different from the size of the time simulation array in cases where IFFT
+	// should be used. This can not happen, then the size of the time vector is fixed below.
+	if (getFlagIFFT() && m_timeArray.size() != m_wave.size())
+	{
+		m_timeArray = arma::linspace(0, m_timeTotal, m_wave.size());
+		double newTimeStep = m_timeArray.at(1) - m_timeArray.at(0);		
+		IO::print2log("Setting time step to " + std::to_string(newTimeStep) + "s to avoid incompatible sizes in IFFT calculation. Previous value was " + std::to_string(m_timeStep) + ".");
+		m_timeStep = newTimeStep;
+	}
+
 	m_timeRampArray = zeros(m_timeArray.size(), 1);
 	for (int it = 0; it < m_timeArray.size(); ++it)
 	{
