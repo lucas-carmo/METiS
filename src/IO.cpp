@@ -226,18 +226,22 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 				// Check if the input is a file with the wave elevation series at z = 0
 				else if (caseInsCompare(getKeyword(strInput), "ELEV"))
 				{
-					// Need 2 inputs separated by a comma
-					// Path to the file with the wave elevation series and wave direction
+					// Need 4 inputs separated by a comma
+					// Path to the file with the wave elevation series, wave direction, lowest frequency and high frequency limits 
+					// (which determine the region outside of which the wave amplitude is set to zero)
 					std::vector<std::string> input = stringTokenize(getData(strInput), ",");
-					if (input.size() != 2)
+					if (input.size() != 4)
 					{
 						throw std::runtime_error("Unable to read the wave in input line " + std::to_string(IO::getInLineNumber()) + 
 							". Wrong number of parameters. Since the file can have whitespaces in its path, make sure you are using commas to separete the file path and the wave incidence.");
 					}
-					double waveDir = string2num<double>(input.at(1));
 					std::string elevFlPath = input.at(0);
+					double waveDir = string2num<double>(input.at(1));
+					double wlow = string2num<double>(input.at(2));
+					double whigh = string2num<double>(input.at(3));
+					
 
-					envir.addWaveElevSeries(elevFlPath, waveDir);
+					envir.addWaveElevSeries(elevFlPath, waveDir, wlow, whigh);
 				}
 
 				// Otherwise, there could be a typo or something of the kind.

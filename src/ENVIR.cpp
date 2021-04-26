@@ -288,7 +288,7 @@ void ENVIR::addJonswap(const double Hs, const double Tp, const double gamma, con
 	}
 }
 
-void ENVIR::addWaveElevSeries(const std::string &elevFlPath, const double direction)
+void ENVIR::addWaveElevSeries(const std::string &elevFlPath, const double direction, const double wlow, const double whigh)
 {
 	// Open input file
 	std::ifstream elevFl;
@@ -343,13 +343,17 @@ void ENVIR::addWaveElevSeries(const std::string &elevFlPath, const double direct
 	m_flagIFFT = true;
 
 	// FFT and assignment of the computed values to the vector of waves
-	cx_vec amp(mkl_fft_real(elev));
-	amp *= 1. / time.size();
-	amp.rows(std::floor(amp.size() / 2), amp.size() - 1).zeros();
-	amp.rows(1, amp.size() - 1) *= 2;
+	cx_vec A(mkl_fft_real(elev));
+	A *= 1. / time.size();
+	A.rows(std::floor(A.size() / 2), A.size() - 1).zeros();
+	A.rows(1, A.size() - 1) *= 2;
 	for (int ii = 0; ii < w.size(); ++ii)
 	{
-		addRegularWave("TRWave", 2 * std::abs(amp.at(ii)), 2 * arma::datum::pi / w.at(ii), direction, -std::arg(amp.at(ii)) * 180. / arma::datum::pi);
+		if (w.at(ii) < wlow || (w.at(ii) > whigh && whigh > 0))
+		{
+			A.at(ii) = 0;
+	}
+		addRegularWave("TRWave", 2 * std::abs(A.at(ii)), 2 * arma::datum::pi / w.at(ii), direction, -std::arg(A.at(ii)) * 180. / arma::datum::pi);
 	}
 
 	// Make sure that the total simulation time are equal to the wave elevation file
