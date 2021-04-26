@@ -1801,7 +1801,7 @@ double ENVIR::windVel_Y(const vec::fixed<3> &coord) const
 
 mat ENVIR::timeSeriesFromAmp(cx_mat &inAmp, const vec &w) const
 {
-	mat out(inAmp.n_rows, inAmp.n_cols, fill::zeros);
+	mat out(m_timeArray.size() , inAmp.n_cols, fill::zeros);
 	uword ncols = inAmp.n_cols;
 	if (getFlagIFFT())
 	{
