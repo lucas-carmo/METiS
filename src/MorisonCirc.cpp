@@ -92,28 +92,19 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 	if (hydroMode == 2)
 	{
 		m_du1dx_Array_x = zeros(t.size(), npts);
-		m_du1dx_Array_y = zeros(t.size(), npts);
-		m_du1dx_Array_z = zeros(t.size(), npts);
-
-		m_du1dy_Array_x = zeros(t.size(), npts);
 		m_du1dy_Array_y = zeros(t.size(), npts);
-		m_du1dy_Array_z = zeros(t.size(), npts);
-
-		m_du1dz_Array_x = zeros(t.size(), npts);
-		m_du1dz_Array_y = zeros(t.size(), npts);
 		m_du1dz_Array_z = zeros(t.size(), npts);
+		m_du1dx_Array_y = zeros(t.size(), npts);
+		m_du1dx_Array_z = zeros(t.size(), npts);		
+		m_du1dy_Array_z = zeros(t.size(), npts);		
 
 		cx_mat amp_du1dx_x(nWaves, npts, fill::zeros);
-		cx_mat amp_du1dx_y(nWaves, npts, fill::zeros);
-		cx_mat amp_du1dx_z(nWaves, npts, fill::zeros);
-
-		cx_mat amp_du1dy_x(nWaves, npts, fill::zeros);
 		cx_mat amp_du1dy_y(nWaves, npts, fill::zeros);
-		cx_mat amp_du1dy_z(nWaves, npts, fill::zeros);
-
-		cx_mat amp_du1dz_x(nWaves, npts, fill::zeros);
-		cx_mat amp_du1dz_y(nWaves, npts, fill::zeros);
 		cx_mat amp_du1dz_z(nWaves, npts, fill::zeros);
+		cx_mat amp_du1dx_y(nWaves, npts, fill::zeros);
+		cx_mat amp_du1dx_z(nWaves, npts, fill::zeros);		
+		cx_mat amp_du1dy_z(nWaves, npts, fill::zeros);
+		
 		for (unsigned int iWave = 0; iWave < nWaves; ++iWave)
 		{
 			const Wave &wave(envir.getWave(iWave));
@@ -126,28 +117,20 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 				amp_du1dx_z.at(iWave, iNode) = aux.at(2);
 
 				aux = envir.du1dy_coef(m_nodesArray.at(0, iNode), m_nodesArray.at(1, iNode), m_nodesArray.at(2, iNode), iWave);
-				amp_du1dy_x.at(iWave, iNode) = aux.at(0);
 				amp_du1dy_y.at(iWave, iNode) = aux.at(1);
 				amp_du1dy_z.at(iWave, iNode) = aux.at(2);
 
 				aux = envir.du1dz_coef(m_nodesArray.at(0, iNode), m_nodesArray.at(1, iNode), m_nodesArray.at(2, iNode), iWave);
-				amp_du1dz_x.at(iWave, iNode) = aux.at(0);
-				amp_du1dz_y.at(iWave, iNode) = aux.at(1);
 				amp_du1dz_z.at(iWave, iNode) = aux.at(2);
 			}
 		}
 
 		m_du1dx_Array_x = envir.timeSeriesFromAmp(amp_du1dx_x, w);
+		m_du1dy_Array_y = envir.timeSeriesFromAmp(amp_du1dy_y, w);
 		m_du1dx_Array_y = envir.timeSeriesFromAmp(amp_du1dx_y, w);
 		m_du1dx_Array_z = envir.timeSeriesFromAmp(amp_du1dx_z, w);
-
-		m_du1dy_Array_x = envir.timeSeriesFromAmp(amp_du1dy_x, w);
-		m_du1dy_Array_y = envir.timeSeriesFromAmp(amp_du1dy_y, w);
+		m_du1dz_Array_z = envir.timeSeriesFromAmp(amp_du1dz_z, w);		
 		m_du1dy_Array_z = envir.timeSeriesFromAmp(amp_du1dy_z, w);
-
-		m_du1dz_Array_x = envir.timeSeriesFromAmp(amp_du1dz_x, w);
-		m_du1dz_Array_y = envir.timeSeriesFromAmp(amp_du1dz_y, w);
-		m_du1dz_Array_z = envir.timeSeriesFromAmp(amp_du1dz_z, w);
 	}
 
 	// Special treatment for the force due to the second-order wave potential due to the double sum
@@ -1550,20 +1533,21 @@ vec::fixed<6> MorisonCirc::hydroForce_convecAcc_already_calculated(const ENVIR &
 
 	for (int ii = 0; ii < ncyl; ++ii)
 	{
-
 		// Fluid kinematics at the integration point.				
 		double u_x = m_u1_Array_x.at(ind1, ii);
 		double u_y = m_u1_Array_y.at(ind1, ii);
 		double u_z = m_u1_Array_z.at(ind1, ii);		
 
+		// Remember of symmetries of the velocity gradient
+		// e.g. du1dx_z = du1dz_x
 		double du1dx_x = m_du1dx_Array_x.at(ind1, ii);
 		double du1dx_y = m_du1dx_Array_y.at(ind1, ii);
 		double du1dx_z = m_du1dx_Array_z.at(ind1, ii);
-		double du1dy_x = m_du1dy_Array_x.at(ind1, ii);
+		double du1dy_x = m_du1dx_Array_y.at(ind1, ii);
 		double du1dy_y = m_du1dy_Array_y.at(ind1, ii);
 		double du1dy_z = m_du1dy_Array_z.at(ind1, ii);
-		double du1dz_x = m_du1dz_Array_x.at(ind1, ii);
-		double du1dz_y = m_du1dz_Array_y.at(ind1, ii);
+		double du1dz_x = m_du1dx_Array_z.at(ind1, ii);
+		double du1dz_y = m_du1dy_Array_z.at(ind1, ii);
 		double du1dz_z = m_du1dz_Array_z.at(ind1, ii);
 		if (envir.shouldInterp())
 		{
@@ -1575,12 +1559,12 @@ vec::fixed<6> MorisonCirc::hydroForce_convecAcc_already_calculated(const ENVIR &
 			du1dx_y += (m_du1dx_Array_y.at(ind2, ii) - m_du1dx_Array_y.at(ind1, ii)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
 			du1dx_z += (m_du1dx_Array_z.at(ind2, ii) - m_du1dx_Array_z.at(ind1, ii)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
 
-			du1dy_x += (m_du1dy_Array_x.at(ind2, ii) - m_du1dy_Array_x.at(ind1, ii)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			du1dy_x += (m_du1dx_Array_y.at(ind2, ii) - m_du1dx_Array_y.at(ind1, ii)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
 			du1dy_y += (m_du1dy_Array_y.at(ind2, ii) - m_du1dy_Array_y.at(ind1, ii)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
 			du1dy_z += (m_du1dy_Array_z.at(ind2, ii) - m_du1dy_Array_z.at(ind1, ii)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
 
-			du1dz_x += (m_du1dz_Array_x.at(ind2, ii) - m_du1dz_Array_x.at(ind1, ii)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
-			du1dz_y += (m_du1dz_Array_y.at(ind2, ii) - m_du1dz_Array_y.at(ind1, ii)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			du1dz_x += (m_du1dx_Array_z.at(ind2, ii) - m_du1dx_Array_z.at(ind1, ii)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			du1dz_y += (m_du1dy_Array_z.at(ind2, ii) - m_du1dy_Array_z.at(ind1, ii)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
 			du1dz_z += (m_du1dz_Array_z.at(ind2, ii) - m_du1dz_Array_z.at(ind1, ii)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
 		}
 		u = { u_x, u_y, u_z };

@@ -42,16 +42,11 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 	m_u1_Array_z = zeros(0, 0);
 
 	m_du1dx_Array_x = zeros(0, 0);
-	m_du1dx_Array_y = zeros(0, 0);
-	m_du1dx_Array_z = zeros(0, 0);
-
-	m_du1dy_Array_x = zeros(0, 0);
 	m_du1dy_Array_y = zeros(0, 0);
-	m_du1dy_Array_z = zeros(0, 0);
-
-	m_du1dz_Array_x = zeros(0, 0);
-	m_du1dz_Array_y = zeros(0, 0);
 	m_du1dz_Array_z = zeros(0, 0);
+	m_du1dx_Array_y = zeros(0, 0);
+	m_du1dx_Array_z = zeros(0, 0);	
+	m_du1dy_Array_z = zeros(0, 0);	
 }
 
 /*****************************************************

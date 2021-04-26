@@ -77,18 +77,12 @@ protected:
 	mat m_u1_Array_y;
 	mat m_u1_Array_z;
 
-	mat m_du1dx_Array_x;
+	mat m_du1dx_Array_x; // Do not need the 9 components of the gradiant of the velocity because of symmetries, e.g. du1dx_z = du1dz_x
+	mat m_du1dy_Array_y;
+	mat m_du1dz_Array_z;
 	mat m_du1dx_Array_y;
 	mat m_du1dx_Array_z;
-
-	mat m_du1dy_Array_x;
-	mat m_du1dy_Array_y;
 	mat m_du1dy_Array_z;
-
-	mat m_du1dz_Array_x;
-	mat m_du1dz_Array_y;
-	mat m_du1dz_Array_z;
-
 
 
 public:

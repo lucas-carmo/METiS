@@ -391,7 +391,7 @@ void ENVIR::evaluateWaveKinematics()
 	if (getFlagIFFT() && m_timeArray.size() != m_wave.size())
 	{
 		m_timeArray = arma::linspace(0, m_timeTotal, m_wave.size());
-		double newTimeStep = m_timeArray.at(1) - m_timeArray.at(0);		
+		double newTimeStep = m_timeArray.at(1) - m_timeArray.at(0);
 		IO::print2log("Setting time step to " + std::to_string(newTimeStep) + "s to avoid incompatible sizes in IFFT calculation. Previous value was " + std::to_string(m_timeStep) + ".");
 		m_timeStep = newTimeStep;
 	}
@@ -495,7 +495,7 @@ void ENVIR::evaluateWaveKinematics()
 	{
 		m_wavePress2ndArray = zeros(m_timeArray.size(), 1);
 		for (int iProbe = 0; iProbe < m_waveProbeID.size(); ++iProbe)
-		{			
+		{
 			if (getFlagIFFT())
 			{
 				cx_mat amp_dw(m_wave.size(), 1, fill::zeros); // Vector with the complex amplitude at the difference frequency
@@ -504,7 +504,7 @@ void ENVIR::evaluateWaveKinematics()
 					if (m_wave.at(iWave).amp() == 0) continue;
 					for (int jWave = 0; jWave <= iWave; ++jWave)
 					{
-						if (m_wave.at(jWave).amp() == 0) continue;						
+						if (m_wave.at(jWave).amp() == 0) continue;
 						cx_double aux = wavePressure_2ndOrd_coef(m_waveProbe.at(iProbe), iWave, jWave);
 						if (iWave != jWave)
 						{
@@ -525,7 +525,7 @@ void ENVIR::evaluateWaveKinematics()
 						for (int jWave = 0; jWave <= iWave; ++jWave)
 						{
 							double w_ii{ m_wave.at(iWave).angFreq() }, w_jj{ m_wave.at(jWave).angFreq() };
-							cx_double sinCos{ cos((w_ii-w_jj) * m_timeArray.at(it)), sin((w_ii - w_jj) * m_timeArray.at(it)) };
+							cx_double sinCos{ cos((w_ii - w_jj) * m_timeArray.at(it)), sin((w_ii - w_jj) * m_timeArray.at(it)) };
 							cx_double amp_dw = wavePressure_2ndOrd_coef(m_waveProbe.at(iProbe), iWave, jWave);
 							if (iWave != jWave)
 							{
@@ -1388,14 +1388,11 @@ cx_vec::fixed<3> ENVIR::du1dx_coef(const double x, const double y, const double 
 			khz_z = sinh(k * (z + h)) / sinh(k*h);
 		}
 
-		acc.at(0) = cx_double(sin(k*cosBeta*x + k * sinBeta*y + phase), cos(k*cosBeta*x + k * sinBeta*y + phase));
-		acc.at(0) *= -w * A * k * khz_xy * cosBeta * cosBeta;
-
-		acc.at(1) = cx_double(sin(k*cosBeta*x + k * sinBeta*y + phase), cos(k*cosBeta*x + k * sinBeta*y + phase));
-		acc.at(1) *= -w * A * k * khz_xy * sinBeta * cosBeta;
-
-		acc.at(2) = cx_double(cos(k*cosBeta*x + k * sinBeta*y + phase), -sin(k*cosBeta*x + k * sinBeta*y + phase));
-		acc.at(2) *= w * A * k * khz_z * cosBeta;
+		cx_double i(0, 1);
+		cx_double aux = w * A * k * cosBeta * cx_double(sin(k*cosBeta*x + k * sinBeta*y + phase), cos(k*cosBeta*x + k * sinBeta*y + phase));
+		acc.at(0) = -aux * khz_xy * cosBeta;
+		acc.at(1) = -aux * khz_xy * sinBeta;
+		acc.at(2) = -aux * i * khz_z;
 	}
 
 	return acc;
@@ -1467,14 +1464,11 @@ cx_vec::fixed<3> ENVIR::du1dy_coef(const double x, const double y, const double 
 			khz_z = sinh(k * (z + h)) / sinh(k*h);
 		}
 
-		acc.at(0) = cx_double(sin(k*cosBeta*x + k * sinBeta*y + phase), cos(k*cosBeta*x + k * sinBeta*y + phase));
-		acc.at(0) *= -w * A * k * khz_xy * cosBeta * sinBeta;
-
-		acc.at(1) = cx_double(sin(k*cosBeta*x + k * sinBeta*y + phase), cos(k*cosBeta*x + k * sinBeta*y + phase));
-		acc.at(1) *= -w * A * k * khz_xy * sinBeta * sinBeta;
-
-		acc.at(2) = cx_double(cos(k*cosBeta*x + k * sinBeta*y + phase), -sin(k*cosBeta*x + k * sinBeta*y + phase));
-		acc.at(2) *= w * A * k * khz_z * sinBeta;
+		cx_double i(0, 1);
+		cx_double aux = w * A * k * sinBeta * cx_double(sin(k*cosBeta*x + k * sinBeta*y + phase), cos(k*cosBeta*x + k * sinBeta*y + phase));
+		acc.at(0) = -aux * khz_xy * cosBeta;
+		acc.at(1) = -aux * khz_xy * sinBeta;
+		acc.at(2) = -aux * i * khz_z;
 	}
 
 	return acc;
@@ -1546,14 +1540,11 @@ cx_vec::fixed<3> ENVIR::du1dz_coef(const double x, const double y, const double 
 			khz_z = sinh(k * (z + h)) / sinh(k*h);
 		}
 
-		acc.at(0) = cx_double(cos(k*cosBeta*x + k * sinBeta*y + phase), -sin(k*cosBeta*x + k * sinBeta*y + phase));
-		acc.at(0) *= w * A * k * khz_z * cosBeta;
-
-		acc.at(1) = cx_double(cos(k*cosBeta*x + k * sinBeta*y + phase), -sin(k*cosBeta*x + k * sinBeta*y + phase));
-		acc.at(1) *= w * A * k * khz_z * sinBeta;
-
-		acc.at(2) = cx_double(sin(k*cosBeta*x + k * sinBeta*y + phase), cos(k*cosBeta*x + k * sinBeta*y + phase));
-		acc.at(2) *= w * A * k * khz_xy;
+		cx_double i(0, 1);
+		cx_double aux = w * A * k * cx_double(cos(k*cosBeta*x + k * sinBeta*y + phase), -sin(k*cosBeta*x + k * sinBeta*y + phase));
+		acc.at(0) = aux * khz_z * cosBeta;
+		acc.at(1) = aux * khz_z * sinBeta;
+		acc.at(2) = aux * i * khz_xy;
 	}
 
 	return acc;
