@@ -51,6 +51,7 @@ public:
 	vec::fixed<6> hydroForce_drag(const ENVIR &envir) const;	
 	vec::fixed<6> hydroForce_2ndPot(const ENVIR &envir) const;
 	vec::fixed<6> hydroForce_convecAcc(const ENVIR &envir) const;
+	vec::fixed<6> hydroForce_axDiverg(const ENVIR &envir) const;
 
 	cx_vec::fixed<6> hydroForce_1st_coefs(const Wave &wave, double watDensity, double watDepth, double gravity) const;
 	cx_vec::fixed<6> hydroForce_2ndPot_coefs(const Wave &wave_ii, const Wave &wave_jj, double watDensity, double watDepth, double gravity) const;
@@ -60,6 +61,9 @@ public:
 	
 	vec::fixed<6> hydroForce_convecAcc_already_calculated(const ENVIR &envir) const;
 	vec::fixed<6> hydroForce_convecAcc_calculate(const ENVIR &envir) const;
+
+	vec::fixed<6> hydroForce_axDiverg_already_calculated(const ENVIR &envir) const;
+	vec::fixed<6> hydroForce_axDiverg_calculate(const ENVIR &envir) const;
 
 	/*****************************************************
 		Printing
