@@ -1,7 +1,7 @@
 % Post processing routine for METiS output 
 
 clear all
-% close all
+close all
 clc
 
 
@@ -15,8 +15,11 @@ flNm = {
 %             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-2ndOrder_out.txt';
 %             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-2ndOrder_out_4.txt';
 
-%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-JONSWAP_out.txt';
-            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-JONSWAP_out_4.txt';
+            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-JONSWAP_out.txt';
+            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-JONSWAP_out_7.txt';
+            
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Cilindro\teste_analitico\bic_out.txt';
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Cilindro\teste_analitico\bic_out_5.txt';
         };
     
 %===== Choose the output
@@ -42,11 +45,11 @@ analysisList('total_force') = 0;
 
 % Wave outputs
 analysisList('wave_elev') = 1;
-analysisList('wave_vel') = 1;
+analysisList('wave_vel') = 0;
 analysisList('wave_acc') = 0;
 analysisList('wave_acc_2nd') = 0;
 analysisList('wave_press') = 0;
-analysisList('wave_press_2nd') = 0;
+analysisList('wave_pres_2nd') = 1;
 
 
 %===== Plot style
@@ -136,7 +139,7 @@ for ii = 1:numel(flNm)
         % below, since there can be several wave locations. Besides, some 
         % of them are scalars (elevation and pressure) while others are 
         % vectors (velocity and acceleration).
-        if strcmp(k{jj}, 'wave_elev') || strcmp(k{jj}, 'wave_press')
+        if strcmp(k{jj}, 'wave_elev') || strcmp(k{jj}, 'wave_press') || strcmp(k{jj}, 'wave_pres_2nd')
             waveLocation = find(contains(fieldsOfData, k{jj})==1);
             for ww = numel(waveLocation):-1:1
                 y(:,1,ww) = data.(fieldsOfData{waveLocation(ww)});

@@ -85,11 +85,11 @@ void Floater::setInstantSD(bool instantSD)
 	m_instantSD = instantSD;
 }
 
-void Floater::evaluateQuantitiesAtBegin(const ENVIR & envir)
+void Floater::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroMode)
 {
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		m_MorisonElements.at(ii)->evaluateQuantitiesAtBegin(envir);
+		m_MorisonElements.at(ii)->evaluateQuantitiesAtBegin(envir, hydroMode);
 	}
 }
 

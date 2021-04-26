@@ -34,11 +34,24 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 	// the debug version in Visual Studio 2017
 	m_waveElevAtWL = zeros(0, 0);
 	m_hydroForce_1st_Array = zeros(0, 0);
+	m_hydroForce_2nd_Array = zeros(0, 0);
 	m_nodesArray = zeros(0, 0);
+
 	m_u1_Array_x = zeros(0, 0);
 	m_u1_Array_y = zeros(0, 0);
 	m_u1_Array_z = zeros(0, 0);
-	m_hydroForce_1st_Array = zeros(0, 0);
+
+	m_du1dx_Array_x = zeros(0, 0);
+	m_du1dx_Array_y = zeros(0, 0);
+	m_du1dx_Array_z = zeros(0, 0);
+
+	m_du1dy_Array_x = zeros(0, 0);
+	m_du1dy_Array_y = zeros(0, 0);
+	m_du1dy_Array_z = zeros(0, 0);
+
+	m_du1dz_Array_x = zeros(0, 0);
+	m_du1dz_Array_y = zeros(0, 0);
+	m_du1dz_Array_z = zeros(0, 0);
 }
 
 /*****************************************************

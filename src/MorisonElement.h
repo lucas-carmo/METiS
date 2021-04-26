@@ -70,10 +70,25 @@ protected:
 	double m_dL;
 	mat m_waveElevAtWL;
 	mat m_hydroForce_1st_Array;
+	mat m_hydroForce_2nd_Array;
 	mat m_nodesArray;
+
 	mat m_u1_Array_x;
 	mat m_u1_Array_y;
 	mat m_u1_Array_z;
+
+	mat m_du1dx_Array_x;
+	mat m_du1dx_Array_y;
+	mat m_du1dx_Array_z;
+
+	mat m_du1dy_Array_x;
+	mat m_du1dy_Array_y;
+	mat m_du1dy_Array_z;
+
+	mat m_du1dz_Array_x;
+	mat m_du1dz_Array_y;
+	mat m_du1dz_Array_z;
+
 
 
 public:
@@ -81,7 +96,7 @@ public:
 				   const bool botPressFlag, const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2);
 	
 	// If the body is fixed, most of the computationally expensive calculations can be performed only once at the beginning of the simulation
-	virtual void evaluateQuantitiesAtBegin(const ENVIR &envir) = 0;
+	virtual void evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroMode) = 0;
 
 	// Functions related to position, velocity and acceleration
 	void calcPosVel(const vec::fixed<6> &pos, const vec::fixed<6> &vel,

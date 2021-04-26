@@ -16,7 +16,7 @@ private:
 
 
 public:
-	virtual void evaluateQuantitiesAtBegin(const ENVIR &envir) override;
+	virtual void evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroMode) override;
 
 
 	/*****************************************************
@@ -47,15 +47,19 @@ public:
 	// Written in the global coordinate system.
 	// Moments are given with respect to node1.
 	// TODO: Once things are finished, put these functions in MorisonElement
-	vec::fixed<6> hydroForce_1st(const ENVIR &envir, const int hydroMode) const;
+	vec::fixed<6> hydroForce_1st(const ENVIR &envir, const int hydroMode) const;	
+	vec::fixed<6> hydroForce_drag(const ENVIR &envir) const;	
+	vec::fixed<6> hydroForce_2ndPot(const ENVIR &envir) const;
+	vec::fixed<6> hydroForce_convecAcc(const ENVIR &envir) const;
+
 	cx_vec::fixed<6> hydroForce_1st_coefs(const Wave &wave, double watDensity, double watDepth, double gravity) const;
-
-	vec::fixed<6> hydroForce_drag(const ENVIR &envir) const;
-	vec::fixed<6> hydroForce_drag_already_calculated(const ENVIR &envir) const;
-	vec::fixed<6> hydroForce_drag_calculate(const ENVIR &envir) const;	
-
-	vec::fixed<6> morisonForce_2ndPot(const ENVIR &envir) const;
 	cx_vec::fixed<6> hydroForce_2ndPot_coefs(const Wave &wave_ii, const Wave &wave_jj, double watDensity, double watDepth, double gravity) const;
+
+	vec::fixed<6> hydroForce_drag_already_calculated(const ENVIR &envir) const;
+	vec::fixed<6> hydroForce_drag_calculate(const ENVIR &envir) const;		
+	
+	vec::fixed<6> hydroForce_convecAcc_already_calculated(const ENVIR &envir) const;
+	vec::fixed<6> hydroForce_convecAcc_calculate(const ENVIR &envir) const;
 
 	/*****************************************************
 		Printing

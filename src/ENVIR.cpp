@@ -352,7 +352,7 @@ void ENVIR::addWaveElevSeries(const std::string &elevFlPath, const double direct
 		if (w.at(ii) < wlow || (w.at(ii) > whigh && whigh > 0))
 		{
 			A.at(ii) = 0;
-	}
+		}
 		addRegularWave("TRWave", 2 * std::abs(A.at(ii)), 2 * arma::datum::pi / w.at(ii), direction, -std::arg(A.at(ii)) * 180. / arma::datum::pi);
 	}
 
@@ -501,8 +501,10 @@ void ENVIR::evaluateWaveKinematics()
 				cx_mat amp_dw(m_wave.size(), 1, fill::zeros); // Vector with the complex amplitude at the difference frequency
 				for (int iWave = 0; iWave < m_wave.size(); ++iWave)
 				{
+					if (m_wave.at(iWave).amp() == 0) continue;
 					for (int jWave = 0; jWave <= iWave; ++jWave)
 					{
+						if (m_wave.at(jWave).amp() == 0) continue;						
 						cx_double aux = wavePressure_2ndOrd_coef(m_waveProbe.at(iProbe), iWave, jWave);
 						if (iWave != jWave)
 						{
@@ -511,6 +513,7 @@ void ENVIR::evaluateWaveKinematics()
 						amp_dw.at(iWave - jWave) += aux;
 					}
 				}
+
 				m_wavePress2ndArray.col(iProbe) = m_wave.size() * mkl_ifft_real(amp_dw);
 			}
 			else
@@ -535,7 +538,7 @@ void ENVIR::evaluateWaveKinematics()
 				}
 			}
 
-			m_waveElevArray.col(iProbe) %= m_timeRampArray;
+			m_wavePress2ndArray.col(iProbe) %= m_timeRampArray;
 		}
 	}
 }
@@ -1803,6 +1806,29 @@ double ENVIR::windVel_X(const vec::fixed<3> &coord) const
 double ENVIR::windVel_Y(const vec::fixed<3> &coord) const
 {
 	return (-ramp() * windRefVel() * std::sin(m_windDir * arma::datum::pi / 180.) * pow(coord[2] / windRefHeight(), windExp()));
+}
+
+mat ENVIR::timeSeriesFromAmp(cx_mat &inAmp, const vec &w) const
+{
+	mat out(inAmp.n_rows, inAmp.n_cols, fill::zeros);
+	uword ncols = inAmp.n_cols;
+	if (getFlagIFFT())
+	{
+		out = m_wave.size() * mkl_ifft_real(inAmp) % repmat(getRampArray(), 1, inAmp.n_cols);
+	}
+	else
+	{
+		for (unsigned int it = 0; it < m_timeArray.size(); ++it)
+		{
+			cx_vec sinCos{ cos(w * m_timeArray.at(it)), sin(w * m_timeArray.at(it)) };
+
+			out.row(it) = sum(real(inAmp % repmat(sinCos, 1, inAmp.n_cols)), 0);
+		}
+
+		out %= repmat(getRampArray(), 1, inAmp.n_cols);
+	}
+
+	return out;
 }
 
 
