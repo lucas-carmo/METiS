@@ -97,7 +97,9 @@ void MorisonElement::updateMorisonElement(const vec::fixed<6> &floaterCoGpos, co
 
 	// Considering only the mean and slow drift motions
 	calcPosVel(floaterCoGpos_SD, floaterVel_SD, m_node1Pos_sd, m_node2Pos_sd, m_node1Vel_sd, m_node2Vel_sd, m_xvec_sd, m_yvec_sd, m_zvec_sd);
-	m_RotatMatrix_sd = rotatMatrix(floaterCoGpos_SD.rows(3, 5));	
+	m_RotatMatrix_sd = rotatMatrix(floaterCoGpos_SD.rows(3, 5));
+
+	calculateImmersedLengthProperties_sd(m_Lw, m_numNodesBelowWL, m_dL);
 }
 
 vec::fixed<3> MorisonElement::node1Pos_t0() const
@@ -158,6 +160,212 @@ vec::fixed<3> MorisonElement::node1AccCentrip() const
 vec::fixed<3> MorisonElement::node2AccCentrip() const
 {
 	return m_node2AccCentrip;
+}
+
+vec::fixed<3> MorisonElement::nodePos_sd(const int nodeIndex) const
+{
+	if (m_u1_Array_x.is_empty())
+	{
+		return m_node1Pos_sd + m_dL * nodeIndex * m_zvec_sd;
+	}
+	else
+	{
+		return m_nodesArray.col(nodeIndex);
+	}
+}
+
+double MorisonElement::waveElevAtWL(const ENVIR &envir) const
+{
+	double eta;
+	if (m_waveElevAtWL.is_empty())
+	{
+		vec::fixed<3> n_wl = nodePos_sd(m_numNodesBelowWL-1); // Coordinates of the intersection with the still water line
+		eta = envir.waveElev(n_wl.at(0), n_wl.at(1));
+	}
+	else
+	{
+		const vec &t = envir.getTimeArray();
+		uword ind1 = envir.getInd4interp1();
+		uword ind2 = envir.getInd4interp2();
+
+		eta = m_waveElevAtWL.at(ind1);
+		if (envir.shouldInterp())
+		{
+			eta += (m_waveElevAtWL.at(ind2) - m_waveElevAtWL.at(ind1)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+		}
+	}
+	return eta;
+}
+
+vec::fixed<3> MorisonElement::u1(const ENVIR &envir, const int nodeIndex) const
+{
+	vec::fixed<3> u1;
+	if (m_u1_Array_x.is_empty())
+	{
+		vec::fixed<3> node = nodePos_sd(nodeIndex);
+		double eta{ 0 };
+		if (envir.waveStret() == 2)
+		{
+			eta = envir.waveElev(node.at(0), node.at(1));
+		}
+		u1 = envir.u1(node, eta);
+	}
+	else
+	{
+		const vec &t = envir.getTimeArray();
+		uword ind1 = envir.getInd4interp1();
+		uword ind2 = envir.getInd4interp2();
+		
+		double u_x = m_u1_Array_x.at(ind1, nodeIndex);
+		double u_y = m_u1_Array_y.at(ind1, nodeIndex);
+		double u_z = m_u1_Array_z.at(ind1, nodeIndex);
+		if (envir.shouldInterp())
+		{
+			u_x += (m_u1_Array_x.at(ind2, nodeIndex) - m_u1_Array_x.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			u_y += (m_u1_Array_y.at(ind2, nodeIndex) - m_u1_Array_y.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			u_z += (m_u1_Array_z.at(ind2, nodeIndex) - m_u1_Array_z.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+		}
+		u1 = { u_x, u_y, u_z };
+	}
+	return u1;
+}
+
+vec::fixed<3> MorisonElement::du1dt(const ENVIR & envir, const int nodeIndex) const
+{
+	vec::fixed<3> du1dt;
+	if (m_du1dt_Array_x.is_empty())
+	{
+		vec::fixed<3> node = nodePos_sd(nodeIndex);
+		double eta{ 0 };
+		if (envir.waveStret() == 2)
+		{
+			eta = envir.waveElev(node.at(0), node.at(1));
+		}
+		du1dt = envir.du1dt(node, eta);
+	}
+	else
+	{
+		const vec &t = envir.getTimeArray();
+		uword ind1 = envir.getInd4interp1();
+		uword ind2 = envir.getInd4interp2();
+
+		double du1dt_x = m_du1dt_Array_x.at(ind1, nodeIndex);
+		double du1dt_y = m_du1dt_Array_y.at(ind1, nodeIndex);
+		double du1dt_z = m_du1dt_Array_z.at(ind1, nodeIndex);
+		if (envir.shouldInterp())
+		{
+			du1dt_x += (m_du1dt_Array_x.at(ind2, nodeIndex) - m_du1dt_Array_x.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			du1dt_y += (m_du1dt_Array_y.at(ind2, nodeIndex) - m_du1dt_Array_y.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			du1dt_z += (m_du1dt_Array_z.at(ind2, nodeIndex) - m_du1dt_Array_z.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+		}
+		du1dt = { du1dt_x, du1dt_y, du1dt_z };
+	}
+	return du1dt;
+}
+
+vec::fixed<3> MorisonElement::du1dx(const ENVIR &envir, const int nodeIndex) const
+{
+	vec::fixed<3> du1dx;
+	if (m_du1dx_Array_x.is_empty())
+	{
+		vec::fixed<3> node = nodePos_sd(nodeIndex);
+		double eta{ 0 };
+		if (envir.waveStret() == 2)
+		{
+			eta = envir.waveElev(node.at(0), node.at(1));
+		}
+	
+		du1dx = envir.du1dx(node, eta);
+	}
+	else
+	{
+		const vec &t = envir.getTimeArray();
+		uword ind1 = envir.getInd4interp1();
+		uword ind2 = envir.getInd4interp2();
+
+		double du1dx_x = m_du1dx_Array_x.at(ind1, nodeIndex);
+		double du1dx_y = m_du1dx_Array_y.at(ind1, nodeIndex);
+		double du1dx_z = m_du1dx_Array_z.at(ind1, nodeIndex);
+		if (envir.shouldInterp())
+		{
+			du1dx_x += (m_du1dx_Array_x.at(ind2, nodeIndex) - m_du1dx_Array_x.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			du1dx_y += (m_du1dx_Array_y.at(ind2, nodeIndex) - m_du1dx_Array_y.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			du1dx_z += (m_du1dx_Array_z.at(ind2, nodeIndex) - m_du1dx_Array_z.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+		}
+		du1dx = { du1dx_x, du1dx_y, du1dx_z };
+	}
+	return du1dx;
+}
+
+vec::fixed<3> MorisonElement::du1dy(const ENVIR &envir, const int nodeIndex) const
+{
+	vec::fixed<3> du1dy;
+	if (m_du1dx_Array_y.is_empty())
+	{
+		vec::fixed<3> node = nodePos_sd(nodeIndex);
+		double eta{ 0 };
+		if (envir.waveStret() == 2)
+		{
+			eta = envir.waveElev(node.at(0), node.at(1));
+		}	
+		du1dy = envir.du1dy(node, eta);
+	}
+	else
+	{
+		const vec &t = envir.getTimeArray();
+		uword ind1 = envir.getInd4interp1();
+		uword ind2 = envir.getInd4interp2();
+
+		// Remember of symmetries of the velocity gradient
+		// e.g. du1dy_x = du1dx_y
+		double du1dy_x = m_du1dx_Array_y.at(ind1, nodeIndex);
+		double du1dy_y = m_du1dy_Array_y.at(ind1, nodeIndex);
+		double du1dy_z = m_du1dy_Array_z.at(ind1, nodeIndex);
+		if (envir.shouldInterp())
+		{
+			du1dy_x += (m_du1dx_Array_y.at(ind2, nodeIndex) - m_du1dx_Array_y.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			du1dy_y += (m_du1dy_Array_y.at(ind2, nodeIndex) - m_du1dy_Array_y.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			du1dy_z += (m_du1dy_Array_z.at(ind2, nodeIndex) - m_du1dy_Array_z.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+		}
+		du1dy = { du1dy_x, du1dy_y, du1dy_z };
+	}
+	return du1dy;
+}
+
+vec::fixed<3> MorisonElement::du1dz(const ENVIR &envir, const int nodeIndex) const
+{
+	vec::fixed<3> du1dz;
+
+	if (m_du1dx_Array_z.is_empty())
+	{
+		vec::fixed<3> node = nodePos_sd(nodeIndex);
+		double eta{ 0 };
+		if (envir.waveStret() == 2)
+		{
+			eta = envir.waveElev(node.at(0), node.at(1));
+		}		
+		du1dz = envir.du1dz(node, eta);
+	}
+	else
+	{
+		const vec &t = envir.getTimeArray();
+		uword ind1 = envir.getInd4interp1();
+		uword ind2 = envir.getInd4interp2();
+
+		// Remember of symmetries of the velocity gradient
+		// e.g. du1dz_x = du1dx_z
+		double du1dz_x = m_du1dx_Array_z.at(ind1, nodeIndex);
+		double du1dz_y = m_du1dy_Array_z.at(ind1, nodeIndex);
+		double du1dz_z = m_du1dz_Array_z.at(ind1, nodeIndex);
+		if (envir.shouldInterp())
+		{
+			du1dz_x += (m_du1dx_Array_z.at(ind2, nodeIndex) - m_du1dx_Array_z.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			du1dz_y += (m_du1dy_Array_z.at(ind2, nodeIndex) - m_du1dy_Array_z.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			du1dz_z += (m_du1dz_Array_z.at(ind2, nodeIndex) - m_du1dz_Array_z.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+		}
+		du1dz = { du1dz_x, du1dz_y, du1dz_z };
+	}
+	return du1dz;
 }
 
 // Calculate the intersection between the cylinder and waterline, considering the wave elevation.

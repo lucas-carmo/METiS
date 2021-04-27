@@ -88,6 +88,10 @@ protected:
 	mat m_du1dx_Array_z;
 	mat m_du1dy_Array_z;
 
+	// Properties that are used in case the slow drift position is not fixed
+	double m_Lw;
+	int m_numNodesBelowWL;
+
 
 public:
 	MorisonElement(const vec &node1Pos, const vec &node2Pos, const vec &cog, const int numIntPoints, 
@@ -134,6 +138,17 @@ public:
 											vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_2, 
 											vec::fixed<6> &force_3, vec::fixed<6> &force_4, vec::fixed<6> &force_eta, vec::fixed<6> &force_rem) const = 0;
 	
+	// Wave kinematic properties at a certain node along the immersed length of the cylinder.
+	// The slow position is considered.
+	// For performance, there are no boundary checks, so be careful when using these functions
+	// nodeIndex = 0 is node1 and m_numNodesBelowWL - 1 is the intersection with the waterline
+	vec::fixed<3> nodePos_sd(const int nodeIndex) const;
+	double waveElevAtWL(const ENVIR &envir) const;
+	vec::fixed<3> u1(const ENVIR &envir, const int nodeIndex) const;
+	vec::fixed<3> du1dt(const ENVIR &envir, const int nodeIndex) const;
+	vec::fixed<3> du1dx(const ENVIR &envir, const int nodeIndex) const;
+	vec::fixed<3> du1dy(const ENVIR &envir, const int nodeIndex) const;
+	vec::fixed<3> du1dz(const ENVIR &envir, const int nodeIndex) const;
 
 	// Printers and getters
 	virtual std::string print() const = 0;
