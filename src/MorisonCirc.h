@@ -48,7 +48,8 @@ public:
 	// Moments are given with respect to node1.
 	// TODO: Once things are finished, put these functions in MorisonElement
 	vec::fixed<6> hydroForce_1st(const ENVIR &envir, const int hydroMode) const;	
-	vec::fixed<6> hydroForce_drag(const ENVIR &envir) const;	
+	vec::fixed<6> hydroForce_drag(const ENVIR &envir) const;
+	vec::fixed<6> hydroForce_relWaveElev(const ENVIR &envir) const;
 	vec::fixed<6> hydroForce_2ndPot(const ENVIR &envir) const;
 	vec::fixed<6> hydroForce_convecAcc(const ENVIR &envir) const;
 	vec::fixed<6> hydroForce_axDiverg(const ENVIR &envir) const;

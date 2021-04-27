@@ -37,6 +37,10 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 	m_hydroForce_2nd_Array = zeros(0, 0);
 	m_nodesArray = zeros(0, 0);
 
+	m_du1dt_Array_x = zeros(0, 0);
+	m_du1dt_Array_y = zeros(0, 0);
+	m_du1dt_Array_z = zeros(0, 0);
+
 	m_u1_Array_x = zeros(0, 0);
 	m_u1_Array_y = zeros(0, 0);
 	m_u1_Array_z = zeros(0, 0);

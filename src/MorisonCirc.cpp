@@ -53,6 +53,9 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 	m_hydroForce_1st_Array = zeros(t.size(), 6);
 	m_hydroForce_2nd_Array = zeros(t.size(), 6);
 	m_waveElevAtWL = zeros(t.size(), 1);
+	m_du1dt_Array_x = zeros(t.size(), npts);
+	m_du1dt_Array_y = zeros(t.size(), npts);
+	m_du1dt_Array_z = zeros(t.size(), npts);
 	m_u1_Array_x = zeros(t.size(), npts);
 	m_u1_Array_y = zeros(t.size(), npts);
 	m_u1_Array_z = zeros(t.size(), npts);
@@ -63,6 +66,9 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 	// Complex amplitudes	
 	cx_mat amp_hydroForce_1st(nWaves, 6, fill::zeros);	
 	cx_vec amp_waveElevAtWL(nWaves, 1, fill::zeros);
+	cx_mat amp_du1dt_x(nWaves, npts, fill::zeros);
+	cx_mat amp_du1dt_y(nWaves, npts, fill::zeros);
+	cx_mat amp_du1dt_z(nWaves, npts, fill::zeros);
 	cx_mat amp_u1_x(nWaves, npts, fill::zeros);
 	cx_mat amp_u1_y(nWaves, npts, fill::zeros);
 	cx_mat amp_u1_z(nWaves, npts, fill::zeros);
@@ -79,11 +85,19 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 			amp_u1_x.at(iWave, iNode) = aux.at(0);
 			amp_u1_y.at(iWave, iNode) = aux.at(1);
 			amp_u1_z.at(iWave, iNode) = aux.at(2);
+
+			aux = envir.du1dt_coef(m_nodesArray.at(0, iNode), m_nodesArray.at(1, iNode), m_nodesArray.at(2, iNode), iWave);
+			amp_du1dt_x.at(iWave, iNode) = aux.at(0);
+			amp_du1dt_y.at(iWave, iNode) = aux.at(1);
+			amp_du1dt_z.at(iWave, iNode) = aux.at(2);
 		}		
 	}
 
 	m_waveElevAtWL = envir.timeSeriesFromAmp(amp_waveElevAtWL, w);
 	m_hydroForce_1st_Array = envir.timeSeriesFromAmp(amp_hydroForce_1st, w);
+	m_du1dt_Array_x = envir.timeSeriesFromAmp(amp_du1dt_x, w);
+	m_du1dt_Array_y = envir.timeSeriesFromAmp(amp_du1dt_y, w);
+	m_du1dt_Array_z = envir.timeSeriesFromAmp(amp_du1dt_z, w);
 	m_u1_Array_x = envir.timeSeriesFromAmp(amp_u1_x, w);
 	m_u1_Array_y = envir.timeSeriesFromAmp(amp_u1_y, w);
 	m_u1_Array_z = envir.timeSeriesFromAmp(amp_u1_z, w);
@@ -431,6 +445,13 @@ vec::fixed<6> MorisonCirc::hydrodynamicForce(const ENVIR &envir, const int hydro
 		auxForce = hydroForce_axDiverg(envir);
 		force_4 += auxForce;
 		force_4.rows(3, 5) += cross(n1 - refPt, auxForce.rows(0, 2));
+
+		if (envir.waveStret() == 1)
+		{
+			auxForce = hydroForce_relWaveElev(envir);
+			force_eta += auxForce;
+			force_eta.rows(3, 5) += cross(n1 - refPt, auxForce.rows(0, 2));
+		}
 	}
 
 	auxForce = hydroForce_drag(envir);
@@ -747,6 +768,63 @@ vec::fixed<6> MorisonCirc::hydroForce_drag(const ENVIR &envir) const
 		force = hydroForce_drag_already_calculated(envir);
 	}
 	return force;
+}
+
+vec::fixed<6> MorisonCirc::hydroForce_relWaveElev(const ENVIR &envir) const
+{
+	vec::fixed<6> force(fill::zeros);
+	vec::fixed<3> xvec{ m_xvec_sd }, yvec{ m_yvec_sd }, zvec{ m_zvec_sd };
+	vec::fixed<3> n1{ m_node1Pos_sd }, n2{ m_node2Pos_sd };
+
+	// The cylinder can not be above the mean waterline
+	if (n1.at(2) > 0)
+		return force;
+
+	// The cylinder must cross the mean waterline
+	if (n2.at(2)*n1.at(2) > 0)
+		return force;
+
+	vec::fixed<3> du1dt(fill::zeros);
+	double eta{0};
+	vec::fixed<3> n_wl(fill::zeros);
+	if (m_waveElevAtWL.is_empty())
+	{
+		n_wl = (n2 - n1) * (0 - n1.at(2)) / (n2.at(2) - n1.at(2)) + n1; // Coordinates of the intersection with the still water line;				
+		n_wl.at(2) = 0; // Since envir.du1dt returns 0 for z > 0, this line is necessary to make sure that the z coordinate of n_ii is exactly 0, and not slightly above due to roundoff errors.
+		du1dt = envir.du1dt(n_wl, 0);
+		du1dt = arma::dot(du1dt, xvec) * xvec + arma::dot(du1dt, yvec) * yvec;
+		eta = envir.waveElev(n_wl.at(0), n_wl.at(1));
+	}
+	else
+	{
+		// The node that corresponds to the intersection with the waterline is the last column
+		uword ind4WL = m_nodesArray.n_cols-1;
+		n_wl = m_nodesArray.col(ind4WL);
+
+		// Indices for interpolation of the time vector
+		const vec &t = envir.getTimeArray();
+		uword ind1 = envir.getInd4interp1();
+		uword ind2 = envir.getInd4interp2();
+
+		// Fluid acceleration and wave elevation at the integration point.				
+		double du1dt_x = m_du1dt_Array_x.at(ind1, ind4WL);
+		double du1dt_y = m_du1dt_Array_y.at(ind1, ind4WL);
+		double du1dt_z = m_du1dt_Array_z.at(ind1, ind4WL);
+		eta = m_waveElevAtWL(ind1);
+		if (envir.shouldInterp())
+		{
+			du1dt_x += (m_du1dt_Array_x.at(ind2, ind4WL) - m_du1dt_Array_x.at(ind1, ind4WL)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			du1dt_y += (m_du1dt_Array_y.at(ind2, ind4WL) - m_du1dt_Array_y.at(ind1, ind4WL)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			du1dt_z += (m_du1dt_Array_z.at(ind2, ind4WL) - m_du1dt_Array_z.at(ind1, ind4WL)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			eta += (m_waveElevAtWL.at(ind2, ind4WL) - m_waveElevAtWL.at(ind1, ind4WL)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+		}
+		du1dt = { du1dt_x, du1dt_y, du1dt_z };	
+		du1dt = arma::dot(du1dt, xvec) * xvec + arma::dot(du1dt, yvec) * yvec;
+	}
+	force.rows(0, 2) = (datum::pi * m_diam*m_diam / 4.) * envir.watDensity()* m_CM * du1dt * (eta - m_Zwl);
+	force.rows(3, 5) = cross(n_wl - m_node1Pos_sd, force.rows(0, 2));
+
+	return force;	
 }
 
 vec::fixed<6> MorisonCirc::hydroForce_2ndPot(const ENVIR &envir) const

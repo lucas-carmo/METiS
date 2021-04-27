@@ -73,6 +73,10 @@ protected:
 	mat m_hydroForce_2nd_Array;
 	mat m_nodesArray;
 
+	mat m_du1dt_Array_x;
+	mat m_du1dt_Array_y;
+	mat m_du1dt_Array_z;
+
 	mat m_u1_Array_x;
 	mat m_u1_Array_y;
 	mat m_u1_Array_z;
