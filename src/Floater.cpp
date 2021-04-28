@@ -285,49 +285,68 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 
 	// These forces below are used to output the different components to the output files and internally in MorisonElement.hydrodynamicForce().	
 	vec::fixed<6> force_drag(fill::zeros); // Drag force
-	vec::fixed<6> force_1(fill::zeros);	// Component due to 1st order incoming flow
-	vec::fixed<6> force_2(fill::zeros); // Component due to 2nd order incoming flow
-	vec::fixed<6> force_3(fill::zeros); // Component due to axial acceleration
-	vec::fixed<6> force_4(fill::zeros); // Component due to the axial-divergence acceleration
-	vec::fixed<6> force_eta(fill::zeros); // Component due to the wave elevation
-	vec::fixed<6> force_rem(fill::zeros); // Remaining force components
+	vec::fixed<6> force_1stP(fill::zeros); // Due to first-order potential
+	vec::fixed<6> force_eta(fill::zeros);  // Due to relative wave elevation
+	vec::fixed<6> force_conv(fill::zeros); // Due to convective acceleration
+	vec::fixed<6> force_axdv(fill::zeros); // Due to axial-divergence acceleration
+	vec::fixed<6> force_acgr(fill::zeros); // Due to gradient of fluid acceleration
+	vec::fixed<6> force_rotn(fill::zeros); // Due to the rotation of the normal vector
+	vec::fixed<6> force_2ndP(fill::zeros); // Component due to 2nd order incoming flow
+	vec::fixed<6> force_rslb(fill::zeros); // Due to the rotation term from slender-body approximation
+	vec::fixed<6> force_rem(fill::zeros);  // Remaining force components
 
-	// Forces acting on each Morison Element. They are set to zero inside MorisonElement.hydrodynamicForce().
-	vec::fixed<6> df_drag(fill::zeros);
-	vec::fixed<6> df_1(fill::zeros);
-	vec::fixed<6> df_2(fill::zeros);
-	vec::fixed<6> df_3(fill::zeros);
-	vec::fixed<6> df_4(fill::zeros);
-	vec::fixed<6> df_eta(fill::zeros);
-	vec::fixed<6> df_rem(fill::zeros);
+	vec::fixed<3> refPt = CoGPos_sd().rows(0, 2);
+	mat::fixed<6, 6> R(fill::eye);
+	R *= -1;
+	R.rows(0, 2).cols(0, 2) += rotatMatrix(m_disp.rows(3, 5));
+	R.rows(3, 5).cols(3, 5) = R.rows(0, 2).cols(0, 2);	
 
 	// Force acting on each element
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)	
 	{
+		// If the cylinder is above the waterline, do not need to compute the hydrodynamic forces
+		if (m_MorisonElements.at(ii)->node1Pos_sd().at(2) > 0)
+			continue;		
 
-		df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, CoGPos_sd().rows(0, 2), CoGPos_sd().rows(0, 2), df_drag, df_1, df_2, df_3, df_4, df_eta, df_rem);
+		// Force due to first-order acceleration - part along the length of the cylinder is integrated analytically
+		vec::fixed<6> auxForce = m_MorisonElements.at(ii)->hydroForce_1st(envir, hydroMode, refPt);
+		force_1stP += auxForce;
 
+		// Second order forces
+		if (hydroMode == 2)
+		{
+			if (envir.waveStret() == 1)
+			{
+				force_eta += m_MorisonElements.at(ii)->hydroForce_relWaveElev(envir, refPt);
+			}
 
-		// Add to the forces acting on the whole floater
-		force += df;
-
-		force_drag += df_drag;
-		force_1 += df_1;
-		force_2 += df_2;
-		force_3 += df_3;
-		force_4 += df_4;
-		force_eta += df_eta;
-		force_rem += df_rem;
+			// If the body is not treated as fixed, these second order components are included in hydroForce_1st
+			if (m_MorisonElements.at(ii)->flagFixed())
+			{				
+				force_rotn += R * auxForce;
+				force_acgr += m_MorisonElements.at(ii)->hydroForce_accGradient(envir, refPt);
+			}
+			
+			force_conv += m_MorisonElements.at(ii)->hydroForce_convecAcc(envir, refPt);
+			force_axdv += m_MorisonElements.at(ii)->hydroForce_axDiverg(envir, refPt);
+			force_2ndP+= m_MorisonElements.at(ii)->hydroForce_2ndPot(envir, refPt);
+			force_rslb += m_MorisonElements.at(ii)->hydroForce_slendBodyRot(envir, refPt);						
+		}
+		force_drag += m_MorisonElements.at(ii)->hydroForce_drag(envir, refPt);
 	}	
 
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE, force);
+	force = force_drag + force_1stP + force_eta + force_conv + force_axdv + force_acgr + force_rotn + force_2ndP + force_rslb + force_rem;
 
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE, force);
 	IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG, force_drag);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_1, force_1);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_2, force_2);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_3, force_3);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_4, force_4);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_1STP, force_1stP);
 	IO::print2outLine(IO::OUTFLAG_HD_FORCE_ETA, force_eta);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_CONV, force_conv);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_AXDV, force_axdv);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_ACGR, force_acgr);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_ROTN, force_rotn);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_2NDP, force_2ndP);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_RSLB, force_rslb);
 	IO::print2outLine(IO::OUTFLAG_HD_FORCE_REM, force_rem);
 	
 	return force;

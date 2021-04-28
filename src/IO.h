@@ -36,13 +36,16 @@ public:
 		OUTFLAG_WAVE_ACC_2ND,
 		OUTFLAG_WAVE_PRES_2ND,
 //		
-		OUTFLAG_HD_FORCE_DRAG,
-		OUTFLAG_HD_FORCE_1,
-		OUTFLAG_HD_FORCE_2,
-		OUTFLAG_HD_FORCE_3,
-		OUTFLAG_HD_FORCE_4,
-		OUTFLAG_HD_FORCE_ETA,
-		OUTFLAG_HD_FORCE_REM,
+		OUTFLAG_HD_FORCE_DRAG, // Drag force
+		OUTFLAG_HD_FORCE_1STP, // Due to first-order potential
+		OUTFLAG_HD_FORCE_ETA,  // Due to relative wave elevation
+		OUTFLAG_HD_FORCE_CONV, // Due to convective acceleration
+		OUTFLAG_HD_FORCE_AXDV, // Due to axial-divergence acceleration
+		OUTFLAG_HD_FORCE_ACGR, // Due to gradient of fluid acceleration
+		OUTFLAG_HD_FORCE_ROTN, // Due to the rotation of the normal vector
+		OUTFLAG_HD_FORCE_2NDP, // Due to second-order potential
+		OUTFLAG_HD_FORCE_RSLB, // Due to the rotation term from slender-body approximation
+		OUTFLAG_HD_FORCE_REM,  // Remaining force terms
 //
 		OUTFLAG_HD_ADD_MASS_FORCE,
 //

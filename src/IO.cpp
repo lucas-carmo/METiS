@@ -919,37 +919,55 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		isOutput = true;
 	}
 
-	if (caseInsCompare(keyword, "hd_force1"))
+	if (caseInsCompare(keyword, "hd_force_1stP"))
 	{
-		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_1) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_1STP) = true;
 		isOutput = true;
 	}
 
-	if (caseInsCompare(keyword, "hd_force2"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_2) = true;
-		isOutput = true;
-	}
-
-	if (caseInsCompare(keyword, "hd_force3"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_3) = true;
-		isOutput = true;
-	}
-
-	if (caseInsCompare(keyword, "hd_force4"))
-	{
-		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_4) = true;
-		isOutput = true;
-	}
-
-	if (caseInsCompare(keyword, "hd_forceEta"))
+	if (caseInsCompare(keyword, "hd_force_eta"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_ETA) = true;
 		isOutput = true;
 	}
 
-	if (caseInsCompare(keyword, "hd_forceRem"))
+	if (caseInsCompare(keyword, "hd_force_conv"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_CONV) = true;
+		isOutput = true;
+	}
+
+	if (caseInsCompare(keyword, "hd_force_axDv"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_AXDV) = true;
+		isOutput = true;
+	}
+
+	if (caseInsCompare(keyword, "hd_force_2ndP"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_2NDP) = true;
+		isOutput = true;
+	}
+
+	if (caseInsCompare(keyword, "hd_force_acgr"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_ACGR) = true;
+		isOutput = true;
+	}
+
+	if (caseInsCompare(keyword, "hd_force_rotN"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_ROTN) = true;
+		isOutput = true;
+	}
+
+	if (caseInsCompare(keyword, "hd_force_RSLB"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_RSLB) = true;
+		isOutput = true;
+	}
+
+	if (caseInsCompare(keyword, "hd_force_Rem"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_HD_FORCE_REM) = true;
 		isOutput = true;
@@ -1142,8 +1160,9 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 	// Check whether the specified flag is indeed one that requires a vector with six components
 	if ((flag != IO::OUTFLAG_FOWT_DISP) && (flag != IO::OUTFLAG_FOWT_VEL) && (flag != IO::OUTFLAG_FOWT_ACC) && (flag != IO::OUTFLAG_FOWT_DISP_SD) &&
 		(flag != IO::OUTFLAG_TOTAL_FORCE) && (flag != IO::OUTFLAG_HD_FORCE) && (flag != IO::OUTFLAG_HS_FORCE) && (flag != IO::OUTFLAG_MOOR_FORCE) &&
-		(flag != IO::OUTFLAG_HD_FORCE_DRAG) && (flag != IO::OUTFLAG_HD_FORCE_1) && (flag != IO::OUTFLAG_HD_FORCE_2) &&
-		(flag != IO::OUTFLAG_HD_FORCE_3) && (flag != IO::OUTFLAG_HD_FORCE_4) && (flag != IO::OUTFLAG_HD_FORCE_ETA) && (flag != IO::OUTFLAG_HD_FORCE_REM) &&
+		(flag != IO::OUTFLAG_HD_FORCE_DRAG) && (flag != IO::OUTFLAG_HD_FORCE_1STP) && (flag != IO::OUTFLAG_HD_FORCE_ETA) &&
+		(flag != IO::OUTFLAG_HD_FORCE_CONV) && (flag != IO::OUTFLAG_HD_FORCE_AXDV) && (flag != IO::OUTFLAG_HD_FORCE_ACGR) &&
+		(flag != IO::OUTFLAG_HD_FORCE_ROTN) && (flag != IO::OUTFLAG_HD_FORCE_2NDP) && (flag != IO::OUTFLAG_HD_FORCE_RSLB) && (flag != IO::OUTFLAG_HD_FORCE_REM) &&
 		(flag != IO::OUTFLAG_HD_ADD_MASS_FORCE) && (flag != IO::OUTFLAG_AD_HUB_FORCE) && (flag != IO::OUTFLAG_ADDED_MASS_DIAG) && (flag != OUTFLAG_DEBUG_VEC_6)
 	   )
 	{
@@ -1170,35 +1189,11 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			}
 		}
 
-		if (flag == OUTFLAG_HD_FORCE_1)
+		if (flag == OUTFLAG_HD_FORCE_1STP)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
-				print2outLineHeader("hd_force1_" + std::to_string(ii));
-			}
-		}
-
-		if (flag == OUTFLAG_HD_FORCE_2)
-		{
-			for (int ii = 1; ii <= 6; ++ii)
-			{
-				print2outLineHeader("hd_force2_" + std::to_string(ii));
-			}
-		}
-
-		if (flag == OUTFLAG_HD_FORCE_3)
-		{
-			for (int ii = 1; ii <= 6; ++ii)
-			{
-				print2outLineHeader("hd_force3_" + std::to_string(ii));
-			}
-		}
-
-		if (flag == OUTFLAG_HD_FORCE_4)
-		{
-			for (int ii = 1; ii <= 6; ++ii)
-			{
-				print2outLineHeader("hd_force4_" + std::to_string(ii));
+				print2outLineHeader("hd_force_1stP_" + std::to_string(ii));
 			}
 		}
 
@@ -1206,7 +1201,55 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
-				print2outLineHeader("hd_forceEta_" + std::to_string(ii));
+				print2outLineHeader("hd_force_eta_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_FORCE_CONV)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_force_conv_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_FORCE_AXDV)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_force_axdv_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_FORCE_ACGR)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_force_acgr_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_FORCE_ROTN)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_force_rotn_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_FORCE_2NDP)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_force_2ndP_" + std::to_string(ii));
+			}
+		}
+
+		if (flag == OUTFLAG_HD_FORCE_RSLB)
+		{
+			for (int ii = 1; ii <= 6; ++ii)
+			{
+				print2outLineHeader("hd_force_rslb_" + std::to_string(ii));
 			}
 		}
 
@@ -1214,7 +1257,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 		{
 			for (int ii = 1; ii <= 6; ++ii)
 			{
-				print2outLineHeader("hd_forceRem_" + std::to_string(ii));
+				print2outLineHeader("hd_force_rem_" + std::to_string(ii));
 			}
 		}
 
@@ -1617,24 +1660,36 @@ std::string IO::printOutVar()
 			output += "Hydrodynamic force - Drag: ";
 			break;
 
-		case IO::OUTFLAG_HD_FORCE_1:
-			output += "Hydrodynamic force - Pt1 - 1st order pot: ";
-			break;
-
-		case IO::OUTFLAG_HD_FORCE_2:
-			output += "Hydrodynamic force - Pt2 - 2nd order pot: ";
-			break;
-
-		case IO::OUTFLAG_HD_FORCE_3:
-			output += "Hydrodynamic force - Pt3 - Conv acc: ";
-			break;
-
-		case IO::OUTFLAG_HD_FORCE_4:
-			output += "Hydrodynamic force - Pt4 - Ax-diverg: ";
+		case IO::OUTFLAG_HD_FORCE_1STP:
+			output += "Hydrodynamic force - 1stp - 1st order pot: ";
 			break;
 
 		case IO::OUTFLAG_HD_FORCE_ETA:
 			output += "Hydrodynamic force - Eta - Wave elevation: ";
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_CONV:
+			output += "Hydrodynamic force - CONV - Conv acc: ";
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_AXDV:
+			output += "Hydrodynamic force - AXDIV - Ax-diverg acc: ";
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_ACGR:
+			output += "Hydrodynamic force - ACGR - Acceleration gradient: ";
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_ROTN:
+			output += "Hydrodynamic force - ROTN - Rotation of normal vector: ";
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_2NDP:
+			output += "Hydrodynamic force - 2NDP - 2nd order pot: ";
+			break;
+
+		case IO::OUTFLAG_HD_FORCE_RSLB:
+			output += "Hydrodynamic force - RLSB - Rotation from slender-body app: ";
 			break;
 
 		case IO::OUTFLAG_HD_FORCE_REM:

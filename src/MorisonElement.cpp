@@ -50,7 +50,14 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 	m_du1dz_Array_z = zeros(0, 0);
 	m_du1dx_Array_y = zeros(0, 0);
 	m_du1dx_Array_z = zeros(0, 0);	
-	m_du1dy_Array_z = zeros(0, 0);	
+	m_du1dy_Array_z = zeros(0, 0);
+
+	m_da1dx_Array_x = zeros(0, 0);
+	m_da1dy_Array_y = zeros(0, 0);
+	m_da1dz_Array_z = zeros(0, 0);
+	m_da1dx_Array_y = zeros(0, 0);
+	m_da1dx_Array_z = zeros(0, 0);
+	m_da1dy_Array_z = zeros(0, 0);
 }
 
 /*****************************************************
@@ -88,16 +95,15 @@ void MorisonElement::updateMorisonElement(const vec::fixed<6> &floaterCoGpos, co
 {
 	// Considering total body motion
 	calcPosVel(floaterCoGpos, floaterVel, m_node1Pos, m_node2Pos, m_node1Vel, m_node2Vel, m_xvec, m_yvec, m_zvec);
-	m_RotatMatrix = rotatMatrix(floaterCoGpos.rows(3, 5));
-	m_node1AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), m_RotatMatrix * m_cog2node1));
-	m_node2AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), m_RotatMatrix * m_cog2node2));
+	mat::fixed<3, 3> R = rotatMatrix(floaterCoGpos.rows(3, 5));
+	m_node1AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R * m_cog2node1));
+	m_node2AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R * m_cog2node2));
 
-	m_nodeWL = floaterCoGpos.rows(0, 2) + m_RotatMatrix * m_cog2nodeWL;
+	m_nodeWL = floaterCoGpos.rows(0, 2) + R * m_cog2nodeWL;
 	m_Zwl = m_nodeWL.at(2);
 
 	// Considering only the mean and slow drift motions
 	calcPosVel(floaterCoGpos_SD, floaterVel_SD, m_node1Pos_sd, m_node2Pos_sd, m_node1Vel_sd, m_node2Vel_sd, m_xvec_sd, m_yvec_sd, m_zvec_sd);
-	m_RotatMatrix_sd = rotatMatrix(floaterCoGpos_SD.rows(3, 5));
 
 	calculateImmersedLengthProperties_sd(m_Lw, m_numNodesBelowWL, m_dL);
 }
@@ -368,6 +374,111 @@ vec::fixed<3> MorisonElement::du1dz(const ENVIR &envir, const int nodeIndex) con
 	return du1dz;
 }
 
+vec::fixed<3> MorisonElement::da1dx(const ENVIR &envir, const int nodeIndex) const
+{
+	vec::fixed<3> da1dx;
+	if (m_da1dx_Array_x.is_empty())
+	{
+		vec::fixed<3> node = nodePos_sd(nodeIndex);
+		double eta{ 0 };
+		if (envir.waveStret() == 2)
+		{
+			eta = envir.waveElev(node.at(0), node.at(1));
+		}
+
+		da1dx = envir.da1dx(node, eta);
+	}
+	else
+	{
+		const vec &t = envir.getTimeArray();
+		uword ind1 = envir.getInd4interp1();
+		uword ind2 = envir.getInd4interp2();
+
+		double da1dx_x = m_da1dx_Array_x.at(ind1, nodeIndex);
+		double da1dx_y = m_da1dx_Array_y.at(ind1, nodeIndex);
+		double da1dx_z = m_da1dx_Array_z.at(ind1, nodeIndex);
+		if (envir.shouldInterp())
+		{
+			da1dx_x += (m_da1dx_Array_x.at(ind2, nodeIndex) - m_da1dx_Array_x.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			da1dx_y += (m_da1dx_Array_y.at(ind2, nodeIndex) - m_da1dx_Array_y.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			da1dx_z += (m_da1dx_Array_z.at(ind2, nodeIndex) - m_da1dx_Array_z.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+		}
+		da1dx = { da1dx_x, da1dx_y, da1dx_z };
+	}
+	return da1dx;
+}
+
+vec::fixed<3> MorisonElement::da1dy(const ENVIR &envir, const int nodeIndex) const
+{
+	vec::fixed<3> da1dy;
+	if (m_da1dx_Array_y.is_empty())
+	{
+		vec::fixed<3> node = nodePos_sd(nodeIndex);
+		double eta{ 0 };
+		if (envir.waveStret() == 2)
+		{
+			eta = envir.waveElev(node.at(0), node.at(1));
+		}
+		da1dy = envir.da1dy(node, eta);
+	}
+	else
+	{
+		const vec &t = envir.getTimeArray();
+		uword ind1 = envir.getInd4interp1();
+		uword ind2 = envir.getInd4interp2();
+
+		// Remember of symmetries of the velocity gradient
+		// e.g. da1dy_x = da1dx_y
+		double da1dy_x = m_da1dx_Array_y.at(ind1, nodeIndex);
+		double da1dy_y = m_da1dy_Array_y.at(ind1, nodeIndex);
+		double da1dy_z = m_da1dy_Array_z.at(ind1, nodeIndex);
+		if (envir.shouldInterp())
+		{
+			da1dy_x += (m_da1dx_Array_y.at(ind2, nodeIndex) - m_da1dx_Array_y.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			da1dy_y += (m_da1dy_Array_y.at(ind2, nodeIndex) - m_da1dy_Array_y.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			da1dy_z += (m_da1dy_Array_z.at(ind2, nodeIndex) - m_da1dy_Array_z.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+		}
+		da1dy = { da1dy_x, da1dy_y, da1dy_z };
+	}
+	return da1dy;
+}
+
+vec::fixed<3> MorisonElement::da1dz(const ENVIR &envir, const int nodeIndex) const
+{
+	vec::fixed<3> da1dz;
+
+	if (m_da1dx_Array_z.is_empty())
+	{
+		vec::fixed<3> node = nodePos_sd(nodeIndex);
+		double eta{ 0 };
+		if (envir.waveStret() == 2)
+		{
+			eta = envir.waveElev(node.at(0), node.at(1));
+		}
+		da1dz = envir.da1dz(node, eta);
+	}
+	else
+	{
+		const vec &t = envir.getTimeArray();
+		uword ind1 = envir.getInd4interp1();
+		uword ind2 = envir.getInd4interp2();
+
+		// Remember of symmetries of the velocity gradient
+		// e.g. da1dz_x = da1dx_z
+		double da1dz_x = m_da1dx_Array_z.at(ind1, nodeIndex);
+		double da1dz_y = m_da1dy_Array_z.at(ind1, nodeIndex);
+		double da1dz_z = m_da1dz_Array_z.at(ind1, nodeIndex);
+		if (envir.shouldInterp())
+		{
+			da1dz_x += (m_da1dx_Array_z.at(ind2, nodeIndex) - m_da1dx_Array_z.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			da1dz_y += (m_da1dy_Array_z.at(ind2, nodeIndex) - m_da1dy_Array_z.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			da1dz_z += (m_da1dz_Array_z.at(ind2, nodeIndex) - m_da1dz_Array_z.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+		}
+		da1dz = { da1dz_x, da1dz_y, da1dz_z };
+	}
+	return da1dz;
+}
+
 // Calculate the intersection between the cylinder and waterline, considering the wave elevation.
 // Returns arma::datum::nan if no intersection is found
 // For computational speed, it assumes that the waves are all so long and the cylinder is almost vertical, so that 
@@ -432,4 +543,9 @@ void MorisonElement::calculateImmersedLengthProperties_sd(double &Lw, int &ncyl,
 		ncyl += 1;
 	}
 	dL = Lw / (ncyl - 1); // length of each interval between points
+}
+
+bool MorisonElement::flagFixed() const
+{
+	return m_flagFixed;
 }

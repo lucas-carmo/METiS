@@ -63,14 +63,45 @@ vec::fixed<6> MorisonRect::hydrostaticForce(const double rho, const double g) co
 	return force;
 }
 
-vec::fixed<6> MorisonRect::hydrodynamicForce(const ENVIR &envir, const int hydroMode, const vec::fixed<3> &refPt, const vec::fixed<3> &refPt_sd,
-	vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_2,
-	vec::fixed<6> &force_3, vec::fixed<6> &force_4, vec::fixed<6> &force_eta, vec::fixed<6> &force_rem) const
+vec::fixed<6> MorisonRect::hydroForce_1st(const ENVIR & envir, const int hydroMode, const vec::fixed<3>& refPt) const
 {
-	vec::fixed<6> force(fill::zeros);
-	return force;
+	return fill::zeros;
 }
 
+vec::fixed<6> MorisonRect::hydroForce_drag(const ENVIR & envir, const vec::fixed<3>& refPt) const
+{
+	return fill::zeros;
+}
+
+vec::fixed<6> MorisonRect::hydroForce_relWaveElev(const ENVIR & envir, const vec::fixed<3>& refPt) const
+{
+	return fill::zeros;
+}
+
+vec::fixed<6> MorisonRect::hydroForce_2ndPot(const ENVIR & envir, const vec::fixed<3>& refPt) const
+{
+	return fill::zeros;
+}
+
+vec::fixed<6> MorisonRect::hydroForce_convecAcc(const ENVIR & envir, const vec::fixed<3>& refPt) const
+{
+	return fill::zeros;
+}
+
+vec::fixed<6> MorisonRect::hydroForce_axDiverg(const ENVIR & envir, const vec::fixed<3>& refPt) const
+{
+	return fill::zeros;
+}
+
+vec::fixed<6> MorisonRect::hydroForce_accGradient(const ENVIR & envir, const vec::fixed<3>& refPt) const
+{
+	return fill::zeros;
+}
+
+vec::fixed<6> MorisonRect::hydroForce_slendBodyRot(const ENVIR & envir, const vec::fixed<3>& refPt) const
+{
+	return fill::zeros;
+}
 
 /*****************************************************
 	Printing
