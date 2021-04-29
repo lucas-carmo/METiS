@@ -456,7 +456,16 @@ vec::fixed<6> MorisonCirc::hydroForce_relWaveElev(const ENVIR &envir, const vec:
 	double eta(this->waveElevAtWL(envir));
 	vec::fixed<3> n_wl = this->nodePos_sd(m_numNodesBelowWL - 1);
 	
-	force.rows(0, 2) = (datum::pi * m_diam*m_diam / 4.) * envir.watDensity() * m_CM * du1dt * (eta - m_Zwl);
+	// If the forces are evaluated at the fixed position, this component is due to the relative wave elevation,
+	// just like when using Pinkster's formulation. However, if the force due to the first-order potential is 
+	// evaluated at the instantaneous body position, this component considers only the wave elevation, as the part
+	// due to the body motion is included in hd_force_1stP.
+	double zBody = 0;
+	if (m_flagFixed)
+	{
+		zBody = m_Zwl;
+	}
+	force.rows(0, 2) = (datum::pi * m_diam*m_diam / 4.) * envir.watDensity() * m_CM * du1dt * (eta - zBody);
 	force.rows(3, 5) = cross(n_wl - refPt, force.rows(0, 2));
 
 	return force;	

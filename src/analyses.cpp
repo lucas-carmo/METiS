@@ -98,7 +98,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	envir.evaluateWaveKinematics();
 	std::cout << "Finished\n";
 
-	if (fowt.filterSD_omega() == 0)
+	if (fowt.filterSD_omega() == 0 || fowt.hydroMode() == 1)
 	{
 		std::cout << "\nBegan evaluating body quantities related to wave kinematics\n";
 		fowt.evaluateQuantitiesAtBegin(envir);
