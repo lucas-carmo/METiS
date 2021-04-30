@@ -605,8 +605,7 @@ vec::fixed<6> MorisonCirc::hydroForce_axDiverg(const ENVIR &envir, const vec::fi
 	return force;
 }
 
-// TODO: include axial contribution
-vec::fixed<6> MorisonCirc::hydroForce_accGradient(const ENVIR & envir, const vec::fixed<3>& refPt) const
+vec::fixed<6> MorisonCirc::hydroForce_accGradient(const ENVIR & envir, const vec::fixed<3>& refPt) const // TODO: include axial contribution
 {
 	vec::fixed<6> force(fill::zeros);
 	vec::fixed<3> zvec{ m_zvec_sd };
@@ -687,6 +686,71 @@ vec::fixed<6> MorisonCirc::hydroForce_slendBodyRot(const ENVIR & envir, const ve
 		}
 	}
 
+	return force;
+}
+
+vec::fixed<6> MorisonCirc::hydroForce_rem(const ENVIR & envir, const vec::fixed<3>& refPt) const
+{
+	vec::fixed<6> force(fill::zeros);
+	vec::fixed<3> xvec{ m_xvec_sd }, yvec{ m_yvec_sd }, zvec{ m_zvec_sd };
+
+	int ncyl = m_numNodesBelowWL; // If the body is fixed, this is the same as m_nodesArray.n_cols. Otherwise, it is updated at each time step
+	for (int ii = 0; ii < ncyl; ++ii)
+	{
+		vec::fixed<3> n_ii = nodePos_sd(ii);
+
+		// Centripetal acceleration of the integration point
+		double lambda = norm(n_ii - m_node1Pos_sd, 2) / norm(m_node2Pos_sd - m_node1Pos_sd);
+		vec::fixed<3> acc_ii = m_node1AccCentrip + lambda * (m_node2AccCentrip - m_node1AccCentrip);
+		vec::fixed<3> acc_ii_axial = dot(acc_ii, zvec) * zvec;
+
+		if (ii == 0)
+		{
+			// For due to the convective acceleration - axial part
+			force.rows(0, 2) += -(4 / 3.) * datum::pi * (m_diam*m_diam*m_diam / 8.)  * envir.watDensity() * m_axialCa_1 * acc_ii_axial;
+
+			// Quadratic pressure drop from Rainey's formulation
+			vec::fixed<3> u1(this->u1(envir, ii));
+			force.rows(0, 2) += -0.5 * datum::pi * (m_diam*m_diam / 4.) * envir.watDensity() * (m_CM - 1) * (pow(dot(u1 - m_node1Vel, xvec), 2) + pow(dot(u1 - m_node1Vel, yvec), 2)) * zvec;
+
+			// Point load from Rainey's formulation that results in a Munk moment
+			force.rows(0,2) += datum::pi * (m_diam*m_diam / 4.)* (m_CM - 1) * dot(u1 - m_node1Vel, zvec) * (cdot(u1 - m_node1Vel, xvec)*xvec + cdot(u1 - m_node1Vel, yvec)*yvec);
+		}
+		else if (ii == ncyl - 1)
+		{
+			force.rows(0, 2) += -(4 / 3.) * datum::pi * (m_diam*m_diam*m_diam / 8.)  * envir.watDensity() * m_axialCa_2 * acc_ii_axial;
+
+			// At the top node, the direction of the pressure drop is the opposite of the bottom
+			vec::fixed<3> u1(this->u1(envir, ii));
+			force.rows(0, 2) += 0.5 * datum::pi * (m_diam*m_diam / 4.) * envir.watDensity() * (m_CM - 1) * (pow(dot(u1 - m_node1Vel, xvec), 2) + pow(dot(u1 - m_node1Vel, yvec), 2)) * zvec;
+
+			// As this component does not act along the axis of the cylinder, need to include the moment with respect to node1
+			// It is also the opposite of the bottom
+			vec::fixed<3> auxForce = -datum::pi * (m_diam*m_diam / 4.)* (m_CM - 1) * dot(u1 - m_node1Vel, zvec) * (cdot(u1 - m_node1Vel, xvec)*xvec + cdot(u1 - m_node1Vel, yvec)*yvec);
+			force.rows(0, 2) += auxForce;
+			force.rows(3, 5) += cross(m_node2Pos_sd - m_node1Pos_sd, auxForce);
+		}
+
+		// // For due to the convective acceleration - part that is perpendicular to the cylinder axis
+		acc_ii -= acc_ii_axial;
+		vec::fixed<3> force_ii = -datum::pi * (m_diam*m_diam / 4.) * envir.watDensity() * (m_CM - 1)  * acc_ii;
+
+		// Integrate the forces along the cylinder using Simpson's Rule
+		if (ii == 0 || ii == ncyl - 1)
+		{
+			force += (m_dL / 3.0) * join_cols(force_ii, cross(n_ii - m_node1Pos_sd, force_ii));
+		}
+		else if (ii % 2 != 0)
+		{
+			force += (4 * m_dL / 3.0) * join_cols(force_ii, cross(n_ii - m_node1Pos_sd, force_ii));
+		}
+		else
+		{
+			force += (2 * m_dL / 3.0) * join_cols(force_ii, cross(n_ii - m_node1Pos_sd, force_ii));
+		}
+	}
+
+	force.rows(3, 5) += cross(m_node1Pos_sd - refPt, force.rows(0, 2));
 	return force;
 }
 

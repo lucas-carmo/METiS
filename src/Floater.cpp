@@ -330,7 +330,8 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 			force_conv += m_MorisonElements.at(ii)->hydroForce_convecAcc(envir, refPt);
 			force_axdv += m_MorisonElements.at(ii)->hydroForce_axDiverg(envir, refPt);
 			force_2ndP+= m_MorisonElements.at(ii)->hydroForce_2ndPot(envir, refPt);
-			force_rslb += m_MorisonElements.at(ii)->hydroForce_slendBodyRot(envir, refPt);						
+			force_rslb += m_MorisonElements.at(ii)->hydroForce_slendBodyRot(envir, refPt);
+			force_rem += m_MorisonElements.at(ii)->hydroForce_rem(envir, refPt);
 		}
 		force_drag += m_MorisonElements.at(ii)->hydroForce_drag(envir, refPt);
 	}	

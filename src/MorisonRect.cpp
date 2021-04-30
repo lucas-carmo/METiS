@@ -103,6 +103,11 @@ vec::fixed<6> MorisonRect::hydroForce_slendBodyRot(const ENVIR & envir, const ve
 	return fill::zeros;
 }
 
+vec::fixed<6> MorisonRect::hydroForce_rem(const ENVIR &envir, const vec::fixed<3> &refPt) const
+{
+	return fill::zeros;
+}
+
 /*****************************************************
 	Printing
 *****************************************************/
