@@ -76,6 +76,9 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 	{
 		const Wave &wave(envir.getWave(iWave));
 		w.at(iWave) = wave.angFreq();
+
+		if (wave.amp() == 0) continue;
+
 		amp_hydroForce_1st.row(iWave) = hydroForce_1st_coefs(wave, envir.watDensity(), envir.watDepth(), envir.gravity()).st();
 		amp_waveElevAtWL.at(iWave) = envir.waveElev_coef(m_nodesArray.at(0, npts - 1), m_nodesArray.at(1, npts - 1), iWave); // Wave elevation is evaluated at the last node, which is the intersection with the water line
 
@@ -269,19 +272,14 @@ void MorisonCirc::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3>
 	}
 }
 
-
-vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) const
+vec::fixed<6> MorisonCirc::hydrostaticForce_helper(const double rho, const double g, const vec::fixed<3> &n1, const vec::fixed<3> &n2_in, const vec::fixed<3> &xvec, const vec::fixed<3> &yvec, const vec::fixed<3> &zvec) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
+	vec::fixed<3> n2(n2_in);
 
 	// Use a more friendly notation
 	double D = m_diam;
-
-	vec::fixed<3> n1 = node1Pos();
-	vec::fixed<3> n2 = node2Pos();
-	vec::fixed<3> xvec(m_xvec), yvec(m_yvec), zvec(m_zvec);
-
 
 	// If the cylinder is above the waterline, then the hydrostatic force is zero
 	if (n1[2] >= 0)
@@ -349,11 +347,29 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 	force[2] = rho * g * Vol; // Fx = Fy = 0 and Fz = Buoyancy force
 	force.rows(3, 5) = cross(Xb_global, force.rows(0, 2));
 
-	// The moment was calculated with relation to n1, which may be different from node1.
-	// We need to change the fulcrum to node1
-	force.rows(3, 5) = force.rows(3, 5) + cross(n1 - node1Pos(), force.rows(0, 2));
-
 	return force;
+}
+
+vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) const
+{
+	// Forces and moments acting at the Morison Element
+	vec::fixed<6> force(fill::zeros);
+
+	// Use a more friendly notation
+	double D = m_diam;
+	
+	return hydrostaticForce_helper(rho, g, node1Pos(), node2Pos(), m_xvec, m_yvec, m_zvec);
+}
+
+vec::fixed<6> MorisonCirc::hydrostaticForce_sd(const double rho, const double g) const
+{
+	// Forces and moments acting at the Morison Element
+	vec::fixed<6> force(fill::zeros);
+
+	// Use a more friendly notation
+	double D = m_diam;
+	
+	return hydrostaticForce_helper(rho, g, node1Pos_sd(), node2Pos_sd(), m_xvec_sd, m_yvec_sd, m_zvec_sd);
 }
 
 /*
@@ -1327,7 +1343,7 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 	// Nodes position and vectors of the local coordinate system vectors
 	vec::fixed<3> n1 = node1Pos();
 	vec::fixed<3> n2 = node2Pos();
-	vec::fixed<3> xvec = m_xvec; // xvec and yvec are used to project the acceleration. They are analogous to the normal vector, which should consider the slow or fixed position
+	vec::fixed<3> xvec = m_xvec; // xvec and yvec are used to project the acceleration. They are analogous to the normal vector.
 	vec::fixed<3> yvec = m_yvec;
 	vec::fixed<3> zvec = m_zvec; // While zvec is used only to evaluate the nodes position, and hence should be first-order position
 	if (hydroMode < 2)

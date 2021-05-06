@@ -41,6 +41,7 @@ public:
 
 	// Forces up to second order - to be used in the evaluation of the total acceleration
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const override;
+	virtual vec::fixed<6> hydrostaticForce_sd(const double rho, const double g) const override;
 	virtual vec::fixed<6> hydroForce_1st(const ENVIR &envir, const int hydroMode, const vec::fixed<3> &refPt) const override;
 	virtual vec::fixed<6> hydroForce_drag(const ENVIR &envir, const vec::fixed<3> &refPt) const override;
 	virtual vec::fixed<6> hydroForce_relWaveElev(const ENVIR &envir, const vec::fixed<3> &refPt) const override;

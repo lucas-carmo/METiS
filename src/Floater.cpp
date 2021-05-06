@@ -296,10 +296,7 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 	vec::fixed<6> force_rem(fill::zeros);  // Remaining force components
 
 	vec::fixed<3> refPt = CoGPos_sd().rows(0, 2);
-	mat::fixed<6, 6> R(fill::eye);
-	R *= -1;
-	R.rows(0, 2).cols(0, 2) += rotatMatrix(m_disp.rows(3, 5));
-	R.rows(3, 5).cols(3, 5) = R.rows(0, 2).cols(0, 2);	
+	vec::fixed<3> Rvec = m_disp.rows(3, 5) - m_disp_sd.rows(3, 5);
 
 	// Force acting on each element
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)	
@@ -322,8 +319,10 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 
 			// If the body is not treated as fixed, these second order components are included in hydroForce_1st
 			if (m_MorisonElements.at(ii)->flagFixed())
-			{				
-				force_rotn += R * auxForce;
+			{
+				auxForce += m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity()) - m_MorisonElements.at(ii)->hydrostaticForce_sd(envir.watDensity(), envir.gravity());
+				force_rotn.rows(0,2) += cross(Rvec, auxForce.rows(0,2));
+				force_rotn.rows(3, 5) += cross(Rvec, auxForce.rows(3, 5));
 				force_acgr += m_MorisonElements.at(ii)->hydroForce_accGradient(envir, refPt);
 			}
 			

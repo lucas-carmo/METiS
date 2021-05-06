@@ -63,6 +63,11 @@ vec::fixed<6> MorisonRect::hydrostaticForce(const double rho, const double g) co
 	return force;
 }
 
+vec::fixed<6> MorisonRect::hydrostaticForce_sd(const double rho, const double g) const
+{
+	return fill::zeros;
+}
+
 vec::fixed<6> MorisonRect::hydroForce_1st(const ENVIR & envir, const int hydroMode, const vec::fixed<3>& refPt) const
 {
 	return fill::zeros;
