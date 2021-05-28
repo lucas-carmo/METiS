@@ -415,6 +415,12 @@ vec::fixed<6> MorisonCirc::hydroForce_drag(const ENVIR &envir, const vec::fixed<
 	vec::fixed<3> zvec{ m_zvec_sd };
 	vec::fixed<3> v_axial = arma::dot(m_node1Vel, zvec) * zvec; // Since the cylinder is a rigid body, this is the same for all the nodes
 
+	bool evaluateTopNode{ true };
+	if (m_node2Pos.at(2) > 0)
+	{
+		evaluateTopNode = false;
+	}
+
 	int ncyl = m_numNodesBelowWL; // If the body is fixed, this is the same as m_nodesArray.n_cols. Otherwise, it is updated at each time step
 	for (int ii = 0; ii < ncyl; ++ii)
 	{
@@ -430,7 +436,7 @@ vec::fixed<6> MorisonCirc::hydroForce_drag(const ENVIR &envir, const vec::fixed<
 		{
 			force.rows(0, 2) += 0.5 * envir.watDensity() * m_axialCD_1 * datum::pi * (m_diam*m_diam / 4.) * norm(u1_axial - v_axial, 2) * (u1_axial - v_axial);
 		}
-		else if (ii == ncyl - 1)
+		else if (ii == ncyl - 1 && evaluateTopNode)
 		{
 			force.rows(0, 2) += 0.5 * envir.watDensity() * m_axialCD_2 * datum::pi * (m_diam*m_diam / 4.) * norm(u1_axial - v_axial, 2) * (u1_axial - v_axial);
 		}
@@ -532,6 +538,12 @@ vec::fixed<6> MorisonCirc::hydroForce_convecAcc(const ENVIR &envir, const vec::f
 	vec::fixed<6> force(fill::zeros);
 	vec::fixed<3> zvec{ m_zvec_sd };
 
+	bool evaluateTopNode{ true };
+	if (m_node2Pos.at(2) > 0)
+	{
+		evaluateTopNode = false;
+	}
+
 	int ncyl = m_numNodesBelowWL; // If the body is fixed, this is the same as m_nodesArray.n_cols. Otherwise, it is updated at each time step
 	vec::fixed<3> a_c(fill::zeros);
 	for (int ii = 0; ii < ncyl; ++ii)
@@ -552,7 +564,7 @@ vec::fixed<6> MorisonCirc::hydroForce_convecAcc(const ENVIR &envir, const vec::f
 		{
 			force.rows(0, 2) += (4 / 3.) * datum::pi * (m_diam*m_diam*m_diam / 8.)  * envir.watDensity() * m_axialCa_1 * a_c_axial;
 		}
-		else if (ii == ncyl - 1)
+		else if (ii == ncyl - 1 && evaluateTopNode)
 		{
 			force.rows(0, 2) += (4 / 3.) * datum::pi * (m_diam*m_diam*m_diam / 8.)  * envir.watDensity() * m_axialCa_2 * a_c_axial;
 		}
@@ -710,6 +722,12 @@ vec::fixed<6> MorisonCirc::hydroForce_rem(const ENVIR & envir, const vec::fixed<
 	vec::fixed<6> force(fill::zeros);
 	vec::fixed<3> xvec{ m_xvec_sd }, yvec{ m_yvec_sd }, zvec{ m_zvec_sd };
 
+	bool evaluateTopNode{ true };
+	if (m_node2Pos.at(2) > 0)
+	{
+		evaluateTopNode = false;
+	}
+
 	int ncyl = m_numNodesBelowWL; // If the body is fixed, this is the same as m_nodesArray.n_cols. Otherwise, it is updated at each time step
 	for (int ii = 0; ii < ncyl; ++ii)
 	{
@@ -720,7 +738,7 @@ vec::fixed<6> MorisonCirc::hydroForce_rem(const ENVIR & envir, const vec::fixed<
 		vec::fixed<3> acc_ii = m_node1AccCentrip + lambda * (m_node2AccCentrip - m_node1AccCentrip);
 		vec::fixed<3> acc_ii_axial = dot(acc_ii, zvec) * zvec;
 
-		if (ii == 0)
+		if (ii == 0 && m_botPressFlag)
 		{
 			// For due to the convective acceleration - axial part
 			force.rows(0, 2) += -(4 / 3.) * datum::pi * (m_diam*m_diam*m_diam / 8.)  * envir.watDensity() * m_axialCa_1 * acc_ii_axial;
@@ -732,7 +750,7 @@ vec::fixed<6> MorisonCirc::hydroForce_rem(const ENVIR & envir, const vec::fixed<
 			// Point load from Rainey's formulation that results in a Munk moment
 			force.rows(0,2) += datum::pi * (m_diam*m_diam / 4.)* (m_CM - 1) * dot(u1 - m_node1Vel, zvec) * (cdot(u1 - m_node1Vel, xvec)*xvec + cdot(u1 - m_node1Vel, yvec)*yvec);
 		}
-		else if (ii == ncyl - 1)
+		else if (ii == ncyl - 1 && m_botPressFlag && evaluateTopNode)
 		{
 			force.rows(0, 2) += -(4 / 3.) * datum::pi * (m_diam*m_diam*m_diam / 8.)  * envir.watDensity() * m_axialCa_2 * acc_ii_axial;
 
@@ -747,7 +765,7 @@ vec::fixed<6> MorisonCirc::hydroForce_rem(const ENVIR & envir, const vec::fixed<
 			force.rows(3, 5) += cross(m_node2Pos_sd - m_node1Pos_sd, auxForce);
 		}
 
-		// // For due to the convective acceleration - part that is perpendicular to the cylinder axis
+		// For due to the centripetal acceleration - part that is perpendicular to the cylinder axis
 		acc_ii -= acc_ii_axial;
 		vec::fixed<3> force_ii = -datum::pi * (m_diam*m_diam / 4.) * envir.watDensity() * (m_CM - 1)  * acc_ii;
 
