@@ -14,7 +14,7 @@ m_disp_sd(fill::zeros), m_vel_sd(fill::zeros)
 	m_CoG.fill(datum::nan);
 
 	// Default values for the filter in case the user has not specified any.
-	m_filterSD_omega = 0.10;
+	m_filterSD_omega = 0;
 	m_filterSD_zeta = 0.20;
 }
 
