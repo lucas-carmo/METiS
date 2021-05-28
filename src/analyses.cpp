@@ -219,9 +219,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 			{
 				throw std::runtime_error("The adaptive stepsize RK5 diverged.");
 			}
-
 			
-
 			if (factor >= 1)
 			{
 				// Update for next time step.
