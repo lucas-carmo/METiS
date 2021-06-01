@@ -317,14 +317,15 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 				force_eta += m_MorisonElements.at(ii)->hydroForce_relWaveElev(envir, refPt);
 			}
 
-			// If the body is not treated as fixed, these second order components are included in hydroForce_1st
-			if (m_MorisonElements.at(ii)->flagFixed())
-			{
-				auxForce += m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity()) - m_MorisonElements.at(ii)->hydrostaticForce_sd(envir.watDensity(), envir.gravity());
-				force_rotn.rows(0,2) += cross(Rvec, auxForce.rows(0,2));
-				force_rotn.rows(3, 5) += cross(Rvec, auxForce.rows(3, 5));
-				force_acgr += m_MorisonElements.at(ii)->hydroForce_accGradient(envir, refPt);
-			}
+			auxForce += m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity()) - m_MorisonElements.at(ii)->hydrostaticForce_sd(envir.watDensity(), envir.gravity());
+			force_rotn.rows(0,2) += cross(Rvec, auxForce.rows(0,2));
+			force_rotn.rows(3, 5) += cross(Rvec, auxForce.rows(3, 5));
+
+			auxForce = m_MorisonElements.at(ii)->hydrostaticForce_sd(envir.watDensity(), envir.gravity());
+			force_rotn.rows(0, 2) += cross(Rvec, (cross(Rvec, auxForce.rows(0, 2))));
+			force_rotn.rows(3, 5) += cross(Rvec, (cross(Rvec, auxForce.rows(3, 5))));
+
+			force_acgr += m_MorisonElements.at(ii)->hydroForce_accGradient(envir, refPt);
 			
 			force_conv += m_MorisonElements.at(ii)->hydroForce_convecAcc(envir, refPt);
 			force_axdv += m_MorisonElements.at(ii)->hydroForce_axDiverg(envir, refPt);
@@ -334,6 +335,7 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 		}
 		force_drag += m_MorisonElements.at(ii)->hydroForce_drag(envir, refPt);
 	}	
+	
 
 	force = force_drag + force_1stP + force_eta + force_conv + force_axdv + force_acgr + force_rotn + force_2ndP + force_rslb + force_rem;
 

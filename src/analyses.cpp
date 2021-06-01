@@ -92,18 +92,15 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	// make sure that the members of FOWT are updated
 	fowt.update(envir, disp0, vel0);
 
-	// If the filter frequency is 0, all quantities are evaluated at the fixed body position,
+	// All quantities are evaluated at the fixed body position,
 	// hence they can be evaluate previously with an IFFT
 	std::cout << "\nBegan evaluating wave kinematics at wave probes\n";
 	envir.evaluateWaveKinematics();
 	std::cout << "Finished\n";
 
-	if (fowt.filterSD_omega() == 0 || fowt.hydroMode() == 1)
-	{
-		std::cout << "\nBegan evaluating body quantities related to wave kinematics\n";
-		fowt.evaluateQuantitiesAtBegin(envir);
-		std::cout << "Finished\n\n";
-	}	
+	std::cout << "\nBegan evaluating body quantities related to wave kinematics\n";
+	fowt.evaluateQuantitiesAtBegin(envir);
+	std::cout << "Finished\n\n";
 
 	// The header of the formatted output file is written during the first time step and is then turned off
 	IO::print2outLineHeader_turnOn();

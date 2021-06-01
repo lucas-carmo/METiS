@@ -109,7 +109,7 @@ Disable all **DoFs** + choose the **forces** that you want to include in the ana
 ## **Hydro options**
 - **Hydro 0:** Do not compute hydrodynamic and hydrostatic forces;
 - **Hydro 1:** Evaluate non-linear hydrostatic and first-order wave forces. Hydrostatic forces are calculated considering the instantaneous body position instead of a stiffness matrix;
-- **Hydro 2:** Include second-order forces to the ones already calculated when hydro = 1. By default, the forces are evaluated at the initial body position. If, however, the user specifies a low-frequency filter `FiltSlowDrift` with a frequency different from zero, the slow body position is considered for the evaluation of second-order terms, while the force due to the first-order potential is computed at the instantaneous body position. In this case, the force outputs `hd_force_rotn` and `hd_force_acgr` (the one due to the rotation of the normal vector and the one due to the acceleration gradient) are zero while `hd_force_eta` includes only the wave elevation, and the second-order forces due to body motions are all included in `hd_force_1stP`. Note that this option does not allow the utilization of IFFT algorithms to compute wave kinematics, which is impractical in real wave conditions, but can be useful when only a few wave components are considered.
+- **Hydro 2:** Include second-order forces to the ones already calculated when hydro = 1. 
 
 # **Tools**
 The following MATLAB routines are included in folder **tools**:

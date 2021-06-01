@@ -29,7 +29,6 @@ MorisonCirc::MorisonCirc(const vec &node1Pos, const vec &node2Pos, const vec &co
 void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroMode)
 {
 	typedef std::vector<cx_double> cx_stdvec;
-	m_flagFixed = true;
 
 	const vec &t = envir.getTimeArray();
 	int nWaves = envir.numberOfWaveComponents();
@@ -242,7 +241,6 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 			m_hydroForce_2nd_Array %= repmat(envir.getRampArray(), 1, 6);
 		}
 	}
-
 }
 
 /*****************************************************
@@ -473,21 +471,17 @@ vec::fixed<6> MorisonCirc::hydroForce_relWaveElev(const ENVIR &envir, const vec:
 	if (m_node1Pos_sd.at(2)*m_node2Pos_sd.at(2) > 0)
 		return force;
 
-	vec::fixed<3> du1dt(this->du1dt(envir, m_numNodesBelowWL-1));
+	vec::fixed<3> du1dt(this->du1dt(envir, m_numNodesBelowWL-1));	
 	du1dt -= dot(du1dt, zvec) * zvec;
 	double eta(this->waveElevAtWL(envir));
 	vec::fixed<3> n_wl = this->nodePos_sd(m_numNodesBelowWL - 1);
 	
-	// If the forces are evaluated at the fixed position, this component is due to the relative wave elevation,
-	// just like when using Pinkster's formulation. However, if the force due to the first-order potential is 
-	// evaluated at the instantaneous body position, this component considers only the wave elevation, as the part
-	// due to the body motion is included in hd_force_1stP.
-	double zBody = 0;
-	if (m_flagFixed)
-	{
-		zBody = m_Zwl;
-	}
-	force.rows(0, 2) = (datum::pi * m_diam*m_diam / 4.) * envir.watDensity() * m_CM * du1dt * (eta - zBody);
+	double g{envir.gravity() };
+	double zBody = m_Zwl;
+	double L = norm(m_node2Pos_sd - m_node1Pos_sd);
+	double ry(dot(m_node2Pos - m_node1Pos, m_xvec_sd) / L), rx(dot(m_node2Pos - m_node1Pos, m_yvec_sd) / L);
+
+	force.rows(0, 2) = (datum::pi * m_diam*m_diam / 4.) * envir.watDensity() * (eta - zBody) * (m_CM * du1dt + g * rx*m_yvec_sd - g * ry*m_xvec_sd);
 	force.rows(3, 5) = cross(n_wl - refPt, force.rows(0, 2));
 
 	return force;	
@@ -810,10 +804,6 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 
 	vec::fixed<3> n1{ node1Pos_sd() }, n2{ node2Pos_sd() };
 	vec::fixed<3> xvec{ m_xvec_sd }, yvec{ m_yvec_sd }, zvec{ m_zvec_sd };
-	if (!m_flagFixed)
-	{
-		n1 = node1Pos(); n2 = node2Pos(); xvec = m_xvec; yvec = m_yvec; zvec = m_zvec;
-	}
 
 	if (n1.at(2) >= 0)
 	{
@@ -1047,14 +1037,6 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 	{
 		coef.at(ii) = cx_double{ mx_cos * xvec(ii - 3) + my_cos * yvec(ii - 3) , mx_sin * xvec(ii - 3) + my_sin * yvec(ii - 3) };
 	}
-
-	// Moments are always with respect to the slow n1 position, so we dont have to choose later for each type of analysis
-	if (!m_flagFixed)
-	{
-		cx_vec::fixed<3> aux = { cross(n1 - node1Pos_sd(), real(coef.rows(0,2))), cross(n1 - node1Pos_sd(), imag(coef.rows(0,2))) };
-		coef.rows(3, 5) += aux;
-	}
-
 
 	return rho * pi* R * R * coef;
 }
@@ -1331,13 +1313,6 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_2ndPot_coefs(const Wave &wave_ii, const
 	for (int ii = 3; ii < 6; ++ii)
 	{
 		coef.at(ii) = cx_double{ mx_cos * xvec(ii - 3) + my_cos * yvec(ii - 3) , mx_sin * xvec(ii - 3) + my_sin * yvec(ii - 3) };
-	}
-
-	// Moments have to be with respect to the slow n1 position, as this is assumed by the other functions
-	if (!m_flagFixed)
-	{
-		cx_vec::fixed<3> aux = { cross(n1 - node1Pos_sd(), real(coef.rows(0,2))), cross(n1 - node1Pos_sd(), imag(coef.rows(0,2))) };
-		coef.rows(3, 5) += aux;
 	}
 
 	return rho * pi* R * R * coef;
