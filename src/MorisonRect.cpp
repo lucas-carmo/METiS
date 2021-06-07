@@ -57,18 +57,18 @@ double MorisonRect::A_paral(const int ii, const int jj, const vec::fixed<3> &x, 
 	return 0;
 }
 
-vec::fixed<6> MorisonRect::hydrostaticForce(const double rho, const double g) const
+vec::fixed<6> MorisonRect::hydrostaticForce(const double rho, const double g, const vec::fixed<3> &refPt) const
 {
 	vec::fixed<6> force(fill::zeros);
 	return force;
 }
 
-vec::fixed<6> MorisonRect::hydrostaticForce_sd(const double rho, const double g) const
+vec::fixed<6> MorisonRect::hydrostaticForce_sd(const double rho, const double g, const vec::fixed<3> &refPt) const
 {
 	return fill::zeros;
 }
 
-vec::fixed<6> MorisonRect::hydroForce_1st(const ENVIR & envir, const int hydroMode, const vec::fixed<3>& refPt) const
+vec::fixed<6> MorisonRect::hydroForce_1st(const ENVIR & envir, const vec::fixed<3>& refPt) const
 {
 	return fill::zeros;
 }

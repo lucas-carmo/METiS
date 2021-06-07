@@ -270,7 +270,7 @@ void MorisonCirc::make_local_base(arma::vec::fixed<3> &xvec, arma::vec::fixed<3>
 	}
 }
 
-vec::fixed<6> MorisonCirc::hydrostaticForce_helper(const double rho, const double g, const vec::fixed<3> &n1, const vec::fixed<3> &n2_in, const vec::fixed<3> &xvec, const vec::fixed<3> &yvec, const vec::fixed<3> &zvec) const
+vec::fixed<6> MorisonCirc::hydrostaticForce_helper(const double rho, const double g, const vec::fixed<3> &refPt, const vec::fixed<3> &n1, const vec::fixed<3> &n2_in, const vec::fixed<3> &xvec, const vec::fixed<3> &yvec, const vec::fixed<3> &zvec) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
@@ -345,10 +345,14 @@ vec::fixed<6> MorisonCirc::hydrostaticForce_helper(const double rho, const doubl
 	force[2] = rho * g * Vol; // Fx = Fy = 0 and Fz = Buoyancy force
 	force.rows(3, 5) = cross(Xb_global, force.rows(0, 2));
 
+	// The moments acting on the cylinders were calculated with respect to the first node
+	// We need to change the fulcrum to refPt
+	force.rows(3, 5) = force.rows(3, 5) + cross(m_node1Pos - refPt, force.rows(0, 2));
+
 	return force;
 }
 
-vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) const
+vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g, const vec::fixed<3> &refPt) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
@@ -356,10 +360,10 @@ vec::fixed<6> MorisonCirc::hydrostaticForce(const double rho, const double g) co
 	// Use a more friendly notation
 	double D = m_diam;
 	
-	return hydrostaticForce_helper(rho, g, node1Pos(), node2Pos(), m_xvec, m_yvec, m_zvec);
+	return hydrostaticForce_helper(rho, g, refPt, node1Pos(), node2Pos(), m_xvec, m_yvec, m_zvec);
 }
 
-vec::fixed<6> MorisonCirc::hydrostaticForce_sd(const double rho, const double g) const
+vec::fixed<6> MorisonCirc::hydrostaticForce_sd(const double rho, const double g, const vec::fixed<3> &refPt) const
 {
 	// Forces and moments acting at the Morison Element
 	vec::fixed<6> force(fill::zeros);
@@ -367,7 +371,7 @@ vec::fixed<6> MorisonCirc::hydrostaticForce_sd(const double rho, const double g)
 	// Use a more friendly notation
 	double D = m_diam;
 	
-	return hydrostaticForce_helper(rho, g, node1Pos_sd(), node2Pos_sd(), m_xvec_sd, m_yvec_sd, m_zvec_sd);
+	return hydrostaticForce_helper(rho, g, refPt, node1Pos_sd(), node2Pos_sd(), m_xvec_sd, m_yvec_sd, m_zvec_sd);
 }
 
 /*
@@ -375,7 +379,7 @@ Functions to evaluate force components
 */
 
 // TODO: Implement Wheeler stretching in force components
-vec::fixed<6> MorisonCirc::hydroForce_1st(const ENVIR &envir, const int hydroMode, const vec::fixed<3> &refPt) const
+vec::fixed<6> MorisonCirc::hydroForce_1st(const ENVIR &envir, const vec::fixed<3> &refPt) const
 {
 	vec::fixed<6> force(fill::zeros);
 
@@ -465,18 +469,17 @@ vec::fixed<6> MorisonCirc::hydroForce_drag(const ENVIR &envir, const vec::fixed<
 vec::fixed<6> MorisonCirc::hydroForce_relWaveElev(const ENVIR &envir, const vec::fixed<3> &refPt) const
 {
 	vec::fixed<6> force(fill::zeros);
-	vec::fixed<3> zvec{ m_zvec_sd };
 
 	// The cylinder must cross the mean waterline for this component to make sense
 	if (m_node1Pos_sd.at(2)*m_node2Pos_sd.at(2) > 0)
 		return force;
-
+		
 	vec::fixed<3> du1dt(this->du1dt(envir, m_numNodesBelowWL-1));	
-	du1dt -= dot(du1dt, zvec) * zvec;
+	du1dt -= dot(du1dt, m_zvec_sd) * m_zvec_sd;
 	double eta(this->waveElevAtWL(envir));
 	vec::fixed<3> n_wl = this->nodePos_sd(m_numNodesBelowWL - 1);
-	
-	double g{envir.gravity() };
+		
+	double g{ envir.gravity() };
 	double zBody = m_Zwl;
 	double L = norm(m_node2Pos_sd - m_node1Pos_sd);
 	double ry(dot(m_node2Pos - m_node1Pos, m_xvec_sd) / L), rx(dot(m_node2Pos - m_node1Pos, m_yvec_sd) / L);
@@ -630,7 +633,6 @@ vec::fixed<6> MorisonCirc::hydroForce_axDiverg(const ENVIR &envir, const vec::fi
 vec::fixed<6> MorisonCirc::hydroForce_accGradient(const ENVIR & envir, const vec::fixed<3>& refPt) const // TODO: include axial contribution
 {
 	vec::fixed<6> force(fill::zeros);
-	vec::fixed<3> zvec{ m_zvec_sd };
 
 	int ncyl = m_numNodesBelowWL; // If the body is fixed, this is the same as m_nodesArray.n_cols. Otherwise, it is updated at each time step
 	vec::fixed<3> a_g(fill::zeros);
@@ -643,13 +645,8 @@ vec::fixed<6> MorisonCirc::hydroForce_accGradient(const ENVIR & envir, const vec
 		double yii = m_node1Pos.at(1) + m_dL * ii * m_zvec.at(1) - n_ii.at(1);
 		double zii = m_node1Pos.at(2) + m_dL * ii * m_zvec.at(2) - n_ii.at(2);
 
-		vec::fixed<3> da1dx(this->da1dx(envir, ii));
-		vec::fixed<3> da1dy(this->da1dy(envir, ii));
-		vec::fixed<3> da1dz(this->da1dz(envir, ii));
-
-		vec::fixed<3> a_g = arma::dot(da1dx * xii, m_xvec_sd) * m_xvec_sd + arma::dot(da1dx * xii, m_yvec_sd) * m_yvec_sd
-			+ arma::dot(da1dy * yii, m_xvec_sd) * m_xvec_sd + arma::dot(da1dy * yii, m_yvec_sd) * m_yvec_sd
-			+ arma::dot(da1dz * zii, m_xvec_sd) * m_xvec_sd + arma::dot(da1dz * zii, m_yvec_sd) * m_yvec_sd;
+		vec::fixed<3> a_g(this->da1dx(envir, ii)*xii + this->da1dy(envir, ii)*yii + this->da1dz(envir, ii)*zii);
+		a_g -= dot(a_g, m_zvec_sd)*m_zvec_sd;
 
 		vec::fixed<3> force_ii = datum::pi * (m_diam*m_diam / 4.) * envir.watDensity() * m_CM  * a_g;
 

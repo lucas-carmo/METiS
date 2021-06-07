@@ -38,9 +38,9 @@ public:
 	// Forces up to second order - to be used in the evaluation of the total acceleration
 	// Written in the global coordinate system.
 	// Moments are given with respect to node1_sd.
-	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const override;
-	virtual vec::fixed<6> hydrostaticForce_sd(const double rho, const double g) const override;
-	virtual vec::fixed<6> hydroForce_1st(const ENVIR &envir, const int hydroMode, const vec::fixed<3> &refPt) const override;
+	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g, const vec::fixed<3> &refPt) const override;
+	virtual vec::fixed<6> hydrostaticForce_sd(const double rho, const double g, const vec::fixed<3> &refPt) const override;
+	virtual vec::fixed<6> hydroForce_1st(const ENVIR &envir, const vec::fixed<3> &refPt) const override;
 	virtual vec::fixed<6> hydroForce_drag(const ENVIR &envir, const vec::fixed<3> &refPt) const override;
 	virtual vec::fixed<6> hydroForce_relWaveElev(const ENVIR &envir, const vec::fixed<3> &refPt) const override;
 	virtual vec::fixed<6> hydroForce_2ndPot(const ENVIR &envir, const vec::fixed<3> &refPt) const override;
@@ -50,7 +50,7 @@ public:
 	virtual vec::fixed<6> hydroForce_slendBodyRot(const ENVIR &envir, const vec::fixed<3> &refPt) const override;
 	virtual vec::fixed<6> hydroForce_rem(const ENVIR &envir, const vec::fixed<3> &refPt) const override;
 
-	vec::fixed<6> hydrostaticForce_helper(const double rho, const double g, const vec::fixed<3> &n1, const vec::fixed<3> &n2_in, const vec::fixed<3> &xvec, const vec::fixed<3> &yvec, const vec::fixed<3> &zvec) const;
+	vec::fixed<6> hydrostaticForce_helper(const double rho, const double g, const vec::fixed<3> &refPt, const vec::fixed<3> &n1, const vec::fixed<3> &n2_in, const vec::fixed<3> &xvec, const vec::fixed<3> &yvec, const vec::fixed<3> &zvec) const;
 	cx_vec::fixed<6> hydroForce_1st_coefs(const Wave &wave, double watDensity, double watDepth, double gravity) const;
 	cx_vec::fixed<6> hydroForce_2ndPot_coefs(const Wave &wave_ii, const Wave &wave_jj, double watDensity, double watDepth, double gravity) const;
 

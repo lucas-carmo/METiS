@@ -306,7 +306,7 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 			continue;		
 
 		// Force due to first-order acceleration - part along the length of the cylinder is integrated analytically
-		vec::fixed<6> auxForce = m_MorisonElements.at(ii)->hydroForce_1st(envir, hydroMode, refPt);
+		vec::fixed<6> auxForce = m_MorisonElements.at(ii)->hydroForce_1st(envir, refPt);
 		force_1stP += auxForce;
 
 		// Second order forces
@@ -316,12 +316,15 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 			{
 				force_eta += m_MorisonElements.at(ii)->hydroForce_relWaveElev(envir, refPt);
 			}
-
-			auxForce += m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity()) - m_MorisonElements.at(ii)->hydrostaticForce_sd(envir.watDensity(), envir.gravity());
+			
 			force_rotn.rows(0,2) += cross(Rvec, auxForce.rows(0,2));
 			force_rotn.rows(3, 5) += cross(Rvec, auxForce.rows(3, 5));
 
-			auxForce = m_MorisonElements.at(ii)->hydrostaticForce_sd(envir.watDensity(), envir.gravity());
+			auxForce = m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity(), refPt) - m_MorisonElements.at(ii)->hydrostaticForce_sd(envir.watDensity(), envir.gravity(), refPt);
+			force_rotn.rows(0, 2) += cross(Rvec, auxForce.rows(0, 2));
+			force_rotn.rows(3, 5) += cross(Rvec, auxForce.rows(3, 5));
+
+			auxForce = m_MorisonElements.at(ii)->hydrostaticForce_sd(envir.watDensity(), envir.gravity(), refPt);
 			force_rotn.rows(0, 2) += cross(Rvec, (cross(Rvec, auxForce.rows(0, 2))));
 			force_rotn.rows(3, 5) += cross(Rvec, (cross(Rvec, auxForce.rows(3, 5))));
 
@@ -356,17 +359,10 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 
 vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir) const
 {
-	vec::fixed<6> force(fill::zeros);		
-	vec::fixed<6> df(fill::zeros);
-	
+	vec::fixed<6> force(fill::zeros);				
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		df = m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity());
-
-		// The moments acting on the cylinders were calculated with respect to the first node
-		// We need to change the fulcrum to the CoG
-		df.rows(3, 5) = df.rows(3, 5) + cross(m_MorisonElements.at(ii)->node1Pos() - CoGPos().rows(0, 2), df.rows(0, 2));
-		force += df;
+		force += m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity(), CoGPos().rows(0, 2));
 	}
 	IO::print2outLine(IO::OUTFLAG_HS_FORCE, force);		
 
