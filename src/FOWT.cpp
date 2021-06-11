@@ -87,6 +87,11 @@ void FOWT::setAddedMass_t0(const double density)
 	m_floater.setAddedMass_t0(density);
 }
 
+void FOWT::setStiffnessMatrix(const double density, const double gravity)
+{
+	m_floater.setStiffnessMatrix(density, gravity);
+}
+
 void FOWT::evaluateQuantitiesAtBegin(const ENVIR &envir)
 {
 	if (envir.getTimeArray().size() == 0)
@@ -209,6 +214,19 @@ std::string FOWT::printFloater() const
 		for (int jj = 0; jj < 6; ++jj)
 		{
 			output = output + std::to_string(A(ii, jj));
+
+			(jj == 5) ? (output = output + '\n') : (output = output + " \t\t ; \t\t");
+		}
+	}
+
+	mat::fixed<6, 6> K = m_floater.hydrostaticStiffness();
+	output = output + "\tHydrostatic stiffness (same units as input):\n";
+	for (int ii = 0; ii < 6; ++ii)
+	{
+		output = output + "\t\t";
+		for (int jj = 0; jj < 6; ++jj)
+		{
+			output = output + std::to_string(K(ii, jj));
 
 			(jj == 5) ? (output = output + '\n') : (output = output + " \t\t ; \t\t");
 		}

@@ -20,7 +20,7 @@ Floater::Floater()
 	m_mass = datum::nan;
 	m_CoG.fill(datum::nan);	
 	m_inertia.fill(datum::nan);
-	m_addedMass_t0.fill(datum::nan);	
+	m_addedMass_t0.fill(datum::nan);
 }
 
 
@@ -89,6 +89,7 @@ void Floater::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroMode)
 {
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
+		// Evaluate fluid kinematics at each node
 		m_MorisonElements.at(ii)->evaluateQuantitiesAtBegin(envir, hydroMode);
 	}
 }
@@ -147,6 +148,11 @@ mat::fixed<6, 6> Floater::addedMass_t0() const
 	{
 		throw std::runtime_error("Tried to call Floater::addedMass_t0(), but it was not calculated yet. Try calling Floater::addedMass(const double density, const int hydroMode) first.");
 	}
+}
+
+mat::fixed<6, 6> Floater::hydrostaticStiffness() const
+{
+	return m_Khs;
 }
 
 vec::fixed<6> Floater::CoGPos() const
@@ -247,6 +253,38 @@ void Floater::setAddedMass_t0(const double density)
 	m_addedMass_t0 = density*addedMass(1);
 }
 
+void Floater::setStiffnessMatrix(const double density, const double gravity)
+{
+	// Quantities required for evaluating the hydrostatic matrix
+	double zb{ 0 }, V{ 0 }, Awl{ 0 }, xwl{ 0 }, ywl{ 0 }, Ixx{ 0 }, Iyy{ 0 }, Ixy{ 0 };
+
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		double aux_zb{ 0 }, aux_V{ 0 }, aux_Awl{ 0 }, aux_xwl{ 0 }, aux_ywl{ 0 }, aux_Ixx{ 0 }, aux_Iyy{ 0 }, aux_Ixy{ 0 };
+		m_MorisonElements.at(ii)->quantities4hydrostaticMatrix(aux_zb, aux_V, aux_Awl, aux_xwl, aux_ywl, aux_Ixx, aux_Iyy, aux_Ixy);
+
+		Awl += aux_Awl;
+		V += aux_V;
+		xwl += aux_Awl * aux_xwl;
+		zb += aux_V * aux_zb;
+		Ixx += aux_Ixx + aux_Awl * aux_ywl * aux_ywl;
+		Iyy += aux_Iyy + aux_Awl * aux_xwl*aux_xwl;
+		Ixy += aux_Ixy + aux_Awl * aux_xwl*aux_ywl;
+	}
+	xwl *= 1 / Awl;
+	ywl *= 1 / Awl;
+	zb *= 1 / V;
+
+
+	m_Khs.at(2, 2) = density * gravity * Awl;
+	m_Khs.at(3, 3) = density * gravity * (Ixx + V * (zb - m_CoG.at(2)));
+	m_Khs.at(4, 4) = density * gravity * (Iyy + V * (zb - m_CoG.at(2)));
+	m_Khs.at(3, 4) = density * gravity * Ixy;
+	m_Khs.at(4, 3) = m_Khs.at(3, 4);
+
+	m_Vol = V;
+}
+
 mat::fixed<6, 6> Floater::addedMass(const double density, const int hydroMode) 
 {
 	mat::fixed<6, 6> A(fill::zeros);
@@ -318,15 +356,7 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 			}
 			
 			force_rotn.rows(0,2) += cross(Rvec, auxForce.rows(0,2));
-			force_rotn.rows(3, 5) += cross(Rvec, auxForce.rows(3, 5));
-
-			auxForce = m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity(), refPt) - m_MorisonElements.at(ii)->hydrostaticForce_sd(envir.watDensity(), envir.gravity(), refPt);
-			force_rotn.rows(0, 2) += cross(Rvec, auxForce.rows(0, 2));
-			force_rotn.rows(3, 5) += cross(Rvec, auxForce.rows(3, 5));
-
-			auxForce = m_MorisonElements.at(ii)->hydrostaticForce_sd(envir.watDensity(), envir.gravity(), refPt);
-			force_rotn.rows(0, 2) += cross(Rvec, (cross(Rvec, auxForce.rows(0, 2))));
-			force_rotn.rows(3, 5) += cross(Rvec, (cross(Rvec, auxForce.rows(3, 5))));
+			force_rotn.rows(3, 5) += cross(Rvec, auxForce.rows(3, 5));	
 
 			force_acgr += m_MorisonElements.at(ii)->hydroForce_accGradient(envir, refPt);
 			
@@ -338,7 +368,16 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 		}
 		force_drag += m_MorisonElements.at(ii)->hydroForce_drag(envir, refPt);
 	}	
-	
+
+	if (hydroMode == 2)
+	{
+		vec::fixed<6> Fhs0(fill::zeros);
+		Fhs0.at(2) = envir.watDensity()*envir.gravity()*m_Vol;
+
+		vec::fixed<6> Fhs = hydrostaticForce(envir) - Fhs0;
+		force_rotn.rows(0, 2) += (cross(Rvec, Fhs.rows(0, 2)));
+		force_rotn.rows(3, 5) += (cross(Rvec, Fhs.rows(3, 5)));
+	}
 
 	force = force_drag + force_1stP + force_eta + force_conv + force_axdv + force_acgr + force_rotn + force_2ndP + force_rslb + force_rem;
 
@@ -359,14 +398,16 @@ vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode
 
 vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir) const
 {
-	vec::fixed<6> force(fill::zeros);				
+	vec::fixed<6> compare(fill::zeros);
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		force += m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity(), CoGPos().rows(0, 2));
+		compare += m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity(), CoGPos().rows(0, 2));
 	}
-	IO::print2outLine(IO::OUTFLAG_HS_FORCE, force);		
 
+	vec::fixed<6> force = -m_Khs * m_disp;
+	force.at(2) += envir.watDensity()*envir.gravity() * m_Vol;
+	IO::print2outLine(IO::OUTFLAG_HS_FORCE, force);
+	IO::print2outLine(IO::OUTFLAG_DEBUG_VEC_6, compare);
 	return force;
 }
-
 

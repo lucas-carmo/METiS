@@ -347,7 +347,7 @@ vec::fixed<6> MorisonCirc::hydrostaticForce_helper(const double rho, const doubl
 
 	// The moments acting on the cylinders were calculated with respect to the first node
 	// We need to change the fulcrum to refPt
-	force.rows(3, 5) = force.rows(3, 5) + cross(m_node1Pos - refPt, force.rows(0, 2));
+	force.rows(3, 5) = force.rows(3, 5) + cross(n1 - refPt, force.rows(0, 2));
 
 	return force;
 }
@@ -777,6 +777,44 @@ vec::fixed<6> MorisonCirc::hydroForce_rem(const ENVIR & envir, const vec::fixed<
 
 	force.rows(3, 5) += cross(m_node1Pos_sd - refPt, force.rows(0, 2));
 	return force;
+}
+
+void MorisonCirc::quantities4hydrostaticMatrix(double &zb, double &V, double &Awl, double &xwl, double &ywl, double &Ixx, double &Iyy, double &Ixy) const
+{
+	// Use a more friendly notation
+	double R = 0.5*m_diam;
+
+	// If the cylinder is above the waterline or if it is completely submerged, then 
+	// it does not contribute to the hydrostatic matrix
+	if (m_node1Pos.at(2) >= 0 || m_node2Pos.at(2) <= 0)
+	{
+		zb = 0;
+		V = 0;
+		Awl = 0;
+		xwl = 0;
+		ywl = 0;
+		Ixx = 0;
+		Ixy = 0;
+	}
+		
+	double cosAlpha = m_zvec.at(2); // Inclination of the cylinder (with respect to the vertical)
+	double tanAlpha{ tan(acos(cosAlpha)) }; // Alpha can not be pi/2 because this would require the vertical position of the nodes to be the same, but this part of the code is only reached if the cilinder crosses the waterline
+	double cosBeta = m_yvec.at(2); // Inclination in the plane of the mean water level. The rotations must be around the local y axis, and this is taken into account when creating the local basis
+	double sin2Beta = 2 * cosBeta*sqrt(1 - cosBeta * cosBeta);
+	double inclFactor = 1 / cosAlpha;
+	vec::fixed<3> nwl = m_node1Pos + (m_node2Pos - m_node1Pos) * std::abs(0 - m_node1Pos.at(2)) / (m_node2Pos.at(2) - m_node1Pos.at(2)); // Intersection with the waterline
+	double L = norm(nwl - m_node1Pos);
+	double Iyy_local = 0.25 * arma::datum::pi * R * R * R * R;
+	double Ixx_local = Iyy_local * inclFactor;
+
+	V = arma::datum::pi * R * R * L;	
+	Awl = arma::datum::pi * R * R * inclFactor;
+	xwl = nwl.at(0);
+	ywl = nwl.at(1);
+	Ixx = Ixx_local * cosBeta * cosBeta + Iyy_local * (1 - cosBeta * cosBeta);
+	Iyy = Iyy_local * cosBeta * cosBeta + Ixx_local * (1 - cosBeta * cosBeta);
+	Ixy = 0.5 * (Ixx_local + Iyy_local) * sin2Beta;
+	zb = (pow(tanAlpha*R, 2) + 4 * pow(L, 2)) / (8 * L) + m_node1Pos.at(2);
 }
 
 /*
@@ -1335,7 +1373,7 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 	vec::fixed<3> n2 = node2Pos();
 	vec::fixed<3> xvec = m_xvec; // xvec and yvec are used to project the acceleration. They are analogous to the normal vector.
 	vec::fixed<3> yvec = m_yvec;
-	vec::fixed<3> zvec = m_zvec; // While zvec is used only to evaluate the nodes position, and hence should be first-order position
+	vec::fixed<3> zvec = m_zvec; // While zvec is used only to evaluate the nodes position
 	if (hydroMode < 2)
 	{
 		n1 = node1Pos_sd();

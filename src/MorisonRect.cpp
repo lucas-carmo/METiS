@@ -113,6 +113,10 @@ vec::fixed<6> MorisonRect::hydroForce_rem(const ENVIR &envir, const vec::fixed<3
 	return fill::zeros;
 }
 
+void MorisonRect::quantities4hydrostaticMatrix(double & zb, double & V, double & Awl, double & xwl, double & ywl, double & Ixx, double & Iyy, double & Ixy) const
+{
+}
+
 /*****************************************************
 	Printing
 *****************************************************/

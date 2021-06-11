@@ -769,6 +769,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 	fowt.update_sd(disp0, envir.timeStep());
 	fowt.update(envir, disp0, vel0);
 	fowt.setAddedMass_t0(envir.watDensity());
+	fowt.setStiffnessMatrix(envir.watDensity(), envir.gravity());
 	fowt.setFilderSD(wf, fowt.filterSD_zeta());
 }
 

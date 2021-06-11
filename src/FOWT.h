@@ -71,6 +71,7 @@ public:
 	void setRNA(RNA &rna);
 
 	void setAddedMass_t0(const double density);
+	void setStiffnessMatrix(const double density, const double gravity);
 	void evaluateQuantitiesAtBegin(const ENVIR & envir); // If the body is fixed, most of the computationally expensive calculations can be performed only once at the beginning of the simulation
 
 	/*****************************************************
