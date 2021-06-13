@@ -38,6 +38,12 @@ protected:
 	vec::fixed<3> m_node2Pos_sd;
 	vec::fixed<3> m_node1Vel_sd;
 	vec::fixed<3> m_node2Vel_sd;
+
+	// Nodes position and velocity considering only the 1st order position of the FOWT.
+	vec::fixed<3> m_node1Pos_1stOrd;
+	vec::fixed<3> m_node2Pos_1stOrd;
+	vec::fixed<3> m_node1Vel_1stOrd;
+	vec::fixed<3> m_node2Vel_1stOrd;
 	
 	// Vectors of the local base
 	// They could be calculated every time from the nodes' position,
@@ -51,6 +57,9 @@ protected:
 	vec::fixed<3> m_xvec; // Considering the instantaneous total position of the cylinder
 	vec::fixed<3> m_yvec;
 	vec::fixed<3> m_zvec;
+	vec::fixed<3> m_xvec_1stOrd; // Considering the first order position of the cylinder
+	vec::fixed<3> m_yvec_1stOrd;
+	vec::fixed<3> m_zvec_1stOrd;
 
 	// Intersection with the instantaneous waterline
 	vec::fixed<3> m_intersectWL;
@@ -60,6 +69,7 @@ protected:
 	vec::fixed<3> m_nodeWL;
 	vec::fixed<3> m_cog2nodeWL;
 	double m_Zwl{ 0 };
+	vec::fixed<3> m_accNodeAtWL_1stOrd;
 	
 	// Quantities calculated at the beginning of the simulaion using IFFT
 	bool m_flagFixed{ false }; // Flag used to specify whether things will be evaluated about the mean position of the cylinder
@@ -107,11 +117,15 @@ public:
 	// Functions related to position, velocity and acceleration
 	void calcPosVel(const vec::fixed<6> &pos, const vec::fixed<6> &vel,
 		            vec::fixed<3> &node1Pos, vec::fixed<3> &node2Pos, vec::fixed<3> &node1Vel, vec::fixed<3> &node2Vel,
-		            vec::fixed<3> &xvec, vec::fixed<3> &yvec, vec::fixed<3> &zvec) ;	
+		            vec::fixed<3> &xvec, vec::fixed<3> &yvec, vec::fixed<3> &zvec);	
+
 	void updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, 
+							  const vec::fixed<6> &floaterCoGpos_1stOrd, const vec::fixed<6> &floaterVel_1stOrd,
 							  const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD);
-	void updateMorisonElement(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel,
-							  const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD); // Version that does not find the intersection with the waterline
+	void updateMorisonElement(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, // Version that does not find the intersection with the waterline
+							  const vec::fixed<6> &floaterCoGpos_1stOrd, const vec::fixed<6> &floaterVel_1stOrd,
+							  const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD); 
+	void updateAcc1stOrdNodeAtWL(const vec::fixed<6> &floaterAcc_1stOrd);
 
 	vec::fixed<3> node1Pos_t0() const;
 	vec::fixed<3> node2Pos_t0() const;
@@ -142,7 +156,7 @@ public:
 	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g, const vec::fixed<3> &refPt) const = 0;
 	virtual vec::fixed<6> hydrostaticForce_sd(const double rho, const double g, const vec::fixed<3> &refPt) const = 0;
 	virtual vec::fixed<6> hydroForce_1st(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
-	virtual vec::fixed<6> hydroForce_drag(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
+	virtual vec::fixed<6> hydroForce_drag(const ENVIR &envir, const vec::fixed<3> &refPt, bool flagUse1stOrd) const = 0;
 	virtual vec::fixed<6> hydroForce_relWaveElev(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
 	virtual vec::fixed<6> hydroForce_2ndPot(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
 	virtual vec::fixed<6> hydroForce_convecAcc(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
@@ -151,8 +165,6 @@ public:
 	virtual vec::fixed<6> hydroForce_slendBodyRot(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
 	virtual vec::fixed<6> hydroForce_rem(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
 	virtual void quantities4hydrostaticMatrix(double &zb, double &V, double &Awl, double &xwl, double &ywl, double &Ixx, double &Iyy, double &Ixy) const = 0;
-
-
 	
 	// Wave kinematic properties at a certain node along the immersed length of the cylinder.
 	// The slow position is considered.

@@ -411,11 +411,18 @@ vec::fixed<6> MorisonCirc::hydroForce_1st(const ENVIR &envir, const vec::fixed<3
 	return force;
 }
 
-vec::fixed<6> MorisonCirc::hydroForce_drag(const ENVIR &envir, const vec::fixed<3> &refPt) const
+vec::fixed<6> MorisonCirc::hydroForce_drag(const ENVIR &envir, const vec::fixed<3> &refPt, bool flagUse1stOrd) const
 {
 	vec::fixed<6> force(fill::zeros);
 	vec::fixed<3> zvec{ m_zvec_sd };
 	vec::fixed<3> v_axial = arma::dot(m_node1Vel, zvec) * zvec; // Since the cylinder is a rigid body, this is the same for all the nodes
+	vec::fixed<3> vel1 = m_node1Vel;
+	vec::fixed<3> vel2 = m_node2Vel;
+	if (flagUse1stOrd)
+	{
+		vel1 = m_node1Vel_1stOrd;
+		vel2 = m_node2Vel_1stOrd;
+	}
 
 	bool evaluateTopNode{ true };
 	if (m_node2Pos.at(2) > 0)
@@ -429,8 +436,8 @@ vec::fixed<6> MorisonCirc::hydroForce_drag(const ENVIR &envir, const vec::fixed<
 		vec::fixed<3> n_ii = nodePos_sd(ii);
 
 		// Velocity of the integration point
-		double lambda = norm(n_ii - m_node1Pos_sd, 2) / norm(m_node2Pos_sd - m_node1Pos_sd);
-		vec::fixed<3> vel_ii = m_node1Vel + lambda * (m_node2Vel - m_node1Vel);
+		double lambda = norm(n_ii - m_node1Pos_sd, 2) / norm(m_node2Pos_sd - m_node1Pos_sd);		
+		vec::fixed<3> vel_ii = vel1 + lambda * (vel2 - vel1);
 
 		vec::fixed<3> u1(this->u1(envir, ii));
 		vec::fixed<3> u1_axial = arma::dot(u1, zvec) * zvec;
@@ -476,15 +483,17 @@ vec::fixed<6> MorisonCirc::hydroForce_relWaveElev(const ENVIR &envir, const vec:
 		
 	vec::fixed<3> du1dt(this->du1dt(envir, m_numNodesBelowWL-1));	
 	du1dt -= dot(du1dt, m_zvec_sd) * m_zvec_sd;
+	vec::fixed<3> acc = m_accNodeAtWL_1stOrd;
+	acc -= dot(acc, m_zvec_sd) * m_zvec_sd;
 	double eta(this->waveElevAtWL(envir));
 	vec::fixed<3> n_wl = this->nodePos_sd(m_numNodesBelowWL - 1);
 		
 	double g{ envir.gravity() };
 	double zBody = m_Zwl;
 	double L = norm(m_node2Pos_sd - m_node1Pos_sd);
-	double ry(dot(m_node2Pos - m_node1Pos, m_xvec_sd) / L), rx(dot(m_node2Pos - m_node1Pos, m_yvec_sd) / L);
+	double ry(dot(m_node2Pos_1stOrd - m_node1Pos_1stOrd, m_xvec_sd) / L), rx(dot(m_node2Pos_1stOrd - m_node1Pos_1stOrd, m_yvec_sd) / L);
 
-	force.rows(0, 2) = (datum::pi * m_diam*m_diam / 4.) * envir.watDensity() * (eta - zBody) * (m_CM * du1dt + g * rx*m_yvec_sd - g * ry*m_xvec_sd);
+	force.rows(0, 2) = (datum::pi * m_diam*m_diam / 4.) * envir.watDensity() * (eta - zBody) * (m_CM * du1dt - (m_CM-1) * acc + g * rx*m_yvec_sd - g * ry*m_xvec_sd);
 	force.rows(3, 5) = cross(n_wl - refPt, force.rows(0, 2));
 
 	return force;	
@@ -601,7 +610,7 @@ vec::fixed<6> MorisonCirc::hydroForce_axDiverg(const ENVIR &envir, const vec::fi
 
 		// Velocity of the integration point
 		double lambda = norm(n_ii - m_node1Pos_sd, 2) / norm(m_node2Pos_sd - m_node1Pos_sd);
-		vec::fixed<3> vel_ii = m_node1Vel + lambda * (m_node2Vel - m_node1Vel);
+		vec::fixed<3> vel_ii = m_node1Vel_1stOrd + lambda * (m_node2Vel_1stOrd - m_node1Vel_1stOrd);
 		
 		vec::fixed<3> u(this->u1(envir, ii));
 		vec::fixed<3> du1dx(this->du1dx(envir, ii));
@@ -640,10 +649,10 @@ vec::fixed<6> MorisonCirc::hydroForce_accGradient(const ENVIR & envir, const vec
 	{
 		vec::fixed<3> n_ii = nodePos_sd(ii);
 
-		// Diference between the instantaneous position and the fixed (or slow) position
-		double xii = m_node1Pos.at(0) + m_dL * ii * m_zvec.at(0) - n_ii.at(0);
-		double yii = m_node1Pos.at(1) + m_dL * ii * m_zvec.at(1) - n_ii.at(1);
-		double zii = m_node1Pos.at(2) + m_dL * ii * m_zvec.at(2) - n_ii.at(2);
+		// Diference between the 1st order position and the fixed (or slow) position
+		double xii = m_node1Pos_1stOrd.at(0) + m_dL * ii * m_zvec_1stOrd.at(0) - n_ii.at(0);
+		double yii = m_node1Pos_1stOrd.at(1) + m_dL * ii * m_zvec_1stOrd.at(1) - n_ii.at(1);
+		double zii = m_node1Pos_1stOrd.at(2) + m_dL * ii * m_zvec_1stOrd.at(2) - n_ii.at(2);
 
 		vec::fixed<3> a_g(this->da1dx(envir, ii)*xii + this->da1dy(envir, ii)*yii + this->da1dz(envir, ii)*zii);
 		a_g -= dot(a_g, m_zvec_sd)*m_zvec_sd;
@@ -677,7 +686,7 @@ vec::fixed<6> MorisonCirc::hydroForce_slendBodyRot(const ENVIR & envir, const ve
 
 	int ncyl = m_numNodesBelowWL;
 	double L = norm(m_node2Pos_sd - m_node1Pos_sd);
-	double wy(dot(m_node2Vel - m_node1Vel, xvec) / L), wx(dot(m_node2Vel - m_node1Vel, yvec) / L);
+	double wy(dot(m_node2Vel_1stOrd - m_node1Vel_1stOrd, xvec) / L), wx(dot(m_node2Vel_1stOrd - m_node1Vel_1stOrd, yvec) / L);
 	for (int ii = 0; ii < ncyl; ++ii)
 	{
 		vec::fixed<3> n_ii = nodePos_sd(ii);
@@ -736,10 +745,10 @@ vec::fixed<6> MorisonCirc::hydroForce_rem(const ENVIR & envir, const vec::fixed<
 
 			// Quadratic pressure drop from Rainey's formulation
 			vec::fixed<3> u1(this->u1(envir, ii));
-			force.rows(0, 2) += -0.5 * datum::pi * (m_diam*m_diam / 4.) * envir.watDensity() * (m_CM - 1) * (pow(dot(u1 - m_node1Vel, xvec), 2) + pow(dot(u1 - m_node1Vel, yvec), 2)) * zvec;
+			force.rows(0, 2) += -0.5 * datum::pi * (m_diam*m_diam / 4.) * envir.watDensity() * (m_CM - 1) * (pow(dot(u1 - m_node1Vel_1stOrd, xvec), 2) + pow(dot(u1 - m_node1Vel_1stOrd, yvec), 2)) * zvec;
 
 			// Point load from Rainey's formulation that results in a Munk moment
-			force.rows(0,2) += datum::pi * (m_diam*m_diam / 4.)* (m_CM - 1) * dot(u1 - m_node1Vel, zvec) * (cdot(u1 - m_node1Vel, xvec)*xvec + cdot(u1 - m_node1Vel, yvec)*yvec);
+			force.rows(0,2) += datum::pi * (m_diam*m_diam / 4.)* (m_CM - 1) * dot(u1 - m_node1Vel_1stOrd, zvec) * (cdot(u1 - m_node1Vel_1stOrd, xvec)*xvec + cdot(u1 - m_node1Vel_1stOrd, yvec)*yvec);
 		}
 		else if (ii == ncyl - 1 && m_botPressFlag && evaluateTopNode)
 		{
@@ -747,11 +756,11 @@ vec::fixed<6> MorisonCirc::hydroForce_rem(const ENVIR & envir, const vec::fixed<
 
 			// At the top node, the direction of the pressure drop is the opposite of the bottom
 			vec::fixed<3> u1(this->u1(envir, ii));
-			force.rows(0, 2) += 0.5 * datum::pi * (m_diam*m_diam / 4.) * envir.watDensity() * (m_CM - 1) * (pow(dot(u1 - m_node1Vel, xvec), 2) + pow(dot(u1 - m_node1Vel, yvec), 2)) * zvec;
+			force.rows(0, 2) += 0.5 * datum::pi * (m_diam*m_diam / 4.) * envir.watDensity() * (m_CM - 1) * (pow(dot(u1 - m_node2Vel_1stOrd, xvec), 2) + pow(dot(u1 - m_node2Vel_1stOrd, yvec), 2)) * zvec;
 
 			// As this component does not act along the axis of the cylinder, need to include the moment with respect to node1
 			// It is also the opposite of the bottom
-			vec::fixed<3> auxForce = -datum::pi * (m_diam*m_diam / 4.)* (m_CM - 1) * dot(u1 - m_node1Vel, zvec) * (cdot(u1 - m_node1Vel, xvec)*xvec + cdot(u1 - m_node1Vel, yvec)*yvec);
+			vec::fixed<3> auxForce = -datum::pi * (m_diam*m_diam / 4.)* (m_CM - 1) * dot(u1 - m_node2Vel_1stOrd, zvec) * (cdot(u1 - m_node2Vel_1stOrd, xvec)*xvec + cdot(u1 - m_node2Vel_1stOrd, yvec)*yvec);
 			force.rows(0, 2) += auxForce;
 			force.rows(3, 5) += cross(m_node2Pos_sd - m_node1Pos_sd, auxForce);
 		}
@@ -1361,27 +1370,16 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 	double Lambda = datum::pi * pow(m_diam / 2., 2) * rho * (m_CM - 1);
 	int ncyl = m_numIntPoints;
 
-	// Get vertical coordinate of the intersection with the waterline
+	// TODO: Replace the zwl's by 0 directly
 	double zwl = 0;
-	if (hydroMode == 2 && m_intersectWL.is_finite())
-	{
-		zwl = m_intersectWL.at(2);
-	}
 
 	// Nodes position and vectors of the local coordinate system vectors
-	vec::fixed<3> n1 = node1Pos();
-	vec::fixed<3> n2 = node2Pos();
-	vec::fixed<3> xvec = m_xvec; // xvec and yvec are used to project the acceleration. They are analogous to the normal vector.
-	vec::fixed<3> yvec = m_yvec;
-	vec::fixed<3> zvec = m_zvec; // While zvec is used only to evaluate the nodes position
-	if (hydroMode < 2)
-	{
-		n1 = node1Pos_sd();
-		n2 = node2Pos_sd();
-		xvec = m_xvec_sd;
-		yvec = m_yvec_sd;
-		zvec = m_zvec_sd;
-	}
+	vec::fixed<3> n1 = node1Pos_sd();
+	vec::fixed<3> n2 = node2Pos_sd();
+	vec::fixed<3> xvec = m_xvec_sd; // xvec and yvec are used to project the acceleration. They are analogous to the normal vector.
+	vec::fixed<3> yvec = m_yvec_sd;
+	vec::fixed<3> zvec = m_zvec_sd; // While zvec is used only to evaluate the nodes position
+
 
 	// Since n2 is above n1, if n1[2] > zwl, the cylinder is above the waterline
 	if (n1[2] > zwl)

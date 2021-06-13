@@ -25,6 +25,7 @@ private:
 
 	vec::fixed<6> m_disp; // Floater displacement (i.e. [instantaneous position] - [initial position])
 	vec::fixed<6> m_disp_sd; // Keep track of the slow position of the floater as well
+	vec::fixed<6> m_disp_1stOrd; // Same thing, but first order
 
 public:
 	Floater();
@@ -60,6 +61,7 @@ public:
 
 	// Floater position, including rotations, with respect to the CoG position
 	vec::fixed<6> CoGPos() const;
+	vec::fixed<6> CoGPos_1stOrd() const;
 	vec::fixed<6> CoGPos_sd() const;
 
 
@@ -72,12 +74,17 @@ public:
 	/*****************************************************
 		Forces, acceleration, displacement, etc
 	*****************************************************/
-	void update(const ENVIR &envir, const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTdisp_SD, const vec::fixed<6> &FOWTvel_SD);
+	void update(const ENVIR &envir, const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTdisp_1stOrd, const vec::fixed<6> &FOWTvel_1stOrd, const vec::fixed<6> &FOWTdisp_SD, const vec::fixed<6> &FOWTvel_SD);
+	void setNode1stAcc(const vec::fixed<6> &FOWTacc_1stOrd);
 	void setAddedMass_t0(const double density);
 	void setStiffnessMatrix(const double density, const double gravity);
 	mat::fixed<6, 6> addedMass(const int hydroMode) const; // Calculated considering unitary density
 	mat::fixed<6, 6> addedMass(const double density, const int hydroMode);	
-	vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode) const;
-	vec::fixed<6> hydrostaticForce(const ENVIR &envir) const;
+	vec::fixed<6> hydrodynamicForce_1stOrd(const ENVIR &envir) const;
+	vec::fixed<6> hydrodynamicForce_drag1stOrd(const ENVIR &envir) const;
+	vec::fixed<6> hydrodynamicForce_dragTotal(const ENVIR &envir) const;
+	vec::fixed<6> hydrodynamicForce_2ndOrd(const ENVIR &envir, const vec::fixed<6> &F_1stOrd) const;
+	vec::fixed<6> hydrostaticForce_stiffnessPart(bool flagUse1stOrd) const;
+	vec::fixed<6> hydrostaticForce_staticBuoyancy(const double rho, const double g) const;	
 };
 

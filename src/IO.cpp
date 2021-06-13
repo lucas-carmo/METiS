@@ -767,7 +767,7 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 	double wf = fowt.filterSD_omega();
 	fowt.setFilderSD(1, fowt.filterSD_zeta());
 	fowt.update_sd(disp0, envir.timeStep());
-	fowt.update(envir, disp0, vel0);
+	fowt.update(envir, join_cols(vec::fixed<6> (fill::zeros), disp0), join_cols(vec::fixed<6>(fill::zeros), vel0));
 	fowt.setAddedMass_t0(envir.watDensity());
 	fowt.setStiffnessMatrix(envir.watDensity(), envir.gravity());
 	fowt.setFilderSD(wf, fowt.filterSD_zeta());
@@ -893,18 +893,21 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 	if (caseInsCompare(keyword, "fowt_disp"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_DISP) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_DISP_1ST) = true;
 		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "fowt_vel"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_VEL) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_VEL_1ST) = true;
 		isOutput = true;
 	}
 
 	if (caseInsCompare(keyword, "fowt_acc"))
 	{
 		m_whichResult2Output.at(IO::OUTFLAG_FOWT_ACC) = true;
+		m_whichResult2Output.at(IO::OUTFLAG_FOWT_ACC_1ST) = true;
 		isOutput = true;
 	}
 
@@ -1159,7 +1162,8 @@ void IO::print2outLineHeader_turnOff()
 void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 {
 	// Check whether the specified flag is indeed one that requires a vector with six components
-	if ((flag != IO::OUTFLAG_FOWT_DISP) && (flag != IO::OUTFLAG_FOWT_VEL) && (flag != IO::OUTFLAG_FOWT_ACC) && (flag != IO::OUTFLAG_FOWT_DISP_SD) &&
+	if ((flag != IO::OUTFLAG_FOWT_DISP) && (flag != IO::OUTFLAG_FOWT_VEL) && (flag != IO::OUTFLAG_FOWT_ACC) && 
+		(flag != IO::OUTFLAG_FOWT_DISP_1ST) && (flag != IO::OUTFLAG_FOWT_VEL_1ST) && (flag != IO::OUTFLAG_FOWT_ACC_1ST) && (flag != IO::OUTFLAG_FOWT_DISP_SD) &&
 		(flag != IO::OUTFLAG_TOTAL_FORCE) && (flag != IO::OUTFLAG_HD_FORCE) && (flag != IO::OUTFLAG_HS_FORCE) && (flag != IO::OUTFLAG_MOOR_FORCE) &&
 		(flag != IO::OUTFLAG_HD_FORCE_DRAG) && (flag != IO::OUTFLAG_HD_FORCE_1STP) && (flag != IO::OUTFLAG_HD_FORCE_ETA) &&
 		(flag != IO::OUTFLAG_HD_FORCE_CONV) && (flag != IO::OUTFLAG_HD_FORCE_AXDV) && (flag != IO::OUTFLAG_HD_FORCE_ACGR) &&
@@ -1328,6 +1332,16 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			print2outLineHeader("yaw");
 		}
 
+		if (flag == OUTFLAG_FOWT_DISP_1ST)
+		{
+			print2outLineHeader("surge_1st");
+			print2outLineHeader("sway_1st");
+			print2outLineHeader("heave_1st");
+			print2outLineHeader("roll_1st");
+			print2outLineHeader("pitch_1st");
+			print2outLineHeader("yaw_1st");
+		}
+
 		if (flag == OUTFLAG_FOWT_DISP_SD)
 		{
 			print2outLineHeader("surge_sd");
@@ -1348,6 +1362,16 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			print2outLineHeader("yaw_vel");
 		}
 
+		if (flag == OUTFLAG_FOWT_VEL_1ST)
+		{
+			print2outLineHeader("surge_vel_1st");
+			print2outLineHeader("sway_vel_1st");
+			print2outLineHeader("heave_vel_1st");
+			print2outLineHeader("roll_vel_1st");
+			print2outLineHeader("pitch_vel_1st");
+			print2outLineHeader("yaw_vel_1st");
+		}
+
 		if (flag == OUTFLAG_FOWT_ACC)
 		{
 			print2outLineHeader("surge_acc");
@@ -1356,7 +1380,17 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 			print2outLineHeader("roll_acc");
 			print2outLineHeader("pitch_acc");
 			print2outLineHeader("yaw_acc");
-		}		
+		}
+
+		if (flag == OUTFLAG_FOWT_ACC_1ST)
+		{
+			print2outLineHeader("surge_acc_1st");
+			print2outLineHeader("sway_acc_1st");
+			print2outLineHeader("heave_acc_1st");
+			print2outLineHeader("roll_acc_1st");
+			print2outLineHeader("pitch_acc_1st");
+			print2outLineHeader("yaw_acc_1st");
+		}
 	}
 
 	// If the printing flag is true and if this is one of the requested output variables,
@@ -1727,6 +1761,7 @@ std::string IO::printOutVar()
 
 		// Options that are not printted to the sum file:
 		// - Debug options, as they are for development usage
+		// - 1st order quantities, because they are activated with their respective total flags
 		case IO::OUTFLAG_DEBUG_NUM:
 			printFlag = false;
 			break;
@@ -1736,6 +1771,18 @@ std::string IO::printOutVar()
 			break;
 
 		case OUTFLAG_DEBUG_VEC_6:
+			printFlag = false;
+			break;
+
+		case IO::OUTFLAG_FOWT_DISP_1ST:
+			printFlag = false;
+			break;
+
+		case IO::OUTFLAG_FOWT_VEL_1ST:
+			printFlag = false;
+			break;
+
+		case IO::OUTFLAG_FOWT_ACC_1ST:
 			printFlag = false;
 			break;
 

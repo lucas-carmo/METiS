@@ -29,6 +29,7 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 	m_nodeWL = m_node1Pos + (m_node2Pos - m_node1Pos) * (0 - m_node1Pos.at(2)) / (m_node2Pos.at(2) - m_node1Pos.at(2));
 	m_cog2nodeWL = m_nodeWL - cog;
 	m_Zwl = m_nodeWL.at(2);
+	m_accNodeAtWL_1stOrd.zeros();
 
 	// Don't know why, but without declaring the following sizes the code crashes due to lack of memory when compiling
 	// the debug version in Visual Studio 2017
@@ -81,9 +82,11 @@ void MorisonElement::calcPosVel(const vec::fixed<6> &pos, const vec::fixed<6> &v
 	make_local_base(xvec, yvec, zvec, node1Pos, node2Pos);
 }
 
-void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD)
+void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, 
+										 const vec::fixed<6> &floaterCoGpos_1stOrd, const vec::fixed<6> &floaterVel_1stOrd,
+										 const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD)
 {
-	updateMorisonElement(floaterCoGpos, floaterVel, floaterCoGpos_SD, floaterVel_SD);
+	updateMorisonElement(floaterCoGpos, floaterVel, floaterCoGpos_1stOrd, floaterVel_1stOrd, floaterCoGpos_SD, floaterVel_SD);
 
 	// Find the intersection with the instantaneous waterline
 	// Used in Wheeler stretching and in the calculation of the added mass matrix.
@@ -91,21 +94,31 @@ void MorisonElement::updateMorisonElement(const ENVIR &envir, const vec::fixed<6
 	m_intersectWL = findIntersectWL(envir);
 }
 
-void MorisonElement::updateMorisonElement(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD)
+void MorisonElement::updateMorisonElement(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, 
+										  const vec::fixed<6> &floaterCoGpos_1stOrd, const vec::fixed<6> &floaterVel_1stOrd,
+										  const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD)
 {
 	// Considering total body motion
-	calcPosVel(floaterCoGpos, floaterVel, m_node1Pos, m_node2Pos, m_node1Vel, m_node2Vel, m_xvec, m_yvec, m_zvec);
-	mat::fixed<3, 3> R = rotatMatrix(floaterCoGpos.rows(3, 5));
-	m_node1AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R * m_cog2node1));
-	m_node2AccCentrip = arma::cross(floaterVel.rows(3, 5), arma::cross(floaterVel.rows(3, 5), R * m_cog2node2));
+	calcPosVel(floaterCoGpos, floaterVel, m_node1Pos, m_node2Pos, m_node1Vel, m_node2Vel, m_xvec, m_yvec, m_zvec);	
 
-	m_nodeWL = floaterCoGpos.rows(0, 2) + R * m_cog2nodeWL;
+	// Considering only the 1st order motions
+	calcPosVel(floaterCoGpos_1stOrd, floaterVel_1stOrd, m_node1Pos_1stOrd, m_node2Pos_1stOrd, m_node1Vel_1stOrd, m_node2Vel_1stOrd, m_xvec_1stOrd, m_yvec_1stOrd, m_zvec_1stOrd);
+	mat::fixed<3, 3> R = rotatMatrix(floaterCoGpos_1stOrd.rows(3, 5));
+	m_node1AccCentrip = arma::cross(floaterVel_1stOrd.rows(3, 5), arma::cross(floaterVel_1stOrd.rows(3, 5), R * m_cog2node1));
+	m_node2AccCentrip = arma::cross(floaterVel_1stOrd.rows(3, 5), arma::cross(floaterVel_1stOrd.rows(3, 5), R * m_cog2node2));
+
+	m_nodeWL = floaterCoGpos_1stOrd.rows(0, 2) + R * m_cog2nodeWL;
 	m_Zwl = m_nodeWL.at(2);
 
 	// Considering only the mean and slow drift motions
 	calcPosVel(floaterCoGpos_SD, floaterVel_SD, m_node1Pos_sd, m_node2Pos_sd, m_node1Vel_sd, m_node2Vel_sd, m_xvec_sd, m_yvec_sd, m_zvec_sd);
 
 	calculateImmersedLengthProperties_sd(m_Lw, m_numNodesBelowWL, m_dL);
+}
+
+void MorisonElement::updateAcc1stOrdNodeAtWL(const vec::fixed<6> &floaterAcc_1stOrd)
+{
+	m_accNodeAtWL_1stOrd = floaterAcc_1stOrd.rows(0, 2) + arma::cross(floaterAcc_1stOrd.rows(3, 5), m_cog2nodeWL);
 }
 
 vec::fixed<3> MorisonElement::node1Pos_t0() const

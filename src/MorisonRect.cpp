@@ -73,7 +73,7 @@ vec::fixed<6> MorisonRect::hydroForce_1st(const ENVIR & envir, const vec::fixed<
 	return fill::zeros;
 }
 
-vec::fixed<6> MorisonRect::hydroForce_drag(const ENVIR & envir, const vec::fixed<3>& refPt) const
+vec::fixed<6> MorisonRect::hydroForce_drag(const ENVIR & envir, const vec::fixed<3>& refPt, bool flagUse1stOrd) const
 {
 	return fill::zeros;
 }

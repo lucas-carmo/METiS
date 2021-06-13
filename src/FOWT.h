@@ -42,6 +42,8 @@ private:
 	*/
 	vec::fixed<6> m_disp; // m_disp(0:2) = Position with respect to the initial CoG (i.e. CoG(t) - CoG(0)) --- m_disp(3:5) = Rotation with respect to initial configuration. For now, we are considering small rotations
 	vec::fixed<6> m_vel;
+	vec::fixed<6> m_disp_1stOrd; // Same thing, but first order 
+	vec::fixed<6> m_vel_1stOrd;
 
 	// Axis system that follows the mean and slow drift.
 	// They are evaluated by filtering the instantaneous position with the following parameters.
@@ -91,6 +93,8 @@ public:
 
 	vec::fixed<6> disp() const;
 	vec::fixed<6> vel() const;
+	vec::fixed<6> disp_1stOrd() const;
+	vec::fixed<6> vel_1stOrd() const;
 	vec::fixed<6> disp_sd() const;
  
 	vec::fixed<6> constForce() const;
@@ -105,15 +109,12 @@ public:
 	/*****************************************************
 		Forces, acceleration, displacement, etc
 	*****************************************************/
-	vec::fixed<6> calcAcceleration(const ENVIR &envir);
-	void update(const ENVIR &envir, const vec::fixed<6> &disp, const vec::fixed<6> &vel);
+	vec::fixed<12> calcAcceleration(const ENVIR &envir);
+	void update(const ENVIR &envir, const vec::fixed<12> &disp, const vec::fixed<12> &vel);
 	void update_sd(const vec::fixed<6> &disp, const double dt);
 	void update_sd(const vec::fixed<6> &disp, const double dt, const double wf, const double zeta);
 
-	vec::fixed<6> hydrodynamicForce(const ENVIR &envir);
-	vec::fixed<6> hydrostaticForce(const ENVIR &envir);
 	vec::fixed<6> aeroForce(const ENVIR &envir);
-	vec::fixed<6> mooringForce();
+	vec::fixed<6> mooringForce(bool flagUse1stOrd);
 	vec::fixed<6> weightForce(const double gravity);
-	vec::fixed<6> totalForce(const ENVIR &envir);
 };

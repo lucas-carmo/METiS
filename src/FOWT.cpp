@@ -171,6 +171,16 @@ vec::fixed<6> FOWT::vel() const
 	return m_vel;
 }
 
+vec::fixed<6> FOWT::disp_1stOrd() const
+{
+	return m_disp_1stOrd;
+}
+
+vec::fixed<6> FOWT::vel_1stOrd() const
+{
+	return m_vel_1stOrd;
+}
+
 vec::fixed<6> FOWT::disp_sd() const
 {
 	return m_disp_sd;
@@ -293,10 +303,12 @@ std::string FOWT::printDoF() const
 	Forces, acceleration, displacement, etc
 *****************************************************/
 // Update FOWT displacement, velocity, acceleration and any other necessary state.
-void FOWT::update(const ENVIR &envir, const vec::fixed<6> &disp, const vec::fixed<6> &vel)
+void FOWT::update(const ENVIR &envir, const vec::fixed<12> &disp, const vec::fixed<12> &vel)
 {
-	m_disp = disp;
-	m_vel = vel;	
+	m_disp_1stOrd = disp.rows(0, 5);
+	m_vel_1stOrd = vel.rows(0, 5);
+	m_disp = disp.rows(6, 11);
+	m_vel = vel.rows(6, 11);
 
 	if (m_filterSD_omega < 0)
 	{
@@ -304,9 +316,10 @@ void FOWT::update(const ENVIR &envir, const vec::fixed<6> &disp, const vec::fixe
 		m_vel_sd = vel;
 	}
 
-	// Aqui tem que passar os deslocamentos com relacao ao CoG do floater. Calcular aqui mesmo baseado na posicao do centro de referencia de movimento
-	m_floater.update(envir, m_disp, m_vel, m_disp_sd, m_vel_sd);
+	// Aqui tem que passar os deslocamentos com relacao ao CoG do floater. Calcular aqui mesmo baseado na posicao do centro de referencia de movimento 
+	m_floater.update(envir, m_disp, m_vel, m_disp_1stOrd, m_vel_1stOrd, m_disp_sd, m_vel_sd);
 }
+
 
 // Evaluate (and update) the axis system that follows the slow position.
 // Done so by applying a second-order low-pass filter to the displacement.
@@ -349,40 +362,70 @@ void FOWT::update_sd(const vec::fixed<6> &disp, const double dt)
 	}
 }
 
-
-vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
-{
-	vec::fixed<6> acc(fill::zeros);	
-
-	mat::fixed<6, 6> addedMass(fill::zeros);
-
-	// Added mass matrix evaluated at slow position if the analysis is first-order. This
-	// is mostly because the expressions are all expressed in terms of slow-drift variables (the ones 
-	// with '_sd' in their names), since a real first-order analysis needs to consider the fixed mean position.
-	//
-	// However, if the slow position is fixed, just use the value that was evaluated at the beginning of the simulation
-	//
-	// If the analysis is second-order, it is reevaluated at each time step at the instantaneous position.	
-	if (m_filterSD_omega == 0 && m_hydroMode == 1)
-	{
-		addedMass = m_floater.addedMass_t0();
-	}
-	else
-	{
-		addedMass = m_floater.addedMass(envir.watDensity(), m_hydroMode);
-	}
-	
+vec::fixed<12> FOWT::calcAcceleration(const ENVIR &envir)
+{	
+	mat::fixed<6, 6> addedMass(m_floater.addedMass_t0());
 	IO::print2outLine(IO::OUTFLAG_ADDED_MASS_DIAG, addedMass.diag());
 
 	mat::fixed<6, 6> inertiaMatrix = addedMass + m_floater.inertiaMatrix();	
 
+	/*
+		Calculate the force and acceleration due to first-order wave forces
+	*/
+	// The first order hydrodynamic forces (including hydrostatic and added mass) may be needed ahead
+	// if second-order forces are required. Hence, assign the following two to avoid recalculating later.
+	// The others are not necessary, as their evaluation is very fast.
+	vec::fixed<6> hydrodynamicForce_1stOrd = m_floater.hydrodynamicForce_1stOrd(envir);
+	vec::fixed<6> hydrostaticForce_1stOrd = m_floater.hydrostaticForce_stiffnessPart(true);
+	vec::fixed<6> force_1stOrd = hydrodynamicForce_1stOrd + hydrostaticForce_1stOrd
+							   + m_floater.hydrodynamicForce_drag1stOrd(envir) + mooringForce(true)
+							   + m_floater.hydrostaticForce_staticBuoyancy(envir.watDensity(), envir.gravity()) + weightForce(envir.gravity());;
+
+	// Calculate the acceleration only if at least one dof is activated 
+	// (i.e. if at least one element of m_dofs is equal to 'true') 
+	vec::fixed<6> acc_1stOrd(fill::zeros);
+	if (std::find(m_dofs.begin(), m_dofs.end(), true) != m_dofs.end())
+	{
+		// Avoid coupling effects when a DoF is disabled and the others are not. 
+		// Please note that the force was printed BEFORE this is done, in such a way 
+		// that the full 6 component force vector is printed, even if the DoF is not active. 
+		for (int ii = 0; ii < 6; ++ii)
+		{
+			if (!m_dofs[ii])
+			{
+				force_1stOrd.at(ii) = 0;
+
+				// Even when the dof is disabled, it is necessary to provide a non-zero inertia 
+				// entry at the main diagonal to avoid a singular matrix 
+				inertiaMatrix.row(ii).zeros();
+				inertiaMatrix.col(ii).zeros();
+				inertiaMatrix.at(ii, ii) = 1;
+			}
+		}
+
+		// Solve inertiaMatrix * acc = force 
+		// Armadillo will throw its own exception if this computation fails. 
+		acc_1stOrd = arma::solve(inertiaMatrix, force_1stOrd);
+	}
+
+	// Calculate second order forces, if necessary
+	vec::fixed<6> hydroForce_2ndOrd(fill::zeros);
+	if (m_hydroMode > 1)
+	{
+		m_floater.setNode1stAcc(acc_1stOrd);
+		hydroForce_2ndOrd = m_floater.hydrodynamicForce_2ndOrd(envir, hydrodynamicForce_1stOrd + hydrostaticForce_1stOrd - m_floater.addedMass_t0()*acc_1stOrd);
+	}
 
 	// Calculate the total force acting on the FOWT
-	vec::fixed<6> force = totalForce(envir);	
+	// Remember that the weight is already included in hydroForce_1stOrd, but the drag is not!
+	vec::fixed<6> force = hydrodynamicForce_1stOrd + hydroForce_2ndOrd + m_floater.hydrostaticForce_stiffnessPart(false) 
+						+ m_floater.hydrodynamicForce_dragTotal(envir) + mooringForce(false) 
+						+ m_floater.hydrostaticForce_staticBuoyancy(envir.watDensity(), envir.gravity()) + weightForce(envir.gravity()) + aeroForce(envir);
 	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE, force);
 
 	// Calculate the acceleration only if at least one dof is activated
 	// (i.e. if at least one element of m_dofs is equal to 'true')
+	vec::fixed<6> acc_total(fill::zeros);
 	if (std::find(m_dofs.begin(), m_dofs.end(), true) != m_dofs.end())
 	{
 		// Avoid coupling effects when a DoF is disabled and the others are not.
@@ -405,31 +448,10 @@ vec::fixed<6> FOWT::calcAcceleration(const ENVIR &envir)
 
 		// Solve inertiaMatrix * acc = force
 		// Armadillo will throw its own exception if this computation fails.
-		acc = arma::solve(inertiaMatrix, force);		
-	}
-	IO::print2outLine(IO::OUTFLAG_HD_ADD_MASS_FORCE, -(addedMass - m_floater.addedMass_t0())* acc);
-
-	return acc;
-}
-
-vec::fixed<6> FOWT::hydrodynamicForce(const ENVIR &envir)
-{
-	if (m_hydroMode == 0)
-	{
-		return vec::fixed<6> {0, 0, 0, 0, 0, 0};
+		acc_total = arma::solve(inertiaMatrix, force);		
 	}
 
-	return m_floater.hydrodynamicForce(envir, m_hydroMode);
-}
-
-vec::fixed<6> FOWT::hydrostaticForce(const ENVIR &envir)
-{
-	if (m_hydroMode == 0)
-	{
-		return vec::fixed<6> {0, 0, 0, 0, 0, 0};
-	}
-
-	return m_floater.hydrostaticForce(envir);
+	return join_cols(acc_1stOrd, acc_total);
 }
 
 vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)
@@ -444,12 +466,19 @@ vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)
 	return vec::fixed<6> {0, 0, 0, 0, 0, 0};
 }
 
-vec::fixed<6> FOWT::mooringForce()
+vec::fixed<6> FOWT::mooringForce(bool flagUse1stOrd)
 {
 	vec::fixed<6> force{ 0, 0, 0, 0, 0, 0 };
 	if (m_moorMode == 1)
 	{
-		force = (-m_extLinStiff * m_disp + m_extConstForce);
+		if (flagUse1stOrd)
+		{
+			force = (-m_extLinStiff * m_disp_1stOrd + m_extConstForce);
+		}
+		else
+		{
+			force = (-m_extLinStiff * m_disp + m_extConstForce);
+		}
 	}
 
 	IO::print2outLine(IO::OUTFLAG_MOOR_FORCE, force);
@@ -460,9 +489,4 @@ vec::fixed<6> FOWT::mooringForce()
 vec::fixed<6> FOWT::weightForce(const double gravity)
 {
 	return vec::fixed<6> {0, 0, -gravity * mass(), 0, 0, 0};
-}
-
-vec::fixed<6> FOWT::totalForce(const ENVIR &envir)
-{
-	return (hydrodynamicForce(envir) + hydrostaticForce(envir) + mooringForce() + weightForce(envir.gravity()) + aeroForce(envir));
 }
