@@ -30,6 +30,8 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 	m_cog2nodeWL = m_nodeWL - cog;
 	m_Zwl = m_nodeWL.at(2);
 	m_accNodeAtWL_1stOrd.zeros();
+	m_node1Acc_1stOrd.zeros();
+	m_node2Acc_1stOrd.zeros();
 
 	// Don't know why, but without declaring the following sizes the code crashes due to lack of memory when compiling
 	// the debug version in Visual Studio 2017
@@ -59,6 +61,10 @@ MorisonElement::MorisonElement(const vec &node1Pos, const vec &node2Pos, const v
 	m_da1dx_Array_y = zeros(0, 0);
 	m_da1dx_Array_z = zeros(0, 0);
 	m_da1dy_Array_z = zeros(0, 0);
+
+	m_gradP1_Array_x = zeros(0, 0);
+	m_gradP1_Array_y = zeros(0, 0);
+	m_gradP1_Array_z = zeros(0, 0);
 }
 
 /*****************************************************
@@ -119,6 +125,8 @@ void MorisonElement::updateMorisonElement(const vec::fixed<6> &floaterCoGpos, co
 void MorisonElement::updateAcc1stOrdNodeAtWL(const vec::fixed<6> &floaterAcc_1stOrd)
 {
 	m_accNodeAtWL_1stOrd = floaterAcc_1stOrd.rows(0, 2) + arma::cross(floaterAcc_1stOrd.rows(3, 5), m_cog2nodeWL);
+	m_node1Acc_1stOrd = floaterAcc_1stOrd.rows(0, 2) + arma::cross(floaterAcc_1stOrd.rows(3, 5), m_cog2node1);
+	m_node2Acc_1stOrd = floaterAcc_1stOrd.rows(0, 2) + arma::cross(floaterAcc_1stOrd.rows(3, 5), m_cog2node2);
 }
 
 vec::fixed<3> MorisonElement::node1Pos_t0() const
@@ -490,6 +498,40 @@ vec::fixed<3> MorisonElement::da1dz(const ENVIR &envir, const int nodeIndex) con
 		da1dz = { da1dz_x, da1dz_y, da1dz_z };
 	}
 	return da1dz;
+}
+
+vec::fixed<3> MorisonElement::gradP1(const ENVIR & envir, const int nodeIndex) const
+{
+	vec::fixed<3> gradP1;
+
+	if (m_gradP1_Array_x.is_empty())
+	{
+		vec::fixed<3> node = nodePos_sd(nodeIndex);
+		double eta{ 0 };
+		if (envir.waveStret() == 2)
+		{
+			eta = envir.waveElev(node.at(0), node.at(1));
+		}
+		gradP1 = envir.gradP1(node, eta);
+	}
+	else
+	{
+		const vec &t = envir.getTimeArray();
+		uword ind1 = envir.getInd4interp1();
+		uword ind2 = envir.getInd4interp2();
+
+		double gradP1_x = m_gradP1_Array_x.at(ind1, nodeIndex);
+		double gradP1_y = m_gradP1_Array_y.at(ind1, nodeIndex);
+		double gradP1_z = m_gradP1_Array_z.at(ind1, nodeIndex);
+		if (envir.shouldInterp())
+		{
+			gradP1_x += (m_gradP1_Array_x.at(ind2, nodeIndex) - m_gradP1_Array_x.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			gradP1_y += (m_gradP1_Array_y.at(ind2, nodeIndex) - m_gradP1_Array_y.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			gradP1_z += (m_gradP1_Array_z.at(ind2, nodeIndex) - m_gradP1_Array_z.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+		}
+		gradP1 = { gradP1_x, gradP1_y, gradP1_z };
+	}
+	return gradP1;
 }
 
 // Calculate the intersection between the cylinder and waterline, considering the wave elevation.

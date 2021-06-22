@@ -121,6 +121,10 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 		m_da1dx_Array_z = zeros(t.size(), npts);
 		m_da1dy_Array_z = zeros(t.size(), npts);
 
+		m_gradP1_Array_x = zeros(t.size(), npts);
+		m_gradP1_Array_y = zeros(t.size(), npts);
+		m_gradP1_Array_z = zeros(t.size(), npts);
+
 		cx_mat amp_du1dx_x(nWaves, npts, fill::zeros);
 		cx_mat amp_du1dy_y(nWaves, npts, fill::zeros);
 		cx_mat amp_du1dz_z(nWaves, npts, fill::zeros);
@@ -134,6 +138,10 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 		cx_mat amp_da1dx_y(nWaves, npts, fill::zeros);
 		cx_mat amp_da1dx_z(nWaves, npts, fill::zeros);
 		cx_mat amp_da1dy_z(nWaves, npts, fill::zeros);
+
+		cx_mat amp_gradP1_x(nWaves, npts, fill::zeros);
+		cx_mat amp_gradP1_y(nWaves, npts, fill::zeros);
+		cx_mat amp_gradP1_z(nWaves, npts, fill::zeros);
 		
 		for (unsigned int iWave = 0; iWave < nWaves; ++iWave)
 		{
@@ -166,6 +174,12 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 
 				aux = envir.da1dz_coef(m_nodesArray.at(0, iNode), m_nodesArray.at(1, iNode), m_nodesArray.at(2, iNode), iWave);
 				amp_da1dz_z.at(iWave, iNode) = aux.at(2);
+
+				// Pressure gradient
+				aux = envir.gradP1_coef(m_nodesArray.at(0, iNode), m_nodesArray.at(1, iNode), m_nodesArray.at(2, iNode), iWave);
+				amp_gradP1_x.at(iWave, iNode) = aux.at(0);
+				amp_gradP1_y.at(iWave, iNode) = aux.at(1);
+				amp_gradP1_z.at(iWave, iNode) = aux.at(2);				
 			}
 		}
 
@@ -182,6 +196,10 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 		m_da1dx_Array_z = envir.timeSeriesFromAmp(amp_da1dx_z, w);
 		m_da1dz_Array_z = envir.timeSeriesFromAmp(amp_da1dz_z, w);
 		m_da1dy_Array_z = envir.timeSeriesFromAmp(amp_da1dy_z, w);
+
+		m_gradP1_Array_x = envir.timeSeriesFromAmp(amp_gradP1_x, w);
+		m_gradP1_Array_y = envir.timeSeriesFromAmp(amp_gradP1_y, w);
+		m_gradP1_Array_z = envir.timeSeriesFromAmp(amp_gradP1_z, w);
 	}
 
 	// Special treatment for the force due to the second-order wave potential due to the double sum
@@ -493,7 +511,7 @@ vec::fixed<6> MorisonCirc::hydroForce_relWaveElev(const ENVIR &envir, const vec:
 	double L = norm(m_node2Pos_sd - m_node1Pos_sd);
 	double ry(dot(m_node2Pos_1stOrd - m_node1Pos_1stOrd, m_xvec_sd) / L), rx(dot(m_node2Pos_1stOrd - m_node1Pos_1stOrd, m_yvec_sd) / L);
 
-	force.rows(0, 2) = (datum::pi * m_diam*m_diam / 4.) * envir.watDensity() * (eta - zBody) * (m_CM * du1dt - (m_CM-1) * acc + g * rx*m_yvec_sd - g * ry*m_xvec_sd);
+	force.rows(0, 2) = (datum::pi * m_diam*m_diam / 4.) * envir.watDensity() * (eta - zBody) * (m_CM * du1dt + g * rx*m_yvec_sd - g * ry*m_xvec_sd);
 	force.rows(3, 5) = cross(n_wl - refPt, force.rows(0, 2));
 
 	return force;	
@@ -643,13 +661,19 @@ vec::fixed<6> MorisonCirc::hydroForce_accGradient(const ENVIR & envir, const vec
 {
 	vec::fixed<6> force(fill::zeros);
 
+	bool evaluateTopNode{ true };
+	if (m_node2Pos.at(2) > 0)
+	{
+		evaluateTopNode = false;
+	}
+
 	int ncyl = m_numNodesBelowWL; // If the body is fixed, this is the same as m_nodesArray.n_cols. Otherwise, it is updated at each time step
 	vec::fixed<3> a_g(fill::zeros);
 	for (int ii = 0; ii < ncyl; ++ii)
 	{
 		vec::fixed<3> n_ii = nodePos_sd(ii);
 
-		// Diference between the 1st order position and the fixed (or slow) position
+		// Diference between the 1st order position and the fixed position
 		double xii = m_node1Pos_1stOrd.at(0) + m_dL * ii * m_zvec_1stOrd.at(0) - n_ii.at(0);
 		double yii = m_node1Pos_1stOrd.at(1) + m_dL * ii * m_zvec_1stOrd.at(1) - n_ii.at(1);
 		double zii = m_node1Pos_1stOrd.at(2) + m_dL * ii * m_zvec_1stOrd.at(2) - n_ii.at(2);
@@ -662,19 +686,18 @@ vec::fixed<6> MorisonCirc::hydroForce_accGradient(const ENVIR & envir, const vec
 		// Integrate the forces along the cylinder using Simpson's Rule
 		if (ii == 0 || ii == ncyl - 1)
 		{
-			force += (m_dL / 3.0) * join_cols(force_ii, cross(n_ii - m_node1Pos_sd, force_ii));
+			force += (m_dL / 3.0) * join_cols(force_ii, cross(n_ii - refPt, force_ii));
 		}
 		else if (ii % 2 != 0)
 		{
-			force += (4 * m_dL / 3.0) * join_cols(force_ii, cross(n_ii - m_node1Pos_sd, force_ii));
+			force += (4 * m_dL / 3.0) * join_cols(force_ii, cross(n_ii - refPt, force_ii));
 		}
 		else
 		{
-			force += (2 * m_dL / 3.0) * join_cols(force_ii, cross(n_ii - m_node1Pos_sd, force_ii));
+			force += (2 * m_dL / 3.0) * join_cols(force_ii, cross(n_ii - refPt, force_ii));
 		}
 	}
 
-	force.rows(3, 5) += cross(m_node1Pos_sd - refPt, force.rows(0, 2));
 	return force;
 }
 
@@ -1370,15 +1393,27 @@ mat::fixed<6, 6> MorisonCirc::addedMass_perp(const double rho, const vec::fixed<
 	double Lambda = datum::pi * pow(m_diam / 2., 2) * rho * (m_CM - 1);
 	int ncyl = m_numIntPoints;
 
-	// TODO: Replace the zwl's by 0 directly
+	// Get vertical coordinate of the intersection with the waterline
 	double zwl = 0;
+	if (hydroMode == 2 && m_intersectWL.is_finite())
+	{
+		zwl = m_intersectWL.at(2);
+	}
 
 	// Nodes position and vectors of the local coordinate system vectors
-	vec::fixed<3> n1 = node1Pos_sd();
-	vec::fixed<3> n2 = node2Pos_sd();
-	vec::fixed<3> xvec = m_xvec_sd; // xvec and yvec are used to project the acceleration. They are analogous to the normal vector.
-	vec::fixed<3> yvec = m_yvec_sd;
-	vec::fixed<3> zvec = m_zvec_sd; // While zvec is used only to evaluate the nodes position
+	vec::fixed<3> n1 = m_node1Pos_1stOrd;
+	vec::fixed<3> n2 = m_node2Pos_1stOrd;
+	vec::fixed<3> xvec = m_xvec_1stOrd; // xvec and yvec are used to project the acceleration. They are analogous to the normal vector.
+	vec::fixed<3> yvec = m_yvec_1stOrd;
+	vec::fixed<3> zvec = m_zvec_1stOrd; // While zvec is used only to evaluate the nodes position
+	if (hydroMode < 2)
+	{
+		n1 = node1Pos_sd();
+		n2 = node2Pos_sd();
+		xvec = m_xvec_sd;
+		yvec = m_yvec_sd;
+		zvec = m_zvec_sd;
+	}
 
 
 	// Since n2 is above n1, if n1[2] > zwl, the cylinder is above the waterline

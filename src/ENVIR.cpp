@@ -967,10 +967,8 @@ cx_double ENVIR::wavePressure_coef(const double x, const double y, const double 
 	cx_double p(0);
 
 	double h = m_watDepth;
-	double t = m_time;
 	double rho = m_watDens;
 	double g = m_gravity;
-	double w = m_wave.at(waveIndex).angFreq();
 	double A = m_wave.at(waveIndex).amp();
 	double k = m_wave.at(waveIndex).waveNumber();
 	double cosBeta = m_wave.at(waveIndex).cosBeta();
@@ -1750,7 +1748,6 @@ cx_vec::fixed<3> ENVIR::da1dz_coef(const double x, const double y, const double 
 
 	// More friendly notation
 	double h = m_watDepth;
-	double t = m_time;
 	double w = m_wave.at(waveIndex).angFreq();
 	double A = m_wave.at(waveIndex).amp();
 	double k = m_wave.at(waveIndex).waveNumber();
@@ -1785,6 +1782,81 @@ cx_vec::fixed<3> ENVIR::da1dz_coef(const double x, const double y, const double 
 	}
 
 	return acc;
+}
+
+vec::fixed<3> ENVIR::gradP1(const vec::fixed<3>& coord, const double zwl) const
+{
+	return ramp() * gradP1(coord, zwl, m_time);
+}
+
+vec::fixed<3> ENVIR::gradP1(const vec::fixed<3>& coord, const double zwl, const double time) const
+{
+	vec::fixed<3> gradP1(fill::zeros);
+
+	if (m_waveStret <= 1 && zwl != 0)
+	{
+		throw std::runtime_error("zwl = " + std::to_string(zwl) + "is incompatible with wave streching mode " + std::to_string(m_waveStret));
+	}
+
+	double z = coord.at(2);
+	if (z > zwl)
+	{
+		return gradP1;
+	}
+
+	if (m_waveStret == 2)
+	{
+		z = m_watDepth * (m_watDepth + z) / (m_watDepth + zwl) - m_watDepth;
+	}
+
+	for (int ii = 0; ii < m_wave.size(); ++ii)
+	{
+		if (m_wave.at(ii).amp() != 0)
+		{
+			double w = m_wave.at(ii).angFreq();
+			gradP1 += real(gradP1_coef(coord.at(0), coord.at(1), z, ii) * cx_double { cos(w * m_time), sin(w * m_time) });
+		}
+	}
+	return gradP1;
+}
+
+cx_vec::fixed<3> ENVIR::gradP1_coef(const double x, const double y, const double z, const unsigned int waveIndex) const
+{
+	cx_vec::fixed<3> gradP(fill::zeros);
+
+	// More friendly notation
+	double h = m_watDepth;
+	double rho = m_watDens;
+	double g = m_gravity;
+	double A = m_wave.at(waveIndex).amp();
+	double k = m_wave.at(waveIndex).waveNumber();
+	double cosBeta = m_wave.at(waveIndex).cosBeta();
+	double sinBeta = m_wave.at(waveIndex).sinBeta();
+	double phase = m_wave.at(waveIndex).phase() * arma::datum::pi / 180.;
+	double khz_xy(0), khz_z(0);
+
+	if (z <= 0 && k > 0)
+	{
+		// When k*h is too high, which happens for deep water/short waves, sinh(k*h) and cosh(k*h) become too large and are considered "inf".
+		// Hence, we chose a threshold of 10, above which the deep water approximation is employed.
+		if (k*h >= 10)
+		{
+			khz_xy = exp(k*z);
+			khz_z = khz_xy;
+		}
+		else
+		{
+			khz_xy = cosh(k * (z + h)) / sinh(k*h);
+			khz_z = sinh(k * (z + h)) / sinh(k*h);
+		}
+
+		gradP.at(0) = k*cosBeta*khz_xy*cx_double(-sin(k*cosBeta*x + k * sinBeta*y + phase), -cos(k*cosBeta*x + k * sinBeta*y + phase));
+		gradP.at(1) = k*sinBeta*khz_xy*cx_double(-sin(k*cosBeta*x + k * sinBeta*y + phase), -cos(k*cosBeta*x + k * sinBeta*y + phase));
+		gradP.at(2) = k*khz_z*cx_double(cos(k*cosBeta*x + k * sinBeta*y + phase), -sin(k*cosBeta*x + k * sinBeta*y + phase));
+		gradP *= rho * g * A;
+	}
+
+	return gradP;
 }
 
 

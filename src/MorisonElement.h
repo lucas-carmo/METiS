@@ -70,6 +70,8 @@ protected:
 	vec::fixed<3> m_cog2nodeWL;
 	double m_Zwl{ 0 };
 	vec::fixed<3> m_accNodeAtWL_1stOrd;
+	vec::fixed<3> m_node1Acc_1stOrd;
+	vec::fixed<3> m_node2Acc_1stOrd;
 	
 	// Quantities calculated at the beginning of the simulaion using IFFT
 	bool m_flagFixed{ false }; // Flag used to specify whether things will be evaluated about the mean position of the cylinder
@@ -101,6 +103,11 @@ protected:
 	mat m_da1dx_Array_y;
 	mat m_da1dx_Array_z;
 	mat m_da1dy_Array_z;
+
+	// Gradient of the first-order pressure at each node
+	mat m_gradP1_Array_x;
+	mat m_gradP1_Array_y;
+	mat m_gradP1_Array_z;
 
 	// Properties that are used in case the slow drift position is not fixed
 	double m_Lw;
@@ -180,6 +187,9 @@ public:
 	vec::fixed<3> da1dx(const ENVIR &envir, const int nodeIndex) const;
 	vec::fixed<3> da1dy(const ENVIR &envir, const int nodeIndex) const;
 	vec::fixed<3> da1dz(const ENVIR &envir, const int nodeIndex) const;
+	vec::fixed<3> gradP1(const ENVIR &envir, const int nodeIndex) const;
+	double dp1dy(const ENVIR &envir, const int nodeIndex) const;
+	double dp1dz(const ENVIR &envir, const int nodeIndex) const;
 
 	// Printers and getters
 	virtual std::string print() const = 0;

@@ -168,6 +168,8 @@ public:
 	vec::fixed<3> da1dy(const vec::fixed<3> &coord, const double zwl, const double time) const;
 	vec::fixed<3> da1dz(const vec::fixed<3> &coord, const double zwl) const;
 	vec::fixed<3> da1dz(const vec::fixed<3> &coord, const double zwl, const double time) const;
+	vec::fixed<3> gradP1(const vec::fixed<3> &coord, const double zwl) const;
+	vec::fixed<3> gradP1(const vec::fixed<3> &coord, const double zwl, const double time) const;
 
 	// Functions to evaluate properties of each wave
 	cx_double waveElev_coef(const double x, const double y, const unsigned int waveIndex) const;
@@ -182,6 +184,7 @@ public:
 	cx_vec::fixed<3> da1dx_coef(const double x, const double y, const double z, const unsigned int waveIndex) const;
 	cx_vec::fixed<3> da1dy_coef(const double x, const double y, const double z, const unsigned int waveIndex) const;
 	cx_vec::fixed<3> da1dz_coef(const double x, const double y, const double z, const unsigned int waveIndex) const;
+	cx_vec::fixed<3> gradP1_coef(const double x, const double y, const double z, const unsigned int waveIndex) const;
 
 	double windVel_X(const vec::fixed<3> &coord) const;
 	double windVel_Y(const vec::fixed<3> &coord) const;
