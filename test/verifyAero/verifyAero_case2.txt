@@ -15,9 +15,10 @@ DOFS 0 0 0 0 0 0
 %%-----------------------------------------------------------------------------%%
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
 %%-----------------------------------------------------------------------------%%
-TimeStep    0.1                % Time step, in seconds
+TimeStep    0.1               % Time step, in seconds
 TimeTotal  	120					% Total simulation time, in secods
-TimeRamp	180                 % Numerical ramp, in seconds
+TimeRamp	   0                 % Numerical ramp, in seconds
+PrintStep    0.1
 
 
 
@@ -27,6 +28,7 @@ TimeRamp	180                 % Numerical ramp, in seconds
 Grav		9.81
 AirDens     1.225
 WindVel     10.0 % Measured at the reference height
+WindDir     0
 WindHeight  90
 WindExp     0.2
 UseTipLoss  1
@@ -45,7 +47,7 @@ FloaterCoG		0,0,0
 %%---------------------------- RNA DESCRIPTION --------------------------------%%
 %%-----------------------------------------------------------------------------%%
 RotSpeed    12  % Rotor speed in rpm (constant)
-RotTilt     5   % Rotor tilt angle (degrees)
+RotTilt     -5   % Rotor tilt angle (degrees)
 RotYaw      0   % Rotor yaw angle (degrees)
 NumBlades   3   % Number of blades
 BldPitch    3   % Blade pitch angle (degrees)

@@ -27,6 +27,9 @@ public:
 		OUTFLAG_FOWT_DISP,
 		OUTFLAG_FOWT_VEL,
 		OUTFLAG_FOWT_ACC,
+		OUTFLAG_FOWT_DISP_1ST,
+		OUTFLAG_FOWT_VEL_1ST,
+		OUTFLAG_FOWT_ACC_1ST,
 		OUTFLAG_FOWT_DISP_SD,
 //
 		OUTFLAG_WAVE_ELEV,
@@ -34,22 +37,39 @@ public:
 		OUTFLAG_WAVE_ACC,
 		OUTFLAG_WAVE_PRES,
 		OUTFLAG_WAVE_ACC_2ND,
+		OUTFLAG_WAVE_PRES_2ND,
+//		
+		OUTFLAG_HD_FORCE_DRAG, // Drag force
+		OUTFLAG_HD_FORCE_1STP, // Due to first-order potential
+		OUTFLAG_HD_FORCE_ETA,  // Due to relative wave elevation
+		OUTFLAG_HD_FORCE_CONV, // Due to convective acceleration
+		OUTFLAG_HD_FORCE_AXDV, // Due to axial-divergence acceleration
+		OUTFLAG_HD_FORCE_ACGR, // Due to gradient of fluid acceleration
+		OUTFLAG_HD_FORCE_ROTN, // Due to the rotation of the normal vector
+		OUTFLAG_HD_FORCE_2NDP, // Due to second-order potential
+		OUTFLAG_HD_FORCE_RSLB, // Due to the rotation term from slender-body approximation
+		OUTFLAG_HD_FORCE_REM,  // Remaining force terms
 //
-		OUTFLAG_HD_INERTIA_FORCE,
-		OUTFLAG_HD_DRAG_FORCE,
-		OUTFLAG_HD_FK_FORCE,
-		OUTFLAG_HD_2ND_FORCE_PART1,
-		OUTFLAG_HD_2ND_FORCE_PART2,
-		OUTFLAG_HD_2ND_FORCE_PART3,
-		OUTFLAG_HD_2ND_FORCE_PART4,
-		OUTFLAG_HD_2ND_FORCE_PART5,
+		OUTFLAG_HD_ADD_MASS_FORCE,
+//
 		OUTFLAG_HD_FORCE,
 //
 		OUTFLAG_HS_FORCE,
 //
+		OUTFLAG_MOOR_FORCE,
+//
 		OUTFLAG_AD_HUB_FORCE,
 //
 		OUTFLAG_TOTAL_FORCE,
+//
+		OUTFLAG_ADDED_MASS_DIAG,		
+//
+	// Debug flags are not specified in the input files. As the name indicates, they are
+	// supposed to be used when debugging the code, and no call of print2outLine with
+	// an OUTFLAG_DEBUG should be present in production code.
+		OUTFLAG_DEBUG_NUM,
+		OUTFLAG_DEBUG_VEC_3,
+		OUTFLAG_DEBUG_VEC_6,
 //
 		OUTFLAG_SIZE
 	};
@@ -125,6 +145,12 @@ public:
 
 	// Other printing functions
 	static std::string printOutVar();
+
+	// Quantites evaluated at wave probes are not always necessary to the simulation,
+	// hence it is better to assess them only if required. For doing that, we need a function
+	// that outputs the state of the outputs
+	static bool isOutputActive(const OutFlag &flag);
+
 };
 
 

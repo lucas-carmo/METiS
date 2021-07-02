@@ -317,7 +317,7 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 	for (unsigned int iiBlades = 0; iiBlades < m_blades.size(); ++iiBlades)
 	{
 		totalAzimuth = deltaAzimuth + m_blades.at(iiBlades).initialAzimuth();
-		rotorRotation = rotatMatrix_deg(0, -m_blades.at(iiBlades).precone(), 0) * rotatMatrix_deg(-totalAzimuth, -rotorTilt(), -rotorYaw());
+		rotorRotation = rotatMatrix_deg(0, -m_blades.at(iiBlades).precone(), 0) * rotatMatrix_deg(-totalAzimuth, rotorTilt(), -rotorYaw());
 
 		bladeForce.zeros();
 		for (unsigned int iiNodes = 0; iiNodes < m_blades.at(iiBlades).size(); ++iiNodes)
@@ -334,10 +334,11 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 			// - windVel[2] is the component that is in the rotation plan and in the radial direction
 			windVel.zeros();
 			windVel[0] = envir.windVel_X(nodeCoord_earth);
+			windVel[1] = envir.windVel_Y(nodeCoord_earth);
 			windVel = rotorRotation * (rigidBodyRotation * windVel);
 
 			// Structural velocity of the nodes. Need to be written in the node coordinate system
-			cog2node = rotatMatrix(FOWTpos.rows(3, 5)) * nodeCoord_fowt;
+			cog2node = nodeCoord_fowt;
 			nodeVel = FOWTvel.rows(0,2) + arma::cross(FOWTvel.rows(3,5), cog2node);  // nodeVel = linearVel + angVel ^ r ; this is written in the earth coordinate system
 			nodeVel = rotorRotation * (rigidBodyRotation * nodeVel); // Need to pass to the node coordinate system
 			nodeVel += rotatMatrix_deg(-totalAzimuth, 0, 0) * arma::cross(arma::vec::fixed<3> {rotorSpeed()*2*datum::pi/60, 0, 0}, nodeCoord_shaft); // Need to add the velocity due to the rotor rotation, written in the node coordinate system
@@ -434,27 +435,30 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 		****/
 		aeroForce.rows(0,2) += rotatMatrix_deg(m_blades.at(iiBlades).initialAzimuth(), m_blades.at(iiBlades).precone(), 0) * bladeForce.rows(0,2);
 		aeroForce.rows(3,5) += rotatMatrix_deg(m_blades.at(iiBlades).initialAzimuth(), m_blades.at(iiBlades).precone(), 0) * bladeForce.rows(3,5);
-	}
+	}	
 	IO::print2outLine(IO::OUTFLAG_AD_HUB_FORCE, aeroForce);
 
+	// As rotor dynamics is not modelled yet, it would be wrong to consider the moment along 
+	// the shaft as if it was acting on the structure modelled as as rigid body
+	aeroForce.at(4) = 0;
+	
 	// Need to write aeroForce in the global reference plane + change the fulcrum to the FOWT CoG
 	// 1) Write aeroForce in the shaft coordinate system
 	aeroForce.rows(0, 2) = rotatMatrix_deg(deltaAzimuth, 0, 0) * aeroForce.rows(0, 2);
 	aeroForce.rows(3, 5) = rotatMatrix_deg(deltaAzimuth, 0, 0) * aeroForce.rows(3, 5);
 
 	// 2) Write aeroForce in the fowt coordinate system
-	arma::mat::fixed<3, 3> rotatShaft2FOWT = rotatMatrix_deg(0, 0, -rotorYaw()) * rotatMatrix_deg(0, rotorTilt(), 0);
+	arma::mat::fixed<3, 3> rotatShaft2FOWT = rotatMatrix_deg(0, 0, -rotorYaw()) * rotatMatrix_deg(0, -rotorTilt(), 0);
 	aeroForce.rows(0, 2) = rotatShaft2FOWT * aeroForce.rows(0, 2);
 	aeroForce.rows(3, 5) = rotatShaft2FOWT * aeroForce.rows(3, 5);
 
 	// 3) Change the fulcrum to the CoG of the FOWT. Distance is hubHeight2CoG() along the tower and overhang() along the shaft
-	arma::vec::fixed<3> leverHub2CoG{ 0,0,0 };
-	leverHub2CoG = arma::vec::fixed<3>{ 0,0,hubHeight2CoG() } + rotatShaft2FOWT * arma::vec::fixed<3> {overhang(), 0, 0};
+	arma::vec::fixed<3> leverHub2CoG = arma::vec::fixed<3>{ 0,0,hubHeight2CoG() } + rotatShaft2FOWT * arma::vec::fixed<3> {overhang(), 0, 0};
 	aeroForce.rows(3, 5) += arma::cross(leverHub2CoG, aeroForce.rows(0, 2));
 
 	// 4) Write aeroForce in the global coordinate system
 	aeroForce.rows(0, 2) = rotatMatrix(FOWTpos.rows(3, 5)) * aeroForce.rows(0, 2);
-	aeroForce.rows(3, 5) = rotatMatrix(FOWTpos.rows(3, 5)) * aeroForce.rows(3, 5);
+	//aeroForce.rows(3, 5) = rotatMatrix(FOWTpos.rows(3, 5)) * aeroForce.rows(3, 5);	
 
 	return aeroForce;
 }

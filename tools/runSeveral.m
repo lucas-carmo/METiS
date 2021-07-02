@@ -4,7 +4,7 @@ close all
 clc
 
 if ispc
-    folder = '..\test\teste\';
+    folder = 'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_OC4\OC4_regular\METiS\_rodar';
     
     % Remove files from previous runs. This is only needed because the next step
     % is to list all the .txt files in the folder.

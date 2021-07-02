@@ -17,14 +17,20 @@ const std::string filesep =
 	"/";
 #endif
 
+typedef std::vector<std::complex<double>> cx_stdvec;
+
 
 /*****************************************************
     Useful math/geometric operations
 *****************************************************/
 arma::mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, const double rotatZ);
-arma::mat::fixed<3, 3> rotatMatrix_deg(const double rotatX, const double rotatY, const double rotatZ);
 arma::mat::fixed<3, 3> rotatMatrix(const arma::vec::fixed<3> &rotation);
+arma::mat::fixed<3, 3> rotatMatrix_deg(const double rotatX, const double rotatY, const double rotatZ);
 arma::mat::fixed<3, 3> rotatMatrix_deg(const arma::vec::fixed<3> &rotation);
+arma::mat::fixed<3, 3> rotatMatrix_extrinsic(const double rotatX, const double rotatY, const double rotatZ);
+arma::mat::fixed<3, 3> rotatMatrix_extrinsic(const arma::vec::fixed<3> &rotation);
+arma::mat::fixed<3, 3> smallRotatMatrix(const double rotatX, const double rotatY, const double rotatZ);
+arma::mat::fixed<3, 3> smallRotatMatrix(const arma::vec::fixed<3> &rotation);
 double deg2rad(const double degree);
 double minimum(const double x, const double y);
 bool almostEqual(const double x, const double y, double eps);
@@ -106,6 +112,12 @@ inline T string2num(const std::string& string)
 }
 
 
+// FFT and IFFT functions
+cx_stdvec mkl_fft(cx_stdvec &in);
+cx_stdvec mkl_fft_real(std::vector<double> &in_real);
+cx_stdvec mkl_ifft(cx_stdvec &in);
+std::vector<double> mkl_ifft_real(cx_stdvec &in);
+arma::mat mkl_ifft_real(arma::cx_mat &in);
 
 
 /*****************************************************

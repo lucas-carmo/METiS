@@ -132,7 +132,7 @@ double Wave::waveNumber() const
 
 double Wave::length() const
 {
-	if (is_finite(m_length))
+	if (!isnan(m_length))
 	{
 		return m_length;
 	}
@@ -202,11 +202,6 @@ double Wave::waveNumber(const double watDepth, const double gravity) const
 		{
 			return x_i;
 		}
-	}
-
-	if (x_j == 0)
-	{
-		throw std::runtime_error("Wave with wave number k = 0. Wave period = " + std::to_string(m_period));
 	}
 
 	return x_j;

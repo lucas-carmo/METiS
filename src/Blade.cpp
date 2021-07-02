@@ -198,7 +198,7 @@ void Blade::setNodeCoord_hub(const int index)
 	vec::fixed<3> hubCoord;
 	double r = radius(index);
 
-	hubCoord[0] = r * tan(deg2rad(m_precone));
+	hubCoord[0] = r * sin(deg2rad(m_precone));
 	hubCoord[1] = -r * sin(deg2rad(m_initialAzimuth)) * cos(deg2rad(m_precone));
 	hubCoord[2] = r * cos(deg2rad(m_initialAzimuth)) * cos(deg2rad(m_precone));
 
@@ -235,7 +235,7 @@ vec::fixed<3> Blade::nodeCoord_shaft(const vec::fixed<3> &nodeCoord_hub, const d
 // tilt and yaw must be given in degrees
 vec::fixed<3> Blade::nodeCoord_fowt(const vec::fixed<3> &nodeCoord_shaft, const double tilt, const double yaw, const double overhang, const double hubHeight2CoG) const
 {
-	mat::fixed<3,3> rotat = rotatMatrix_deg(0,0,-yaw) * rotatMatrix_deg(0, tilt, 0);
+	mat::fixed<3,3> rotat = rotatMatrix_deg(0,0,-yaw) * rotatMatrix_deg(0, -tilt, 0);
 	return (vec::fixed<3> {0,0,hubHeight2CoG} + rotat * (nodeCoord_shaft + vec::fixed<3> {overhang,0,0}) );
 }
 
