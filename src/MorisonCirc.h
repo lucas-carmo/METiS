@@ -16,7 +16,7 @@ private:
 
 
 public:
-	virtual void evaluateQuantitiesAtBegin(const ENVIR &envir) override;
+	virtual void evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroMode) override;
 
 
 	/*****************************************************
@@ -36,25 +36,24 @@ public:
 	virtual mat::fixed<6, 6> addedMass_paral(const double rho, const vec::fixed<3> &refPt, const int hydroMode) const override;	
 
 	// Forces up to second order - to be used in the evaluation of the total acceleration
-	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const override;
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, const vec::fixed<3> &refPt, const vec::fixed<3> &refPt_sd,
-											vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_2,
-											vec::fixed<6> &force_3, vec::fixed<6> &force_4, vec::fixed<6> &force_eta, vec::fixed<6> &force_rem) const override;
-
-	// Analytical evaluation of the integration along the cylinder's length
-	// of the term due to fluid acceleration in Morison's Equation.
-	//
 	// Written in the global coordinate system.
-	// Moments are given with respect to node1.
-	// TODO: Once things are finished, put these functions in MorisonElement
-	vec::fixed<6> hydroForce_1st(const ENVIR &envir, const int hydroMode) const;
-	cx_vec::fixed<6> hydroForce_1st_components(const Wave &wave, double watDensity, double watDepth, double gravity) const;
-	vec::fixed<6> hydroForce_drag(const ENVIR &envir) const;
-	vec::fixed<6> hydroForce_drag_already_calculated(const ENVIR &envir) const;
-	vec::fixed<6> hydroForce_drag_calculate(const ENVIR &envir) const;
-	
+	// Moments are given with respect to node1_sd.
+	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g, const vec::fixed<3> &refPt) const override;
+	virtual vec::fixed<6> hydrostaticForce_sd(const double rho, const double g, const vec::fixed<3> &refPt) const override;
+	virtual vec::fixed<6> hydroForce_1st(const ENVIR &envir, const vec::fixed<3> &refPt) const override;
+	virtual vec::fixed<6> hydroForce_drag(const ENVIR &envir, const vec::fixed<3> &refPt, bool flagUse1stOrd) const override;
+	virtual vec::fixed<6> hydroForce_relWaveElev(const ENVIR &envir, const vec::fixed<3> &refPt) const override;
+	virtual vec::fixed<6> hydroForce_2ndPot(const ENVIR &envir, const vec::fixed<3> &refPt) const override;
+	virtual vec::fixed<6> hydroForce_convecAcc(const ENVIR &envir, const vec::fixed<3> &refPt) const override;
+	virtual vec::fixed<6> hydroForce_axDiverg(const ENVIR &envir, const vec::fixed<3> &refPt) const override;
+	virtual vec::fixed<6> hydroForce_accGradient(const ENVIR &envir, const vec::fixed<3> &refPt) const override;
+	virtual vec::fixed<6> hydroForce_slendBodyRot(const ENVIR &envir, const vec::fixed<3> &refPt) const override;
+	virtual vec::fixed<6> hydroForce_rem(const ENVIR &envir, const vec::fixed<3> &refPt) const override;
+	virtual void quantities4hydrostaticMatrix(double &zb, double &V, double &Awl, double &xwl, double &ywl, double &Ixx, double &Iyy, double &Ixy) const override;
 
-	vec::fixed<6> morisonForce_inertia2nd(const ENVIR &envir) const;
+	vec::fixed<6> hydrostaticForce_helper(const double rho, const double g, const vec::fixed<3> &refPt, const vec::fixed<3> &n1, const vec::fixed<3> &n2_in, const vec::fixed<3> &xvec, const vec::fixed<3> &yvec, const vec::fixed<3> &zvec) const;
+	cx_vec::fixed<6> hydroForce_1st_coefs(const Wave &wave, double watDensity, double watDepth, double gravity) const;
+	cx_vec::fixed<6> hydroForce_2ndPot_coefs(const Wave &wave_ii, const Wave &wave_jj, double watDensity, double watDepth, double gravity) const;
 
 	/*****************************************************
 		Printing

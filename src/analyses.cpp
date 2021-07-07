@@ -28,38 +28,40 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	double c1s{ 2825 / 27648. }, c2s{ 0 }, c3s{ 18575 / 48384. }, c4s{ 13525 / 55296. }, c5s{ 277 / 14336. }, c6s{ 0.25 };
 
 	// FOWT state in the beginning 
-	vec::fixed<6> disp0(fowt.disp());
-	vec::fixed<6> vel0(fowt.vel());
+	// - Components from 0 to 5: quantities obtained from the solution of the first-order hydrodynamic problem
+	// - Components from 6 to 11: total quantities obtained considering all the forces
+	vec::fixed<12> disp0(join_cols(fowt.disp_1stOrd(), fowt.disp()));
+	vec::fixed<12> vel0(join_cols(fowt.vel_1stOrd(), fowt.vel()));
 
 	// RK4 estimations
-	vec::fixed<6> disp_k1(arma::fill::zeros);
-	vec::fixed<6> vel_k1(arma::fill::zeros);
-	vec::fixed<6> acc_k1(arma::fill::zeros);
+	vec::fixed<12> disp_k1(arma::fill::zeros);
+	vec::fixed<12> vel_k1(arma::fill::zeros);
+	vec::fixed<12> acc_k1(arma::fill::zeros);
 
-	vec::fixed<6> disp_k2(arma::fill::zeros);
-	vec::fixed<6> vel_k2(arma::fill::zeros);
-	vec::fixed<6> acc_k2(arma::fill::zeros);
+	vec::fixed<12> disp_k2(arma::fill::zeros);
+	vec::fixed<12> vel_k2(arma::fill::zeros);
+	vec::fixed<12> acc_k2(arma::fill::zeros);
 
-	vec::fixed<6> disp_k3(arma::fill::zeros);
-	vec::fixed<6> vel_k3(arma::fill::zeros);
-	vec::fixed<6> acc_k3(arma::fill::zeros);
+	vec::fixed<12> disp_k3(arma::fill::zeros);
+	vec::fixed<12> vel_k3(arma::fill::zeros);
+	vec::fixed<12> acc_k3(arma::fill::zeros);
 
-	vec::fixed<6> disp_k4(arma::fill::zeros);
-	vec::fixed<6> vel_k4(arma::fill::zeros);
-	vec::fixed<6> acc_k4(arma::fill::zeros);
+	vec::fixed<12> disp_k4(arma::fill::zeros);
+	vec::fixed<12> vel_k4(arma::fill::zeros);
+	vec::fixed<12> acc_k4(arma::fill::zeros);
 
-	vec::fixed<6> disp_k5(arma::fill::zeros);
-	vec::fixed<6> vel_k5(arma::fill::zeros);
-	vec::fixed<6> acc_k5(arma::fill::zeros);
+	vec::fixed<12> disp_k5(arma::fill::zeros);
+	vec::fixed<12> vel_k5(arma::fill::zeros);
+	vec::fixed<12> acc_k5(arma::fill::zeros);
 
-	vec::fixed<6> disp_k6(arma::fill::zeros);
-	vec::fixed<6> vel_k6(arma::fill::zeros);
-	vec::fixed<6> acc_k6(arma::fill::zeros);
+	vec::fixed<12> disp_k6(arma::fill::zeros);
+	vec::fixed<12> vel_k6(arma::fill::zeros);
+	vec::fixed<12> acc_k6(arma::fill::zeros);
 
 	// RK4: calculated values
-	vec::fixed<6> disp_total(arma::fill::zeros);
-	vec::fixed<6> vel_total(arma::fill::zeros);
-	vec::fixed<6> acc_total(arma::fill::zeros);
+	vec::fixed<12> disp_total(arma::fill::zeros);
+	vec::fixed<12> vel_total(arma::fill::zeros);
+	vec::fixed<12> acc_total(arma::fill::zeros);
 
 	// Check if this is a moving or fixed body
 	bool movBody = false;
@@ -75,16 +77,16 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	// Fifth-order Runge-Kutta method with adaptive stepsize
 	//
 	// If the error 'err' between the RK5 and the embedded 4th order method is 
-	// greater than what is required by delta0, the time step is reduced. Otherwise, it is increased.	
+	// greater than what is required by delta0, the time step is reduced. Otherwise, it is increased.
 	double epsRel{ 0.005 };
 	double epsAbs{ 1e-6 };
-	vec::fixed<6> delta0{ 0 };
-	vec::fixed<6> delta1{ 0 };
-	vec::fixed<6> dispErr(fill::zeros);
+	vec::fixed<12> delta0{ 0 };
+	vec::fixed<12> delta1{ 0 };
+	vec::fixed<12> dispErr(fill::zeros);
 	double safFact = 0.8;
 	double factor{ 1 };
 	bool condition = true;
-	
+
 	// Avoid the first time step to be larger than the print step
 	double h = (envir.timeStep() < envir.printStep() ? envir.timeStep() : envir.printStep());
 	double h_aux = h; // Extra time step used to print every print step without losing the time step calculated by the adaptive stepsize algorithm
@@ -92,18 +94,15 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	// make sure that the members of FOWT are updated
 	fowt.update(envir, disp0, vel0);
 
-	// If the filter frequency is 0, all quantities are evaluated at the fixed body position,
+	// All quantities are evaluated at the fixed body position,
 	// hence they can be evaluate previously with an IFFT
 	std::cout << "\nBegan evaluating wave kinematics at wave probes\n";
 	envir.evaluateWaveKinematics();
 	std::cout << "Finished\n";
 
-	if (fowt.filterSD_omega() == 0)
-	{
-		std::cout << "\nBegan evaluating body quantities related to wave kinematics\n";
-		fowt.evaluateQuantitiesAtBegin(envir);
-		std::cout << "Finished\n\n";
-	}	
+	std::cout << "\nBegan evaluating body quantities related to wave kinematics\n";
+	fowt.evaluateQuantitiesAtBegin(envir);
+	std::cout << "Finished\n\n";
 
 	// The header of the formatted output file is written during the first time step and is then turned off
 	IO::print2outLineHeader_turnOn();
@@ -122,14 +121,17 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		}
 
 		// FOWT state at the beginning of the time step
-		disp0 = fowt.disp();
-		vel0 = fowt.vel();
+		disp0 = join_cols(fowt.disp_1stOrd(), fowt.disp());
+		vel0 = join_cols(fowt.vel_1stOrd(), fowt.vel());
 
 		// Output wave and FOWT characteristics that may have been requested in the input file
 		envir.printWaveCharact();
-		IO::print2outLine(IO::OUTFLAG_FOWT_DISP, disp0);
-		IO::print2outLine(IO::OUTFLAG_FOWT_VEL, vel0);
-		IO::print2outLine(IO::OUTFLAG_FOWT_ACC, acc_total);		
+		IO::print2outLine(IO::OUTFLAG_FOWT_DISP_1ST, disp0.rows(0, 5));
+		IO::print2outLine(IO::OUTFLAG_FOWT_VEL_1ST, vel0.rows(0, 5));
+		IO::print2outLine(IO::OUTFLAG_FOWT_ACC_1ST, acc_total.rows(0, 5));
+		IO::print2outLine(IO::OUTFLAG_FOWT_DISP, disp0.rows(6, 11));
+		IO::print2outLine(IO::OUTFLAG_FOWT_VEL, vel0.rows(6, 11));
+		IO::print2outLine(IO::OUTFLAG_FOWT_ACC, acc_total.rows(6, 11));
 		IO::print2outLine(IO::OUTFLAG_FOWT_DISP_SD, fowt.disp_sd());
 
 		// Print progress to the screen
@@ -154,9 +156,9 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		IO::print2outLine_turnOff();
 
 		// Loop for the adaptive stepsize control
-		condition = true;		
+		condition = true;
 		while (condition && movBody)
-		{			
+		{
 			// RK5: first estimation
 			vel_k1 = acc_k1 * h;
 			disp_k1 = vel0 * h;
@@ -210,7 +212,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 			// Evaluate the error
 			delta1 = arma::abs(dispErr);
 			for (int ii = 0; ii < delta0.size(); ++ii)
-			{				
+			{
 				delta0.at(ii) = epsRel * ((std::abs(disp_total.at(ii)) > epsAbs) ? std::abs(disp_total.at(ii)) : epsAbs);
 			}
 			factor = arma::min(delta0 / delta1);
@@ -219,8 +221,6 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 			{
 				throw std::runtime_error("The adaptive stepsize RK5 diverged.");
 			}
-
-			
 
 			if (factor >= 1)
 			{
@@ -240,9 +240,9 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 				{
 					envir.stepTime(-a6 * h + h);
 				}
-		
+
 				fowt.update(envir, disp_total, vel_total);
-				fowt.update_sd(disp_total, h);
+				fowt.update_sd(disp_total.rows(6, 11), h);
 
 				condition = false;
 
@@ -266,13 +266,13 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 			{
 				h = envir.printStep();
 			}
-		}				
+		}
 
 		// If the next print step is going to be crossed in this time step, 
 		// update time to the print step instead
 		nextPrintStep = currentPrintStep + envir.printStep();
 		h_from_aux = false;
-		if ((envir.time()+h > nextPrintStep + epsAbs) && envir.time() < nextPrintStep - epsAbs)
+		if ((envir.time() + h > nextPrintStep + epsAbs) && envir.time() < nextPrintStep - epsAbs)
 		{
 			h_aux = h;
 			h_from_aux = true;

@@ -38,6 +38,12 @@ protected:
 	vec::fixed<3> m_node2Pos_sd;
 	vec::fixed<3> m_node1Vel_sd;
 	vec::fixed<3> m_node2Vel_sd;
+
+	// Nodes position and velocity considering only the 1st order position of the FOWT.
+	vec::fixed<3> m_node1Pos_1stOrd;
+	vec::fixed<3> m_node2Pos_1stOrd;
+	vec::fixed<3> m_node1Vel_1stOrd;
+	vec::fixed<3> m_node2Vel_1stOrd;
 	
 	// Vectors of the local base
 	// They could be calculated every time from the nodes' position,
@@ -51,6 +57,9 @@ protected:
 	vec::fixed<3> m_xvec; // Considering the instantaneous total position of the cylinder
 	vec::fixed<3> m_yvec;
 	vec::fixed<3> m_zvec;
+	vec::fixed<3> m_xvec_1stOrd; // Considering the first order position of the cylinder
+	vec::fixed<3> m_yvec_1stOrd;
+	vec::fixed<3> m_zvec_1stOrd;
 
 	// Intersection with the instantaneous waterline
 	vec::fixed<3> m_intersectWL;
@@ -60,20 +69,49 @@ protected:
 	vec::fixed<3> m_nodeWL;
 	vec::fixed<3> m_cog2nodeWL;
 	double m_Zwl{ 0 };
-
-	// Rotation matrix from the body coordinate system to the global coordinate system
-	mat::fixed<3, 3> m_RotatMatrix;
-	mat::fixed<3, 3> m_RotatMatrix_sd;
+	vec::fixed<3> m_accNodeAtWL_1stOrd;
+	vec::fixed<3> m_node1Acc_1stOrd;
+	vec::fixed<3> m_node2Acc_1stOrd;
 	
 	// Quantities calculated at the beginning of the simulaion using IFFT
 	bool m_flagFixed{ false }; // Flag used to specify whether things will be evaluated about the mean position of the cylinder
 	double m_dL;
 	mat m_waveElevAtWL;
 	mat m_hydroForce_1st_Array;
+	mat m_hydroForce_2nd_Array;
 	mat m_nodesArray;
+
+	mat m_du1dt_Array_x;
+	mat m_du1dt_Array_y;
+	mat m_du1dt_Array_z;
+
 	mat m_u1_Array_x;
 	mat m_u1_Array_y;
 	mat m_u1_Array_z;
+
+	// Do not need the 9 components of the velocity/acceleration gradients because of symmetries, e.g. du1dx_z = du1dz_x
+	mat m_du1dx_Array_x;
+	mat m_du1dy_Array_y;
+	mat m_du1dz_Array_z;
+	mat m_du1dx_Array_y;
+	mat m_du1dx_Array_z;
+	mat m_du1dy_Array_z;
+
+	mat m_da1dx_Array_x;
+	mat m_da1dy_Array_y;
+	mat m_da1dz_Array_z;
+	mat m_da1dx_Array_y;
+	mat m_da1dx_Array_z;
+	mat m_da1dy_Array_z;
+
+	// Gradient of the first-order pressure at each node
+	mat m_gradP1_Array_x;
+	mat m_gradP1_Array_y;
+	mat m_gradP1_Array_z;
+
+	// Properties that are used in case the slow drift position is not fixed
+	double m_Lw;
+	int m_numNodesBelowWL;
 
 
 public:
@@ -81,16 +119,20 @@ public:
 				   const bool botPressFlag, const double axialCD_1, const double axialCa_1, const double axialCD_2, const double axialCa_2);
 	
 	// If the body is fixed, most of the computationally expensive calculations can be performed only once at the beginning of the simulation
-	virtual void evaluateQuantitiesAtBegin(const ENVIR &envir) = 0;
+	virtual void evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroMode) = 0;
 
 	// Functions related to position, velocity and acceleration
 	void calcPosVel(const vec::fixed<6> &pos, const vec::fixed<6> &vel,
 		            vec::fixed<3> &node1Pos, vec::fixed<3> &node2Pos, vec::fixed<3> &node1Vel, vec::fixed<3> &node2Vel,
-		            vec::fixed<3> &xvec, vec::fixed<3> &yvec, vec::fixed<3> &zvec) ;	
+		            vec::fixed<3> &xvec, vec::fixed<3> &yvec, vec::fixed<3> &zvec);	
+
 	void updateMorisonElement(const ENVIR &envir, const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, 
+							  const vec::fixed<6> &floaterCoGpos_1stOrd, const vec::fixed<6> &floaterVel_1stOrd,
 							  const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD);
-	void updateMorisonElement(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel,
-							  const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD); // Version that does not find the intersection with the waterline
+	void updateMorisonElement(const vec::fixed<6> &floaterCoGpos, const vec::fixed<6> &floaterVel, // Version that does not find the intersection with the waterline
+							  const vec::fixed<6> &floaterCoGpos_1stOrd, const vec::fixed<6> &floaterVel_1stOrd,
+							  const vec::fixed<6> &floaterCoGpos_SD, const vec::fixed<6> &floaterVel_SD); 
+	void updateAcc1stOrdNodeAtWL(const vec::fixed<6> &floaterAcc_1stOrd);
 
 	vec::fixed<3> node1Pos_t0() const;
 	vec::fixed<3> node2Pos_t0() const;
@@ -116,11 +158,38 @@ public:
 	virtual double A_paral(const int ii, const int jj, const vec::fixed<3> &x, const vec::fixed<3> &xG, const vec::fixed<3> &zvec) const = 0;
 
 	// Forces up to second order - to be used in the evaluation of the total acceleration
-	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g) const = 0;
-	virtual vec::fixed<6> hydrodynamicForce(const ENVIR &envir, const int hydroMode, const vec::fixed<3> &refPt, const vec::fixed<3> &refPt_sd,
-											vec::fixed<6> &force_drag, vec::fixed<6> &force_1, vec::fixed<6> &force_2, 
-											vec::fixed<6> &force_3, vec::fixed<6> &force_4, vec::fixed<6> &force_eta, vec::fixed<6> &force_rem) const = 0;
+	// Written in the global coordinate system.
+	// Moments are given with respect to node1_sd.
+	virtual vec::fixed<6> hydrostaticForce(const double rho, const double g, const vec::fixed<3> &refPt) const = 0;
+	virtual vec::fixed<6> hydrostaticForce_sd(const double rho, const double g, const vec::fixed<3> &refPt) const = 0;
+	virtual vec::fixed<6> hydroForce_1st(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
+	virtual vec::fixed<6> hydroForce_drag(const ENVIR &envir, const vec::fixed<3> &refPt, bool flagUse1stOrd) const = 0;
+	virtual vec::fixed<6> hydroForce_relWaveElev(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
+	virtual vec::fixed<6> hydroForce_2ndPot(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
+	virtual vec::fixed<6> hydroForce_convecAcc(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
+	virtual vec::fixed<6> hydroForce_axDiverg(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
+	virtual vec::fixed<6> hydroForce_accGradient(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
+	virtual vec::fixed<6> hydroForce_slendBodyRot(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
+	virtual vec::fixed<6> hydroForce_rem(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
+	virtual void quantities4hydrostaticMatrix(double &zb, double &V, double &Awl, double &xwl, double &ywl, double &Ixx, double &Iyy, double &Ixy) const = 0;
 	
+	// Wave kinematic properties at a certain node along the immersed length of the cylinder.
+	// The slow position is considered.
+	// For performance, there are no boundary checks, so be careful when using these functions
+	// nodeIndex = 0 is node1 and m_numNodesBelowWL - 1 is the intersection with the waterline
+	vec::fixed<3> nodePos_sd(const int nodeIndex) const;
+	double waveElevAtWL(const ENVIR &envir) const;
+	vec::fixed<3> u1(const ENVIR &envir, const int nodeIndex) const;
+	vec::fixed<3> du1dt(const ENVIR &envir, const int nodeIndex) const;
+	vec::fixed<3> du1dx(const ENVIR &envir, const int nodeIndex) const;
+	vec::fixed<3> du1dy(const ENVIR &envir, const int nodeIndex) const;
+	vec::fixed<3> du1dz(const ENVIR &envir, const int nodeIndex) const;
+	vec::fixed<3> da1dx(const ENVIR &envir, const int nodeIndex) const;
+	vec::fixed<3> da1dy(const ENVIR &envir, const int nodeIndex) const;
+	vec::fixed<3> da1dz(const ENVIR &envir, const int nodeIndex) const;
+	vec::fixed<3> gradP1(const ENVIR &envir, const int nodeIndex) const;
+	double dp1dy(const ENVIR &envir, const int nodeIndex) const;
+	double dp1dz(const ENVIR &envir, const int nodeIndex) const;
 
 	// Printers and getters
 	virtual std::string print() const = 0;
@@ -129,6 +198,7 @@ public:
 	virtual vec::fixed<3> findIntersectWL(const ENVIR &envir) const;
 	void calculateImmersedLengthProperties(double &Lw, int &ncyl, double &dL) const;
 	void calculateImmersedLengthProperties_sd(double &Lw, int &ncyl, double &dL) const;
+	bool flagFixed() const;
 
 	/*****************************************************
 		Clone for creating copies of the Morison Element

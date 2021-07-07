@@ -106,7 +106,10 @@ Disable all **DoFs** + choose the **forces** that you want to include in the ana
 
     DOFS 0 0 0 0 0 0
 ```    
-
+## **Hydro options**
+- **Hydro 0:** Do not compute hydrodynamic and hydrostatic forces;
+- **Hydro 1:** Evaluate non-linear hydrostatic and first-order wave forces. Hydrostatic forces are calculated considering the instantaneous body position instead of a stiffness matrix;
+- **Hydro 2:** Include second-order forces to the ones already calculated when hydro = 1. 
 
 # **Tools**
 The following MATLAB routines are included in folder **tools**:

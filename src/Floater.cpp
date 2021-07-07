@@ -20,7 +20,7 @@ Floater::Floater()
 	m_mass = datum::nan;
 	m_CoG.fill(datum::nan);	
 	m_inertia.fill(datum::nan);
-	m_addedMass_t0.fill(datum::nan);	
+	m_addedMass_t0.fill(datum::nan);
 }
 
 
@@ -85,11 +85,12 @@ void Floater::setInstantSD(bool instantSD)
 	m_instantSD = instantSD;
 }
 
-void Floater::evaluateQuantitiesAtBegin(const ENVIR & envir)
+void Floater::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroMode)
 {
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		m_MorisonElements.at(ii)->evaluateQuantitiesAtBegin(envir);
+		// Evaluate fluid kinematics at each node
+		m_MorisonElements.at(ii)->evaluateQuantitiesAtBegin(envir, hydroMode);
 	}
 }
 
@@ -149,16 +150,25 @@ mat::fixed<6, 6> Floater::addedMass_t0() const
 	}
 }
 
+mat::fixed<6, 6> Floater::hydrostaticStiffness() const
+{
+	return m_Khs;
+}
+
 vec::fixed<6> Floater::CoGPos() const
 {
 	return join_cols(m_CoG, zeros(3,1)) + m_disp;
+}
+
+vec::fixed<6> Floater::CoGPos_1stOrd() const
+{
+	return join_cols(m_CoG, zeros(3, 1)) + m_disp_1stOrd;
 }
 
 vec::fixed<6> Floater::CoGPos_sd() const
 {
 	return join_cols(m_CoG, zeros(3, 1)) + m_disp_sd;
 }
-
 
 /*****************************************************
 	Getters
@@ -188,7 +198,6 @@ mat::fixed<6,6> Floater::inertiaMatrix() const
 	return A;
 }
 
-
 std::string Floater::printMass() const
 {
 	return std::to_string(m_mass);
@@ -211,7 +220,6 @@ std::string Floater::printCoG() const
 	return output + ")";
 }
 
-
 std::string Floater::printMorisonElements() const
 {
 	std::string output = "";	
@@ -229,15 +237,23 @@ std::string Floater::printMorisonElements() const
 /*****************************************************
 	Forces, acceleration, displacement, etc
 *****************************************************/
-void Floater::update(const ENVIR &envir, const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTdisp_SD, const vec::fixed<6> &FOWTvel_SD)
+void Floater::update(const ENVIR &envir, const vec::fixed<6> &FOWTdisp, const vec::fixed<6> &FOWTvel, const vec::fixed<6> &FOWTdisp_1stOrd, const vec::fixed<6> &FOWTvel_1stOrd, const vec::fixed<6> &FOWTdisp_SD, const vec::fixed<6> &FOWTvel_SD)
 {
 	m_disp = FOWTdisp;
 	m_disp_sd = FOWTdisp_SD;
+	m_disp_1stOrd = FOWTdisp_1stOrd;
 
 	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
 	{
-		// The CoG position is added to the displacements because updateMorisonElement requires the instantaneous position of the CoG of the floater
-		m_MorisonElements.at(ii)->updateMorisonElement(envir, CoGPos(), FOWTvel, CoGPos_sd(), FOWTvel_SD);
+		m_MorisonElements.at(ii)->updateMorisonElement(envir, CoGPos(), FOWTvel, CoGPos_1stOrd(), FOWTvel_1stOrd, CoGPos_sd(), FOWTvel_SD);
+	}
+}
+
+void Floater::setNode1stAcc(const vec::fixed<6> &FOWTacc_1stOrd)
+{
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		m_MorisonElements.at(ii)->updateAcc1stOrdNodeAtWL(FOWTacc_1stOrd);
 	}
 }
 
@@ -247,12 +263,154 @@ void Floater::setAddedMass_t0(const double density)
 	m_addedMass_t0 = density*addedMass(1);
 }
 
+void Floater::setStiffnessMatrix(const double density, const double gravity)
+{
+	// Quantities required for evaluating the hydrostatic matrix
+	double zb{ 0 }, V{ 0 }, Awl{ 0 }, xwl{ 0 }, ywl{ 0 }, Ixx{ 0 }, Iyy{ 0 }, Ixy{ 0 };
+
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		double aux_zb{ 0 }, aux_V{ 0 }, aux_Awl{ 0 }, aux_xwl{ 0 }, aux_ywl{ 0 }, aux_Ixx{ 0 }, aux_Iyy{ 0 }, aux_Ixy{ 0 };
+		m_MorisonElements.at(ii)->quantities4hydrostaticMatrix(aux_zb, aux_V, aux_Awl, aux_xwl, aux_ywl, aux_Ixx, aux_Iyy, aux_Ixy);
+
+		Awl += aux_Awl;
+		V += aux_V;
+		xwl += aux_Awl * aux_xwl;
+		zb += aux_V * aux_zb;
+		Ixx += aux_Ixx + aux_Awl * aux_ywl * aux_ywl;
+		Iyy += aux_Iyy + aux_Awl * aux_xwl*aux_xwl;
+		Ixy += aux_Ixy + aux_Awl * aux_xwl*aux_ywl;
+	}
+	xwl *= 1 / Awl;
+	ywl *= 1 / Awl;
+	zb *= 1 / V;
+
+
+	m_Khs.at(2, 2) = density * gravity * Awl;
+	m_Khs.at(3, 3) = density * gravity * (Ixx + V * (zb - m_CoG.at(2)));
+	m_Khs.at(4, 4) = density * gravity * (Iyy + V * (zb - m_CoG.at(2)));
+	m_Khs.at(3, 4) = density * gravity * Ixy;
+	m_Khs.at(4, 3) = m_Khs.at(3, 4);
+
+	m_Vol = V;
+}
+
 mat::fixed<6, 6> Floater::addedMass(const double density, const int hydroMode) 
 {
 	mat::fixed<6, 6> A(fill::zeros);
 
 	A = density*addedMass(hydroMode);
 	return A;
+}
+
+vec::fixed<6> Floater::hydrodynamicForce_1stOrd(const ENVIR &envir) const
+{
+	vec::fixed<6> force_1stP(fill::zeros); // Due to first-order potential
+	vec::fixed<3> refPt = CoGPos_sd().rows(0, 2);
+
+	// Force acting on each element
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		// If the cylinder is above the waterline, do not need to compute the hydrodynamic forces
+		if (m_MorisonElements.at(ii)->node1Pos_sd().at(2) > 0)
+			continue;
+
+		force_1stP += m_MorisonElements.at(ii)->hydroForce_1st(envir, refPt);
+	}
+
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_1STP, force_1stP);
+	return force_1stP;
+}
+
+vec::fixed<6> Floater::hydrodynamicForce_drag1stOrd(const ENVIR &envir) const
+{
+	vec::fixed<6> force_drag(fill::zeros); // Drag force
+	vec::fixed<3> refPt = CoGPos_sd().rows(0, 2);
+
+	// Force acting on each element
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		// If the cylinder is above the waterline, do not need to compute the hydrodynamic forces
+		if (m_MorisonElements.at(ii)->node1Pos_sd().at(2) > 0)
+			continue;
+
+		force_drag += m_MorisonElements.at(ii)->hydroForce_drag(envir, refPt, true);
+	}
+
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG, force_drag);
+	return force_drag;
+}
+
+vec::fixed<6> Floater::hydrodynamicForce_dragTotal(const ENVIR &envir) const
+{
+	vec::fixed<6> force_drag(fill::zeros); // Drag force
+	vec::fixed<3> refPt = CoGPos_sd().rows(0, 2);
+
+	// Force acting on each element
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		// If the cylinder is above the waterline, do not need to compute the hydrodynamic forces
+		if (m_MorisonElements.at(ii)->node1Pos_sd().at(2) > 0)
+			continue;
+
+		force_drag += m_MorisonElements.at(ii)->hydroForce_drag(envir, refPt, false);
+	}
+
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG, force_drag);
+	return force_drag;
+}
+
+// Moments are output with respect to the CoG of the floater
+vec::fixed<6> Floater::hydrodynamicForce_2ndOrd(const ENVIR &envir, const vec::fixed<6> &F_1stOrd) const
+{	
+	// These forces below are used to output the different components to the output files and internally in MorisonElement.hydrodynamicForce().	
+	vec::fixed<6> force_eta(fill::zeros);  // Due to relative wave elevation
+	vec::fixed<6> force_conv(fill::zeros); // Due to convective acceleration
+	vec::fixed<6> force_axdv(fill::zeros); // Due to axial-divergence acceleration
+	vec::fixed<6> force_acgr(fill::zeros); // Due to gradient of fluid acceleration
+	vec::fixed<6> force_rotn(fill::zeros); // Due to the rotation of the normal vector
+	vec::fixed<6> force_2ndP(fill::zeros); // Component due to 2nd order incoming flow
+	vec::fixed<6> force_rslb(fill::zeros); // Due to the rotation term from slender-body approximation
+	vec::fixed<6> force_rem(fill::zeros);  // Remaining force components
+
+	vec::fixed<3> refPt = CoGPos_sd().rows(0, 2);
+	vec::fixed<3> Rvec = m_disp_1stOrd.rows(3, 5);
+
+	// Force acting on each element
+	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	{
+		// If the cylinder is above the waterline, do not need to compute the hydrodynamic forces
+		if (m_MorisonElements.at(ii)->node1Pos_sd().at(2) > 0)
+			continue;
+
+		if (envir.waveStret() == 1)
+		{
+			force_eta += m_MorisonElements.at(ii)->hydroForce_relWaveElev(envir, refPt);
+		}
+
+		force_acgr += m_MorisonElements.at(ii)->hydroForce_accGradient(envir, refPt);
+		force_conv += m_MorisonElements.at(ii)->hydroForce_convecAcc(envir, refPt);
+		force_axdv += m_MorisonElements.at(ii)->hydroForce_axDiverg(envir, refPt);
+		force_2ndP += m_MorisonElements.at(ii)->hydroForce_2ndPot(envir, refPt);
+		force_rslb += m_MorisonElements.at(ii)->hydroForce_slendBodyRot(envir, refPt);
+		force_rem += m_MorisonElements.at(ii)->hydroForce_rem(envir, refPt);
+	}
+
+	force_rotn.rows(0, 2) = cross(Rvec, F_1stOrd.rows(0, 2));
+	force_rotn.rows(3, 5) = cross(Rvec, F_1stOrd.rows(3, 5));
+
+	vec::fixed<6> force = force_eta + force_conv + force_axdv + force_acgr + force_rotn + force_2ndP + force_rslb + force_rem;
+
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_ETA, force_eta);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_CONV, force_conv);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_AXDV, force_axdv);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_ACGR, force_acgr);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_ROTN, force_rotn);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_2NDP, force_2ndP);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_RSLB, force_rslb);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE_REM, force_rem);
+
+	return force;
 }
 
 mat::fixed<6, 6> Floater::addedMass(const int hydroMode) const
@@ -277,79 +435,26 @@ mat::fixed<6, 6> Floater::addedMass(const int hydroMode) const
 	return A;
 }
 
-// Moments are output with respect to the CoG of the floater
-vec::fixed<6> Floater::hydrodynamicForce(const ENVIR &envir, const int hydroMode) const
-{	
-	vec::fixed<6> force(fill::zeros); // Total hydrodynamic force acting on the floater
-	vec::fixed<6> df(fill::zeros); // Total hydrodynamic force acting on each cylinder
-
-	// These forces below are used to output the different components to the output files and internally in MorisonElement.hydrodynamicForce().	
-	vec::fixed<6> force_drag(fill::zeros); // Drag force
-	vec::fixed<6> force_1(fill::zeros);	// Component due to 1st order incoming flow
-	vec::fixed<6> force_2(fill::zeros); // Component due to 2nd order incoming flow
-	vec::fixed<6> force_3(fill::zeros); // Component due to axial acceleration
-	vec::fixed<6> force_4(fill::zeros); // Component due to the axial-divergence acceleration
-	vec::fixed<6> force_eta(fill::zeros); // Component due to the wave elevation
-	vec::fixed<6> force_rem(fill::zeros); // Remaining force components
-
-	// Forces acting on each Morison Element. They are set to zero inside MorisonElement.hydrodynamicForce().
-	vec::fixed<6> df_drag(fill::zeros);
-	vec::fixed<6> df_1(fill::zeros);
-	vec::fixed<6> df_2(fill::zeros);
-	vec::fixed<6> df_3(fill::zeros);
-	vec::fixed<6> df_4(fill::zeros);
-	vec::fixed<6> df_eta(fill::zeros);
-	vec::fixed<6> df_rem(fill::zeros);
-
-	// Force acting on each element
-	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)	
-	{
-
-		df = m_MorisonElements.at(ii)->hydrodynamicForce(envir, hydroMode, CoGPos_sd().rows(0, 2), CoGPos_sd().rows(0, 2), df_drag, df_1, df_2, df_3, df_4, df_eta, df_rem);
-
-
-		// Add to the forces acting on the whole floater
-		force += df;
-
-		force_drag += df_drag;
-		force_1 += df_1;
-		force_2 += df_2;
-		force_3 += df_3;
-		force_4 += df_4;
-		force_eta += df_eta;
-		force_rem += df_rem;
-	}	
-
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE, force);
-
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG, force_drag);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_1, force_1);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_2, force_2);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_3, force_3);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_4, force_4);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_ETA, force_eta);
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_REM, force_rem);
-	
-	return force;
-}
-
-vec::fixed<6> Floater::hydrostaticForce(const ENVIR &envir) const
+vec::fixed<6> Floater::hydrostaticForce_stiffnessPart(bool flagUse1stOrd) const
 {
-	vec::fixed<6> force(fill::zeros);		
-	vec::fixed<6> df(fill::zeros);
-	
-	for (int ii = 0; ii < m_MorisonElements.size(); ++ii)
+	vec::fixed<6> disp{ m_disp };
+	if (flagUse1stOrd)
 	{
-		df = m_MorisonElements.at(ii)->hydrostaticForce(envir.watDensity(), envir.gravity());
-
-		// The moments acting on the cylinders were calculated with respect to the first node
-		// We need to change the fulcrum to the CoG
-		df.rows(3, 5) = df.rows(3, 5) + cross(m_MorisonElements.at(ii)->node1Pos() - CoGPos().rows(0, 2), df.rows(0, 2));
-		force += df;
+		disp = m_disp_1stOrd;
 	}
-	IO::print2outLine(IO::OUTFLAG_HS_FORCE, force);		
 
+	vec::fixed<6> force = -m_Khs * disp;
+
+	// Print only the total hydrostatic force, not the intermediary evaluation with the first-order
+	if (!flagUse1stOrd)
+	{
+		IO::print2outLine(IO::OUTFLAG_HS_FORCE, force);
+	}
 	return force;
 }
 
+vec::fixed<6> Floater::hydrostaticForce_staticBuoyancy(const double rho, const double g) const
+{	
+	return { 0,0, rho * g * m_Vol, 0, 0, 0 };
+}
 
