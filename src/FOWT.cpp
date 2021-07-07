@@ -47,6 +47,11 @@ void FOWT::setExtLinStiff(const mat::fixed<6, 6> &extLinStiff)
 	m_extLinStiff = extLinStiff;
 }
 
+void FOWT::setExtLinDamp(const mat::fixed<6, 6> &extLinDamp)
+{
+	m_extLinDamp = extLinDamp;
+}
+
 void FOWT::setExtConstForce(const vec::fixed<6> &extConstForce)
 {
 	m_extConstForce = extConstForce;
@@ -377,8 +382,9 @@ vec::fixed<12> FOWT::calcAcceleration(const ENVIR &envir)
 	// The others are not necessary, as their evaluation is very fast.
 	vec::fixed<6> hydrodynamicForce_1stOrd = m_floater.hydrodynamicForce_1stOrd(envir);
 	vec::fixed<6> hydrostaticForce_1stOrd = m_floater.hydrostaticForce_stiffnessPart(true);
+	vec::fixed<6> extLinDamp_1stOrd = extLinearDamp(true);
 	vec::fixed<6> force_1stOrd = hydrodynamicForce_1stOrd + hydrostaticForce_1stOrd
-							   + m_floater.hydrodynamicForce_drag1stOrd(envir) + mooringForce(true)
+							   + m_floater.hydrodynamicForce_drag1stOrd(envir) + mooringForce(true) + extLinDamp_1stOrd
 							   + m_floater.hydrostaticForce_staticBuoyancy(envir.watDensity(), envir.gravity()) + weightForce(envir.gravity());;
 
 	// Calculate the acceleration only if at least one dof is activated 
@@ -413,14 +419,14 @@ vec::fixed<12> FOWT::calcAcceleration(const ENVIR &envir)
 	if (m_hydroMode > 1)
 	{		
 		m_floater.setNode1stAcc(acc_1stOrd);
-		hydroForce_2ndOrd = m_floater.hydrodynamicForce_2ndOrd(envir, hydrodynamicForce_1stOrd + hydrostaticForce_1stOrd);	
+		hydroForce_2ndOrd = m_floater.hydrodynamicForce_2ndOrd(envir, hydrodynamicForce_1stOrd + hydrostaticForce_1stOrd + extLinDamp_1stOrd);	
 	}
 
 	// Calculate the total force acting on the FOWT
 	// Remember that the weight is already included in hydroForce_1stOrd, but the drag is not!
 	vec::fixed<6> FaddMass = -(m_floater.addedMass(envir.watDensity(), m_hydroMode) - m_floater.addedMass_t0())* acc_1stOrd;
 	vec::fixed<6> force = hydrodynamicForce_1stOrd + hydroForce_2ndOrd + m_floater.hydrostaticForce_stiffnessPart(false) 
-						+ m_floater.hydrodynamicForce_dragTotal(envir) + mooringForce(false) 
+						+ m_floater.hydrodynamicForce_dragTotal(envir) + mooringForce(false) + extLinearDamp(false)
 						+ m_floater.hydrostaticForce_staticBuoyancy(envir.watDensity(), envir.gravity()) + weightForce(envir.gravity()) + aeroForce(envir) + FaddMass;
 	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE, force);
 
@@ -490,4 +496,24 @@ vec::fixed<6> FOWT::mooringForce(bool flagUse1stOrd)
 vec::fixed<6> FOWT::weightForce(const double gravity)
 {
 	return vec::fixed<6> {0, 0, -gravity * mass(), 0, 0, 0};
+}
+
+vec::fixed<6> FOWT::extLinearDamp(bool flagUse1stOrd)
+{
+	vec::fixed<6> force{ 0, 0, 0, 0, 0, 0 };
+	if (m_moorMode == 1)
+	{
+		if (flagUse1stOrd)
+		{
+			force = -m_extLinDamp * m_vel_1stOrd;
+		}
+		else
+		{
+			force = -m_extLinDamp * m_vel;
+		}
+	}
+
+	//IO::print2outLine(IO::OUTFLAG_LINDAMP_FORCE, force);
+
+	return force;
 }
