@@ -59,7 +59,7 @@ This process will be conducted with CMake in the future (I don't know when).
 - Modify **include/armadillo_bits/config.hpp** to indicate which libraries are currently available on your system (see the readme file provided with Armadillo for details).
 
 - Configure a project in your IDE (the procedure below is given for Visual Studio):
-    1. Create a new Empty Project or a new Windows Console Application;
+    1. Create a new Empty Project;
     2. If you are using Visual Studio 2017 or above, downgrade your project to Visual Studio 2015. This is done by right clicking on the project name and selecting **Properties**. In **Configuration Properties**, find **Platform Toolset** and change it to **Visual Studio 2015 (v140)**. I honestly don't know why this is necessary;
     3. Add all the files included in **/src/** (except for Armadillo's **include** folder) to the project;       
     4. Locate the MKL folder. It is usually in **C:\Program Files (x86)\IntelSWTools\compiler_and_libraries_xxxx\windows\mkl**;
