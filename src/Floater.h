@@ -45,7 +45,7 @@ public:
 	void evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroMode);
 
 	void addMorisonCirc(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_coord, const double diam, const double CD, const double CM, const unsigned int numIntPoints,
-	const double botDiam, const double topDiam, const double axialCD, const double axialCa, const bool botPressFlag);
+						const double botDiam, const double topDiam, const double axialCD, const double axialCa, const bool botPressFlag);
 	void addMorisonRect(vec::fixed<3> &node1_coord, vec::fixed<3> &node2_coord, vec::fixed<3> &node3_coord, const double diam_X, const double diam_Y,
 	const double CD_X, const double CD_Y, const double CM_X, const double CM_Y, const unsigned int numIntPoints,
 	const double botArea, const double topArea, const double axialCD, const double axialCa, const bool botPressFlag);
@@ -63,7 +63,6 @@ public:
 	vec::fixed<6> CoGPos() const;
 	vec::fixed<6> CoGPos_1stOrd() const;
 	vec::fixed<6> CoGPos_sd() const;
-
 
 	std::string printMass() const;
 	std::string printInertia() const;

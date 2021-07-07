@@ -20,6 +20,7 @@ private:
 	RNA m_rna;
 	vec::fixed<6> m_extConstForce;
 	mat::fixed<6,6> m_extLinStiff;
+	mat::fixed<6, 6> m_extLinDamp;
 
 	/*
 	Specification of the analysis
@@ -64,8 +65,9 @@ public:
 	void setMoorMode(const int moorMode);
 	void setDoFs(std::array<bool, 6> &dofs);
 
-	void setExtLinStiff(const mat::fixed<6,6> &extLinStiff);
 	void setExtConstForce(const vec::fixed<6> &extConstForce);
+	void setExtLinStiff(const mat::fixed<6,6> &extLinStiff);
+	void setExtLinDamp(const mat::fixed<6, 6> &extLinDamp);
 
 	void setFilderSD(const double omega, const double zeta);
 
@@ -74,7 +76,7 @@ public:
 
 	void setAddedMass_t0(const double density);
 	void setStiffnessMatrix(const double density, const double gravity);
-	void evaluateQuantitiesAtBegin(const ENVIR & envir); // If the body is fixed, most of the computationally expensive calculations can be performed only once at the beginning of the simulation
+	void evaluateQuantitiesAtBegin(const ENVIR &envir); // If the body is fixed, most of the computationally expensive calculations can be performed only once at the beginning of the simulation
 
 	/*****************************************************
 		Getters
@@ -117,4 +119,5 @@ public:
 	vec::fixed<6> aeroForce(const ENVIR &envir);
 	vec::fixed<6> mooringForce(bool flagUse1stOrd);
 	vec::fixed<6> weightForce(const double gravity);
+	vec::fixed<6> extLinearDamp(bool flagUse1stOrd);
 };

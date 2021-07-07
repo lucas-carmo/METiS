@@ -52,6 +52,9 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 	Floater floater;
 	RNA rna;
 
+	// Mean displacement for hydrodynamic calculations
+	vec::fixed<6> meanDisp(fill::zeros);
+
 	// Initial displacement and velocity
 	vec::fixed<6> disp0(fill::zeros);
 	vec::fixed<6> vel0(fill::zeros);
@@ -349,6 +352,30 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		fowt.setExtLinStiff(aux_extStiff);
 		}
 
+		// The external linear damping is a 6x6 matrix with columns separated by whitespaces or tabs.
+		// Different rows correspond to different lines in the input file.
+		else if (caseInsCompare(getKeyword(strInput), "extLinDamp"))
+		{
+		arma::mat::fixed<6, 6> aux_extDamp(fill::zeros);
+		for (unsigned int countRows = 0; countRows < 6; ++countRows)
+		{
+			IO::readLineInputFile(strInput);
+
+			std::vector<std::string> input = stringTokenize(strInput, " \t");
+			if (input.size() != 6)
+			{
+				throw std::runtime_error("Unable to read row of linear damping matrix in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+			}
+
+			// Read to an auxiliar matrix before passing to fowt
+			for (int ii = 0; ii < aux_extDamp.n_rows; ++ii)
+			{
+				aux_extDamp.at(countRows, ii) = string2num<double>(input.at(ii));
+			}
+		}
+		fowt.setExtLinDamp(aux_extDamp);
+		}
+
 
 		else if (caseInsCompare(getKeyword(strInput), "ExtConstForce"))
 		{
@@ -423,6 +450,20 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			floater.setCoG(aux);
 		}
 
+		else if (caseInsCompare(getKeyword(strInput), "meanDisp"))
+		{
+		// The components of the mean displacement of the FOWT for hydrodynamic calculation are separated by commas in the input string
+		std::vector<std::string> input = stringTokenize(getData(strInput), ",");
+		if (input.size() != 6)
+		{
+			throw std::runtime_error("Unable to read meanDisp in input line " + std::to_string(IO::getInLineNumber()) + ". Wrong number of parameters.");
+		}
+
+		for (int ii = 0; ii < 6; ++ii)
+		{
+			meanDisp(ii) = string2num<double>(input.at(ii));
+		}
+		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Disp0"))
 		{
@@ -766,10 +807,10 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 	// before calling it and them restore it back to its original value.	
 	double wf = fowt.filterSD_omega();
 	fowt.setFilderSD(1, fowt.filterSD_zeta());
-	fowt.update_sd(disp0, envir.timeStep());
-	fowt.update(envir, join_cols(vec::fixed<6> (fill::zeros), disp0), join_cols(vec::fixed<6>(fill::zeros), vel0));
-	fowt.setAddedMass_t0(envir.watDensity());
-	fowt.setStiffnessMatrix(envir.watDensity(), envir.gravity());
+	fowt.update_sd(meanDisp, envir.timeStep());
+	fowt.setAddedMass_t0(envir.watDensity()); // The added mass matrix hydrostatics is evaluated considering the mean position
+	fowt.setStiffnessMatrix(envir.watDensity(), envir.gravity()); // The hydrostatics is evaluated considering the instantaneous position, thus it DOES NOT take into account the mean displacement
+	fowt.update(envir, join_cols(vec::fixed<6>(fill::zeros), disp0), join_cols(vec::fixed<6>(fill::zeros), vel0));
 	fowt.setFilderSD(wf, fowt.filterSD_zeta());
 }
 

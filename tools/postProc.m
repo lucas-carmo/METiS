@@ -1,22 +1,25 @@
 % Post processing routine for METiS output 
 
 clear all
-close all
+% close all
 clc
 
 
 flNm = { 
-%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Jappaku\metis\BIC\180DEG-teste\MOD0_BIC20_180DEG_V00_out_5.txt'
-%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Jappaku\metis\BIC\180DEG-teste\MOD0_BIC20_180DEG_V00_out_6.txt'
+    'G:\Meu Drive\Doutorado\1Testes_Cilindro\floating\motion\mts\cyl1\wn_pitch\wnb_BIC04_out.txt'
+%     'G:\Meu Drive\Doutorado\1Testes_Cilindro\floating\motion\mts\cyl1\wn_surge\wna_BIC27_out_2.txt'
+    
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Jappaku\metis\BIC\180DEG-teste\MOD0_BIC16_180DEG_V00_out.txt'
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Jappaku\metis\BIC\180DEG-teste\MOD0_BIC16_180DEG_V00_out_17.txt'
 
-%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Jappaku\metis\WHI\MOD0_WHI01_180DEG_V00_out.txt'
-%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Jappaku\metis\WHI\MOD0_WHI01_180DEG_V00_out_9.txt'
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Jappaku\metis\JON\MOD0_IRR01_180DEG_V00_out.txt'
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Jappaku\metis\JON\MOD0_IRR01_180DEG_V00_out_1.txt'
             
 %             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-2ndOrder_out.txt';
 %             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-2ndOrder_out_4.txt';
 
-            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-JONSWAP_out_4.txt';
-            'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-JONSWAP_out_5.txt';
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-JONSWAP_out.txt';
+%             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Misc\Cylinder-JONSWAP_out_2.txt';
             
 %             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Cilindro\teste_analitico\bic_out.txt';
 %             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Cilindro\teste_analitico\bic_out_5.txt';
@@ -29,22 +32,26 @@ activeDoFs = [1 1 1 1 1 1];
 analysisList = containers.Map;
 
 % FOWT position, velocity and acceleration
-analysisList('fowt_disp') = 0;
+analysisList('fowt_disp') = 1;
 analysisList('fowt_vel') = 0;
 analysisList('fowt_acc') = 0;
 
 % Forces
-analysisList('hd_force') = 1;
+analysisList('hd_force') = 0;
 analysisList('hd_force1') = 1;
-analysisList('hd_drag_force') = 1;
-analysisList('hd_force2') = 1;
+analysisList('hd_drag_force') = 0;
+analysisList('hd_force2') = 0;
 analysisList('hd_force3') = 0;
+analysisList('hd_force_rotn') = 0;
+analysisList('hd_forceeta') = 0;
+analysisList('hd_force_rem') = 0;
+analysisList('hd_force_acgr') = 1;
 analysisList('hs_force') = 0;
 analysisList('ad_hub_force') = 0;
 analysisList('total_force') = 0;
 
 % Wave outputs
-analysisList('wave_elev') = 1;
+analysisList('wave_elev') = 0;
 analysisList('wave_vel') = 0;
 analysisList('wave_acc') = 0;
 analysisList('wave_acc_2nd') = 0;
@@ -91,7 +98,7 @@ for ii = 1:numel(flNm)
         clear y
         % Displacement, forces, etc
         if strcmp(k{jj}, 'fowt_disp')
-            y = [data.surge, data.sway, data.heave, data.roll, data.pitch, data.yaw];            
+            y = [data.surge_1st, data.sway, data.heave_1st, data.roll*180/pi, data.pitch_1st*180/pi, data.yaw*180/pi];            
             y(:, activeDoFs == 0) = [];                     
             
         elseif strcmp(k{jj}, 'fowt_vel')
@@ -103,7 +110,7 @@ for ii = 1:numel(flNm)
             y(:, activeDoFs == 0) = [];
             
         elseif strcmp(k{jj}, 'hd_force1')
-            y = [data.hd_force1_1, data.hd_force1_2, data.hd_force1_3, data.hd_force1_4, data.hd_force1_5, data.hd_force1_6];
+            y = [data.hd_force_1stp_1, data.hd_force_1stp_2, data.hd_force_1stp_3, data.hd_force_1stp_4, data.hd_force_1stp_5, data.hd_force_1stp_6];
             y(:, activeDoFs == 0) = [];
             
         elseif strcmp(k{jj}, 'hd_drag_force')
@@ -118,12 +125,28 @@ for ii = 1:numel(flNm)
             y = [data.hd_force3_1, data.hd_force3_2, data.hd_force3_3, data.hd_force3_4, data.hd_force3_5, data.hd_force3_6];
             y(:, activeDoFs == 0) = [];
             
+        elseif strcmp(k{jj}, 'hd_force_rotn')
+            y = [data.hd_force_rotn_1, data.hd_force_rotn_2, data.hd_force_rotn_3, data.hd_force_rotn_4, data.hd_force_rotn_5, data.hd_force_rotn_6];
+            y(:, activeDoFs == 0) = [];
+            
+        elseif strcmp(k{jj}, 'hd_forceeta')
+            y = [data.hd_forceeta_1, data.hd_forceeta_2, data.hd_forceeta_3, data.hd_forceeta_4, data.hd_forceeta_5, data.hd_forceeta_6];
+            y(:, activeDoFs == 0) = [];
+            
+        elseif strcmp(k{jj}, 'hd_force_acgr')
+            y = [data.hd_force_acgr_1, data.hd_force_acgr_2, data.hd_force_acgr_3, data.hd_force_acgr_4, data.hd_force_acgr_5, data.hd_force_acgr_6];
+            y(:, activeDoFs == 0) = []; 
+            
+        elseif strcmp(k{jj}, 'hd_force_rem')
+            y = [data.hd_force_rem_1, data.hd_force_rem_2, data.hd_force_rem_3, data.hd_force_rem_4, data.hd_force_rem_5, data.hd_force_rem_6];
+            y(:, activeDoFs == 0) = [];            
+            
         elseif strcmp(k{jj}, 'hd_force')
             y = [data.hd_force_1, data.hd_force_2, data.hd_force_3, data.hd_force_4, data.hd_force_5, data.hd_force_6];
             y(:, activeDoFs == 0) = [];
             
         elseif strcmp(k{jj}, 'hs_force')
-            y = [data.hs_force_1, data.hs_force_2, data.hs_force_3, data.hs_force_4, data.hs_force_5, data.hs_force_6];
+            y = [data.hs_force_1, data.hs_force_2, data.hs_force_3-mean(data.hs_force_3), data.hs_force_4, data.hs_force_5, data.hs_force_6];
             y(:, activeDoFs == 0) = [];
             
         elseif strcmp(k{jj}, 'ad_hub_force')

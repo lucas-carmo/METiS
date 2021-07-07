@@ -4,7 +4,7 @@ close all
 clc
 
 if ispc
-    folder = 'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_OC4\OC4_regular\METiS\_rodar';
+    folder = 'G:\Meu Drive\Doutorado\1Testes_Jappaku\metis\BIC\180DEG\CDz_real';
     
     % Remove files from previous runs. This is only needed because the next step
     % is to list all the .txt files in the folder.
@@ -16,10 +16,11 @@ if ispc
     
     % Run each of the files in sequence
     for ii = 1 : numel(files_to_run)
+        tic
         flNm = [files_to_run(ii).folder '\' files_to_run(ii).name];
-        [status,result] = system(['"C:\Users\lucas.henrique\Documents\METiS - VS\x64\Release\METiS - VS.exe" "' flNm '"']);
-        disp(['status:' status]);
-        disp(['result:' result]);
+        [status, ~] = system(['"C:\Users\lucas.henrique\Documents\METiS - VS\x64\Release\METiS - VS.exe" "' flNm '"']);
+%         disp(['status:' status]);
+        fprintf('%d files left - Last file took %.3f s\n', numel(files_to_run) - ii, toc);
     end
 
 
