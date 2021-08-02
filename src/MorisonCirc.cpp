@@ -433,7 +433,6 @@ vec::fixed<6> MorisonCirc::hydroForce_drag(const ENVIR &envir, const vec::fixed<
 {
 	vec::fixed<6> force(fill::zeros);
 	vec::fixed<3> zvec{ m_zvec_sd };
-	vec::fixed<3> v_axial = arma::dot(m_node1Vel, zvec) * zvec; // Since the cylinder is a rigid body, this is the same for all the nodes
 	vec::fixed<3> vel1 = m_node1Vel;
 	vec::fixed<3> vel2 = m_node2Vel;
 	if (flagUse1stOrd)
@@ -441,6 +440,7 @@ vec::fixed<6> MorisonCirc::hydroForce_drag(const ENVIR &envir, const vec::fixed<
 		vel1 = m_node1Vel_1stOrd;
 		vel2 = m_node2Vel_1stOrd;
 	}
+	vec::fixed<3> v_axial = arma::dot(vel1, zvec) * zvec; // Since the cylinder is a rigid body, this is the same for all the nodes
 
 	bool evaluateTopNode{ true };
 	if (m_node2Pos.at(2) > 0)
