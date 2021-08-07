@@ -433,7 +433,6 @@ vec::fixed<6> MorisonCirc::hydroForce_drag(const ENVIR &envir, const vec::fixed<
 {
 	vec::fixed<6> force(fill::zeros);
 	vec::fixed<3> zvec{ m_zvec_sd };
-	vec::fixed<3> v_axial = arma::dot(m_node1Vel, zvec) * zvec; // Since the cylinder is a rigid body, this is the same for all the nodes
 	vec::fixed<3> vel1 = m_node1Vel;
 	vec::fixed<3> vel2 = m_node2Vel;
 	if (flagUse1stOrd)
@@ -441,6 +440,7 @@ vec::fixed<6> MorisonCirc::hydroForce_drag(const ENVIR &envir, const vec::fixed<
 		vel1 = m_node1Vel_1stOrd;
 		vel2 = m_node2Vel_1stOrd;
 	}
+	vec::fixed<3> v_axial = arma::dot(vel1, zvec) * zvec; // Since the cylinder is a rigid body, this is the same for all the nodes
 
 	bool evaluateTopNode{ true };
 	if (m_node2Pos.at(2) > 0)
@@ -814,39 +814,41 @@ vec::fixed<6> MorisonCirc::hydroForce_rem(const ENVIR & envir, const vec::fixed<
 void MorisonCirc::quantities4hydrostaticMatrix(double &zb, double &V, double &Awl, double &xwl, double &ywl, double &Ixx, double &Iyy, double &Ixy) const
 {
 	// Use a more friendly notation
-	double R = 0.5*m_diam;
+	double R = 0.5*m_diam;	
+		
+	double cosAlpha = m_zvec.at(2); // Inclination of the cylinder (with respect to the vertical)
+	double tanAlpha{ tan(acos(cosAlpha)) }; // Alpha can not be pi/2 because this would require the vertical position of the nodes to be the same, but this part of the code is only reached if the cilinder crosses the waterline
+	double cosBeta = m_yvec.at(2); // Inclination in the plane of the mean water level. The rotations must be around the local y axis, and this is taken into account when creating the local basis
+	double sin2Beta = 2 * cosBeta*sqrt(1 - cosBeta * cosBeta);
+	double inclFactor = 1 / cosAlpha;	
+	double Iyy_local = 0.25 * arma::datum::pi * R * R * R * R;
+	double Ixx_local = Iyy_local * inclFactor;
+	double L = norm(m_node2Pos - m_node1Pos);
 
 	// If the cylinder is above the waterline or if it is completely submerged, then 
-	// it does not contribute to the hydrostatic matrix
+	// this terms are all zero
 	if (m_node1Pos.at(2) >= 0 || m_node2Pos.at(2) <= 0)
 	{
-		zb = 0;
-		V = 0;
 		Awl = 0;
 		xwl = 0;
 		ywl = 0;
 		Ixx = 0;
 		Ixy = 0;
 	}
-		
-	double cosAlpha = m_zvec.at(2); // Inclination of the cylinder (with respect to the vertical)
-	double tanAlpha{ tan(acos(cosAlpha)) }; // Alpha can not be pi/2 because this would require the vertical position of the nodes to be the same, but this part of the code is only reached if the cilinder crosses the waterline
-	double cosBeta = m_yvec.at(2); // Inclination in the plane of the mean water level. The rotations must be around the local y axis, and this is taken into account when creating the local basis
-	double sin2Beta = 2 * cosBeta*sqrt(1 - cosBeta * cosBeta);
-	double inclFactor = 1 / cosAlpha;
-	vec::fixed<3> nwl = m_node1Pos + (m_node2Pos - m_node1Pos) * std::abs(0 - m_node1Pos.at(2)) / (m_node2Pos.at(2) - m_node1Pos.at(2)); // Intersection with the waterline
-	double L = norm(nwl - m_node1Pos);
-	double Iyy_local = 0.25 * arma::datum::pi * R * R * R * R;
-	double Ixx_local = Iyy_local * inclFactor;
+	else
+	{
+		vec::fixed<3> nwl = m_node1Pos + (m_node2Pos - m_node1Pos) * std::abs(0 - m_node1Pos.at(2)) / (m_node2Pos.at(2) - m_node1Pos.at(2)); // Intersection with the waterline
+		L = norm(nwl - m_node1Pos);
+		Awl = arma::datum::pi * R * R * inclFactor;
+		xwl = nwl.at(0);
+		ywl = nwl.at(1);
+		Ixx = Ixx_local * cosBeta * cosBeta + Iyy_local * (1 - cosBeta * cosBeta);
+		Iyy = Iyy_local * cosBeta * cosBeta + Ixx_local * (1 - cosBeta * cosBeta);
+		Ixy = 0.5 * (Ixx_local + Iyy_local) * sin2Beta;
+	}
 
-	V = arma::datum::pi * R * R * L;	
-	Awl = arma::datum::pi * R * R * inclFactor;
-	xwl = nwl.at(0);
-	ywl = nwl.at(1);
-	Ixx = Ixx_local * cosBeta * cosBeta + Iyy_local * (1 - cosBeta * cosBeta);
-	Iyy = Iyy_local * cosBeta * cosBeta + Ixx_local * (1 - cosBeta * cosBeta);
-	Ixy = 0.5 * (Ixx_local + Iyy_local) * sin2Beta;
-	zb = (pow(tanAlpha*R, 2) + 4 * pow(L, 2)) / (8 * L) + m_node1Pos.at(2);
+	V = arma::datum::pi * R * R * L;		
+	zb = (pow(tanAlpha*R, 2) + 4 * pow(L, 2)) / (8 * L) * m_zvec.at(2) + m_node1Pos.at(2);
 }
 
 /*
@@ -995,11 +997,19 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 	else
 	{
 		// Contribution of the horizontal acceleration
-		mult_h_cos = -cos(p2) + cos(p1);
-		mult_h_cos *= 1 / Ih;
+		if (Ih != 0)
+		{
+			mult_h_cos = -cos(p2) + cos(p1);
+			mult_h_cos *= 1 / Ih;
 
-		mult_h_sin = sin(p2) - sin(p1);
-		mult_h_sin *= 1 / Ih;
+			mult_h_sin = sin(p2) - sin(p1);
+			mult_h_sin *= 1 / Ih;
+		}
+		else
+		{
+			mult_h_cos = sin(p1)*L;
+			mult_h_sin = cos(p1)*L;
+		}
 
 		// Contribution of the vertical acceleration
 		mult_v_cos = mult_h_sin * sinh_sinh_1;
@@ -1063,11 +1073,19 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 	else
 	{
 		// Contribution of the horizontal acceleration
-		mult_h_cos = -Ih * L*cos(p2) + sin(p2) - sin(p1);
-		mult_h_cos *= 1 / (Ih*Ih);
+		if (Ih != 0)
+		{			
+			mult_h_cos = -Ih * L*cos(p2) + sin(p2) - sin(p1);
+			mult_h_cos *= 1 / (Ih*Ih);
 
-		mult_h_sin = Ih * L*sin(p2) + cos(p2) - cos(p1);
-		mult_h_sin *= 1 / (Ih*Ih);;
+			mult_h_sin = Ih * L*sin(p2) + cos(p2) - cos(p1);
+			mult_h_sin *= 1 / (Ih*Ih);
+		}
+		else
+		{
+			mult_h_cos = sin(p1)*L*L*0.5;
+			mult_h_sin = cos(p1)*L*L*0.5;
+		}
 
 		// Contribution of the vertical acceleration
 		mult_v_cos = mult_h_sin * sinh_sinh_1;
@@ -1271,11 +1289,19 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_2ndPot_coefs(const Wave &wave_ii, const
 	else
 	{
 		// Contribution of the horizontal acceleration
-		mult_h_cos = -cos(p2) + cos(p1);
-		mult_h_cos *= 1 / Ih;
+		if (Ih != 0)
+		{			
+			mult_h_cos = -cos(p2) + cos(p1);
+			mult_h_cos *= 1 / Ih;
 
-		mult_h_sin = sin(p2) - sin(p1);
-		mult_h_sin *= 1 / Ih;
+			mult_h_sin = sin(p2) - sin(p1);
+			mult_h_sin *= 1 / Ih;
+		}
+		else
+		{
+			mult_h_cos = sin(p1)*L;
+			mult_h_sin = cos(p1)*L;
+		}
 
 		// Contribution of the vertical acceleration
 		mult_v_cos = mult_h_sin * sinh_cosh_1;
@@ -1340,11 +1366,19 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_2ndPot_coefs(const Wave &wave_ii, const
 	else
 	{
 		// Contribution of the horizontal acceleration
-		mult_h_cos = -Ih * L*cos(p2) + sin(p2) - sin(p1);
-		mult_h_cos *= 1 / (Ih*Ih);
+		if (Ih != 0)
+		{
+			mult_h_cos = -Ih * L*cos(p2) + sin(p2) - sin(p1);
+			mult_h_cos *= 1 / (Ih*Ih);
 
-		mult_h_sin = Ih * L*sin(p2) + cos(p2) - cos(p1);
-		mult_h_sin *= 1 / (Ih*Ih);;
+			mult_h_sin = Ih * L*sin(p2) + cos(p2) - cos(p1);
+			mult_h_sin *= 1 / (Ih*Ih);
+		}
+		else
+		{
+			mult_h_cos = sin(p1)*L*L*0.5;
+			mult_h_sin = cos(p1)*L*L*0.5;
+		}
 
 		// Contribution of the vertical acceleration
 		mult_v_cos = mult_h_sin * sinh_cosh_1;

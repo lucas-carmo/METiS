@@ -101,8 +101,8 @@ void FOWT::evaluateQuantitiesAtBegin(const ENVIR &envir)
 {
 	if (envir.getTimeArray().size() == 0)
 		throw std::runtime_error("Time array should be set before calling FOWT::setPropertiesWithIFFT.");
-
-	m_floater.evaluateQuantitiesAtBegin(envir, m_hydroMode);
+	if (hydroMode() != 0)
+		m_floater.evaluateQuantitiesAtBegin(envir, m_hydroMode);
 }
 
 
@@ -385,7 +385,7 @@ vec::fixed<12> FOWT::calcAcceleration(const ENVIR &envir)
 	vec::fixed<6> extLinDamp_1stOrd = extLinearDamp(true);
 	vec::fixed<6> force_1stOrd = hydrodynamicForce_1stOrd + hydrostaticForce_1stOrd
 							   + m_floater.hydrodynamicForce_drag1stOrd(envir) + mooringForce(true) + extLinDamp_1stOrd
-							   + m_floater.hydrostaticForce_staticBuoyancy(envir.watDensity(), envir.gravity()) + weightForce(envir.gravity());;
+							   + m_floater.hydrostaticForce_staticBuoyancy(envir.watDensity(), envir.gravity()) + weightForce(envir.gravity());
 
 	// Calculate the acceleration only if at least one dof is activated 
 	// (i.e. if at least one element of m_dofs is equal to 'true') 
@@ -414,6 +414,8 @@ vec::fixed<12> FOWT::calcAcceleration(const ENVIR &envir)
 		acc_1stOrd = arma::solve(inertiaMatrix, force_1stOrd);
 	}
 
+	// TODO: Não precisa calcular de novo se for só 1a ordem, pq o resultado é igual ao de cima.
+
 	// Calculate second order forces, if necessary
 	vec::fixed<6> hydroForce_2ndOrd(fill::zeros);
 	if (m_hydroMode > 1)
@@ -429,6 +431,7 @@ vec::fixed<12> FOWT::calcAcceleration(const ENVIR &envir)
 						+ m_floater.hydrodynamicForce_dragTotal(envir) + mooringForce(false) + extLinearDamp(false)
 						+ m_floater.hydrostaticForce_staticBuoyancy(envir.watDensity(), envir.gravity()) + weightForce(envir.gravity()) + aeroForce(envir) + FaddMass;
 	IO::print2outLine(IO::OUTFLAG_TOTAL_FORCE, force);
+	IO::print2outLine(IO::OUTFLAG_HD_FORCE, hydrodynamicForce_1stOrd + hydroForce_2ndOrd);
 
 	// Calculate the acceleration only if at least one dof is activated
 	// (i.e. if at least one element of m_dofs is equal to 'true')
@@ -501,16 +504,13 @@ vec::fixed<6> FOWT::weightForce(const double gravity)
 vec::fixed<6> FOWT::extLinearDamp(bool flagUse1stOrd)
 {
 	vec::fixed<6> force{ 0, 0, 0, 0, 0, 0 };
-	if (m_moorMode == 1)
+	if (flagUse1stOrd)
 	{
-		if (flagUse1stOrd)
-		{
-			force = -m_extLinDamp * m_vel_1stOrd;
-		}
-		else
-		{
-			force = -m_extLinDamp * m_vel;
-		}
+		force = -m_extLinDamp * m_vel_1stOrd;
+	}
+	else
+	{
+		force = -m_extLinDamp * m_vel;
 	}
 
 	//IO::print2outLine(IO::OUTFLAG_LINDAMP_FORCE, force);

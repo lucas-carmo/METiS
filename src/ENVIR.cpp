@@ -1025,9 +1025,9 @@ cx_vec::fixed<3> ENVIR::u1_coef(const double x, const double y, const double z, 
 			khz_z = sinh(k * (z + h)) / sinh(k*h);
 		}
 
-		vel.row(0) = { cosBeta * khz_xy * cos(k*cosBeta*x + k * sinBeta*y + phase), -cosBeta * khz_xy * sin(k*cosBeta*x + k * sinBeta*y + phase) };
-		vel.row(1) = { sinBeta * khz_xy * cos(k*cosBeta*x + k * sinBeta*y + phase), -sinBeta * khz_xy * sin(k*cosBeta*x + k * sinBeta*y + phase) };
-		vel.row(2) = { khz_z * sin(k*cosBeta*x + k * sinBeta*y + phase), khz_z * cos(k*cosBeta*x + k * sinBeta*y + phase) };
+		vel.row(0) = cx_double(cosBeta * khz_xy * cos(k*cosBeta*x + k * sinBeta*y + phase), -cosBeta * khz_xy * sin(k*cosBeta*x + k * sinBeta*y + phase));
+		vel.row(1) = cx_double(sinBeta * khz_xy * cos(k*cosBeta*x + k * sinBeta*y + phase), -sinBeta * khz_xy * sin(k*cosBeta*x + k * sinBeta*y + phase));
+		vel.row(2) = cx_double(khz_z * sin(k*cosBeta*x + k * sinBeta*y + phase), khz_z * cos(k*cosBeta*x + k * sinBeta*y + phase));
 	}
 
 	return w * A * vel;

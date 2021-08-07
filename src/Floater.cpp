@@ -337,7 +337,6 @@ vec::fixed<6> Floater::hydrodynamicForce_drag1stOrd(const ENVIR &envir) const
 		force_drag += m_MorisonElements.at(ii)->hydroForce_drag(envir, refPt, true);
 	}
 
-	IO::print2outLine(IO::OUTFLAG_HD_FORCE_DRAG, force_drag);
 	return force_drag;
 }
 
