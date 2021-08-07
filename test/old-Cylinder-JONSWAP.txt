@@ -12,7 +12,7 @@
 Hydro   1 % 0: Disable hydrodynamic/hydrostatic calculation; 1: First-order hydrodynamic calculation; 2: Second-order hydrodynamic calculation
 Aero    0 % 0 : Disable aerodynamic calculation; 1: Use Blade Element Method to evaluate aerodynamic loads
 Moor    1 % 0 : Disable mooring calculation; 1: Use linear mooring model (stiffness matrix + constant force vector)
-DOFS 0 0 0 0 0 0 % One of the following options for each of the 6 degrees of freedom (dof) --- 0: Disable selected dof in the equations of motion (loads are still evaluated); 1: Enable selected dof in the equations of motion
+DOFS 0 0 1 0 0 0 % One of the following options for each of the 6 degrees of freedom (dof) --- 0: Disable selected dof in the equations of motion (loads are still evaluated); 1: Enable selected dof in the equations of motion
 
 %%-----------------------------------------------------------------------------%%
 %%--------------------------- NUMERICAL PARAMETERS ----------------------------%%
