@@ -1,13 +1,12 @@
 % Post processing routine for METiS output 
 
 clear all
-% close all
+close all
 clc
 
 
 flNm = { 
-    'G:\Meu Drive\Doutorado\1Testes_Cilindro\floating\motion\mts\cyl1\wn_pitch\wnb_BIC04_out.txt'
-%     'G:\Meu Drive\Doutorado\1Testes_Cilindro\floating\motion\mts\cyl1\wn_surge\wna_BIC27_out_2.txt'
+    'C:\Users\lucas.henrique\Documents\METiS\test\OC4-JONSWAP_out.txt'
     
 %             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Jappaku\metis\BIC\180DEG-teste\MOD0_BIC16_180DEG_V00_out.txt'
 %             'C:\Users\lucas.henrique\Google Drive\Doutorado\1Testes_Jappaku\metis\BIC\180DEG-teste\MOD0_BIC16_180DEG_V00_out_17.txt'
@@ -38,14 +37,14 @@ analysisList('fowt_acc') = 0;
 
 % Forces
 analysisList('hd_force') = 0;
-analysisList('hd_force1') = 1;
+analysisList('hd_force1') = 0;
 analysisList('hd_drag_force') = 0;
-analysisList('hd_force2') = 0;
+analysisList('hd_force_2ndp') = 0;
 analysisList('hd_force3') = 0;
 analysisList('hd_force_rotn') = 0;
-analysisList('hd_forceeta') = 0;
+analysisList('hd_force_eta') = 0;
 analysisList('hd_force_rem') = 0;
-analysisList('hd_force_acgr') = 1;
+analysisList('hd_force_acgr') = 0;
 analysisList('hs_force') = 0;
 analysisList('ad_hub_force') = 0;
 analysisList('total_force') = 0;
@@ -117,8 +116,8 @@ for ii = 1:numel(flNm)
             y = [data.hd_drag_force_1, data.hd_drag_force_2, data.hd_drag_force_3, data.hd_drag_force_4, data.hd_drag_force_5, data.hd_drag_force_6];
             y(:, activeDoFs == 0) = [];
             
-        elseif strcmp(k{jj}, 'hd_force2')
-            y = [data.hd_force2_1, data.hd_force2_2, data.hd_force2_3, data.hd_force2_4, data.hd_force2_5, data.hd_force2_6];
+        elseif strcmp(k{jj}, 'hd_force_2ndp')
+            y = [data.hd_force_2ndp_1, data.hd_force_2ndp_2, data.hd_force_2ndp_3, data.hd_force_2ndp_4, data.hd_force_2ndp_5, data.hd_force_2ndp_6];
             y(:, activeDoFs == 0) = [];
             
         elseif strcmp(k{jj}, 'hd_force3')
@@ -129,8 +128,8 @@ for ii = 1:numel(flNm)
             y = [data.hd_force_rotn_1, data.hd_force_rotn_2, data.hd_force_rotn_3, data.hd_force_rotn_4, data.hd_force_rotn_5, data.hd_force_rotn_6];
             y(:, activeDoFs == 0) = [];
             
-        elseif strcmp(k{jj}, 'hd_forceeta')
-            y = [data.hd_forceeta_1, data.hd_forceeta_2, data.hd_forceeta_3, data.hd_forceeta_4, data.hd_forceeta_5, data.hd_forceeta_6];
+        elseif strcmp(k{jj}, 'hd_force_eta')
+            y = [data.hd_force_eta_1, data.hd_force_eta_2, data.hd_force_eta_3, data.hd_force_eta_4, data.hd_force_eta_5, data.hd_force_eta_6];
             y(:, activeDoFs == 0) = [];
             
         elseif strcmp(k{jj}, 'hd_force_acgr')

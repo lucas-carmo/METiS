@@ -500,9 +500,16 @@ vec::fixed<3> MorisonElement::da1dz(const ENVIR &envir, const int nodeIndex) con
 	return da1dz;
 }
 
-vec::fixed<3> MorisonElement::gradP1(const ENVIR & envir, const int nodeIndex) const
+vec::fixed<3> MorisonElement::gradP1(const ENVIR &envir, const int nodeIndex) const
 {
 	vec::fixed<3> gradP1;
+	int localNodeIndex = nodeIndex;
+
+	// As gradP1 is used only at the end nodes of the cylinder, the array has only 2 columns
+	if (nodeIndex == m_nodesArray.n_cols-1) localNodeIndex = 1;
+
+	if (localNodeIndex < 0 || localNodeIndex > 1)
+		throw std::runtime_error("MorisonElement::gradP1 can only be called for the bottom or end nodes of the cylinder.");
 
 	if (m_gradP1_Array_x.is_empty())
 	{
@@ -520,14 +527,14 @@ vec::fixed<3> MorisonElement::gradP1(const ENVIR & envir, const int nodeIndex) c
 		uword ind1 = envir.getInd4interp1();
 		uword ind2 = envir.getInd4interp2();
 
-		double gradP1_x = m_gradP1_Array_x.at(ind1, nodeIndex);
-		double gradP1_y = m_gradP1_Array_y.at(ind1, nodeIndex);
-		double gradP1_z = m_gradP1_Array_z.at(ind1, nodeIndex);
+		double gradP1_x = m_gradP1_Array_x.at(ind1, localNodeIndex);
+		double gradP1_y = m_gradP1_Array_y.at(ind1, localNodeIndex);
+		double gradP1_z = m_gradP1_Array_z.at(ind1, localNodeIndex);
 		if (envir.shouldInterp())
 		{
-			gradP1_x += (m_gradP1_Array_x.at(ind2, nodeIndex) - m_gradP1_Array_x.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
-			gradP1_y += (m_gradP1_Array_y.at(ind2, nodeIndex) - m_gradP1_Array_y.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
-			gradP1_z += (m_gradP1_Array_z.at(ind2, nodeIndex) - m_gradP1_Array_z.at(ind1, nodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			gradP1_x += (m_gradP1_Array_x.at(ind2, localNodeIndex) - m_gradP1_Array_x.at(ind1, localNodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			gradP1_y += (m_gradP1_Array_y.at(ind2, localNodeIndex) - m_gradP1_Array_y.at(ind1, localNodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
+			gradP1_z += (m_gradP1_Array_z.at(ind2, localNodeIndex) - m_gradP1_Array_z.at(ind1, localNodeIndex)) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1));
 		}
 		gradP1 = { gradP1_x, gradP1_y, gradP1_z };
 	}

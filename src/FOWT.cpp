@@ -63,6 +63,11 @@ void FOWT::setFilderSD(const double omega, const double zeta)
 	m_filterSD_zeta = zeta;
 }
 
+void FOWT::setDispSD(const vec::fixed<6> &disp_sd)
+{
+	m_disp_sd = disp_sd;
+}
+
 
 void FOWT::setFloater(Floater &floater)
 {

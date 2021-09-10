@@ -807,7 +807,8 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 	// before calling it and them restore it back to its original value.	
 	double wf = fowt.filterSD_omega();
 	fowt.setFilderSD(1, fowt.filterSD_zeta());
-	fowt.update_sd(meanDisp, envir.timeStep());
+	fowt.setDispSD(meanDisp);
+	fowt.update(envir, fill::zeros, fill::zeros);
 	fowt.setAddedMass_t0(envir.watDensity()); // The added mass matrix hydrostatics is evaluated considering the mean position
 	fowt.setStiffnessMatrix(envir.watDensity(), envir.gravity()); // The hydrostatics is evaluated considering the instantaneous position, thus it DOES NOT take into account the mean displacement
 	fowt.update(envir, join_cols(vec::fixed<6>(fill::zeros), disp0), join_cols(vec::fixed<6>(fill::zeros), vel0));
@@ -1649,6 +1650,7 @@ void IO::printSumFile(const FOWT &fowt, const ENVIR &envir)
 	m_sumFl << "Moor Mode:\t" << fowt.printMoorMode() << "\n";
 	m_sumFl << "Filter SD:\t" << fowt.filterSD_omega() << "\t" << fowt.filterSD_zeta() << "\n";
 	m_sumFl << "DOFs:\t" << fowt.printDoF() << '\n';
+	m_sumFl << "MeanDisp:\t" << fowt.disp_sd() << '\n';
 
 	if (fowt.moorMode() == 0)
 	{

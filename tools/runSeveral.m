@@ -4,7 +4,7 @@ close all
 clc
 
 if ispc
-    folder = 'G:\Meu Drive\Doutorado\1Testes_Jappaku\metis\BIC\180DEG\CDz_real';
+    folder = 'G:\Meu Drive\Doutorado\1Testes_Jappaku\metis\BIC\180DEG\K11_menor';
     
     % Remove files from previous runs. This is only needed because the next step
     % is to list all the .txt files in the folder.
