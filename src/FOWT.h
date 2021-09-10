@@ -70,6 +70,7 @@ public:
 	void setExtLinDamp(const mat::fixed<6, 6> &extLinDamp);
 
 	void setFilderSD(const double omega, const double zeta);
+	void setDispSD(const vec::fixed<6> &disp_sd);
 
 	void setFloater(Floater &floater);
 	void setRNA(RNA &rna);

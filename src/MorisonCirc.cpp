@@ -121,9 +121,9 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 		m_da1dx_Array_z = zeros(t.size(), npts);
 		m_da1dy_Array_z = zeros(t.size(), npts);
 
-		m_gradP1_Array_x = zeros(t.size(), npts);
-		m_gradP1_Array_y = zeros(t.size(), npts);
-		m_gradP1_Array_z = zeros(t.size(), npts);
+		m_gradP1_Array_x = zeros(t.size(), 2);
+		m_gradP1_Array_y = zeros(t.size(), 2);
+		m_gradP1_Array_z = zeros(t.size(), 2);
 
 		cx_mat amp_du1dx_x(nWaves, npts, fill::zeros);
 		cx_mat amp_du1dy_y(nWaves, npts, fill::zeros);
@@ -139,9 +139,9 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 		cx_mat amp_da1dx_z(nWaves, npts, fill::zeros);
 		cx_mat amp_da1dy_z(nWaves, npts, fill::zeros);
 
-		cx_mat amp_gradP1_x(nWaves, npts, fill::zeros);
-		cx_mat amp_gradP1_y(nWaves, npts, fill::zeros);
-		cx_mat amp_gradP1_z(nWaves, npts, fill::zeros);
+		cx_mat amp_gradP1_x(nWaves, 2, fill::zeros);
+		cx_mat amp_gradP1_y(nWaves, 2, fill::zeros);
+		cx_mat amp_gradP1_z(nWaves, 2, fill::zeros);
 		
 		for (unsigned int iWave = 0; iWave < nWaves; ++iWave)
 		{
@@ -175,11 +175,17 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 				aux = envir.da1dz_coef(m_nodesArray.at(0, iNode), m_nodesArray.at(1, iNode), m_nodesArray.at(2, iNode), iWave);
 				amp_da1dz_z.at(iWave, iNode) = aux.at(2);
 
-				// Pressure gradient
-				aux = envir.gradP1_coef(m_nodesArray.at(0, iNode), m_nodesArray.at(1, iNode), m_nodesArray.at(2, iNode), iWave);
-				amp_gradP1_x.at(iWave, iNode) = aux.at(0);
-				amp_gradP1_y.at(iWave, iNode) = aux.at(1);
-				amp_gradP1_z.at(iWave, iNode) = aux.at(2);				
+				if (iNode == 0 || iNode == npts-1)
+				{
+					int auxInd = 0;
+					if (iNode == npts - 1) auxInd = 1;
+
+					// Pressure gradient
+					aux = envir.gradP1_coef(m_nodesArray.at(0, iNode), m_nodesArray.at(1, iNode), m_nodesArray.at(2, iNode), iWave);
+					amp_gradP1_x.at(iWave, auxInd) = aux.at(0);
+					amp_gradP1_y.at(iWave, auxInd) = aux.at(1);
+					amp_gradP1_z.at(iWave, auxInd) = aux.at(2);
+				}
 			}
 		}
 
@@ -443,7 +449,7 @@ vec::fixed<6> MorisonCirc::hydroForce_drag(const ENVIR &envir, const vec::fixed<
 	vec::fixed<3> v_axial = arma::dot(vel1, zvec) * zvec; // Since the cylinder is a rigid body, this is the same for all the nodes
 
 	bool evaluateTopNode{ true };
-	if (m_node2Pos.at(2) > 0)
+	if (m_node2Pos_sd.at(2) > 0)
 	{
 		evaluateTopNode = false;
 	}
@@ -563,7 +569,7 @@ vec::fixed<6> MorisonCirc::hydroForce_convecAcc(const ENVIR &envir, const vec::f
 	vec::fixed<3> zvec{ m_zvec_sd };
 
 	bool evaluateTopNode{ true };
-	if (m_node2Pos.at(2) > 0)
+	if (m_node2Pos_sd.at(2) > 0)
 	{
 		evaluateTopNode = false;
 	}
@@ -662,7 +668,7 @@ vec::fixed<6> MorisonCirc::hydroForce_accGradient(const ENVIR & envir, const vec
 	vec::fixed<6> force(fill::zeros);
 
 	bool evaluateTopNode{ true };
-	if (m_node2Pos.at(2) > 0)
+	if (m_node2Pos_sd.at(2) > 0)
 	{
 		evaluateTopNode = false;
 	}
@@ -678,9 +684,31 @@ vec::fixed<6> MorisonCirc::hydroForce_accGradient(const ENVIR & envir, const vec
 		double yii = m_node1Pos_1stOrd.at(1) + m_dL * ii * m_zvec_1stOrd.at(1) - n_ii.at(1);
 		double zii = m_node1Pos_1stOrd.at(2) + m_dL * ii * m_zvec_1stOrd.at(2) - n_ii.at(2);
 
-		vec::fixed<3> a_g(this->da1dx(envir, ii)*xii + this->da1dy(envir, ii)*yii + this->da1dz(envir, ii)*zii);
-		a_g -= dot(a_g, m_zvec_sd)*m_zvec_sd;
+		vec::fixed<3> a_g(this->da1dx(envir, ii)*xii + this->da1dy(envir, ii)*yii + this->da1dz(envir, ii)*zii);		
+		vec::fixed<3> a_g_axial = arma::dot(a_g, m_zvec_sd) * m_zvec_sd;
+		if (ii == 0)
+		{			
+			force.rows(0, 2) += datum::pi * (m_diam*m_diam*m_diam / 6.) * envir.watDensity() * m_axialCa_1 * a_g_axial;
 
+			if (m_botPressFlag)
+			{
+				double gP1 = arma::dot(gradP1(envir, ii), arma::vec{ xii, yii, zii });
+				force.rows(0, 2) += datum::pi * (m_diam*m_diam / 4.) * gP1 * m_zvec_sd;
+			}
+		}
+		else if (ii == ncyl - 1 && evaluateTopNode)
+		{
+			double gP1 = arma::dot(gradP1(envir, ii), arma::vec{ xii, yii, zii });
+			force.rows(0, 2) += datum::pi * (m_diam*m_diam*m_diam / 6.) * envir.watDensity() * m_axialCa_2 * a_g_axial;
+
+			if (m_botPressFlag)
+			{
+				double gP1 = arma::dot(gradP1(envir, ii), arma::vec{ xii, yii, zii });
+				force.rows(0, 2) -= datum::pi * (m_diam*m_diam / 4.) * gP1 * m_zvec_sd;
+			}
+		}
+
+		a_g -= a_g_axial;
 		vec::fixed<3> force_ii = datum::pi * (m_diam*m_diam / 4.) * envir.watDensity() * m_CM  * a_g;
 
 		// Integrate the forces along the cylinder using Simpson's Rule
@@ -746,7 +774,7 @@ vec::fixed<6> MorisonCirc::hydroForce_rem(const ENVIR & envir, const vec::fixed<
 	vec::fixed<3> xvec{ m_xvec_sd }, yvec{ m_yvec_sd }, zvec{ m_zvec_sd };
 
 	bool evaluateTopNode{ true };
-	if (m_node2Pos.at(2) > 0)
+	if (m_node2Pos_sd.at(2) > 0)
 	{
 		evaluateTopNode = false;
 	}
@@ -1536,9 +1564,9 @@ mat::fixed<6, 6> MorisonCirc::addedMass_paral(const double rho, const vec::fixed
 	mat::fixed<6, 6> A(fill::zeros);
 
 	// Nodes position and vectors of the local coordinate system vectors
-	vec::fixed<3> n1 = node1Pos();
-	vec::fixed<3> n2 = node2Pos();
-	vec::fixed<3> zvec = m_zvec;
+	vec::fixed<3> n1 = m_node1Pos_1stOrd;
+	vec::fixed<3> n2 = m_node1Pos_1stOrd;
+	vec::fixed<3> zvec = m_zvec_1stOrd;
 	if (hydroMode < 2)
 	{
 		n1 = node1Pos_sd();
