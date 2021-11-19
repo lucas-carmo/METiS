@@ -132,7 +132,7 @@ double Wave::waveNumber() const
 
 double Wave::length() const
 {
-	if (!isnan(m_length))
+	if (!std::isnan(m_length))
 	{
 		return m_length;
 	}

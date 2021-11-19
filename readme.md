@@ -6,55 +6,28 @@
 
 - Install CMake: `sudo apt-get install cmake`
 
-- OpenBLAS: `sudo apt-get install libopenblas-dev`    *(see the readme file provided with Armadillo for the other options, like MKL)*
+- Instal Intel (R) MKL. By the time I wrote these Linux instructions, it is part of Intel (R) oneAPI Base Toolkit, available at Download and install Intel (R) Math Kernel Library (MKL) at https://www.intel.com/content/www/us/en/developer/tools/oneapi/overview.html#gs.gdas9u
 
 - Armadillo (details in the readme file provided with Armadillo):
     1. Download at http://arma.sourceforge.net;
     2. Extract files;
     3. In a terminal window, change into the directory that was created by unpacking Armadillo, and type `cmake .` (the full stop separated from "cmake" by a space is important);
-    4. To generate the run-time armadillo library, type `make`;
-    5. Type `sudo make install`
-
-- I have run into a problem when Anaconda is installed. Armadillo could not found **libhdf5.so.101**, so I had to do one of the following:
-    1. Add this line to **~/.bashrc**: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/lib` (in my case, that was `/home/user/anaconda3/lib`). Then, I needed to reload the .bashrc by running `source ~\.bashrc`. After that, METiS compiled and linked just fine. However, this solution may affect other applications, so I don't recommend it.
-
-    OR
-
-    2. The other option is to include the following lines in the compiling and running scripts, in such a way that it does not affect other applications:
-```    
-    LD_LIBRARY_PATH=/path/to/lib
-    export LD_LIBRARY_PATH
-```    
-
-
+    4. Activate MKL in your current terminal window source `/opt/intel/oneapi/setvars.sh`
+    5. Create a symbolic link so that `ld` can find MKL by running `sudo ln -s /opt/intel/oneapi/mkl/2021.4.0/lib/intel64/libmkl_rt.so /usr/local/lib/libmkl_rt.so`
+    6. Type `sudo make install`
 
 
 ### **Compiling and running**
-After installing all the previous dependencies/third party tools listed above, METiS can be compiled, linked and run using the following commands (see the previous section in case you run in problems concerning **libhdf5.so.101**):
-```
-    g++ -c src/*.cpp                        # Compile the source files
-    g++ -o METiS -O2 *.o -larmadillo        # Link the resulting object files and Armadillo
-    ./METiS <filePath>                      # Run METiS
-```    
-
-To make this process easier, two bash scripts named **build_metis.sh** and **run_metis.sh** are included. They can be run as
-```
-    .\build_metis             # Compile the source files and link with Armadillo + move METiS to bin folder
-    .\run_metis fileName      # Run METiS with the input file specified by fileName
-```    
-
-This process will be conducted with CMake in the future (I don't know when).
-
-
+After installing all the previous dependencies/third party tools listed above, METiS can be compiled and linked using `.\build_metis`. It can then be run using `.\METiS path\to\input\file.txt`
 
 
 ## **Windows**
 ### **Installing dependencies/third party tools:**
 - Download Visual Studio Community or other IDE of your choice.
 
-- The Armadillo files that need to be included are provided in **/METiS/src/armadillo-8.400.0_include**. Alternatively, you can download Armadillo at http://arma.sourceforge.net and copy the entire **include** folder to a convenient location.
+- The Armadillo files that need to be included are provided in **/METiS/src/armadillo-version_include**. Alternatively, you can download Armadillo at http://arma.sourceforge.net and copy the entire **include** folder to a convenient location.
 
-- Download and install Intel (R) Math Kernel Library (MKL) at https://software.intel.com/en-us/mkl (or other libraries like OpenBLAS).
+- Download and install Intel (R) Math Kernel Library (MKL) at https://software.intel.com/en-us/mkl (I have not tested yet, but it is probable that the same steps described below are need for the OneAPI Base Toolkit).
 
 - Modify **include/armadillo_bits/config.hpp** to indicate which libraries are currently available on your system (see the readme file provided with Armadillo for details).
 
