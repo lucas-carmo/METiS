@@ -62,7 +62,8 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 	// Need to store the frequency of each wave in case the IFFT won't be used
 	vec w{ zeros(nWaves, 1) };
 
-	// Complex amplitudes	
+	// Complex amplitudes
+	{	// Only need this cx_mat amp_ locally, so these brackets are here to make them go out of scope after use 
 	cx_mat amp_hydroForce_1st(nWaves, 6, fill::zeros);	
 	cx_vec amp_waveElevAtWL(nWaves, 1, fill::zeros);
 	cx_mat amp_du1dt_x(nWaves, npts, fill::zeros);
@@ -103,6 +104,7 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 	m_u1_Array_x = envir.timeSeriesFromAmp(amp_u1_x, w);
 	m_u1_Array_y = envir.timeSeriesFromAmp(amp_u1_y, w);
 	m_u1_Array_z = envir.timeSeriesFromAmp(amp_u1_z, w);
+	}
 
 	// Quantities that are used only in second order analysis
 	if (hydroMode == 2)
@@ -125,6 +127,7 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 		m_gradP1_Array_y = zeros(t.size(), 2);
 		m_gradP1_Array_z = zeros(t.size(), 2);
 
+		{
 		cx_mat amp_du1dx_x(nWaves, npts, fill::zeros);
 		cx_mat amp_du1dy_y(nWaves, npts, fill::zeros);
 		cx_mat amp_du1dz_z(nWaves, npts, fill::zeros);
@@ -206,6 +209,7 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 		m_gradP1_Array_x = envir.timeSeriesFromAmp(amp_gradP1_x, w);
 		m_gradP1_Array_y = envir.timeSeriesFromAmp(amp_gradP1_y, w);
 		m_gradP1_Array_z = envir.timeSeriesFromAmp(amp_gradP1_z, w);
+		}
 	}
 
 	// Special treatment for the force due to the second-order wave potential due to the double sum
