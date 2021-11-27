@@ -8,8 +8,8 @@
 *****************************************************/
 arma::mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, const double rotatZ)
 {
-	/* Rotation matrix is RotatMat = RotatX * RotatY * RotatZ, i.e. a rotation around the Z axis,
-	  followed by a rotation around the new y axis, and a rotation around the new x axis (intrinsic rotation).
+	/* Rotation matrix is RotatMat = RotatX * RotatY * RotatZ, i.e. a rotation around the X axis,
+	  followed by a rotation around the new Y axis, and a rotation around the new Z axis.
 	  Each rotation matrix is given by:
 
 	  rotatX = { 	{ 1 ,        0        ,         0        },
