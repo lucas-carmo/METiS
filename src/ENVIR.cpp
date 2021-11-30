@@ -895,6 +895,10 @@ double ENVIR::ramp() const
 	return ramp(m_time);
 }
 
+// Prof. Pesce:
+// I would prefer a hyperbolic tangent modulation... It goes smoothly and asymptotically to a constant. 
+// In the case of the cosine modulation its second derivative with respect to time is non-null at t=Tr 
+// and this is a source of a localized impulse.
 double ENVIR::ramp(double time) const
 {
 	double ramp{ 1 };
