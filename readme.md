@@ -8,6 +8,9 @@
 
 - Instal Intel (R) MKL. By the time I wrote these Linux instructions, it is part of Intel (R) oneAPI Base Toolkit, available at Download and install Intel (R) Math Kernel Library (MKL) at https://www.intel.com/content/www/us/en/developer/tools/oneapi/overview.html#gs.gdas9u
 
+- Need to set environment variables: https://www.intel.com/content/www/us/en/develop/documentation/get-started-with-intel-oneapi-dlfd-linux/top/before-you-begin.html
+
+
 - Armadillo (details in the readme file provided with Armadillo):
     1. Download at http://arma.sourceforge.net;
     2. Extract files;
@@ -18,7 +21,7 @@
 
 
 ### **Compiling and running**
-After installing all the previous dependencies/third party tools listed above, METiS can be compiled and linked using `.\build_metis`. It can then be run using `.\METiS path\to\input\file.txt`
+After installing all the previous dependencies/third party tools listed above, METiS can be compiled and linked using `./build_metis`. It can then be run using `./METiS path/to/input/file.txt`
 
 
 ## **Windows**
