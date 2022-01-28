@@ -3,8 +3,8 @@
 #
 #
 
-#source /opt/intel/oneapi/setvars.sh % "Ativar" o mkl
-#sudo ln -s /opt/intel/oneapi/mkl/2021.4.0/lib/intel64/libmkl_rt.so /usr/local/lib/libmkl_rt.so # Colocar o mkl no caminho de busca do ld
+source /opt/intel/oneapi/setvars.sh # "Ativar" o mkl
+#sudo ln -s /opt/intel/oneapi/mkl/2022.0.2/lib/intel64/libmkl_rt.so /usr/local/lib/libmkl_rt.so # Colocar o mkl no caminho de busca do ld
 
 echo '-- Compiling all the .cpp files in ../src/'
 g++ -std=c++14 -c src/*.cpp  -DMKL_ILP64  -m64  -I"${MKLROOT}/include"
