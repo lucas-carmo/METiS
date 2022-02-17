@@ -23,6 +23,10 @@ ENVIR::ENVIR()
 	m_timeStep = arma::datum::nan;
 	m_timeTotal = arma::datum::nan;
 	m_timeRamp = arma::datum::nan;
+
+	m_windRefVel = arma::datum::nan;
+	m_windRefHeight = arma::datum::nan;
+	m_windExp = arma::datum::nan;
 }
 
 void ENVIR::setCurrentTime(const double time)
@@ -78,6 +82,139 @@ void ENVIR::setAirDens(const double airDens)
 	m_airDens = airDens;
 }
 
+void ENVIR::setWindFromTurbFile(const std::string &fileName)
+{
+	std::ifstream is(fileName, std::ifstream::binary);
+	if (!is) 
+	{
+		throw std::runtime_error("Unable to read turbulence input file" + fileName + ".");
+	}
+	m_turbFileName = fileName;
+	m_flagTurbWind = true;
+	int nffc = 3; // I dont know what this means exactly, but it seems to be the number of spatial dimensions (X, Y and Z)
+
+	//----------------------------
+	// get the header information
+	//----------------------------
+	int16_t tmp{ 0 }; // TurbSim format identifier(should = 7 or 8 if periodic), INT(2)
+	is.read(reinterpret_cast<char*>(&tmp), sizeof(tmp));
+
+	int32_t nz{ 0 }; // the number of grid points vertically, INT(4)
+	is.read(reinterpret_cast<char*>(&nz), sizeof(nz));
+
+	int32_t ny{ 0 }; // the number of grid points laterally, INT(4)
+	is.read(reinterpret_cast<char*>(&ny), sizeof(ny));
+
+	int32_t ntwr{ 0 }; // the number of tower points, INT(4)
+	is.read(reinterpret_cast<char*>(&ntwr), sizeof(ntwr));
+
+	int32_t nt{ 0 }; // the number of time steps, INT(4)
+	is.read(reinterpret_cast<char*>(&nt), sizeof(nt));
+
+	float dz{ 0 }; // grid spacing in vertical direction, REAL(4), in m
+	is.read(reinterpret_cast<char*>(&dz), sizeof(float));
+
+	float dy{ 0 }; // grid spacing in lateral direction, REAL(4), in m
+	is.read(reinterpret_cast<char*>(&dy), sizeof(float));
+
+	float dt{ 0 }; // grid spacing in delta time, REAL(4), in m / s
+	is.read(reinterpret_cast<char*>(&dt), sizeof(float));
+	
+	is.read(reinterpret_cast<char*>(&m_windRefVel), sizeof(float)); // the mean wind speed at hub height, REAL(4), in m / s
+
+	is.read(reinterpret_cast<char*>(&m_windRefHeight), sizeof(float)); // height of the hub, REAL(4), in m
+
+	float z1{ 0 }; // height of the bottom of the grid, REAL(4), in m
+	is.read(reinterpret_cast<char*>(&z1), sizeof(float));
+
+	std::array<float, 3> Vslope;
+	std::array<float, 3> Voffset;
+	is.read(reinterpret_cast<char*>(&Vslope[0]), sizeof(float)); // the U - component slope for scaling, REAL(4)
+	is.read(reinterpret_cast<char*>(&Voffset[0]), sizeof(float)); // the U - component offset for scaling, REAL(4)
+	is.read(reinterpret_cast<char*>(&Vslope[1]), sizeof(float)); // the V - component slope for scaling, REAL(4)
+	is.read(reinterpret_cast<char*>(&Voffset[1]), sizeof(float)); // the V - component offset for scaling, REAL(4)
+	is.read(reinterpret_cast<char*>(&Vslope[2]), sizeof(float)); // the W - component slope for scaling, REAL(4)
+	is.read(reinterpret_cast<char*>(&Voffset[2]), sizeof(float)); // the W - component offset for scaling, REAL(4)
+
+	int32_t nchar{ 0 }; // the number of characters in the description string, max 200, INT(4)
+	is.read(reinterpret_cast<char*>(&nchar), sizeof(nchar));
+
+	char *asciiSTR = new char[nchar];
+	is.read(asciiSTR, nchar); // the ASCII integer representation of the character string			
+	std::cout << asciiSTR << "\n";
+	delete[] asciiSTR;
+
+	//-------------------------
+	// get the grid information
+	//-------------------------
+	int32_t nPts = ny * nz;
+	int32_t nv = nffc * nPts;       // the size of one time step
+	int32_t nvTwr = nffc * ntwr;
+
+	m_velocity.set_size(nt);
+	m_velocity.fill(arma::zeros<arma::cube>(nffc, ny, nz));
+	arma::cube twrVelocity(nt, nffc, ntwr);
+
+	// Loop the time steps
+	for (int it = 0; it < nt; ++it)
+	{
+		// --------------------
+		// get the grid points
+		// --------------------
+		std::vector<int16_t> v(nv);
+		for (int jj = 0; jj < nv; ++jj)
+		{
+			is.read(reinterpret_cast<char*>(&v[jj]), sizeof(int16_t));
+		}
+
+		int ip = 0;
+		for (int iz = 0; iz < nz; ++iz)
+		{
+			for (int iy = 0; iy < ny; ++iy)
+			{
+				for (int k = 0; k < nffc; ++k)
+				{
+					m_velocity[it][k, iy, iz] = (v[ip] - Voffset[k]) / Vslope[k];
+					ip = ip + 1;
+				}
+			}
+		}
+
+		//---------------------
+		//get the tower points
+		//---------------------
+		// NOTE:: Tower part wasnt tested yet
+		if (nvTwr > 0)
+		{
+			std::vector<int16_t> v(nvTwr);
+			for (int jj = 0; jj < nvTwr; ++jj)
+			{
+				is.read(reinterpret_cast<char*>(&v[jj]), sizeof(int16_t));
+			}
+
+			// scale the data
+			for (int k = 0; k < nffc; ++k)
+			{
+				for (int jj = 0; jj < nvTwr; ++jj)
+				{
+					twrVelocity(it, k, jj) = (v[k + jj * nffc] - Voffset[k]) / Vslope[k];
+				}
+			}
+		}
+	}
+
+	// Just like in NREL's InflowWind, the grid is located at a distance gridwidth/2 downwind of the tower, 
+	// "so that no aerodynamic analysis nodes are outside of the wind domain even if the rotor is initialized 
+	// with a +/-90 degree yaw".
+	m_windGrid_y = arma::regspace(0, 1 , ny - 1) * dy - (ny - 1) / 2.0 * dy;	
+	m_windGrid_z = arma::regspace(0, 1, nz - 1) * dz + z1;
+	double m_windGrid_x0 = m_windGrid_y.back(); // m_windGrid_x could be a scalar for windDirection=0	 
+
+	// Rotate grid considering wind dir (horizontal only)	
+	m_windGrid_x =  m_windGrid_x0 * m_windDirCos + m_windGrid_y * m_windDirSin;
+	m_windGrid_y = -m_windGrid_x0 * m_windDirSin + m_windGrid_y * m_windDirCos;
+}
+
 void ENVIR::setWindRefVel(const double windRefVel)
 {
 	m_windRefVel = windRefVel;
@@ -86,6 +223,8 @@ void ENVIR::setWindRefVel(const double windRefVel)
 void ENVIR::setWindDir(const double windDir)
 {
 	m_windDir = windDir;
+	m_windDirCos = std::cos(m_windDir * arma::datum::pi / 180.);
+	m_windDirSin = std::sin(m_windDir * arma::datum::pi / 180.);
 }
 
 void ENVIR::setWindRefHeight(const double windRefHeight)
@@ -611,6 +750,11 @@ double ENVIR::windExp() const
 	return m_windExp;
 }
 
+bool ENVIR::getFlagWindTurb() const
+{
+	return m_flagTurbWind;
+}
+
 unsigned int ENVIR::numberOfWaveComponents() const
 {
 	return m_wave.size();
@@ -714,6 +858,11 @@ const vec& ENVIR::getTimeArray() const
 const vec& ENVIR::getRampArray() const
 {
 	return m_timeRampArray;
+}
+
+std::string ENVIR::getTurbFileName() const
+{
+	return m_turbFileName;
 }
 
 /*****************************************************
@@ -1865,14 +2014,66 @@ cx_vec::fixed<3> ENVIR::gradP1_coef(const double x, const double y, const double
 
 
 
-double ENVIR::windVel_X(const vec::fixed<3> &coord) const
+void ENVIR::windVel(vec::fixed<3> &windVel, const vec::fixed<3> &coord) const
 {
-	return (ramp() * windRefVel() * std::cos(m_windDir * arma::datum::pi / 180.) * pow(coord[2] / windRefHeight(), windExp()));
-}
+	if (m_flagTurbWind)
+	{				
+		// Distance from a point P to a line whose vertices are v1 and v2 can be calculated by
+		// ds = ||cross(P-v1, v2-v1)|| / norm(v2-v1)
+		// This is what is done below, but the math was developed for the special case at hand
+		// in order to save computational time
+		double dx0 = coord.at(0) - m_windGrid_x.at(0);
+		double dy0 = coord.at(1) - m_windGrid_y.at(0);
+		double ds = dx0 * m_windDirCos - dy0 * m_windDirSin;
 
-double ENVIR::windVel_Y(const vec::fixed<3> &coord) const
-{
-	return (-ramp() * windRefVel() * std::sin(m_windDir * arma::datum::pi / 180.) * pow(coord[2] / windRefHeight(), windExp()));
+		// Find the point at the grid that corresponds to "coord".
+		// It is P = (x,y) = coord + ds * V/||V||, with V/||V|| simply the unitary vector
+		// pointing at the direction of the wind propagation.
+		double x = coord.at(0) + ds * m_windDirCos;
+		double y = coord.at(1) - ds * m_windDirSin;
+
+		// TODO: VERIFICAR SE O PONTO NAO TA FORA DO DOMINIO
+
+		// This point is probably not one of the grid nodes, hence, it is necessary to interpolate.
+		// To do so, find the indices of the lower bounds that will be used in the interpolation
+		// for each of the grid vectors.
+		arma::uword ind1_x = arma::index_min(abs(m_windGrid_x - x));	
+		if (m_windGrid_x(ind1_x) > x)
+		{
+			ind1_x -= 1;
+		}		
+
+		arma::uword ind1_y = arma::index_min(abs(m_windGrid_y - y));
+		if (m_windGrid_y(ind1_y) > y)
+		{
+			ind1_y -= 1;
+		}
+
+		arma::uword ind1_z = arma::index_min(abs(m_windGrid_z - coord.at(2)));
+		if (m_windGrid_z(ind1_z) > coord.at(2))
+		{
+			ind1_z -= 1;
+		}
+		
+		// The turbulence at "coord" is given by the one at the point found above, but not at the current time step.
+		// Based on Taylor frozen turbulence hypothesis, the time taken for the turbulent wind to go from
+		// the grid to the desired point "coord" is simply dt = ds/||V||. If this is a positive value,
+		// it means that the wind at "coord" is the same that was at the grid in t-dt. Otherwise, it means that the wind
+		// at coord will be at P in t+dt. Since the grid is located downwind of the turbine, the latter is expected to occur.
+		double dt = ds / m_windRefVel;
+
+		// TODO: 
+		// 1) Achar os indices pra interpolacao no tempo
+		// 2) Interpolar no tempo (1D) e no espaco (2D)
+
+	}
+	else
+	{		
+		double U = ramp() * windRefVel()  * pow(coord[2] / windRefHeight(), windExp());
+		windVel.at(0) = U * m_windDirCos;
+		windVel.at(1) = -U * m_windDirSin;
+		windVel.at(2) = 0;
+	}
 }
 
 mat ENVIR::timeSeriesFromAmp(cx_mat &inAmp, const vec &w) const

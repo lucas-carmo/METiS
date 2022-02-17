@@ -24,11 +24,24 @@ private:
 	std::vector<Wave> m_wave; // The sea is specified by a vector with regular wave components. You can add a wave component using the method addRegularWave(), or many components using addJonswap().
 	unsigned int m_waveStret;
 
+	// Wind Characteristics
 	double m_airDens;
-	double m_windRefVel;
 	double m_windDir;
+	double m_windDirCos;
+	double m_windDirSin;
+	double m_windRefVel;	
 	double m_windRefHeight;
 	double m_windExp;
+
+	// For turbulent wind only
+	bool m_flagTurbWind = false;
+	std::string m_turbFileName = "";
+	arma::field<arma::cube> m_velocity;
+	arma::vec m_windGrid_x;
+	arma::vec m_windGrid_y;
+	arma::vec m_windGrid_z;
+
+	// End of wind characteristics
 
 	std::vector<unsigned int> m_waveProbeID;
 	std::vector<vec::fixed<3>> m_waveProbe; // Coordinates of the points where the wave characteristics (elevation, velocity, etc) are calculated for output
@@ -71,6 +84,8 @@ public:
 	void setWatDepth(const double watDepth);
 	void setWaveStret(const unsigned int waveStret);
 	void setAirDens(const double airDens);
+
+	void setWindFromTurbFile(const std::string &fileName);
 	void setWindRefVel(const double windRefVel);
 	void setWindDir(const double windDir);
 	void setWindRefHeight(const double windRefHeight);
@@ -101,6 +116,7 @@ public:
 	double windRefHeight() const;
 	double windDir() const;
 	double windExp() const;
+	bool getFlagWindTurb() const;
 
 	unsigned int numberOfWaveComponents() const;
 	const Wave& getWave(unsigned int waveIndex) const;
@@ -115,6 +131,7 @@ public:
 	uword getInd4interp2() const;
 	const vec& getTimeArray() const;
 	const vec& getRampArray() const;
+	std::string getTurbFileName() const;
 
 	/*****************************************************
 		Printing
@@ -186,8 +203,7 @@ public:
 	cx_vec::fixed<3> da1dz_coef(const double x, const double y, const double z, const unsigned int waveIndex) const;
 	cx_vec::fixed<3> gradP1_coef(const double x, const double y, const double z, const unsigned int waveIndex) const;
 
-	double windVel_X(const vec::fixed<3> &coord) const;
-	double windVel_Y(const vec::fixed<3> &coord) const;
+	void windVel(vec::fixed<3> &windVel, const vec::fixed<3> &coord) const;
 
 	// Function that generates time series from complex amplitudes
 	mat timeSeriesFromAmp(cx_mat &in, const vec &w) const;

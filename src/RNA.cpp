@@ -313,7 +313,6 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 	double phi_min;
 	double phi_max;
 
-
 	for (unsigned int iiBlades = 0; iiBlades < m_blades.size(); ++iiBlades)
 	{
 		totalAzimuth = deltaAzimuth + m_blades.at(iiBlades).initialAzimuth();
@@ -332,9 +331,7 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 			// - windVel[0] is the component that is normal to the rotation plan
 			// - windVel[1] is the component that is in the rotation plan and in the tangential direction
 			// - windVel[2] is the component that is in the rotation plan and in the radial direction
-			windVel.zeros();
-			windVel[0] = envir.windVel_X(nodeCoord_earth);
-			windVel[1] = envir.windVel_Y(nodeCoord_earth);
+			envir.windVel(windVel, nodeCoord_earth);
 			windVel = rotorRotation * (rigidBodyRotation * windVel);
 
 			// Structural velocity of the nodes. Need to be written in the node coordinate system
