@@ -472,10 +472,8 @@ vec::fixed<12> FOWT::calcAcceleration(const ENVIR &envir)
 vec::fixed<6> FOWT::aeroForce(const ENVIR &envir)
 {
 	if (m_aeroMode == 1)
-	{
-		vec::fixed<6> dbg = m_rna.aeroForce(envir, m_disp + join_cols(CoG(), vec::fixed<3> {0, 0, 0}), m_vel);
-		IO::print2outLine(IO::OUTFLAG_DEBUG_VEC_6, dbg);
-		return dbg;
+	{		
+		return m_rna.aeroForce(envir, m_disp + join_cols(CoG(), vec::fixed<3> {0, 0, 0}), m_vel);
 	}
 
 	return vec::fixed<6> {0, 0, 0, 0, 0, 0};
