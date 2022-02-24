@@ -27,6 +27,7 @@ ENVIR::ENVIR()
 	m_windRefVel = arma::datum::nan;
 	m_windRefHeight = arma::datum::nan;
 	m_windExp = arma::datum::nan;
+	m_windDir = arma::datum::nan;
 }
 
 void ENVIR::setCurrentTime(const double time)
@@ -93,6 +94,12 @@ void ENVIR::setWindFromTurbFile(const std::string &fileName)
 	m_flagTurbWind = true;
 	int nffc = 3; // I dont know what this means exactly, but it seems to be the number of spatial dimensions (X, Y and Z)
 
+	// Need wind direction in some of the calculations below
+	if (!arma::is_finite(m_windDir))
+	{
+		throw std::runtime_error("Need to specify WindDir before turbulence file.");
+	}
+
 	//----------------------------
 	// get the header information
 	//----------------------------
@@ -116,9 +123,9 @@ void ENVIR::setWindFromTurbFile(const std::string &fileName)
 
 	float dy{ 0 }; // grid spacing in lateral direction, REAL(4), in m
 	is.read(reinterpret_cast<char*>(&dy), sizeof(float));
-
-	float dt{ 0 }; // grid spacing in delta time, REAL(4), in m / s
-	is.read(reinterpret_cast<char*>(&dt), sizeof(float));
+	 
+	is.read(reinterpret_cast<char*>(&m_windDt), sizeof(float)); // grid spacing in delta time, REAL(4), in m / s
+	m_windTimeTotal = (nt - 1) * m_windDt;
 	
 	is.read(reinterpret_cast<char*>(&m_windRefVel), sizeof(float)); // the mean wind speed at hub height, REAL(4), in m / s
 
@@ -151,9 +158,9 @@ void ENVIR::setWindFromTurbFile(const std::string &fileName)
 	int32_t nv = nffc * nPts;       // the size of one time step
 	int32_t nvTwr = nffc * ntwr;
 
-	m_velocity.set_size(nt);
-	m_velocity.fill(arma::zeros<arma::cube>(nffc, ny, nz));
-	arma::cube twrVelocity(nt, nffc, ntwr);
+	m_windVelocity.set_size(nt);
+	m_windVelocity.fill(arma::zeros<arma::fcube>(nffc, ny, nz));
+	arma::fcube twrVelocity(nt, nffc, ntwr);
 
 	// Loop the time steps
 	for (int it = 0; it < nt; ++it)
@@ -174,9 +181,16 @@ void ENVIR::setWindFromTurbFile(const std::string &fileName)
 			{
 				for (int k = 0; k < nffc; ++k)
 				{
-					m_velocity[it][k, iy, iz] = (v[ip] - Voffset[k]) / Vslope[k];
+					m_windVelocity.at(it).at(k, iy, iz) = (v[ip] - Voffset[k]) / Vslope[k];
 					ip = ip + 1;
 				}
+
+				// Rotate based on wind direction
+				m_windVelocity.at(it).at(0, iy, iz) =   m_windVelocity.at(it).at(0, iy, iz) * m_windDirCos 
+                                                      + m_windVelocity.at(it).at(1, iy, iz) * m_windDirSin;
+
+				m_windVelocity.at(it).at(1, iy, iz) = - m_windVelocity.at(it).at(0, iy, iz) * m_windDirSin
+					                                  + m_windVelocity.at(it).at(1, iy, iz) * m_windDirCos;
 			}
 		}
 
@@ -206,8 +220,8 @@ void ENVIR::setWindFromTurbFile(const std::string &fileName)
 	// Just like in NREL's InflowWind, the grid is located at a distance gridwidth/2 downwind of the tower, 
 	// "so that no aerodynamic analysis nodes are outside of the wind domain even if the rotor is initialized 
 	// with a +/-90 degree yaw".
-	m_windGrid_y = arma::regspace(0, 1 , ny - 1) * dy - (ny - 1) / 2.0 * dy;	
-	m_windGrid_z = arma::regspace(0, 1, nz - 1) * dz + z1;
+	m_windGrid_y = arma::regspace<fvec>(0, 1, ny - 1) * dy - (ny - 1) / 2.0 * dy;
+	m_windGrid_z = arma::regspace<fvec>(0, 1, nz - 1) * dz + z1;
 	double m_windGrid_x0 = m_windGrid_y.back(); // m_windGrid_x could be a scalar for windDirection=0	 
 
 	// Rotate grid considering wind dir (horizontal only)	
@@ -501,19 +515,40 @@ void ENVIR::addWaveElevSeries(const std::string &elevFlPath, const double direct
 }
 
 
+void ENVIR::addWindProbe(const unsigned int ID)
+{
+	// Check whether nodes were specified
+	if (this->isNodeEmpty())
+	{
+		throw std::runtime_error("Nodes should be specified before adding wind probes. In: ENVIR::addWindProbe");
+	}
+
+	// Check if this wind probe was already included
+	std::vector<unsigned int>::const_iterator iter = std::find(m_windProbeID.begin(), m_windProbeID.end(), ID);
+
+	if (iter == m_windProbeID.end())
+	{
+		// Get the node coordinate and add it to m_windProbe
+		m_windProbe.push_back(this->getNode(ID));
+		m_windProbeID.push_back(ID);
+	}
+}
+
 void ENVIR::addWaveProbe(const unsigned int ID)
 {
 	// Check whether nodes were specified
 	if (this->isNodeEmpty())
 	{
-		throw std::runtime_error("Nodes should be specified before adding wave locations. In: ENVIR::addWaveProbe");
+		throw std::runtime_error("Nodes should be specified before adding wave probes. In: ENVIR::addWaveProbe");
 	}
 
-	std::vector<unsigned int>::const_iterator iter = std::find(m_waveProbeID.begin(), m_waveProbeID.end(), ID); // Check if this wave probe was already included
+	// Check if this wave probe was already included
+	std::vector<unsigned int>::const_iterator iter = std::find(m_waveProbeID.begin(), m_waveProbeID.end(), ID);
 
 	if (iter == m_waveProbeID.end())
 	{
-		m_waveProbe.push_back(this->getNode(ID)); // Get the node coordinate and add it to m_waveProbe
+		// Get the node coordinate and add it to m_waveProbe
+		m_waveProbe.push_back(this->getNode(ID));
 		m_waveProbeID.push_back(ID);
 	}
 }
@@ -969,6 +1004,16 @@ void ENVIR::printWaveCharact() const
 
 		if (IO::isOutputActive(IO::OUTFLAG_WAVE_PRES_2ND))
 			IO::print2outLine(IO::OUTFLAG_WAVE_PRES_2ND, m_waveProbeID[ii], wavePres2ndAtProbe(ii));
+	}
+}
+
+void ENVIR::printWindVelocity() const
+{
+	for (int ii = 0; ii < m_windProbe.size(); ++ii)
+	{	
+		vec::fixed<3> windVel(fill::zeros);
+		this->windVel(windVel, m_windProbe.at(ii));
+		IO::print2outLine(IO::OUTFLAG_WIND_VEL, m_windProbeID[ii], windVel);
 	}
 }
 
@@ -2012,8 +2057,6 @@ cx_vec::fixed<3> ENVIR::gradP1_coef(const double x, const double y, const double
 	return gradP;
 }
 
-
-
 void ENVIR::windVel(vec::fixed<3> &windVel, const vec::fixed<3> &coord) const
 {
 	if (m_flagTurbWind)
@@ -2027,22 +2070,26 @@ void ENVIR::windVel(vec::fixed<3> &windVel, const vec::fixed<3> &coord) const
 		double ds = dx0 * m_windDirCos - dy0 * m_windDirSin;
 
 		// Find the point at the grid that corresponds to "coord".
-		// It is P = (x,y) = coord + ds * V/||V||, with V/||V|| simply the unitary vector
+		// It is P = (x,y) = coord - ds * V/||V||, with V/||V|| simply the unitary vector
 		// pointing at the direction of the wind propagation.
-		double x = coord.at(0) + ds * m_windDirCos;
-		double y = coord.at(1) - ds * m_windDirSin;
-
-		// TODO: VERIFICAR SE O PONTO NAO TA FORA DO DOMINIO
+		double x = coord.at(0) - ds * m_windDirCos;
+		double y = coord.at(1) + ds * m_windDirSin;
+		
+		if (y < m_windGrid_y.front() || y > m_windGrid_y.back() ||
+			coord.at(2) < m_windGrid_z.front() || coord.at(2) > m_windGrid_z.back() )
+		{
+			throw std::runtime_error("Point (" + std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(coord.at(2)) + "), obtained from (" +
+				std::to_string(coord.at(0)) + "," + std::to_string(coord.at(1)) + "," + std::to_string(coord.at(2)) +
+				"), is outside of turbulence grid domain (function ENVIR::windVel).");
+		}
 
 		// This point is probably not one of the grid nodes, hence, it is necessary to interpolate.
 		// To do so, find the indices of the lower bounds that will be used in the interpolation
 		// for each of the grid vectors.
-		arma::uword ind1_x = arma::index_min(abs(m_windGrid_x - x));	
-		if (m_windGrid_x(ind1_x) > x)
-		{
-			ind1_x -= 1;
-		}		
-
+		// 
+		// Since we are dealing with a plane given by the Z coordinate + the line described by the vectors
+		// m_windGrid_x and m_windGrid_y, only one of the horizontal coordinates is actually needed, as the
+		// index for the other one would be the same.
 		arma::uword ind1_y = arma::index_min(abs(m_windGrid_y - y));
 		if (m_windGrid_y(ind1_y) > y)
 		{
@@ -2061,11 +2108,38 @@ void ENVIR::windVel(vec::fixed<3> &windVel, const vec::fixed<3> &coord) const
 		// it means that the wind at "coord" is the same that was at the grid in t-dt. Otherwise, it means that the wind
 		// at coord will be at P in t+dt. Since the grid is located downwind of the turbine, the latter is expected to occur.
 		double dt = ds / m_windRefVel;
+		double t = time() - dt;
 
-		// TODO: 
-		// 1) Achar os indices pra interpolacao no tempo
-		// 2) Interpolar no tempo (1D) e no espaco (2D)
+		// Time also needs to be interpolated. Since time starts at zero, the lower index is simply
+		if (t > m_windTimeTotal)
+		{
+			throw std::runtime_error("Required simulation time " + std::to_string(t) + 
+				"s is outside range of turbulence field (" + std::to_string(m_windTimeTotal) + "s).");
+		}
 
+		int ind1_t = floor( t / m_windDt);		
+
+		double t1 = ind1_t * m_windDt;
+		double t2 = t1 + m_windDt;		
+
+		double auxVelocity_t1{ 0 };
+		double auxVelocity_t2{ 0 };
+		for (int ii = 0; ii < 3; ++ii)
+		{			
+			// Spatial interpolation at t1
+			auxVelocity_t1 = bilinearInterpolation(m_windGrid_y(ind1_y), m_windGrid_y(ind1_y + 1), m_windGrid_z(ind1_z), m_windGrid_z(ind1_z + 1),
+				                                  m_windVelocity(ind1_t)(ii, ind1_y, ind1_z), m_windVelocity.at(ind1_t).at(ii, ind1_y, ind1_z + 1),
+				                                  m_windVelocity(ind1_t)(ii, ind1_y + 1, ind1_z), m_windVelocity.at(ind1_t).at(ii, ind1_y + 1, ind1_z + 1),
+				                                  y, coord.at(2));
+
+			// Spatial interpolation at t2
+			auxVelocity_t2 = bilinearInterpolation(m_windGrid_y(ind1_y), m_windGrid_y(ind1_y + 1), m_windGrid_z(ind1_z), m_windGrid_z(ind1_z + 1),
+                                                   m_windVelocity.at(ind1_t + 1).at(ii, ind1_y, ind1_z), m_windVelocity.at(ind1_t + 1).at(ii, ind1_y, ind1_z + 1),
+                                                   m_windVelocity.at(ind1_t + 1).at(ii, ind1_y + 1, ind1_z), m_windVelocity.at(ind1_t + 1).at(ii, ind1_y + 1, ind1_z + 1),
+                                                   y, coord.at(2));
+			// Temporal interpolation
+			windVel.at(ii) = auxVelocity_t1 + (auxVelocity_t2 - auxVelocity_t1) * (t - t1) / (t2 - t1);
+		}
 	}
 	else
 	{		

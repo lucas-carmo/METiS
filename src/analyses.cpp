@@ -124,8 +124,9 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 		disp0 = join_cols(fowt.disp_1stOrd(), fowt.disp());
 		vel0 = join_cols(fowt.vel_1stOrd(), fowt.vel());
 
-		// Output wave and FOWT characteristics that may have been requested in the input file
+		// Output environmental and FOWT characteristics that may have been requested in the input file
 		envir.printWaveCharact();
+		envir.printWindVelocity();
 		IO::print2outLine(IO::OUTFLAG_FOWT_DISP_1ST, disp0.rows(0, 5));
 		IO::print2outLine(IO::OUTFLAG_FOWT_VEL_1ST, vel0.rows(0, 5));
 		IO::print2outLine(IO::OUTFLAG_FOWT_ACC_1ST, acc_total.rows(0, 5));

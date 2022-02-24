@@ -25,21 +25,26 @@ private:
 	unsigned int m_waveStret;
 
 	// Wind Characteristics
-	double m_airDens;
-	double m_windDir;
-	double m_windDirCos;
-	double m_windDirSin;
-	double m_windRefVel;	
-	double m_windRefHeight;
-	double m_windExp;
+	float m_airDens;
+	float m_windDir;
+	float m_windDirCos;
+	float m_windDirSin;
+	float m_windRefVel;	
+	float m_windRefHeight;
+	float m_windExp;
 
-	// For turbulent wind only
+	// For turbulent wind only.
+	// NOTE: Periodic wind data (option "UsableTime=ALL" in TurbSim) is not supported yet
 	bool m_flagTurbWind = false;
 	std::string m_turbFileName = "";
-	arma::field<arma::cube> m_velocity;
-	arma::vec m_windGrid_x;
-	arma::vec m_windGrid_y;
-	arma::vec m_windGrid_z;
+	arma::field<arma::fcube> m_windVelocity;
+	arma::fvec m_windGrid_x; // Coordinates of the turbulent grid points
+	arma::fvec m_windGrid_y;
+	arma::fvec m_windGrid_z;
+	float m_windDt; // Time discretization of the turbulent input file
+	float m_windTimeTotal; // Max simulation time in TurbSim file
+	std::vector<unsigned int> m_windProbeID;
+	std::vector<vec::fixed<3>> m_windProbe; // Coordinates of the points where the wind velocity is calculated for output
 
 	// End of wind characteristics
 
@@ -96,6 +101,7 @@ public:
 	void addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh, const int numberOfRegularWaves, const double dwMax);
 	void addWaveElevSeries(const std::string &elevFlPath, const double direction, const double wlow, const double whigh);
 
+	void addWindProbe(const unsigned int ID);
 	void addWaveProbe(const unsigned int ID);
 	void evaluateWaveKinematics();
 
@@ -147,7 +153,9 @@ public:
 	std::string printWave() const;
 	std::string printWaveProbe() const;
 
-	void printWaveCharact() const; // Print the wave characteristics (elevation, velocity, etc) specified for output in the locations given by m_waveLocation
+
+	void printWaveCharact() const; // Print the wave characteristics (elevation, velocity, etc) specified for output in the locations given by m_waveProbe
+	void printWindVelocity() const; // Same thing for wind velocity at m_windProbe
 
 	/*****************************************************
 		Main functions for calculation

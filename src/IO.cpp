@@ -1145,6 +1145,26 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		}
 	}
 
+	// Add wind probe for velocity
+	if (caseInsCompare(keyword, "wind_vel"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_WIND_VEL) = true;		
+		isOutput = true;
+
+		// Wind locations are specified by node IDs separated by tabs or white-spaces
+		std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
+		if (input.empty())
+		{
+			throw std::runtime_error("You should specify at least one node ID for defining a wind probe. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+		}
+
+		for (int ii = 0; ii < input.size(); ++ii)
+		{
+			envir.addWindProbe(string2num<unsigned int>(input.at(ii)));
+		}
+
+	}
+
 	if (!isOutput)
 	{
 		print2log("WARNING: Unknown output option '" + keyword + "' in line " + std::to_string(IO::getInLineNumber()) + ".");
@@ -1472,7 +1492,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 // and the value itself, which three component vector. Other future outputs may profit from this function as well.
 void IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed<3> &vector_3)
 {
-	if ((flag != OUTFLAG_WAVE_VEL) && (flag != OUTFLAG_WAVE_ACC) && (flag != OUTFLAG_WAVE_ACC_2ND) && (flag != OUTFLAG_DEBUG_VEC_3))
+	if ((flag != OUTFLAG_WAVE_VEL) && (flag != OUTFLAG_WAVE_ACC) && (flag != OUTFLAG_WAVE_ACC_2ND) && (flag != OUTFLAG_WIND_VEL) && (flag != OUTFLAG_DEBUG_VEC_3))
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed<3> &vector_3).");
 	}
@@ -1507,6 +1527,13 @@ void IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed
 			print2outLineHeader("wave_acc_2nd_" + std::to_string(ID) + "_x");
 			print2outLineHeader("wave_acc_2nd_" + std::to_string(ID) + "_y");
 			print2outLineHeader("wave_acc_2nd_" + std::to_string(ID) + "_z");
+		}
+
+		if (flag == OUTFLAG_WIND_VEL)
+		{
+			print2outLineHeader("wind_vel_" + std::to_string(ID) + "_x");
+			print2outLineHeader("wind_vel_" + std::to_string(ID) + "_y");
+			print2outLineHeader("wind_vel_" + std::to_string(ID) + "_z");
 		}
 	}
 
@@ -1809,6 +1836,10 @@ std::string IO::printOutVar()
 
 		case IO::OUTFLAG_MOOR_FORCE:
 			output += "Mooring force: ";
+			break;
+
+		case IO::OUTFLAG_WIND_VEL:
+			output += "Wind velocity at probes: ";
 			break;
 
 		case IO::OUTFLAG_AD_HUB_FORCE:

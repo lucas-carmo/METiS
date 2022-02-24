@@ -120,6 +120,9 @@ std::vector<double> mkl_ifft_real(cx_stdvec &in);
 arma::mat mkl_ifft_real(arma::cx_mat &in);
 
 
+// 2D interpolation
+double bilinearInterpolation(double x1, double x2, double y1, double y2, double q11, double q12, double q21, double q22, double x, double y);
+
 /*****************************************************
 	Spline implementation
 	It is almost equal to the original file downloaded from https://kluge.in-chemnitz.de/opensource/spline/
