@@ -9,7 +9,7 @@ Airfoil::Airfoil()
 /*****************************************************
 	Setters
 *****************************************************/
-void Airfoil::addAirfoilData(double angle, double CL, double CD, double CM)
+void Airfoil::addAirfoilData(double angle, realType CL, realType CD, realType CM)
 {
 	if (m_angle.size() != 0) // If this is not the first angle that will be added to m_angle
 	{
@@ -47,22 +47,22 @@ double Airfoil::angle(unsigned int index) const
 	return m_angle.at(index);
 }
 
-double Airfoil::getCL(unsigned int index) const
+realType Airfoil::getCL(unsigned int index) const
 {
 	return m_CL.at(index);
 }
 
-double Airfoil::getCD(unsigned int index) const
+realType Airfoil::getCD(unsigned int index) const
 {
 	return m_CD.at(index);
 }
 
-double Airfoil::getCM(unsigned int index) const
+realType Airfoil::getCM(unsigned int index) const
 {
 	return m_CM.at(index);
 }
 
-double Airfoil::CL(double angle) const
+realType Airfoil::CL(double angle) const
 {
 	if (size() > 2)
 	{
@@ -77,7 +77,7 @@ double Airfoil::CL(double angle) const
 	}
 }
 
-double Airfoil::CD(double angle) const
+realType Airfoil::CD(double angle) const
 {
 	if (size() > 2)
 	{
@@ -89,7 +89,7 @@ double Airfoil::CD(double angle) const
 	}
 }
 
-double Airfoil::CM(double angle) const
+realType Airfoil::CM(double angle) const
 {
 	if (size() > 2)
 	{
