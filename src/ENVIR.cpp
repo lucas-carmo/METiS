@@ -3,6 +3,7 @@
 #include "auxFunctions.h"
 
 #include <iostream>
+#include <math.h>
 #include <vector>
 #include <algorithm>    // std::binary_search
 #include <utility> // For std::move
@@ -86,7 +87,7 @@ void ENVIR::setAirDens(const double airDens)
 void ENVIR::setWindFromTurbFile(const std::string &fileName)
 {
 	std::ifstream is(fileName, std::ifstream::binary);
-	if (!is) 
+	if (!is)
 	{
 		throw std::runtime_error("Unable to read turbulence input file" + fileName + ".");
 	}
@@ -103,9 +104,13 @@ void ENVIR::setWindFromTurbFile(const std::string &fileName)
 	//----------------------------
 	// get the header information
 	//----------------------------
-	int16_t tmp{ 0 }; // TurbSim format identifier(should = 7 or 8 if periodic), INT(2)
+	// TurbSim format identifier
+	// Non periodic: 7
+	// Periodic: 8	
+	int16_t tmp;
 	is.read(reinterpret_cast<char*>(&tmp), sizeof(tmp));
-
+	if (tmp == 8) m_flagPeriodicTurb = true;
+		
 	int32_t nz{ 0 }; // the number of grid points vertically, INT(4)
 	is.read(reinterpret_cast<char*>(&nz), sizeof(nz));
 
@@ -123,10 +128,10 @@ void ENVIR::setWindFromTurbFile(const std::string &fileName)
 
 	float dy{ 0 }; // grid spacing in lateral direction, REAL(4), in m
 	is.read(reinterpret_cast<char*>(&dy), sizeof(float));
-	 
+
 	is.read(reinterpret_cast<char*>(&m_windDt), sizeof(float)); // grid spacing in delta time, REAL(4), in m / s
 	m_windTimeTotal = (nt - 1) * m_windDt;
-	
+
 	is.read(reinterpret_cast<char*>(&m_windRefVel), sizeof(float)); // the mean wind speed at hub height, REAL(4), in m / s
 
 	is.read(reinterpret_cast<char*>(&m_windRefHeight), sizeof(float)); // height of the hub, REAL(4), in m
@@ -186,11 +191,11 @@ void ENVIR::setWindFromTurbFile(const std::string &fileName)
 				}
 
 				// Rotate based on wind direction
-				m_windVelocity.at(it).at(0, iy, iz) =   m_windVelocity.at(it).at(0, iy, iz) * m_windDirCos 
-                                                      + m_windVelocity.at(it).at(1, iy, iz) * m_windDirSin;
+				m_windVelocity.at(it).at(0, iy, iz) = m_windVelocity.at(it).at(0, iy, iz) * m_windDirCos
+					+ m_windVelocity.at(it).at(1, iy, iz) * m_windDirSin;
 
-				m_windVelocity.at(it).at(1, iy, iz) = - m_windVelocity.at(it).at(0, iy, iz) * m_windDirSin
-					                                  + m_windVelocity.at(it).at(1, iy, iz) * m_windDirCos;
+				m_windVelocity.at(it).at(1, iy, iz) = -m_windVelocity.at(it).at(0, iy, iz) * m_windDirSin
+					+ m_windVelocity.at(it).at(1, iy, iz) * m_windDirCos;
 			}
 		}
 
@@ -217,12 +222,17 @@ void ENVIR::setWindFromTurbFile(const std::string &fileName)
 		}
 	}
 
-	// Just like in NREL's InflowWind, the grid is located at a distance gridwidth/2 downwind of the tower, 
-	// "so that no aerodynamic analysis nodes are outside of the wind domain even if the rotor is initialized 
-	// with a +/-90 degree yaw".
 	m_windGrid_y = arma::regspace<fvec>(0, 1, ny - 1) * dy - (ny - 1) / 2.0 * dy;
 	m_windGrid_z = arma::regspace<fvec>(0, 1, nz - 1) * dz + z1;
-	double m_windGrid_x0 = m_windGrid_y.back(); // m_windGrid_x could be a scalar for windDirection=0	 
+
+	// Just like in NREL's InflowWind, the grid is located at a distance gridwidth/2 downwind 
+	// of the tower for non periodic wind, "so that no aerodynamic analysis nodes are outside
+	// of the wind domain even if the rotor is initialized with a +/-90 degree yaw".
+	double m_windGrid_x0{ 0 };
+	if (!m_flagPeriodicTurb)
+	{
+		m_windGrid_x0 = m_windGrid_y.back();
+	}	
 
 	// Rotate grid considering wind dir (horizontal only)	
 	m_windGrid_x =  m_windGrid_x0 * m_windDirCos + m_windGrid_y * m_windDirSin;
@@ -2109,16 +2119,31 @@ void ENVIR::windVel(vec::fixed<3> &windVel, const vec::fixed<3> &coord) const
 		// at coord will be at P in t+dt. Since the grid is located downwind of the turbine, the latter is expected to occur.
 		double dt = ds / m_windRefVel;
 		double t = time() - dt;
+		
 
-		// Time also needs to be interpolated. Since time starts at zero, the lower index is simply
-		if (t > m_windTimeTotal)
+		if (m_flagPeriodicTurb)
 		{
-			throw std::runtime_error("Required simulation time " + std::to_string(t) + 
-				"s is outside range of turbulence field (" + std::to_string(m_windTimeTotal) + "s).");
+			double intPart{ 0 };
+			double fracPart = modf(t / m_windTimeTotal, &intPart);
+			t = fracPart * m_windTimeTotal;
+			t += ((t < 0) ? m_windTimeTotal : 0); // If t is negative, we are walking backwards from the end of the time array
+		}
+		else
+		{	
+			if (t > m_windTimeTotal)
+			{
+				throw std::runtime_error("Required simulation time " + std::to_string(t) +
+					"s is outside range of turbulence field (" + std::to_string(m_windTimeTotal) + "s).");
+			}
+			else if (t < 0)
+			{
+				throw std::runtime_error("Required simulation time for turbulence " + std::to_string(t) +
+					"s is negative, meaning that a larger turbulence grid is required.");
+			}
 		}
 
+		// Time also needs to be interpolated
 		int ind1_t = floor( t / m_windDt);		
-
 		double t1 = ind1_t * m_windDt;
 		double t2 = t1 + m_windDt;		
 

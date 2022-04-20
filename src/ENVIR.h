@@ -33,9 +33,9 @@ private:
 	float m_windRefHeight;
 	float m_windExp;
 
-	// For turbulent wind only.
-	// NOTE: Periodic wind data (option "UsableTime=ALL" in TurbSim) is not supported yet
+	// For turbulent wind only.	
 	bool m_flagTurbWind = false;
+	bool m_flagPeriodicTurb = false;
 	std::string m_turbFileName = "";
 	arma::field<arma::fcube> m_windVelocity;
 	arma::fvec m_windGrid_x; // Coordinates of the turbulent grid points
