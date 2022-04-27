@@ -236,6 +236,28 @@ std::string getFileName(const std::string& path)
 	return flNm;
 }
 
+// Get file extension from a complete file path
+std::string getFileExtension(const std::string& path)
+{
+	// Check if input string is empty
+	if (path.empty())
+	{
+		throw std::runtime_error("Empty string passed to getFileExtension().");
+	}
+
+	// Tokenize the passed string based on the file separator. The file name is the last part (works even if only the file name is passed as argument)
+	std::vector<std::string> str_tokenized = stringTokenize(path, filesep);
+	std::string flNm = str_tokenized.back();
+
+	// Get only the file extension. We get everything after the last dot
+	if (flNm.find_last_not_of(".") != std::string::npos)
+	{
+		flNm = flNm.substr(flNm.find_last_of(".")+1, std::string::npos);
+	}
+
+	return flNm;
+}
+
 // FFT and IFFT using MKL - Faster than using Armadillo
 // Code from https://stackoverflow.com/questions/29805767/is-there-any-simple-c-example-on-how-to-use-intel-mkl-fft
 cx_stdvec mkl_fft(cx_stdvec &in)

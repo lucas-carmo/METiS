@@ -239,6 +239,79 @@ void ENVIR::setWindFromTurbFile(const std::string &fileName)
 	m_windGrid_y = -m_windGrid_x0 * m_windDirSin + m_windGrid_y * m_windDirCos;
 }
 
+void ENVIR::setWindFromUnifFile(const std::string & fileName)
+{
+	// Need wind reference height, not exactly in this function, but when
+	// the wind velocity is calculated. This check should be moved to
+	// functions specifically concerned with consistency check of inputs,
+	// but it is located here for the moment.
+	if (!arma::is_finite(m_windRefHeight))
+	{
+		throw std::runtime_error("Need to specify 'windHeight' before wind file.");
+	}
+
+	std::ifstream is;
+	is.open(fileName);
+	if (!is)
+	{
+		throw std::runtime_error("Unable to read uniform wind file " + fileName + ".");
+	}
+	m_wnd_fileName = fileName;
+	m_flagUnifWind = true;
+	
+	// Count number of lines in file
+	std::string line;
+	int nlines{ 0 }; // Number of lines with actual data (excluding header and comments)
+	while (std::getline(is, line))
+	{
+		if (line.at(0) != '!') ++nlines; // Do not count comments, which are identified by "!"
+	}
+
+	// Clear and return to the beginning
+	is.clear();
+	is.seekg(0);
+
+	// Initialize vectors to the correct size
+	m_wnd_time.zeros(nlines);
+	m_wnd_windSpeed.zeros(nlines);
+	m_wnd_windDir.zeros(nlines);
+	m_wnd_vertSpeed.zeros(nlines);
+	m_wnd_horizSheer.zeros(nlines);
+	m_wnd_windExp.zeros(nlines);
+	m_wnd_linVertSheer.zeros(nlines);
+	m_wnd_gustSpeed.zeros(nlines);
+
+	// Read data to the respective vectors
+	int ii = 0;
+	nlines = 0;
+	while (std::getline(is, line))
+	{		
+		++nlines;
+		if (line.at(0) == '!') continue;		
+
+		std::vector<std::string> input = stringTokenize(line, " \t");
+		if (input.size() != 8)
+		{
+			throw std::runtime_error("Unable to read wind file '" + m_wnd_fileName + "'. Wrong number of parameters in line " + std::to_string(nlines) + ".");
+		}
+
+		m_wnd_time.at(ii)         = string2num<float>(input.at(0));
+		m_wnd_windSpeed.at(ii)    = string2num<float>(input.at(1));
+		m_wnd_windDir.at(ii)      = string2num<float>(input.at(2));
+		m_wnd_vertSpeed.at(ii)    = string2num<float>(input.at(3));
+		m_wnd_horizSheer.at(ii)   = string2num<float>(input.at(4));
+		m_wnd_windExp.at(ii)      = string2num<float>(input.at(5));
+		m_wnd_linVertSheer.at(ii) = string2num<float>(input.at(6));
+		m_wnd_gustSpeed.at(ii)    = string2num<float>(input.at(7));
+		++ii;
+	}
+}
+
+void ENVIR::setWindRefLength(const double windRefLength)
+{
+	m_wnd_refLength = windRefLength;
+}
+
 void ENVIR::setWindRefVel(const double windRefVel)
 {
 	m_windRefVel = windRefVel;
@@ -798,6 +871,11 @@ double ENVIR::windExp() const
 bool ENVIR::getFlagWindTurb() const
 {
 	return m_flagTurbWind;
+}
+
+bool ENVIR::getFlagWindUnif() const
+{
+	return m_flagUnifWind;
 }
 
 unsigned int ENVIR::numberOfWaveComponents() const
@@ -2166,9 +2244,90 @@ void ENVIR::windVel(vec::fixed<3> &windVel, const vec::fixed<3> &coord) const
 			windVel.at(ii) = auxVelocity_t1 + (auxVelocity_t2 - auxVelocity_t1) * (t - t1) / (t2 - t1);
 		}
 	}
+	else if (m_flagUnifWind)
+	{
+		// Declare the variables that will be used to compute the wind velocities at the current time step
+		float U{ 0 };
+		float theta{ 0 };
+		float W{ 0 };
+		float hSheer{ 0 };
+		float windExp{ 0 };
+		float vSheer{ 0 };
+		float ugust{ 0 };
+
+		// If we are below the first record in the file, quantities are constant and equal to the first record
+		if (m_time < m_wnd_time[0])
+		{
+			U = m_wnd_windSpeed[0];
+			theta = m_wnd_windDir[0];
+			W = m_wnd_vertSpeed[0];
+			hSheer = m_wnd_horizSheer[0];
+			windExp = m_wnd_windExp[0];
+			vSheer = m_wnd_linVertSheer[0];
+			ugust = m_wnd_gustSpeed[0];
+		}
+
+		// Same thing if it is above the last record
+		else if (m_time > m_wnd_time.back())
+		{
+			U = m_wnd_windSpeed.back();
+			theta = m_wnd_windDir.back();
+			W = m_wnd_vertSpeed.back();
+			hSheer = m_wnd_horizSheer.back();
+			windExp = m_wnd_windExp.back();
+			vSheer = m_wnd_linVertSheer.back();
+			ugust = m_wnd_gustSpeed.back();
+		}
+
+		// Otherwise, quantities are interpolated between the values provided in m_wnd_time
+		else
+		{
+			// The first step is to get this index
+			arma::uword i1 = index_min(abs(m_wnd_time - m_time));
+			arma::uword i2;
+
+			// Make sure i1 is the lower index and i2 the upper index
+			if (m_wnd_time(i1) < m_time)
+			{
+				i2 = i1 + 1;
+			}
+			else
+			{
+				i2 = i1;
+				i1 = i2 - 1;
+			}
+			float t1 = m_wnd_time(i1);
+			float t2 = m_wnd_time(i2);
+
+			// Interpolate values
+			U     = m_wnd_windSpeed.at(i1) + (m_wnd_windSpeed.at(i2) - m_wnd_windSpeed.at(i1)) * (m_time - t1) / (t2 - t1);
+			theta = m_wnd_windDir.at(i1) + (m_wnd_windDir.at(i2) - m_wnd_windDir.at(i1)) * (m_time - t1) / (t2 - t1);
+			W = m_wnd_vertSpeed.at(i1) + (m_wnd_vertSpeed.at(i2) - m_wnd_vertSpeed.at(i1)) * (m_time - t1) / (t2 - t1);
+			hSheer = m_wnd_horizSheer.at(i1) + (m_wnd_horizSheer.at(i2) - m_wnd_horizSheer.at(i1)) * (m_time - t1) / (t2 - t1);
+			windExp = m_wnd_windExp.at(i1) + (m_wnd_windExp.at(i2) - m_wnd_windExp.at(i1)) * (m_time - t1) / (t2 - t1);
+			vSheer = m_wnd_linVertSheer.at(i1) + (m_wnd_linVertSheer.at(i2) - m_wnd_linVertSheer.at(i1)) * (m_time - t1) / (t2 - t1);
+			ugust = m_wnd_gustSpeed.at(i1) + (m_wnd_gustSpeed.at(i2) - m_wnd_gustSpeed.at(i1)) * (m_time - t1) / (t2 - t1);
+			if (!arma::is_finite(W))
+			{
+				int a = 1;
+			}
+		}
+		float sinTheta = std::sin(theta*arma::datum::pi / 180.);
+		float cosTheta = std::cos(theta*arma::datum::pi / 180.);
+
+		// Compute horizontal velocity using the formula from InflowWind User's Guide (2016)
+		U = U * pow(coord[2] / m_windRefHeight, windExp) +
+			U * (hSheer / m_wnd_refLength) * (coord[0] * sinTheta + coord[1] * cosTheta) +
+			U * (vSheer / m_wnd_refLength) * (coord[2] - m_windRefHeight) +
+			ugust;
+
+		windVel.at(0) =  U * cosTheta;
+		windVel.at(1) = -U * sinTheta;
+		windVel.at(2) =  W;		
+	}
 	else
 	{		
-		double U = ramp() * windRefVel()  * pow(coord[2] / windRefHeight(), windExp());
+		double U = ramp() * windRefVel()  * pow(coord[2] / m_windRefHeight, m_windExp);
 		windVel.at(0) = U * m_windDirCos;
 		windVel.at(1) = -U * m_windDirSin;
 		windVel.at(2) = 0;

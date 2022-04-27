@@ -116,20 +116,38 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			envir.setAirDens(string2num<double>(getData(strInput)));
 		}
 
-		else if (caseInsCompare(getKeyword(strInput), "WindTurbFile"))
+		else if (caseInsCompare(getKeyword(strInput), "WindFile"))
 		{
-			if (arma::is_finite(envir.windRefVel()) || arma::is_finite(envir.windRefHeight()) || arma::is_finite(envir.windExp()))
+			if (arma::is_finite(envir.windRefVel()) || arma::is_finite(envir.windExp()))
 			{
-				throw std::runtime_error("Cannot read turbulence file given in input line " + std::to_string(IO::getInLineNumber()) + " because either WindHeight, WindVel or WindExp were also specified.");
+				throw std::runtime_error("Cannot read wind file given in input line " + std::to_string(IO::getInLineNumber()) + " because either WindHeight, WindVel or WindExp were also specified.");
 			}
-			envir.setWindFromTurbFile(getData(strInput));
+			std::string ext = getFileExtension(strInput);
+
+			if (caseInsCompare(ext, "bts"))
+			{
+				envir.setWindFromTurbFile(getData(strInput));
+			}
+			else if (caseInsCompare(ext, "wnd"))
+			{
+				envir.setWindFromUnifFile(getData(strInput));
+			}
+			else
+			{
+				throw std::runtime_error("Cannot read wind file given in input line " + std::to_string(IO::getInLineNumber()) + " because of unknown extension '" + ext + "'.");
+			}
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "WindRefLength"))
+		{
+			envir.setWindRefLength(string2num<double>(getData(strInput)));
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WindVel"))
 		{
-			if (envir.getFlagWindTurb())
+			if (envir.getFlagWindTurb() || envir.getFlagWindUnif())
 			{
-				throw std::runtime_error("Cannot set WindVel given in input line " + std::to_string(IO::getInLineNumber()) + " because a turbulence file was already provided.");
+				throw std::runtime_error("Cannot set WindVel given in input line " + std::to_string(IO::getInLineNumber()) + " because a wind file was already provided.");
 			}
 			envir.setWindRefVel(string2num<double>(getData(strInput)));
 		}
@@ -141,18 +159,14 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		else if (caseInsCompare(getKeyword(strInput), "WindHeight"))
 		{
-			if (envir.getFlagWindTurb())
-			{
-				throw std::runtime_error("Cannot set WindHeight given in input line " + std::to_string(IO::getInLineNumber()) + " because a turbulence file was already provided.");
-			}
 			envir.setWindRefHeight(string2num<double>(getData(strInput)));
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "WindExp"))
 		{
-			if (envir.getFlagWindTurb())
+			if (envir.getFlagWindTurb() || envir.getFlagWindUnif())
 			{
-				throw std::runtime_error("Cannot set WindExp given in input line " + std::to_string(IO::getInLineNumber()) + " because a turbulence file was already provided.");
+				throw std::runtime_error("Cannot set WindExp given in input line " + std::to_string(IO::getInLineNumber()) + " because a wind file was already provided.");
 			}
 			envir.setWindExp(string2num<double>(getData(strInput)));
 		}

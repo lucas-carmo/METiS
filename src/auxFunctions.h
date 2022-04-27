@@ -84,6 +84,9 @@ std::string getFileFolder(const std::string& path);
 // Get file name, without extension, from a complete file path
 std::string getFileName(const std::string& path);
 
+// Get file extension from a complete file path
+std::string getFileExtension(const std::string& path);
+
 // string2num: used to convert from string to a numerical type (double, float, int...)
 // Returns True if the conversion is succesful and False if it is not
 // Found at http://www.learncpp.com/cpp-tutorial/17-2-stdstring-construction-and-destruction/

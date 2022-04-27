@@ -33,7 +33,22 @@ private:
 	float m_windRefHeight;
 	float m_windExp;
 
-	// For turbulent wind only.	
+	// For uniform wind from .wnd file
+	// Decided to include '_wnd' in the names of the variables
+	// to avoid confusion with other members with similar names
+	bool m_flagUnifWind = false;
+	std::string m_wnd_fileName = "";
+	float m_wnd_refLength{ 1 };
+	arma::fvec m_wnd_time;
+	arma::fvec m_wnd_windSpeed;
+	arma::fvec m_wnd_windDir;
+	arma::fvec m_wnd_vertSpeed;
+	arma::fvec m_wnd_horizSheer;
+	arma::fvec m_wnd_windExp;
+	arma::fvec m_wnd_linVertSheer;
+	arma::fvec m_wnd_gustSpeed;
+
+	// For turbulent wind from .bts file
 	bool m_flagTurbWind = false;
 	bool m_flagPeriodicTurb = false;
 	std::string m_turbFileName = "";
@@ -91,6 +106,8 @@ public:
 	void setAirDens(const double airDens);
 
 	void setWindFromTurbFile(const std::string &fileName);
+	void setWindFromUnifFile(const std::string &fileName);
+	void setWindRefLength(const double windRefLength);
 	void setWindRefVel(const double windRefVel);
 	void setWindDir(const double windDir);
 	void setWindRefHeight(const double windRefHeight);
@@ -123,6 +140,7 @@ public:
 	double windDir() const;
 	double windExp() const;
 	bool getFlagWindTurb() const;
+	bool getFlagWindUnif() const;
 
 	unsigned int numberOfWaveComponents() const;
 	const Wave& getWave(unsigned int waveIndex) const;
