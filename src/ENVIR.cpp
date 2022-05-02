@@ -237,6 +237,15 @@ void ENVIR::setWindFromTurbFile(const std::string &fileName)
 	// Rotate grid considering wind dir (horizontal only)	
 	m_windGrid_x =  m_windGrid_x0 * m_windDirCos + m_windGrid_y * m_windDirSin;
 	m_windGrid_y = -m_windGrid_x0 * m_windDirSin + m_windGrid_y * m_windDirCos;
+
+	// m_windGrid_x and m_windGrid_y may be in ascending or desceding order depending on the rotation angle,
+	// but it is better to have m_windGrid_y in ascending order to make it easier to determine its 
+	// lower and upper bound. Hence we sort it and rearrange m_windGrid_x accordingly.
+	if (m_windGrid_y[1] < m_windGrid_y[0])
+	{
+		m_windGrid_x = arma::reverse(m_windGrid_x);
+		m_windGrid_y = arma::reverse(m_windGrid_y);
+	}
 }
 
 void ENVIR::setWindFromUnifFile(const std::string & fileName)
@@ -2287,7 +2296,7 @@ void ENVIR::windVel(vec::fixed<3> &windVel, const vec::fixed<3> &coord) const
 			arma::uword i2;
 
 			// Make sure i1 is the lower index and i2 the upper index
-			if (m_wnd_time(i1) < m_time)
+			if (m_wnd_time(i1) <= m_time)
 			{
 				i2 = i1 + 1;
 			}
