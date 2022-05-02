@@ -1944,7 +1944,11 @@ std::string getData(const std::string &str)
 	std::string str_out = "";
 	for (int ii = 1; ii < str_tokenized.size(); ++ii) // Start at one to skip keyword
 	{
-		str_out += str_tokenized.at(ii) + " ";
+		str_out += str_tokenized.at(ii);
+		if (ii < str_tokenized.size()-1)
+		{
+			 str_out += " "; // Add empty space between elements
+		}
 	}
 	return str_out;
 }

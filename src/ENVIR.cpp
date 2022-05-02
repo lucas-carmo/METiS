@@ -89,7 +89,7 @@ void ENVIR::setWindFromTurbFile(const std::string &fileName)
 	std::ifstream is(fileName, std::ifstream::binary);
 	if (!is)
 	{
-		throw std::runtime_error("Unable to read turbulence input file" + fileName + ".");
+		throw std::runtime_error("Unable to read turbulence input file " + fileName + ".");
 	}
 	m_turbFileName = fileName;
 	m_flagTurbWind = true;
