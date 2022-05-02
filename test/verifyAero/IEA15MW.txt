@@ -49,13 +49,17 @@ WindFile    ./test/verifyAero/BT04.bts
 FloaterCoG		0,0,0 %Em relação a linha d'agua
 
 
+NODES
+1,0,0,150
+END
+
 %%-----------------------------------------------------------------------------%%
 %%---------------------------- RNA DESCRIPTION --------------------------------%%
 %%-----------------------------------------------------------------------------%%
 RotTilt    -6.0    % Rotor tilt angle (degrees)
 RotYaw      180    % Rotor yaw angle (degrees)
 NumBlades   3      % Number of blades
-BldPitch    0.00   % Blade pitch angle (degrees)
+BldPitch    0.10   % Blade pitch angle (degrees)
 BldPrecone -4.0    % Blade coning angle (degrees)
 
 HubRadius   3.0    % Hub radius (m)
@@ -6512,4 +6516,5 @@ END
 
 OUTPUT
 ad_hub_force
+wind_vel 1
 END
