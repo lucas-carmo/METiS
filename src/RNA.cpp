@@ -441,7 +441,7 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 	aeroForce.rows(3, 5) = rotatMatrix_deg(deltaAzimuth, 0, 0) * aeroForce.rows(3, 5);
 
 	// 2) Write aeroForce in the fowt coordinate system
-	arma::mat::fixed<3, 3> rotatShaft2FOWT = rotatMatrix_deg(0, 0, -rotorYaw()) * rotatMatrix_deg(0, -rotorTilt(), 0);
+	arma::mat::fixed<3, 3> rotatShaft2FOWT = rotatMatrix_deg(0, 0, rotorYaw()) * rotatMatrix_deg(0, -rotorTilt(), 0);
 	aeroForce.rows(0, 2) = rotatShaft2FOWT * aeroForce.rows(0, 2);
 	aeroForce.rows(3, 5) = rotatShaft2FOWT * aeroForce.rows(3, 5);
 
