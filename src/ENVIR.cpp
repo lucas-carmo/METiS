@@ -191,14 +191,13 @@ void ENVIR::setWindFromTurbFile(const std::string &fileName)
 				}
 
 				// Rotate based on wind direction
-				m_windVelocity.at(it).at(0, iy, iz) = m_windVelocity.at(it).at(0, iy, iz) * m_windDirCos
-					+ m_windVelocity.at(it).at(1, iy, iz) * m_windDirSin;
-
-				m_windVelocity.at(it).at(1, iy, iz) = -m_windVelocity.at(it).at(0, iy, iz) * m_windDirSin
-					+ m_windVelocity.at(it).at(1, iy, iz) * m_windDirCos;
+				float auxU = m_windVelocity.at(it).at(0, iy, iz);
+				float auxV = m_windVelocity.at(it).at(1, iy, iz);
+				m_windVelocity.at(it).at(0, iy, iz) = auxU * m_windDirCos + auxV * m_windDirSin;
+				m_windVelocity.at(it).at(1, iy, iz) = -auxU * m_windDirSin + auxV * m_windDirCos;								
 			}
-		}
 
+		}		
 		//---------------------
 		//get the tower points
 		//---------------------
@@ -2316,10 +2315,6 @@ void ENVIR::windVel(vec::fixed<3> &windVel, const vec::fixed<3> &coord) const
 			windExp = m_wnd_windExp.at(i1) + (m_wnd_windExp.at(i2) - m_wnd_windExp.at(i1)) * (m_time - t1) / (t2 - t1);
 			vSheer = m_wnd_linVertSheer.at(i1) + (m_wnd_linVertSheer.at(i2) - m_wnd_linVertSheer.at(i1)) * (m_time - t1) / (t2 - t1);
 			ugust = m_wnd_gustSpeed.at(i1) + (m_wnd_gustSpeed.at(i2) - m_wnd_gustSpeed.at(i1)) * (m_time - t1) / (t2 - t1);
-			if (!arma::is_finite(W))
-			{
-				int a = 1;
-			}
 		}
 		float sinTheta = std::sin(theta*arma::datum::pi / 180.);
 		float cosTheta = std::cos(theta*arma::datum::pi / 180.);
