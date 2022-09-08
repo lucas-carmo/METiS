@@ -27,7 +27,7 @@ After installing all the previous dependencies/third party tools listed above, M
 
 - The Armadillo files that need to be included are provided in **/METiS/src/armadillo-version_include**. Alternatively, you can download Armadillo at http://arma.sourceforge.net and copy the entire **include** folder to a convenient location.
 
-- Download and install Intel (R) Math Kernel Library (MKL) at https://software.intel.com/en-us/mkl (I have not tested yet, but it is probable that the same steps described below are need for the OneAPI Base Toolkit).
+- Download and install Intel (R) Math Kernel Library (MKL) at https://software.intel.com/en-us/mkl (I have not tested yet, but it is probable that the same steps described below are needed for the OneAPI Base Toolkit).
 
 - Modify **include/armadillo_bits/config.hpp** to indicate which libraries are currently available on your system (see the readme file provided with Armadillo for details).
 
