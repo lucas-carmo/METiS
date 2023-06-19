@@ -29,7 +29,6 @@ After installing all the previous dependencies/third party tools listed above, M
 
 
 ## **Windows**
-### **Installing dependencies/third party tools:**
 - Download Visual Studio Community or other IDE of your choice.
 
 - The Armadillo files that need to be included are provided in **/METiS/src/armadillo-version_include**. Alternatively, you can download Armadillo at http://arma.sourceforge.net and copy the entire **include** folder to a convenient location.
