@@ -1,3 +1,10 @@
+METiS-USP (**M**orison's **E**quation **Ti**me domain **S**imulator - University of São Paulo) is a time-domain solver for the analysis of floating offshore wind turbines written in C++. By disabling some effects, it can also be applied for other floating structures or fixed offshore/onshore wind turbines.
+
+The following effects are modeled in METiS-USP:
+- Hydrodynamics: wave loads are computed using a modified version of Rainey's equation, which can be seen as an extended version of Morison's equation to include second-order wave loads acting on the floater. Drag on the structure is considered using the traditional quadratic term from Morison's equation. Details can be found in [Carmo, 2021](https://www.teses.usp.br/teses/disponiveis/3/3135/tde-03022022-120253/publico/LucasHenriqueSouzadoCarmoCorr21.pdf) and [Carmo and Simos, 2022](https://www.sciencedirect.com/science/article/pii/S0029801822012446).
+- Aerodynamics: aerodynamic loads on the rotor are included using Blade Element Momentum Theory (BEMT). Details can be found in [Pegoraro, 2018](https://www.teses.usp.br/teses/disponiveis/3/3135/tde-31012019-075149/publico/BrunoPegoraroCorr18.pdf) (in Portuguese) and [Carmo, 2021](https://www.teses.usp.br/teses/disponiveis/3/3135/tde-03022022-120253/publico/LucasHenriqueSouzadoCarmoCorr21.pdf).
+- For now, body dynamics is modeled using the equations of motion of a rigid body. Moorings are not modeled yet, but their effects can be partially included by specifying a stiffness matrix and a constant vertical force.  
+
 # **Installing, compiling and running**
 
 ## **Linux**
@@ -6,7 +13,7 @@
 
 - Install CMake: `sudo apt-get install cmake`
 
-- Instal Intel (R) MKL. By the time I wrote these Linux instructions, it is part of Intel (R) oneAPI Base Toolkit, available at Download and install Intel (R) Math Kernel Library (MKL) at https://www.intel.com/content/www/us/en/developer/tools/oneapi/overview.html#gs.gdas9u
+- Instal Intel (R) MKL. By the time I wrote these Linux instructions, it is part of Intel (R) oneAPI Base Toolkit, available at https://www.intel.com/content/www/us/en/developer/tools/oneapi/overview.html#gs.gdas9u
 
 - Armadillo (details in the readme file provided with Armadillo):
     1. Download at http://arma.sourceforge.net;
@@ -42,51 +49,8 @@ After installing all the previous dependencies/third party tools listed above, M
 
 
 ### Running
-Open a PowerShell window and run:
+METiS is a CLI software. To run it in Windows, open a PowerShell window and type:
 
 `& "Path\to\METis\executable.exe" "Path\to\test_case.txt"`
 
 with the paths replaced by the ones specific to your case.
-
-
-
-
-
-
-
-
-
-# **Types of analyses**
-
-## **FOWT**
-Choose the **DoFs** and the **forces** that you want to include the analyses. Ex:
-```
-    Hydro   1
-    Aero    1
-    Moor    1
-
-    DOFS 1 1 0 0 0 1
-```    
-Includes hydrodynamic/hydrostatic, aerodynamic and mooring forces + include all the DoFs except for heave, roll and pitch. Note that although the forces are calculated and output for all the DoFs, only the forces in the active DoFs are considered in the equations of motion.
-
-
-## **Fixed offshore**
-Disable all **DoFs** + choose the **forces** that you want to include in the analyses
-```
-    Hydro   1
-    Aero    1
-    Moor    0
-
-    DOFS 0 0 0 0 0 0
-```    
-## **Hydro options**
-- **Hydro 0:** Do not compute hydrodynamic and hydrostatic forces;
-- **Hydro 1:** Evaluate non-linear hydrostatic and first-order wave forces. Hydrostatic forces are calculated considering the instantaneous body position instead of a stiffness matrix;
-- **Hydro 2:** Include second-order forces to the ones already calculated when hydro = 1. 
-
-# **Tools**
-The following MATLAB routines are included in folder **tools**:
-- **readOutFl**: out = readOutFl(flNm) reads a METiS _out file with the results of a time domain simulation. It assumes that the file consists of columns with headers in the first line and the data in the rest of the file (which is the format of the _out file).
-- **readInputFile**: reads a METiS input file to structures. Currently, it only reads the characteristics that are necessary for the next routine
-- **viewFOWT**: plots the geommetry of the FOWT of a given input file. The input is the path to the input file.
-- **postProc**: simple routine, under development, to plot the outputs of a simmulation
