@@ -1,4 +1,5 @@
-METiS-USP (**M**orison's **E**quation **Ti**me domain **S**imulator - University of São Paulo) is a time-domain solver for the analysis of floating offshore wind turbines written in C++. By disabling some effects, it can also be applied for other floating structures or fixed offshore/onshore wind turbines.
+# METiS
+METiS-USP (**M**orison's **E**quation **Ti**me domain **S**imulator - University of São Paulo) is a time-domain solver for the analysis of floating offshore wind turbines written in C++. By disabling some effects, it can also be applied to other floating structures or fixed offshore/onshore wind turbines.
 
 The following effects are modeled in METiS-USP:
 - Hydrodynamics: wave loads are computed using a modified version of Rainey's equation, which can be seen as an extended version of Morison's equation to include second-order wave loads acting on the floater. Drag on the structure is considered using the traditional quadratic term from Morison's equation. Details can be found in [Carmo, 2021](https://www.teses.usp.br/teses/disponiveis/3/3135/tde-03022022-120253/publico/LucasHenriqueSouzadoCarmoCorr21.pdf) and [Carmo and Simos, 2022](https://www.sciencedirect.com/science/article/pii/S0029801822012446).
@@ -25,7 +26,7 @@ The following effects are modeled in METiS-USP:
 
 
 ### **Compiling and running**
-After installing all the previous dependencies/third party tools listed above, METiS can be compiled and linked using `.\build_metis`. It can then be run using `.\METiS path\to\input\file.txt`
+After installing all the previous dependencies/third party tools listed above, METiS can be compiled and linked using `./build_metis`. It can then be run using `./METiS path/to/input/file.txt`. Note that to use Intel MKL you have to run `source /opt/intel/oneapi/setvars.sh` or equivalent depending on your MKL path.
 
 
 ## **Windows**
@@ -33,7 +34,7 @@ After installing all the previous dependencies/third party tools listed above, M
 
 - The Armadillo files that need to be included are provided in **/METiS/src/armadillo-version_include**. Alternatively, you can download Armadillo at http://arma.sourceforge.net and copy the entire **include** folder to a convenient location.
 
-- Download and install Intel (R) Math Kernel Library (MKL) at https://software.intel.com/en-us/mkl (I have not tested yet, but it is probable that the same steps described below are needed for the OneAPI Base Toolkit).
+- Download and install Intel (R) Math Kernel Library (MKL) at https://software.intel.com/en-us/mkl (Note: The following steps were written when MKL was not part of the OneAPI Base Toolkit, so they might need update).
 
 - Modify **include/armadillo_bits/config.hpp** to indicate which libraries are currently available on your system (see the readme file provided with Armadillo for details).
 
@@ -48,7 +49,7 @@ After installing all the previous dependencies/third party tools listed above, M
 
 
 ### Running
-METiS is a CLI software. To run it in Windows, open a PowerShell window and type:
+METiS is a CLI software. To run it on Windows, open a PowerShell window and type:
 
 `& "Path\to\METis\executable.exe" "Path\to\test_case.txt"`
 
