@@ -78,7 +78,12 @@ vec::fixed<6> MorisonRect::hydroForce_drag(const ENVIR & envir, const vec::fixed
 	return fill::zeros;
 }
 
-vec::fixed<6> MorisonRect::hydroForce_relWaveElev(const ENVIR & envir, const vec::fixed<3>& refPt) const
+vec::fixed<6> MorisonRect::hydroForce_relWaveElev_inertia(const ENVIR & envir, const vec::fixed<3>& refPt) const
+{
+	return fill::zeros;
+}
+
+vec::fixed<6> MorisonRect::hydroForce_relWaveElev_drag(const ENVIR& envir, const vec::fixed<3>& refPt) const
 {
 	return fill::zeros;
 }

@@ -384,7 +384,8 @@ vec::fixed<6> Floater::hydrodynamicForce_2ndOrd(const ENVIR &envir, const vec::f
 
 		if (envir.waveStret() == 1)
 		{
-			force_eta += m_MorisonElements.at(ii)->hydroForce_relWaveElev(envir, refPt);
+			force_eta += m_MorisonElements.at(ii)->hydroForce_relWaveElev_inertia(envir, refPt);
+			force_eta += m_MorisonElements.at(ii)->hydroForce_relWaveElev_drag(envir, refPt);
 		}
 
 		force_acgr += m_MorisonElements.at(ii)->hydroForce_accGradient(envir, refPt);

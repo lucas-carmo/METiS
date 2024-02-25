@@ -105,7 +105,7 @@ void FOWT::setStiffnessMatrix(const double density, const double gravity)
 void FOWT::evaluateQuantitiesAtBegin(const ENVIR &envir)
 {
 	if (envir.getTimeArray().size() == 0)
-		throw std::runtime_error("Time array should be set before calling FOWT::setPropertiesWithIFFT.");
+		throw std::runtime_error("Time array should be set before calling FOWT::evaluateQuantitiesAtBegin.");
 	if (hydroMode() != 0)
 		m_floater.evaluateQuantitiesAtBegin(envir, m_hydroMode);
 }
