@@ -164,7 +164,8 @@ public:
 	virtual vec::fixed<6> hydrostaticForce_sd(const double rho, const double g, const vec::fixed<3> &refPt) const = 0;
 	virtual vec::fixed<6> hydroForce_1st(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
 	virtual vec::fixed<6> hydroForce_drag(const ENVIR &envir, const vec::fixed<3> &refPt, bool flagUse1stOrd) const = 0;
-	virtual vec::fixed<6> hydroForce_relWaveElev(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
+	virtual vec::fixed<6> hydroForce_relWaveElev_inertia(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
+	virtual vec::fixed<6> hydroForce_relWaveElev_drag(const ENVIR& envir, const vec::fixed<3>& refPt) const = 0;
 	virtual vec::fixed<6> hydroForce_2ndPot(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
 	virtual vec::fixed<6> hydroForce_convecAcc(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;
 	virtual vec::fixed<6> hydroForce_axDiverg(const ENVIR &envir, const vec::fixed<3> &refPt) const = 0;

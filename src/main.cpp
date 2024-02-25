@@ -36,6 +36,8 @@ int main(int argc, char *argv[])
 		IO::readInputFile(fowt, envir); // Read data from input file to fowt and envir
 		IO::printSumFile(fowt, envir);	// Print the summary file for later verification of the input by the user
 
+		// Add a prepare step here. Compute equilibrium and evaluate wave kinematics
+
 		// All the time domain calculation is done inside this function
 		timeDomainAnalysis(fowt, envir);	
 	}

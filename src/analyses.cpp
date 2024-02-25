@@ -100,7 +100,7 @@ void timeDomainAnalysis(FOWT &fowt, ENVIR &envir)
 	envir.evaluateWaveKinematics();
 	std::cout << "Finished\n";
 
-	std::cout << "\nBegan evaluating body quantities related to wave kinematics\n";
+	std::cout << "\nBegan evaluating wave kinematics at member nodes\n";
 	fowt.evaluateQuantitiesAtBegin(envir);
 	std::cout << "Finished\n\n";
 
