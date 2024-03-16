@@ -16,13 +16,16 @@ The following effects are modeled in METiS-USP:
 
 - Instal Intel (R) MKL. By the time I wrote these Linux instructions, it is part of Intel (R) oneAPI Base Toolkit, available at https://www.intel.com/content/www/us/en/developer/tools/oneapi/overview.html#gs.gdas9u
 
+- Need to set environment variables: https://www.intel.com/content/www/us/en/develop/documentation/get-started-with-intel-oneapi-dlfd-linux/top/before-you-begin.html
+
+
 - Armadillo (details in the readme file provided with Armadillo):
     1. Download at http://arma.sourceforge.net;
     2. Extract files;
-    3. In a terminal window, change into the directory that was created by unpacking Armadillo, and type `cmake .` (the full stop separated from "cmake" by a space is important);
-    4. Activate MKL in your current terminal window source `/opt/intel/oneapi/setvars.sh`
-    5. Create a symbolic link so that `ld` can find MKL by running `sudo ln -s /opt/intel/oneapi/mkl/2021.4.0/lib/intel64/libmkl_rt.so /usr/local/lib/libmkl_rt.so`
-    6. Type `sudo make install`
+    3. As MKL is probably installed in a non standard location, I had to run this extra step that is not included in the Armadillo readme file `sudo ln -s /opt/intel/oneapi/mkl/2021.4.0/lib/intel64/libmkl_rt.so /usr/local/lib/libmkl_rt.so`. It creates a symbolic link so that `ld` can find MKL;
+    4. In a terminal window, change into the directory that was created by unpacking Armadillo, and type `cmake .` (the full stop separated from "cmake" by a space is important);
+    5. Activate MKL in your current terminal window source `/opt/intel/oneapi/setvars.sh`    
+    7. Type `sudo make install`
 
 
 ### **Compiling and running**

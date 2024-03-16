@@ -510,9 +510,7 @@ vec::fixed<6> MorisonCirc::hydroForce_relWaveElev_inertia(const ENVIR &envir, co
 		return force;
 		
 	vec::fixed<3> du1dt(this->du1dt(envir, m_numNodesBelowWL-1));	
-	du1dt -= dot(du1dt, m_zvec_sd) * m_zvec_sd;
-	vec::fixed<3> acc = m_accNodeAtWL_1stOrd;
-	acc -= dot(acc, m_zvec_sd) * m_zvec_sd;
+	du1dt -= dot(du1dt, m_zvec_sd) * m_zvec_sd;	
 	double eta(this->waveElevAtWL(envir));
 	vec::fixed<3> n_wl = this->nodePos_sd(m_numNodesBelowWL - 1);
 		
@@ -1056,7 +1054,7 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 	else
 	{
 		// Contribution of the horizontal acceleration
-		if (Ih != 0)
+		if (std::abs(Ih) > datum::eps)
 		{
 			mult_h_cos = -cos(p2) + cos(p1);
 			mult_h_cos *= 1 / Ih;
@@ -1132,7 +1130,7 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_1st_coefs(const Wave &wave, double watD
 	else
 	{
 		// Contribution of the horizontal acceleration
-		if (Ih != 0)
+		if (std::abs(Ih) > datum::eps)
 		{			
 			mult_h_cos = -Ih * L*cos(p2) + sin(p2) - sin(p1);
 			mult_h_cos *= 1 / (Ih*Ih);
@@ -1348,7 +1346,7 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_2ndPot_coefs(const Wave &wave_ii, const
 	else
 	{
 		// Contribution of the horizontal acceleration
-		if (Ih != 0)
+		if (std::abs(Ih) > datum::eps)
 		{			
 			mult_h_cos = -cos(p2) + cos(p1);
 			mult_h_cos *= 1 / Ih;
@@ -1425,7 +1423,7 @@ cx_vec::fixed<6> MorisonCirc::hydroForce_2ndPot_coefs(const Wave &wave_ii, const
 	else
 	{
 		// Contribution of the horizontal acceleration
-		if (Ih != 0)
+		if (std::abs(Ih) > datum::eps)
 		{
 			mult_h_cos = -Ih * L*cos(p2) + sin(p2) - sin(p1);
 			mult_h_cos *= 1 / (Ih*Ih);

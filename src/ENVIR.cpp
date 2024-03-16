@@ -3,6 +3,7 @@
 #include "auxFunctions.h"
 
 #include <iostream>
+#include <math.h>
 #include <vector>
 #include <algorithm>    // std::binary_search
 #include <utility> // For std::move
@@ -23,6 +24,11 @@ ENVIR::ENVIR()
 	m_timeStep = arma::datum::nan;
 	m_timeTotal = arma::datum::nan;
 	m_timeRamp = arma::datum::nan;
+
+	m_windRefVel = arma::datum::nan;
+	m_windRefHeight = arma::datum::nan;
+	m_windExp = arma::datum::nan;
+	m_windDir = arma::datum::nan;
 }
 
 void ENVIR::setCurrentTime(const double time)
@@ -78,6 +84,242 @@ void ENVIR::setAirDens(const double airDens)
 	m_airDens = airDens;
 }
 
+void ENVIR::setWindFromTurbFile(const std::string &fileName)
+{
+	std::ifstream is(fileName, std::ifstream::binary);
+	if (!is)
+	{
+		throw std::runtime_error("Unable to read turbulence input file " + fileName + ".");
+	}
+	m_turbFileName = fileName;
+	m_flagTurbWind = true;
+	int nffc = 3; // I dont know what this means exactly, but it seems to be the number of spatial dimensions (X, Y and Z)
+
+	// Need wind direction in some of the calculations below
+	if (!arma::is_finite(m_windDir))
+	{
+		throw std::runtime_error("Need to specify WindDir before turbulence file.");
+	}
+
+	//----------------------------
+	// get the header information
+	//----------------------------
+	// TurbSim format identifier
+	// Non periodic: 7
+	// Periodic: 8	
+	int16_t tmp;
+	is.read(reinterpret_cast<char*>(&tmp), sizeof(tmp));
+	if (tmp == 8) m_flagPeriodicTurb = true;
+		
+	int32_t nz{ 0 }; // the number of grid points vertically, INT(4)
+	is.read(reinterpret_cast<char*>(&nz), sizeof(nz));
+
+	int32_t ny{ 0 }; // the number of grid points laterally, INT(4)
+	is.read(reinterpret_cast<char*>(&ny), sizeof(ny));
+
+	int32_t ntwr{ 0 }; // the number of tower points, INT(4)
+	is.read(reinterpret_cast<char*>(&ntwr), sizeof(ntwr));
+
+	int32_t nt{ 0 }; // the number of time steps, INT(4)
+	is.read(reinterpret_cast<char*>(&nt), sizeof(nt));
+
+	float dz{ 0 }; // grid spacing in vertical direction, REAL(4), in m
+	is.read(reinterpret_cast<char*>(&dz), sizeof(float));
+
+	float dy{ 0 }; // grid spacing in lateral direction, REAL(4), in m
+	is.read(reinterpret_cast<char*>(&dy), sizeof(float));
+
+	is.read(reinterpret_cast<char*>(&m_windDt), sizeof(float)); // grid spacing in delta time, REAL(4), in m / s
+	m_windTimeTotal = (nt - 1) * m_windDt;
+
+	is.read(reinterpret_cast<char*>(&m_windRefVel), sizeof(float)); // the mean wind speed at hub height, REAL(4), in m / s
+
+	is.read(reinterpret_cast<char*>(&m_windRefHeight), sizeof(float)); // height of the hub, REAL(4), in m
+
+	float z1{ 0 }; // height of the bottom of the grid, REAL(4), in m
+	is.read(reinterpret_cast<char*>(&z1), sizeof(float));
+
+	std::array<float, 3> Vslope;
+	std::array<float, 3> Voffset;
+	is.read(reinterpret_cast<char*>(&Vslope[0]), sizeof(float)); // the U - component slope for scaling, REAL(4)
+	is.read(reinterpret_cast<char*>(&Voffset[0]), sizeof(float)); // the U - component offset for scaling, REAL(4)
+	is.read(reinterpret_cast<char*>(&Vslope[1]), sizeof(float)); // the V - component slope for scaling, REAL(4)
+	is.read(reinterpret_cast<char*>(&Voffset[1]), sizeof(float)); // the V - component offset for scaling, REAL(4)
+	is.read(reinterpret_cast<char*>(&Vslope[2]), sizeof(float)); // the W - component slope for scaling, REAL(4)
+	is.read(reinterpret_cast<char*>(&Voffset[2]), sizeof(float)); // the W - component offset for scaling, REAL(4)
+
+	int32_t nchar{ 0 }; // the number of characters in the description string, max 200, INT(4)
+	is.read(reinterpret_cast<char*>(&nchar), sizeof(nchar));
+
+	char *asciiSTR = new char[nchar];
+	is.read(asciiSTR, nchar); // the ASCII integer representation of the character string			
+	std::cout << asciiSTR << "\n";
+	delete[] asciiSTR;
+
+	//-------------------------
+	// get the grid information
+	//-------------------------
+	int32_t nPts = ny * nz;
+	int32_t nv = nffc * nPts;       // the size of one time step
+	int32_t nvTwr = nffc * ntwr;
+
+	m_windVelocity.set_size(nt);
+	m_windVelocity.fill(arma::zeros<arma::fcube>(nffc, ny, nz));
+	arma::fcube twrVelocity(nt, nffc, ntwr);
+
+	// Loop the time steps
+	for (int it = 0; it < nt; ++it)
+	{
+		// --------------------
+		// get the grid points
+		// --------------------
+		std::vector<int16_t> v(nv);
+		for (int jj = 0; jj < nv; ++jj)
+		{
+			is.read(reinterpret_cast<char*>(&v[jj]), sizeof(int16_t));
+		}
+
+		int ip = 0;
+		for (int iz = 0; iz < nz; ++iz)
+		{
+			for (int iy = 0; iy < ny; ++iy)
+			{
+				for (int k = 0; k < nffc; ++k)
+				{
+					m_windVelocity.at(it).at(k, iy, iz) = (v[ip] - Voffset[k]) / Vslope[k];
+					ip = ip + 1;
+				}
+
+				// Rotate based on wind direction
+				float auxU = m_windVelocity.at(it).at(0, iy, iz);
+				float auxV = m_windVelocity.at(it).at(1, iy, iz);
+				m_windVelocity.at(it).at(0, iy, iz) = auxU * m_windDirCos + auxV * m_windDirSin;
+				m_windVelocity.at(it).at(1, iy, iz) = -auxU * m_windDirSin + auxV * m_windDirCos;								
+			}
+
+		}		
+		//---------------------
+		//get the tower points
+		//---------------------
+		// NOTE:: Tower part wasnt tested yet
+		if (nvTwr > 0)
+		{
+			std::vector<int16_t> v(nvTwr);
+			for (int jj = 0; jj < nvTwr; ++jj)
+			{
+				is.read(reinterpret_cast<char*>(&v[jj]), sizeof(int16_t));
+			}
+
+			// scale the data
+			for (int k = 0; k < nffc; ++k)
+			{
+				for (int jj = 0; jj < nvTwr; ++jj)
+				{
+					twrVelocity(it, k, jj) = (v[k + jj * nffc] - Voffset[k]) / Vslope[k];
+				}
+			}
+		}
+	}
+
+	m_windGrid_y = arma::regspace<fvec>(0, 1, ny - 1) * dy - (ny - 1) / 2.0 * dy;
+	m_windGrid_z = arma::regspace<fvec>(0, 1, nz - 1) * dz + z1;
+
+	// Just like in NREL's InflowWind, the grid is located at a distance gridwidth/2 downwind 
+	// of the tower for non periodic wind, "so that no aerodynamic analysis nodes are outside
+	// of the wind domain even if the rotor is initialized with a +/-90 degree yaw".
+	double m_windGrid_x0{ 0 };
+	if (!m_flagPeriodicTurb)
+	{
+		m_windGrid_x0 = m_windGrid_y.back();
+	}	
+
+	// Rotate grid considering wind dir (horizontal only)	
+	m_windGrid_x =  m_windGrid_x0 * m_windDirCos + m_windGrid_y * m_windDirSin;
+	m_windGrid_y = -m_windGrid_x0 * m_windDirSin + m_windGrid_y * m_windDirCos;
+
+	// m_windGrid_x and m_windGrid_y may be in ascending or desceding order depending on the rotation angle,
+	// but it is better to have m_windGrid_y in ascending order to make it easier to determine its 
+	// lower and upper bound. Hence we sort it and rearrange m_windGrid_x accordingly.
+	if (m_windGrid_y[1] < m_windGrid_y[0])
+	{
+		m_windGrid_x = arma::reverse(m_windGrid_x);
+		m_windGrid_y = arma::reverse(m_windGrid_y);
+	}
+}
+
+void ENVIR::setWindFromUnifFile(const std::string & fileName)
+{
+	// Need wind reference height, not exactly in this function, but when
+	// the wind velocity is calculated. This check should be moved to
+	// functions specifically concerned with consistency check of inputs,
+	// but it is located here for the moment.
+	if (!arma::is_finite(m_windRefHeight))
+	{
+		throw std::runtime_error("Need to specify 'windHeight' before wind file.");
+	}
+
+	std::ifstream is;
+	is.open(fileName);
+	if (!is)
+	{
+		throw std::runtime_error("Unable to read uniform wind file " + fileName + ".");
+	}
+	m_wnd_fileName = fileName;
+	m_flagUnifWind = true;
+	
+	// Count number of lines in file
+	std::string line;
+	int nlines{ 0 }; // Number of lines with actual data (excluding header and comments)
+	while (std::getline(is, line))
+	{
+		if (line.at(0) != '!') ++nlines; // Do not count comments, which are identified by "!"
+	}
+
+	// Clear and return to the beginning
+	is.clear();
+	is.seekg(0);
+
+	// Initialize vectors to the correct size
+	m_wnd_time.zeros(nlines);
+	m_wnd_windSpeed.zeros(nlines);
+	m_wnd_windDir.zeros(nlines);
+	m_wnd_vertSpeed.zeros(nlines);
+	m_wnd_horizSheer.zeros(nlines);
+	m_wnd_windExp.zeros(nlines);
+	m_wnd_linVertSheer.zeros(nlines);
+	m_wnd_gustSpeed.zeros(nlines);
+
+	// Read data to the respective vectors
+	int ii = 0;
+	nlines = 0;
+	while (std::getline(is, line))
+	{		
+		++nlines;
+		if (line.at(0) == '!') continue;		
+
+		std::vector<std::string> input = stringTokenize(line, " \t");
+		if (input.size() != 8)
+		{
+			throw std::runtime_error("Unable to read wind file '" + m_wnd_fileName + "'. Wrong number of parameters in line " + std::to_string(nlines) + ".");
+		}
+
+		m_wnd_time.at(ii)         = string2num<float>(input.at(0));
+		m_wnd_windSpeed.at(ii)    = string2num<float>(input.at(1));
+		m_wnd_windDir.at(ii)      = string2num<float>(input.at(2));
+		m_wnd_vertSpeed.at(ii)    = string2num<float>(input.at(3));
+		m_wnd_horizSheer.at(ii)   = string2num<float>(input.at(4));
+		m_wnd_windExp.at(ii)      = string2num<float>(input.at(5));
+		m_wnd_linVertSheer.at(ii) = string2num<float>(input.at(6));
+		m_wnd_gustSpeed.at(ii)    = string2num<float>(input.at(7));
+		++ii;
+	}
+}
+
+void ENVIR::setWindRefLength(const double windRefLength)
+{
+	m_wnd_refLength = windRefLength;
+}
+
 void ENVIR::setWindRefVel(const double windRefVel)
 {
 	m_windRefVel = windRefVel;
@@ -86,6 +328,8 @@ void ENVIR::setWindRefVel(const double windRefVel)
 void ENVIR::setWindDir(const double windDir)
 {
 	m_windDir = windDir;
+	m_windDirCos = std::cos(m_windDir * arma::datum::pi / 180.);
+	m_windDirSin = std::sin(m_windDir * arma::datum::pi / 180.);
 }
 
 void ENVIR::setWindRefHeight(const double windRefHeight)
@@ -362,19 +606,40 @@ void ENVIR::addWaveElevSeries(const std::string &elevFlPath, const double direct
 }
 
 
+void ENVIR::addWindProbe(const unsigned int ID)
+{
+	// Check whether nodes were specified
+	if (this->isNodeEmpty())
+	{
+		throw std::runtime_error("Nodes should be specified before adding wind probes. In: ENVIR::addWindProbe");
+	}
+
+	// Check if this wind probe was already included
+	std::vector<unsigned int>::const_iterator iter = std::find(m_windProbeID.begin(), m_windProbeID.end(), ID);
+
+	if (iter == m_windProbeID.end())
+	{
+		// Get the node coordinate and add it to m_windProbe
+		m_windProbe.push_back(this->getNode(ID));
+		m_windProbeID.push_back(ID);
+	}
+}
+
 void ENVIR::addWaveProbe(const unsigned int ID)
 {
 	// Check whether nodes were specified
 	if (this->isNodeEmpty())
 	{
-		throw std::runtime_error("Nodes should be specified before adding wave locations. In: ENVIR::addWaveProbe");
+		throw std::runtime_error("Nodes should be specified before adding wave probes. In: ENVIR::addWaveProbe");
 	}
 
-	std::vector<unsigned int>::const_iterator iter = std::find(m_waveProbeID.begin(), m_waveProbeID.end(), ID); // Check if this wave probe was already included
+	// Check if this wave probe was already included
+	std::vector<unsigned int>::const_iterator iter = std::find(m_waveProbeID.begin(), m_waveProbeID.end(), ID);
 
 	if (iter == m_waveProbeID.end())
 	{
-		m_waveProbe.push_back(this->getNode(ID)); // Get the node coordinate and add it to m_waveProbe
+		// Get the node coordinate and add it to m_waveProbe
+		m_waveProbe.push_back(this->getNode(ID));
 		m_waveProbeID.push_back(ID);
 	}
 }
@@ -611,6 +876,16 @@ double ENVIR::windExp() const
 	return m_windExp;
 }
 
+bool ENVIR::getFlagWindTurb() const
+{
+	return m_flagTurbWind;
+}
+
+bool ENVIR::getFlagWindUnif() const
+{
+	return m_flagUnifWind;
+}
+
 unsigned int ENVIR::numberOfWaveComponents() const
 {
 	return m_wave.size();
@@ -714,6 +989,11 @@ const vec& ENVIR::getTimeArray() const
 const vec& ENVIR::getRampArray() const
 {
 	return m_timeRampArray;
+}
+
+std::string ENVIR::getTurbFileName() const
+{
+	return m_turbFileName;
 }
 
 /*****************************************************
@@ -823,6 +1103,16 @@ void ENVIR::printWaveCharact() const
 	}
 }
 
+void ENVIR::printWindVelocity() const
+{
+	for (int ii = 0; ii < m_windProbe.size(); ++ii)
+	{	
+		vec::fixed<3> windVel(fill::zeros);
+		this->windVel(windVel, m_windProbe.at(ii));
+		IO::print2outLine(IO::OUTFLAG_WIND_VEL, m_windProbeID[ii], windVel);
+	}
+}
+
 
 /*****************************************************
 	Other functions
@@ -895,6 +1185,10 @@ double ENVIR::ramp() const
 	return ramp(m_time);
 }
 
+// Prof. Pesce:
+// I would prefer a hyperbolic tangent modulation... It goes smoothly and asymptotically to a constant. 
+// In the case of the cosine modulation its second derivative with respect to time is non-null at t=Tr 
+// and this is a source of a localized impulse.
 double ENVIR::ramp(double time) const
 {
 	double ramp{ 1 };
@@ -1859,16 +2153,189 @@ cx_vec::fixed<3> ENVIR::gradP1_coef(const double x, const double y, const double
 	return gradP;
 }
 
-
-
-double ENVIR::windVel_X(const vec::fixed<3> &coord) const
+void ENVIR::windVel(vec::fixed<3> &windVel, const vec::fixed<3> &coord) const
 {
-	return (ramp() * windRefVel() * std::cos(m_windDir * arma::datum::pi / 180.) * pow(coord[2] / windRefHeight(), windExp()));
-}
+	if (m_flagTurbWind)
+	{				
+		// Distance from a point P to a line whose vertices are v1 and v2 can be calculated by
+		// ds = ||cross(P-v1, v2-v1)|| / norm(v2-v1)
+		// This is what is done below, but the math was developed for the special case at hand
+		// in order to save computational time
+		double dx0 = coord.at(0) - m_windGrid_x.at(0);
+		double dy0 = coord.at(1) - m_windGrid_y.at(0);
+		double ds = dx0 * m_windDirCos - dy0 * m_windDirSin;
 
-double ENVIR::windVel_Y(const vec::fixed<3> &coord) const
-{
-	return (-ramp() * windRefVel() * std::sin(m_windDir * arma::datum::pi / 180.) * pow(coord[2] / windRefHeight(), windExp()));
+		// Find the point at the grid that corresponds to "coord".
+		// It is P = (x,y) = coord - ds * V/||V||, with V/||V|| simply the unitary vector
+		// pointing at the direction of the wind propagation.
+		double x = coord.at(0) - ds * m_windDirCos;
+		double y = coord.at(1) + ds * m_windDirSin;
+		
+		if (y < m_windGrid_y.front() || y > m_windGrid_y.back() ||
+			coord.at(2) < m_windGrid_z.front() || coord.at(2) > m_windGrid_z.back() )
+		{
+			throw std::runtime_error("Point (" + std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(coord.at(2)) + "), obtained from (" +
+				std::to_string(coord.at(0)) + "," + std::to_string(coord.at(1)) + "," + std::to_string(coord.at(2)) +
+				"), is outside of turbulence grid domain (function ENVIR::windVel).");
+		}
+
+		// This point is probably not one of the grid nodes, hence, it is necessary to interpolate.
+		// To do so, find the indices of the lower bounds that will be used in the interpolation
+		// for each of the grid vectors.
+		// 
+		// Since we are dealing with a plane given by the Z coordinate + the line described by the vectors
+		// m_windGrid_x and m_windGrid_y, only one of the horizontal coordinates is actually needed, as the
+		// index for the other one would be the same.
+		arma::uword ind1_y = arma::index_min(abs(m_windGrid_y - y));
+		if (m_windGrid_y(ind1_y) > y)
+		{
+			ind1_y -= 1;
+		}
+
+		arma::uword ind1_z = arma::index_min(abs(m_windGrid_z - coord.at(2)));
+		if (m_windGrid_z(ind1_z) > coord.at(2))
+		{
+			ind1_z -= 1;
+		}
+		
+		// The turbulence at "coord" is given by the one at the point found above, but not at the current time step.
+		// Based on Taylor frozen turbulence hypothesis, the time taken for the turbulent wind to go from
+		// the grid to the desired point "coord" is simply dt = ds/||V||. If this is a positive value,
+		// it means that the wind at "coord" is the same that was at the grid in t-dt. Otherwise, it means that the wind
+		// at coord will be at P in t+dt. Since the grid is located downwind of the turbine, the latter is expected to occur.
+		double dt = ds / m_windRefVel;
+		double t = time() - dt;
+		
+
+		if (m_flagPeriodicTurb)
+		{
+			double intPart{ 0 };
+			double fracPart = modf(t / m_windTimeTotal, &intPart);
+			t = fracPart * m_windTimeTotal;
+			t += ((t < 0) ? m_windTimeTotal : 0); // If t is negative, we are walking backwards from the end of the time array
+		}
+		else
+		{	
+			if (t > m_windTimeTotal)
+			{
+				throw std::runtime_error("Required simulation time " + std::to_string(t) +
+					"s is outside range of turbulence field (" + std::to_string(m_windTimeTotal) + "s).");
+			}
+			else if (t < 0)
+			{
+				throw std::runtime_error("Required simulation time for turbulence " + std::to_string(t) +
+					"s is negative, meaning that a larger turbulence grid is required.");
+			}
+		}
+
+		// Time also needs to be interpolated
+		int ind1_t = floor( t / m_windDt);		
+		double t1 = ind1_t * m_windDt;
+		double t2 = t1 + m_windDt;		
+
+		double auxVelocity_t1{ 0 };
+		double auxVelocity_t2{ 0 };
+		for (int ii = 0; ii < 3; ++ii)
+		{			
+			// Spatial interpolation at t1
+			auxVelocity_t1 = bilinearInterpolation(m_windGrid_y(ind1_y), m_windGrid_y(ind1_y + 1), m_windGrid_z(ind1_z), m_windGrid_z(ind1_z + 1),
+				                                  m_windVelocity(ind1_t)(ii, ind1_y, ind1_z), m_windVelocity.at(ind1_t).at(ii, ind1_y, ind1_z + 1),
+				                                  m_windVelocity(ind1_t)(ii, ind1_y + 1, ind1_z), m_windVelocity.at(ind1_t).at(ii, ind1_y + 1, ind1_z + 1),
+				                                  y, coord.at(2));
+
+			// Spatial interpolation at t2
+			auxVelocity_t2 = bilinearInterpolation(m_windGrid_y(ind1_y), m_windGrid_y(ind1_y + 1), m_windGrid_z(ind1_z), m_windGrid_z(ind1_z + 1),
+                                                   m_windVelocity.at(ind1_t + 1).at(ii, ind1_y, ind1_z), m_windVelocity.at(ind1_t + 1).at(ii, ind1_y, ind1_z + 1),
+                                                   m_windVelocity.at(ind1_t + 1).at(ii, ind1_y + 1, ind1_z), m_windVelocity.at(ind1_t + 1).at(ii, ind1_y + 1, ind1_z + 1),
+                                                   y, coord.at(2));
+			// Temporal interpolation
+			windVel.at(ii) = auxVelocity_t1 + (auxVelocity_t2 - auxVelocity_t1) * (t - t1) / (t2 - t1);
+		}
+	}
+	else if (m_flagUnifWind)
+	{
+		// Declare the variables that will be used to compute the wind velocities at the current time step
+		float U{ 0 };
+		float theta{ 0 };
+		float W{ 0 };
+		float hSheer{ 0 };
+		float windExp{ 0 };
+		float vSheer{ 0 };
+		float ugust{ 0 };
+
+		// If we are below the first record in the file, quantities are constant and equal to the first record
+		if (m_time < m_wnd_time[0])
+		{
+			U = m_wnd_windSpeed[0];
+			theta = m_wnd_windDir[0];
+			W = m_wnd_vertSpeed[0];
+			hSheer = m_wnd_horizSheer[0];
+			windExp = m_wnd_windExp[0];
+			vSheer = m_wnd_linVertSheer[0];
+			ugust = m_wnd_gustSpeed[0];
+		}
+
+		// Same thing if it is above the last record
+		else if (m_time > m_wnd_time.back())
+		{
+			U = m_wnd_windSpeed.back();
+			theta = m_wnd_windDir.back();
+			W = m_wnd_vertSpeed.back();
+			hSheer = m_wnd_horizSheer.back();
+			windExp = m_wnd_windExp.back();
+			vSheer = m_wnd_linVertSheer.back();
+			ugust = m_wnd_gustSpeed.back();
+		}
+
+		// Otherwise, quantities are interpolated between the values provided in m_wnd_time
+		else
+		{
+			// The first step is to get this index
+			arma::uword i1 = index_min(abs(m_wnd_time - m_time));
+			arma::uword i2;
+
+			// Make sure i1 is the lower index and i2 the upper index
+			if (m_wnd_time(i1) <= m_time)
+			{
+				i2 = i1 + 1;
+			}
+			else
+			{
+				i2 = i1;
+				i1 = i2 - 1;
+			}
+			float t1 = m_wnd_time(i1);
+			float t2 = m_wnd_time(i2);
+
+			// Interpolate values
+			U     = m_wnd_windSpeed.at(i1) + (m_wnd_windSpeed.at(i2) - m_wnd_windSpeed.at(i1)) * (m_time - t1) / (t2 - t1);
+			theta = m_wnd_windDir.at(i1) + (m_wnd_windDir.at(i2) - m_wnd_windDir.at(i1)) * (m_time - t1) / (t2 - t1);
+			W = m_wnd_vertSpeed.at(i1) + (m_wnd_vertSpeed.at(i2) - m_wnd_vertSpeed.at(i1)) * (m_time - t1) / (t2 - t1);
+			hSheer = m_wnd_horizSheer.at(i1) + (m_wnd_horizSheer.at(i2) - m_wnd_horizSheer.at(i1)) * (m_time - t1) / (t2 - t1);
+			windExp = m_wnd_windExp.at(i1) + (m_wnd_windExp.at(i2) - m_wnd_windExp.at(i1)) * (m_time - t1) / (t2 - t1);
+			vSheer = m_wnd_linVertSheer.at(i1) + (m_wnd_linVertSheer.at(i2) - m_wnd_linVertSheer.at(i1)) * (m_time - t1) / (t2 - t1);
+			ugust = m_wnd_gustSpeed.at(i1) + (m_wnd_gustSpeed.at(i2) - m_wnd_gustSpeed.at(i1)) * (m_time - t1) / (t2 - t1);
+		}
+		float sinTheta = std::sin(theta*arma::datum::pi / 180.);
+		float cosTheta = std::cos(theta*arma::datum::pi / 180.);
+
+		// Compute horizontal velocity using the formula from InflowWind User's Guide (2016)
+		U = U * pow(coord[2] / m_windRefHeight, windExp) +
+			U * (hSheer / m_wnd_refLength) * (coord[0] * sinTheta + coord[1] * cosTheta) +
+			U * (vSheer / m_wnd_refLength) * (coord[2] - m_windRefHeight) +
+			ugust;
+
+		windVel.at(0) =  U * cosTheta;
+		windVel.at(1) = -U * sinTheta;
+		windVel.at(2) =  W;		
+	}
+	else
+	{		
+		double U = ramp() * windRefVel()  * pow(coord[2] / m_windRefHeight, m_windExp);
+		windVel.at(0) = U * m_windDirCos;
+		windVel.at(1) = -U * m_windDirSin;
+		windVel.at(2) = 0;
+	}
 }
 
 mat ENVIR::timeSeriesFromAmp(cx_mat &inAmp, const vec &w) const

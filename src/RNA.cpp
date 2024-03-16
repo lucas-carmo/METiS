@@ -313,7 +313,6 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 	double phi_min;
 	double phi_max;
 
-
 	for (unsigned int iiBlades = 0; iiBlades < m_blades.size(); ++iiBlades)
 	{
 		totalAzimuth = deltaAzimuth + m_blades.at(iiBlades).initialAzimuth();
@@ -332,9 +331,7 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 			// - windVel[0] is the component that is normal to the rotation plan
 			// - windVel[1] is the component that is in the rotation plan and in the tangential direction
 			// - windVel[2] is the component that is in the rotation plan and in the radial direction
-			windVel.zeros();
-			windVel[0] = envir.windVel_X(nodeCoord_earth);
-			windVel[1] = envir.windVel_Y(nodeCoord_earth);
+			envir.windVel(windVel, nodeCoord_earth);
 			windVel = rotorRotation * (rigidBodyRotation * windVel);
 
 			// Structural velocity of the nodes. Need to be written in the node coordinate system
@@ -437,10 +434,6 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 		aeroForce.rows(3,5) += rotatMatrix_deg(m_blades.at(iiBlades).initialAzimuth(), m_blades.at(iiBlades).precone(), 0) * bladeForce.rows(3,5);
 	}	
 	IO::print2outLine(IO::OUTFLAG_AD_HUB_FORCE, aeroForce);
-
-	// As rotor dynamics is not modelled yet, it would be wrong to consider the moment along 
-	// the shaft as if it was acting on the structure modelled as as rigid body
-	aeroForce.at(3) = 0;
 	
 	// Need to write aeroForce in the global reference plane + change the fulcrum to the FOWT CoG
 	// 1) Write aeroForce in the shaft coordinate system
@@ -448,7 +441,7 @@ arma::vec::fixed<6> RNA::aeroForce(const ENVIR &envir, const arma::vec::fixed<6>
 	aeroForce.rows(3, 5) = rotatMatrix_deg(deltaAzimuth, 0, 0) * aeroForce.rows(3, 5);
 
 	// 2) Write aeroForce in the fowt coordinate system
-	arma::mat::fixed<3, 3> rotatShaft2FOWT = rotatMatrix_deg(0, 0, -rotorYaw()) * rotatMatrix_deg(0, -rotorTilt(), 0);
+	arma::mat::fixed<3, 3> rotatShaft2FOWT = rotatMatrix_deg(0, 0, rotorYaw()) * rotatMatrix_deg(0, -rotorTilt(), 0);
 	aeroForce.rows(0, 2) = rotatShaft2FOWT * aeroForce.rows(0, 2);
 	aeroForce.rows(3, 5) = rotatShaft2FOWT * aeroForce.rows(3, 5);
 

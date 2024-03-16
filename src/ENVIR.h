@@ -24,11 +24,44 @@ private:
 	std::vector<Wave> m_wave; // The sea is specified by a vector with regular wave components. You can add a wave component using the method addRegularWave(), or many components using addJonswap().
 	unsigned int m_waveStret;
 
-	double m_airDens;
-	double m_windRefVel;
-	double m_windDir;
-	double m_windRefHeight;
-	double m_windExp;
+	// Wind Characteristics
+	float m_airDens;
+	float m_windDir;
+	float m_windDirCos;
+	float m_windDirSin;
+	float m_windRefVel;	
+	float m_windRefHeight;
+	float m_windExp;
+
+	// For uniform wind from .wnd file
+	// Decided to include '_wnd' in the names of the variables
+	// to avoid confusion with other members with similar names
+	bool m_flagUnifWind = false;
+	std::string m_wnd_fileName = "";
+	float m_wnd_refLength{ 1 };
+	arma::fvec m_wnd_time;
+	arma::fvec m_wnd_windSpeed;
+	arma::fvec m_wnd_windDir;
+	arma::fvec m_wnd_vertSpeed;
+	arma::fvec m_wnd_horizSheer;
+	arma::fvec m_wnd_windExp;
+	arma::fvec m_wnd_linVertSheer;
+	arma::fvec m_wnd_gustSpeed;
+
+	// For turbulent wind from .bts file
+	bool m_flagTurbWind = false;
+	bool m_flagPeriodicTurb = false;
+	std::string m_turbFileName = "";
+	arma::field<arma::fcube> m_windVelocity;
+	arma::fvec m_windGrid_x; // Coordinates of the turbulent grid points
+	arma::fvec m_windGrid_y;
+	arma::fvec m_windGrid_z;
+	float m_windDt; // Time discretization of the turbulent input file
+	float m_windTimeTotal; // Max simulation time in TurbSim file
+	std::vector<unsigned int> m_windProbeID;
+	std::vector<vec::fixed<3>> m_windProbe; // Coordinates of the points where the wind velocity is calculated for output
+
+	// End of wind characteristics
 
 	std::vector<unsigned int> m_waveProbeID;
 	std::vector<vec::fixed<3>> m_waveProbe; // Coordinates of the points where the wave characteristics (elevation, velocity, etc) are calculated for output
@@ -71,6 +104,10 @@ public:
 	void setWatDepth(const double watDepth);
 	void setWaveStret(const unsigned int waveStret);
 	void setAirDens(const double airDens);
+
+	void setWindFromTurbFile(const std::string &fileName);
+	void setWindFromUnifFile(const std::string &fileName);
+	void setWindRefLength(const double windRefLength);
 	void setWindRefVel(const double windRefVel);
 	void setWindDir(const double windDir);
 	void setWindRefHeight(const double windRefHeight);
@@ -81,6 +118,7 @@ public:
 	void addJonswap(const double Hs, const double Tp, const double gamma, const double direction, const double wlow, const double whigh, const int numberOfRegularWaves, const double dwMax);
 	void addWaveElevSeries(const std::string &elevFlPath, const double direction, const double wlow, const double whigh);
 
+	void addWindProbe(const unsigned int ID);
 	void addWaveProbe(const unsigned int ID);
 	void evaluateWaveKinematics();
 
@@ -101,6 +139,8 @@ public:
 	double windRefHeight() const;
 	double windDir() const;
 	double windExp() const;
+	bool getFlagWindTurb() const;
+	bool getFlagWindUnif() const;
 
 	unsigned int numberOfWaveComponents() const;
 	const Wave& getWave(unsigned int waveIndex) const;
@@ -115,6 +155,7 @@ public:
 	uword getInd4interp2() const;
 	const vec& getTimeArray() const;
 	const vec& getRampArray() const;
+	std::string getTurbFileName() const;
 
 	/*****************************************************
 		Printing
@@ -130,7 +171,9 @@ public:
 	std::string printWave() const;
 	std::string printWaveProbe() const;
 
-	void printWaveCharact() const; // Print the wave characteristics (elevation, velocity, etc) specified for output in the locations given by m_waveLocation
+
+	void printWaveCharact() const; // Print the wave characteristics (elevation, velocity, etc) specified for output in the locations given by m_waveProbe
+	void printWindVelocity() const; // Same thing for wind velocity at m_windProbe
 
 	/*****************************************************
 		Main functions for calculation
@@ -186,8 +229,7 @@ public:
 	cx_vec::fixed<3> da1dz_coef(const double x, const double y, const double z, const unsigned int waveIndex) const;
 	cx_vec::fixed<3> gradP1_coef(const double x, const double y, const double z, const unsigned int waveIndex) const;
 
-	double windVel_X(const vec::fixed<3> &coord) const;
-	double windVel_Y(const vec::fixed<3> &coord) const;
+	void windVel(vec::fixed<3> &windVel, const vec::fixed<3> &coord) const;
 
 	// Function that generates time series from complex amplitudes
 	mat timeSeriesFromAmp(cx_mat &in, const vec &w) const;

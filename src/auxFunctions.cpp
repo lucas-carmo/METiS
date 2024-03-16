@@ -8,8 +8,8 @@
 *****************************************************/
 arma::mat::fixed<3, 3> rotatMatrix(const double rotatX, const double rotatY, const double rotatZ)
 {
-	/* Rotation matrix is RotatMat = RotatX * RotatY * RotatZ, i.e. a rotation around the Z axis,
-	  followed by a rotation around the new y axis, and a rotation around the new x axis (intrinsic rotation).
+	/* Rotation matrix is RotatMat = RotatX * RotatY * RotatZ, i.e. a rotation around the X axis,
+	  followed by a rotation around the new Y axis, and a rotation around the new Z axis.
 	  Each rotation matrix is given by:
 
 	  rotatX = { 	{ 1 ,        0        ,         0        },
@@ -236,6 +236,28 @@ std::string getFileName(const std::string& path)
 	return flNm;
 }
 
+// Get file extension from a complete file path
+std::string getFileExtension(const std::string& path)
+{
+	// Check if input string is empty
+	if (path.empty())
+	{
+		throw std::runtime_error("Empty string passed to getFileExtension().");
+	}
+
+	// Tokenize the passed string based on the file separator. The file name is the last part (works even if only the file name is passed as argument)
+	std::vector<std::string> str_tokenized = stringTokenize(path, filesep);
+	std::string flNm = str_tokenized.back();
+
+	// Get only the file extension. We get everything after the last dot
+	if (flNm.find_last_not_of(".") != std::string::npos)
+	{
+		flNm = flNm.substr(flNm.find_last_of(".")+1, std::string::npos);
+	}
+
+	return flNm;
+}
+
 // FFT and IFFT using MKL - Faster than using Armadillo
 // Code from https://stackoverflow.com/questions/29805767/is-there-any-simple-c-example-on-how-to-use-intel-mkl-fft
 cx_stdvec mkl_fft(cx_stdvec &in)
@@ -302,6 +324,23 @@ arma::mat mkl_ifft_real(arma::cx_mat &in)
 	}
 
 	return out;
+}
+
+double bilinearInterpolation(double x1, double x2, double y1, double y2, double q11, double q12, double q21, double q22, double x, double y)
+{
+	double x2x1, y2y1, x2x, y2y, yy1, xx1;
+	x2x1 = x2 - x1;
+	y2y1 = y2 - y1;
+	x2x = x2 - x;
+	y2y = y2 - y;
+	yy1 = y - y1;
+	xx1 = x - x1;
+	return 1.0 / (x2x1 * y2y1) * (
+		q11 * x2x * y2y +
+		q21 * xx1 * y2y +
+		q12 * x2x * yy1 +
+		q22 * xx1 * yy1
+		);
 }
 
 /*****************************************************
@@ -509,7 +548,7 @@ namespace tk
 
 
 	void spline::set_points(const std::vector<double>& x,
-		const std::vector<double>& y, bool cubic_spline)
+		const std::vector<realType>& y, bool cubic_spline)
 	{
 		assert(x.size() == y.size());
 		assert(x.size() > 2);

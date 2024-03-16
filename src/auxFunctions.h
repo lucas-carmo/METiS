@@ -1,6 +1,8 @@
 #pragma once
+
 #include <armadillo>
 #include <string>
+#include <complex>
 
 // These four below are needed for the spline implementation
 #include <cstdio>
@@ -15,6 +17,14 @@ const std::string filesep =
 	"\\";
 #else
 	"/";
+#endif
+
+#ifdef USE_DOUBLES
+   typedef double realType;
+   typedef std::complex<double> complexType;
+#else
+   typedef float realType;
+   typedef std::complex<float> complexType;
 #endif
 
 typedef std::vector<std::complex<double>> cx_stdvec;
@@ -74,6 +84,9 @@ std::string getFileFolder(const std::string& path);
 // Get file name, without extension, from a complete file path
 std::string getFileName(const std::string& path);
 
+// Get file extension from a complete file path
+std::string getFileExtension(const std::string& path);
+
 // string2num: used to convert from string to a numerical type (double, float, int...)
 // Returns True if the conversion is succesful and False if it is not
 // Found at http://www.learncpp.com/cpp-tutorial/17-2-stdstring-construction-and-destruction/
@@ -119,6 +132,9 @@ cx_stdvec mkl_ifft(cx_stdvec &in);
 std::vector<double> mkl_ifft_real(cx_stdvec &in);
 arma::mat mkl_ifft_real(arma::cx_mat &in);
 
+
+// 2D interpolation
+double bilinearInterpolation(double x1, double x2, double y1, double y2, double q11, double q12, double q21, double q22, double x, double y);
 
 /*****************************************************
 	Spline implementation
@@ -191,7 +207,8 @@ namespace tk
 		};
 
 	private:
-		std::vector<double> m_x, m_y;            // x,y coordinates of points
+		std::vector<double> m_x;
+		std::vector<realType> m_y;            // x,y coordinates of points
 		// interpolation parameters
 		// f(x) = a*(x-x_i)^3 + b*(x-x_i)^2 + c*(x-x_i) + y_i
 		std::vector<double> m_a, m_b, m_c;        // spline coefficients
@@ -214,7 +231,7 @@ namespace tk
 			bd_type right, double right_value,
 			bool force_linear_extrapolation = false);
 		void set_points(const std::vector<double>& x,
-			const std::vector<double>& y, bool cubic_spline = true);
+			const std::vector<realType>& y, bool cubic_spline = true);
 		double operator() (double x) const;
 	};
 }

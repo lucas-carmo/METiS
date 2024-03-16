@@ -9,7 +9,7 @@
 #include <omp.h>
 
 // METiS Version
-extern const std::string g_METIS_VERSION{ "0.0.1" };
+extern const std::string g_METIS_VERSION{ "1.0" };
 
 int main(int argc, char *argv[])
 {

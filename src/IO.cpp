@@ -116,8 +116,39 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 			envir.setAirDens(string2num<double>(getData(strInput)));
 		}
 
+		else if (caseInsCompare(getKeyword(strInput), "WindFile"))
+		{
+			if (arma::is_finite(envir.windRefVel()) || arma::is_finite(envir.windExp()))
+			{
+				throw std::runtime_error("Cannot read wind file given in input line " + std::to_string(IO::getInLineNumber()) + " because either WindHeight, WindVel or WindExp were also specified.");
+			}
+			std::string ext = getFileExtension(strInput);
+
+			if (caseInsCompare(ext, "bts"))
+			{
+				envir.setWindFromTurbFile(getData(strInput));
+			}
+			else if (caseInsCompare(ext, "wnd"))
+			{
+				envir.setWindFromUnifFile(getData(strInput));
+			}
+			else
+			{
+				throw std::runtime_error("Cannot read wind file given in input line " + std::to_string(IO::getInLineNumber()) + " because of unknown extension '" + ext + "'.");
+			}
+		}
+
+		else if (caseInsCompare(getKeyword(strInput), "WindRefLength"))
+		{
+			envir.setWindRefLength(string2num<double>(getData(strInput)));
+		}
+
 		else if (caseInsCompare(getKeyword(strInput), "WindVel"))
 		{
+			if (envir.getFlagWindTurb() || envir.getFlagWindUnif())
+			{
+				throw std::runtime_error("Cannot set WindVel given in input line " + std::to_string(IO::getInLineNumber()) + " because a wind file was already provided.");
+			}
 			envir.setWindRefVel(string2num<double>(getData(strInput)));
 		}
 
@@ -133,6 +164,10 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 
 		else if (caseInsCompare(getKeyword(strInput), "WindExp"))
 		{
+			if (envir.getFlagWindTurb() || envir.getFlagWindUnif())
+			{
+				throw std::runtime_error("Cannot set WindExp given in input line " + std::to_string(IO::getInLineNumber()) + " because a wind file was already provided.");
+			}
 			envir.setWindExp(string2num<double>(getData(strInput)));
 		}
 
@@ -1124,6 +1159,26 @@ void IO::setResults2Output(std::string strInput, ENVIR &envir)
 		}
 	}
 
+	// Add wind probe for velocity
+	if (caseInsCompare(keyword, "wind_vel"))
+	{
+		m_whichResult2Output.at(IO::OUTFLAG_WIND_VEL) = true;		
+		isOutput = true;
+
+		// Wind locations are specified by node IDs separated by tabs or white-spaces
+		std::vector<std::string> input = stringTokenize(getData(strInput), " \t");
+		if (input.empty())
+		{
+			throw std::runtime_error("You should specify at least one node ID for defining a wind probe. Error in input line " + std::to_string(IO::getInLineNumber()) + ".");
+		}
+
+		for (int ii = 0; ii < input.size(); ++ii)
+		{
+			envir.addWindProbe(string2num<unsigned int>(input.at(ii)));
+		}
+
+	}
+
 	if (!isOutput)
 	{
 		print2log("WARNING: Unknown output option '" + keyword + "' in line " + std::to_string(IO::getInLineNumber()) + ".");
@@ -1451,7 +1506,7 @@ void IO::print2outLine(const OutFlag &flag, const arma::vec::fixed<6> &vector_6)
 // and the value itself, which three component vector. Other future outputs may profit from this function as well.
 void IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed<3> &vector_3)
 {
-	if ((flag != OUTFLAG_WAVE_VEL) && (flag != OUTFLAG_WAVE_ACC) && (flag != OUTFLAG_WAVE_ACC_2ND) && (flag != OUTFLAG_DEBUG_VEC_3))
+	if ((flag != OUTFLAG_WAVE_VEL) && (flag != OUTFLAG_WAVE_ACC) && (flag != OUTFLAG_WAVE_ACC_2ND) && (flag != OUTFLAG_WIND_VEL) && (flag != OUTFLAG_DEBUG_VEC_3))
 	{
 		throw std::runtime_error("Unknown output flag in function IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed<3> &vector_3).");
 	}
@@ -1486,6 +1541,13 @@ void IO::print2outLine(const OutFlag &flag, const int ID, const arma::vec::fixed
 			print2outLineHeader("wave_acc_2nd_" + std::to_string(ID) + "_x");
 			print2outLineHeader("wave_acc_2nd_" + std::to_string(ID) + "_y");
 			print2outLineHeader("wave_acc_2nd_" + std::to_string(ID) + "_z");
+		}
+
+		if (flag == OUTFLAG_WIND_VEL)
+		{
+			print2outLineHeader("wind_vel_" + std::to_string(ID) + "_x");
+			print2outLineHeader("wind_vel_" + std::to_string(ID) + "_y");
+			print2outLineHeader("wind_vel_" + std::to_string(ID) + "_z");
 		}
 	}
 
@@ -1790,6 +1852,10 @@ std::string IO::printOutVar()
 			output += "Mooring force: ";
 			break;
 
+		case IO::OUTFLAG_WIND_VEL:
+			output += "Wind velocity at probes: ";
+			break;
+
 		case IO::OUTFLAG_AD_HUB_FORCE:
 			output += "Aerodynamic forces (Hub): ";
 			break;
@@ -1878,7 +1944,11 @@ std::string getData(const std::string &str)
 	std::string str_out = "";
 	for (int ii = 1; ii < str_tokenized.size(); ++ii) // Start at one to skip keyword
 	{
-		str_out += str_tokenized.at(ii) + " ";
+		str_out += str_tokenized.at(ii);
+		if (ii < str_tokenized.size()-1)
+		{
+			 str_out += " "; // Add empty space between elements
+		}
 	}
 	return str_out;
 }
