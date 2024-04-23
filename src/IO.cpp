@@ -1213,7 +1213,7 @@ std::string IO::METiS_Header()
 	header += ">          Morison Equation Time Domain Simulation          <\n";
 	header += ">              University of Sao Paulo - Brazil             <\n";
 	header += ">                                                           <\n";
-	header += ">                                                   v. " + g_METIS_VERSION + "<\n";
+	header += ">                                                   v. " + g_METIS_VERSION + "  <\n";
 	header += ">--------<>--------<>--------<+>--------<>--------<>--------<\n";
 
 	return header;

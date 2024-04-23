@@ -51,7 +51,7 @@ Wave
 % WRWAVE 	 Height 	 Angular frequency 	 Direction (in degrees) 	 Phase (in degrees)
 % FRWAVE 	 Height 	 Frequency         	 Direction (in degrees) 	 Phase (in degrees)
 % TRWAVE 	 Height 	 Period            	 Direction (in degrees) 	 Phase (in degrees)
-Elev    G:\Meu Drive\Doutorado\1Testes_Jappaku\IRR12.Elev, 180, 0, 1.40
+Elev    ./IRR12.Elev, 180, 0, 1.40
 END
 
 
