@@ -47,6 +47,9 @@ void MorisonCirc::evaluateQuantitiesAtBegin(const ENVIR &envir, const int hydroM
 	{
 		m_nodesArray.col(iNode) = m_node1Pos_sd + iNode * m_dL * m_zvec_sd;
 	}
+	m_nodesArray.at(2, npts - 1) = 0; // Make sure the last node is exactly at the mean water line as there might be some numerical error
+
+	
 
 	// Wave forces or kinematics at each node at each time step
 	m_hydroForce_1st_Array = zeros(t.size(), 6);
@@ -541,10 +544,10 @@ vec::fixed<6> MorisonCirc::hydroForce_relWaveElev_drag(const ENVIR& envir, const
 	vec::fixed<3> n_wl = this->nodePos_sd(m_numNodesBelowWL - 1);
 	double lambda = norm(n_wl - m_node1Pos_sd, 2) / norm(m_node2Pos_sd - m_node1Pos_sd);
 	vec::fixed<3> vel_wl = vel1 + lambda * (vel2 - vel1);
+	vel_wl -= arma::dot(vel_wl, m_zvec_sd) * m_zvec_sd;
 
 	double eta(this->waveElevAtWL(envir));
 	double zBody = m_Zwl;
-	double L = norm(m_node2Pos_sd - m_node1Pos_sd);
 
 	force.rows(0, 2) = 0.5 * envir.watDensity() * m_CD * m_diam * (eta - zBody) * norm(u1_wl - vel_wl, 2) * (u1_wl - vel_wl);
 	force.rows(3, 5) = cross(n_wl - refPt, force.rows(0, 2));
