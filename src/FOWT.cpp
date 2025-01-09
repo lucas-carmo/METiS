@@ -307,6 +307,316 @@ std::string FOWT::printDoF() const
 	return output;
 }
 
+/*****************************************************
+	QTF and AppN
+*****************************************************/
+
+void FOWT::readWAMIT_m_p12(const std::string &QTFPath, const vector<double> &betaQTF){
+
+
+	//struct FOWT::m_p12;
+    //struct FOWT::m_p12auxiliar;
+
+	bool flagFreq = false;
+
+	std::ifstream file(QTFPath);
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file");
+    }
+
+    std::vector<std::vector<double>> dataIn;
+    std::string line;
+
+    while (std::getline(file, line)) {
+
+        std::istringstream iss(line);
+        std::vector<double> row((std::istream_iterator<double>(iss)), std::istream_iterator<double>());
+        dataIn.push_back(row);
+
+    }
+    file.close();
+    
+
+    if (flagFreq) {
+        // Convert period (in s) to angular frequency (in rad/s)
+        for (auto& row : dataIn) {
+
+            row[0] = 2 * datum::pi / row[0];
+            row[1] = 2 * datum::pi / row[1];
+
+        }
+    }
+
+
+
+    // Sort data
+    std::sort(dataIn.begin(), dataIn.end(), [](const std::vector<double>& a, const std::vector<double>& b) {
+
+        return std::tie(a[4], a[0], a[1]) < std::tie(b[4], b[0], b[1]);
+
+    });
+
+
+    std::vector<double> wOrT1, wOrT2, beta1, beta2, I, mod, pha, reP, imP;
+    for (const auto& row : dataIn) {
+
+        wOrT1.push_back(row[0]);
+        wOrT2.push_back(row[1]);
+        beta1.push_back(row[2]);
+        beta2.push_back(row[3]);
+        I.push_back(row[4]);
+        mod.push_back(row[5]);
+        pha.push_back(row[6]);
+        reP.push_back(row[7]);
+        imP.push_back(row[8]);
+
+    }
+    
+
+    
+    // Unique frequencies
+    std::vector<double> wOrT_unique = wOrT1;    
+    wOrT_unique.insert(wOrT_unique.end(), wOrT2.begin(), wOrT2.end());
+    std::sort(wOrT_unique.begin(), wOrT_unique.end());
+    wOrT_unique.erase(std::unique(wOrT_unique.begin(), wOrT_unique.end()), wOrT_unique.end());
+
+
+
+    size_t nRows = wOrT_unique.size();
+    size_t nCols = wOrT_unique.size();
+
+    // Initialize matrices
+    m_m_p12auxiliar.surgeAmp = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.swayAmp  = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.heaveAmp = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.rollAmp  = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.pitchAmp = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.yawAmp   = zeros<mat>(nRows, nCols);
+    
+    m_p12auxiliar.surgePha = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.swayPha  = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.heavePha = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.rollPha  = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.pitchPha = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.yawPha   = zeros<mat>(nRows, nCols);
+    
+    m_p12auxiliar.surgeRe  = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.swayRe   = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.heaveRe  = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.rollRe   = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.pitchRe  = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.yawRe    = zeros<mat>(nRows, nCols);
+    
+    m_p12auxiliar.surgeIm  = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.swayIm   = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.heaveIm  = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.rollIm   = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.pitchIm  = zeros<mat>(nRows, nCols);
+    m_p12auxiliar.yawIm    = zeros<mat>(nRows, nCols);
+
+    m_p12auxiliar.omega    = zeros<mat>(nRows, 1);
+    m_p12auxiliar.period   = zeros<mat>(nRows, 1);
+
+    
+    
+    
+    for (size_t ii = 0; ii < wOrT1.size(); ++ii) {
+        if (beta1[ii] == betaQTF[0] && beta2[ii] == betaQTF[1]) {
+            size_t rr = std::distance(wOrT_unique.begin(), std::find(wOrT_unique.begin(), wOrT_unique.end(), wOrT1[ii]));
+            size_t cc = std::distance(wOrT_unique.begin(), std::find(wOrT_unique.begin(), wOrT_unique.end(), wOrT2[ii]));
+
+            if (I[ii] == 1){
+                m_p12auxiliar.surgeAmp(rr, cc) = mod[ii];
+                m_p12auxiliar.surgePha(rr, cc) = pha[ii];
+                m_p12auxiliar.surgeRe(rr, cc) = reP[ii];
+                m_p12auxiliar.surgeIm(rr, cc) = imP[ii];
+            }
+            
+            if (I[ii] == 2){
+                m_p12auxiliar.swayAmp(rr, cc) = mod[ii];
+                m_p12auxiliar.swayPha(rr, cc) = pha[ii];
+                m_p12auxiliar.swayRe(rr, cc) = reP[ii];
+                m_p12auxiliar.swayIm(rr, cc) = imP[ii];
+            }
+            if (I[ii] == 3){
+                m_p12auxiliar.heaveAmp(rr, cc) = mod[ii];
+                m_p12auxiliar.heavePha(rr, cc) = pha[ii];
+                m_p12auxiliar.heaveRe(rr, cc) = reP[ii];
+                m_p12auxiliar.heaveIm(rr, cc) = imP[ii];
+            }
+
+            if (I[ii] == 4){
+                m_p12auxiliar.rollAmp(rr, cc) = mod[ii];
+                m_p12auxiliar.rollPha(rr, cc) = pha[ii];
+                m_p12auxiliar.rollRe(rr, cc) = reP[ii];
+                m_p12auxiliar.rollIm(rr, cc) = imP[ii];
+            }
+
+            if (I[ii] == 5){
+                m_p12auxiliar.pitchAmp(rr, cc) = mod[ii];
+                m_p12auxiliar.pitchPha(rr, cc) = pha[ii];
+                m_p12auxiliar.pitchRe(rr, cc) = reP[ii];
+                m_p12auxiliar.pitchIm(rr, cc) = imP[ii];
+            }
+
+            if (I[ii] == 6){
+                m_p12auxiliar.yawAmp(rr, cc) = mod[ii];
+                m_p12auxiliar.yawPha(rr, cc) = pha[ii];
+                m_p12auxiliar.yawRe(rr, cc) = reP[ii];
+                m_p12auxiliar.yawIm(rr, cc) = imP[ii];
+            }
+
+        }
+         
+    }
+
+    m_p12auxiliar.period = wOrT_unique;
+
+
+    
+    // Symmetrize matrices
+    if (flagFreq) {
+        
+        m_p12auxiliar.surgeAmp = m_p12auxiliar.surgeAmp + trimatl(m_p12auxiliar.surgeAmp, -1).t();
+        m_p12auxiliar.surgePha = m_p12auxiliar.surgePha - trimatl(m_p12auxiliar.surgePha, -1).t();
+        m_p12auxiliar.surgeRe  = m_p12auxiliar.surgeRe  + trimatl(m_p12auxiliar.surgeRe, -1).t();
+        m_p12auxiliar.surgeIm  = m_p12auxiliar.surgeIm  - trimatl(m_p12auxiliar.surgeIm, -1).t();
+        
+        m_p12auxiliar.swayAmp = m_p12auxiliar.swayAmp + trimatl(m_p12auxiliar.swayAmp, -1).t();
+        m_p12auxiliar.swayPha = m_p12auxiliar.swayPha - trimatl(m_p12auxiliar.swayPha, -1).t();
+        m_p12auxiliar.swayRe  = m_p12auxiliar.swayRe  + trimatl(m_p12auxiliar.swayRe, -1).t();
+        m_p12auxiliar.swayIm  = m_p12auxiliar.swayIm  - trimatl(m_p12auxiliar.swayIm, -1).t();
+
+        m_p12auxiliar.heaveAmp = m_p12auxiliar.heaveAmp + trimatl(m_p12auxiliar.heaveAmp, -1).t();
+        m_p12auxiliar.heavePha = m_p12auxiliar.heavePha - trimatl(m_p12auxiliar.heavePha, -1).t();
+        m_p12auxiliar.heaveRe  = m_p12auxiliar.heaveRe  + trimatl(m_p12auxiliar.heaveRe, -1).t();
+        m_p12auxiliar.heaveIm  = m_p12auxiliar.heaveIm  - trimatl(m_p12auxiliar.heaveIm, -1).t();
+
+        m_p12auxiliar.rollAmp = m_p12auxiliar.rollAmp + trimatl(m_p12auxiliar.rollAmp, -1).t();
+        m_p12auxiliar.rollPha = m_p12auxiliar.rollPha - trimatl(m_p12auxiliar.rollPha, -1).t();
+        m_p12auxiliar.rollRe  = m_p12auxiliar.rollRe  + trimatl(m_p12auxiliar.rollRe, -1).t();
+        m_p12auxiliar.rollIm  = m_p12auxiliar.rollIm  - trimatl(m_p12auxiliar.rollIm, -1).t();
+
+        m_p12auxiliar.pitchAmp = m_p12auxiliar.pitchAmp + trimatl(m_p12auxiliar.pitchAmp, -1).t();
+        m_p12auxiliar.pitchPha = m_p12auxiliar.pitchPha - trimatl(m_p12auxiliar.pitchPha, -1).t();
+        m_p12auxiliar.pitchRe  = m_p12auxiliar.pitchRe  + trimatl(m_p12auxiliar.pitchRe, -1).t();
+        m_p12auxiliar.pitchIm  = m_p12auxiliar.pitchIm  - trimatl(m_p12auxiliar.pitchIm, -1).t();
+
+        m_p12auxiliar.yawAmp = m_p12auxiliar.yawAmp + trimatl(m_p12auxiliar.yawAmp, -1).t();
+        m_p12auxiliar.yawPha = m_p12auxiliar.yawPha - trimatl(m_p12auxiliar.yawPha, -1).t();
+        m_p12auxiliar.yawRe  = m_p12auxiliar.yawRe  + trimatl(m_p12auxiliar.yawRe, -1).t();
+        m_p12auxiliar.yawIm  = m_p12auxiliar.yawIm  - trimatl(m_p12auxiliar.yawIm, -1).t();
+
+    } else {
+
+        m_p12auxiliar.surgeAmp = trimatu(m_p12auxiliar.surgeAmp, 1).t()    + m_p12auxiliar.surgeAmp;
+        m_p12auxiliar.surgePha = -1*trimatu(m_p12auxiliar.surgePha, 1).t() + m_p12auxiliar.surgePha;
+        m_p12auxiliar.surgeRe  = trimatu(m_p12auxiliar.surgeRe, 1).t()     + m_p12auxiliar.surgeRe;
+        m_p12auxiliar.surgeIm  = -1*trimatu(m_p12auxiliar.surgeIm, 1).t()  + m_p12auxiliar.surgeIm;
+
+        m_p12auxiliar.swayAmp = trimatu(m_p12auxiliar.swayAmp, 1).t()      + m_p12auxiliar.swayAmp;
+        m_p12auxiliar.swayPha = -1 * trimatu(m_p12auxiliar.swayPha, 1).t() + m_p12auxiliar.swayPha;
+        m_p12auxiliar.swayRe  = trimatu(m_p12auxiliar.swayRe, 1).t()       + m_p12auxiliar.swayRe;
+        m_p12auxiliar.swayIm  = -1 * trimatu(m_p12auxiliar.swayIm, 1).t()  + m_p12auxiliar.swayIm;
+
+        m_p12auxiliar.heaveAmp = trimatu(m_p12auxiliar.heaveAmp, 1).t()      + m_p12auxiliar.heaveAmp;
+        m_p12auxiliar.heavePha = -1 * trimatu(m_p12auxiliar.heavePha, 1).t() + m_p12auxiliar.heavePha;
+        m_p12auxiliar.heaveRe  = trimatu(m_p12auxiliar.heaveRe, 1).t()       + m_p12auxiliar.heaveRe;
+        m_p12auxiliar.heaveIm  = -1 * trimatu(m_p12auxiliar.heaveIm, 1).t()  + m_p12auxiliar.heaveIm;
+
+        m_p12auxiliar.rollAmp = trimatu(m_p12auxiliar.rollAmp, 1).t()      + m_p12auxiliar.rollAmp;
+        m_p12auxiliar.rollPha = -1 * trimatu(m_p12auxiliar.rollPha, 1).t() + m_p12auxiliar.rollPha;
+        m_p12auxiliar.rollRe  = trimatu(m_p12auxiliar.rollRe, 1).t()       + m_p12auxiliar.rollRe;
+        m_p12auxiliar.rollIm  = -1 * trimatu(m_p12auxiliar.rollIm, 1).t()  + m_p12auxiliar.rollIm;
+
+        m_p12auxiliar.pitchAmp = trimatu(m_p12auxiliar.pitchAmp, 1).t()      + m_p12auxiliar.pitchAmp;
+        m_p12auxiliar.pitchPha = -1 * trimatu(m_p12auxiliar.pitchPha, 1).t() + m_p12auxiliar.pitchPha;
+        m_p12auxiliar.pitchRe  = trimatu(m_p12auxiliar.pitchRe, 1).t()       + m_p12auxiliar.pitchRe;
+        m_p12auxiliar.pitchIm  = -1 * trimatu(m_p12auxiliar.pitchIm, 1).t()  + m_p12auxiliar.pitchIm;
+
+        m_p12auxiliar.yawAmp = trimatu(m_p12auxiliar.yawAmp, 1).t()      + m_p12auxiliar.yawAmp;
+        m_p12auxiliar.yawPha = -1 * trimatu(m_p12auxiliar.yawPha, 1).t() + m_p12auxiliar.yawPha;
+        m_p12auxiliar.yawRe  = trimatu(m_p12auxiliar.yawRe, 1).t()       + m_p12auxiliar.yawRe;
+        m_p12auxiliar.yawIm  = -1 * trimatu(m_p12auxiliar.yawIm, 1).t()  + m_p12auxiliar.yawIm;
+
+    }
+
+
+    m_p12.surgeAmp = zeros<mat>(nRows, nCols);
+    m_p12.swayAmp  = zeros<mat>(nRows, nCols);
+    m_p12.heaveAmp = zeros<mat>(nRows, nCols);
+    m_p12.rollAmp  = zeros<mat>(nRows, nCols);
+    m_p12.pitchAmp = zeros<mat>(nRows, nCols);
+    m_p12.yawAmp   = zeros<mat>(nRows, nCols);
+    
+    m_p12.surgePha = zeros<mat>(nRows, nCols);
+    m_p12.swayPha  = zeros<mat>(nRows, nCols);
+    m_p12.heavePha = zeros<mat>(nRows, nCols);
+    m_p12.rollPha  = zeros<mat>(nRows, nCols);
+    m_p12.pitchPha = zeros<mat>(nRows, nCols);
+    m_p12.yawPha   = zeros<mat>(nRows, nCols);
+    
+    m_p12.surgeRe  = zeros<mat>(nRows, nCols);
+    m_p12.swayRe   = zeros<mat>(nRows, nCols);
+    m_p12.heaveRe  = zeros<mat>(nRows, nCols);
+    m_p12.rollRe   = zeros<mat>(nRows, nCols);
+    m_p12.pitchRe  = zeros<mat>(nRows, nCols);
+    m_p12.yawRe    = zeros<mat>(nRows, nCols);
+    
+    m_p12.surgeIm  = zeros<mat>(nRows, nCols);
+    m_p12.swayIm   = zeros<mat>(nRows, nCols);
+    m_p12.heaveIm  = zeros<mat>(nRows, nCols);
+    m_p12.rollIm   = zeros<mat>(nRows, nCols);
+    m_p12.pitchIm  = zeros<mat>(nRows, nCols);
+    m_p12.yawIm    = zeros<mat>(nRows, nCols);
+
+    for (size_t ii = 0; ii < nRows; ++ii) {
+        for (size_t jj = 0; jj < nCols; ++jj) {
+
+            m_p12.surgeAmp(ii,jj) = m_p12auxiliar.surgeAmp(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.surgePha(ii,jj) = m_p12auxiliar.surgePha(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.surgeRe(ii,jj) = m_p12auxiliar.surgeRe(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.surgeIm(ii,jj) = m_p12auxiliar.surgeIm(nRows - 1 - ii, nCols - 1 - jj);
+
+            m_p12.swayAmp(ii,jj) = m_p12auxiliar.swayAmp(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.swayPha(ii,jj) = m_p12auxiliar.swayPha(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.swayRe(ii,jj) = m_p12auxiliar.swayRe(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.swayIm(ii,jj) = m_p12auxiliar.swayIm(nRows - 1 - ii, nCols - 1 - jj);
+
+            m_p12.heaveAmp(ii,jj) = m_p12auxiliar.heaveAmp(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.heavePha(ii,jj) = m_p12auxiliar.heavePha(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.heaveRe(ii,jj) = m_p12auxiliar.heaveRe(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.heaveIm(ii,jj) = m_p12auxiliar.heaveIm(nRows - 1 - ii, nCols - 1 - jj);
+
+            m_p12.rollAmp(ii,jj) = m_p12auxiliar.rollAmp(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.rollPha(ii,jj) = m_p12auxiliar.rollPha(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.rollRe(ii,jj) = m_p12auxiliar.rollRe(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.rollIm(ii,jj) = m_p12auxiliar.rollIm(nRows - 1 - ii, nCols - 1 - jj);
+
+            m_p12.pitchAmp(ii,jj) = m_p12auxiliar.pitchAmp(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.pitchPha(ii,jj) = m_p12auxiliar.pitchPha(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.pitchRe(ii,jj) = m_p12auxiliar.pitchRe(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.pitchIm(ii,jj) = m_p12auxiliar.pitchIm(nRows - 1 - ii, nCols - 1 - jj);
+
+            m_p12.yawAmp(ii,jj) = m_p12auxiliar.yawAmp(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.yawPha(ii,jj) = m_p12auxiliar.yawPha(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.yawRe(ii,jj) = m_p12auxiliar.yawRe(nRows - 1 - ii, nCols - 1 - jj);
+            m_p12.yawIm(ii,jj) = m_p12auxiliar.yawIm(nRows - 1 - ii, nCols - 1 - jj);
+
+        }
+    }
+
+
+    m_p12.surge  = m_p12.surgeRe + cx_double(0,1) * m_p12.surgeIm;
+    m_p12.sway   = m_p12.sawyRe + cx_double(0,1) * m_p12.swayIm;
+    m_p12.heave  = m_p12.heaveRe + cx_double(0,1) * m_p12.heaveIm;
+    m_p12.roll   = m_p12.rollRe + cx_double(0,1) * m_p12.rollIm;
+    m_p12.pitch  = m_p12.pitchRe + cx_double(0,1) * m_p12.pitchIm;
+    m_p12.yaw    = m_p12.yawRe + cx_double(0,1) * m_p12.yawIm;
+	m_p12.omega  = 2*M_PI / m_p12auxiliar.period;
+	m_p12.period = m_p12auxiliar.period;
+
+};
 
 
 /*****************************************************

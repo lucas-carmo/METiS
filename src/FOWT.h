@@ -110,6 +110,28 @@ public:
 	std::string printDoF() const;
 
 	/*****************************************************
+		QTF and AppN
+	*****************************************************/
+
+	struct p12Struct {
+
+        mat surgeAmp, swayAmp, heaveAmp, rollAmp, pitchAmp, yawAmp;
+        mat surgePha, swayPha, heavePha, rollPha, pitchPha, yawPha;
+        mat surgeRe, swayRe, heaveRe, rollRe, pitchRe, yawRe;
+        mat surgeIm, swayIm, heaveIm, rollIm, pitchIm, yawIm;
+        cx_mat surge, sway, heave, roll, pitch, yaw;
+        vec omega;
+        vec period;
+
+    };
+
+	p12Struct m_p12;
+
+    p12Struct m_p12auxiliar;
+
+	const vector<double> betaQTF;
+	void readWAMIT_p12(const std::string &QTFPath, const vector<double> &betaQTF);
+	/*****************************************************
 		Forces, acceleration, displacement, etc
 	*****************************************************/
 	vec::fixed<12> calcAcceleration(const ENVIR &envir);
