@@ -423,10 +423,26 @@ vec::fixed<12> FOWT::calcAcceleration(const ENVIR &envir)
 
 	// Calculate second order forces, if necessary
 	vec::fixed<6> hydroForce_2ndOrd(fill::zeros);
-	if (m_hydroMode > 1)
+
+	// Calculate second order forces with slender body approximation
+	if (m_hydroMode == 2)
 	{		
 		m_floater.setNode1stAcc(acc_1stOrd);
 		hydroForce_2ndOrd = m_floater.hydrodynamicForce_2ndOrd_slenderbody(envir, hydrodynamicForce_1stOrd + hydrostaticForce_1stOrd + extLinDamp_1stOrd);	
+	}
+
+	// Calculate second order forcer with Newman's approximation
+	else if (m_hydroMode == 3)
+	{		
+		// chamar funcao para ler .12d proveniente do arquivo IO
+		hydroForce_2ndOrd = hydrodynamicForce_2ndOrd_AppN(p12);
+	}
+	
+	// Calculate second order forcer with Full QTF
+	else if (m_hydroMode == 4)
+	{		
+		// chamar funcao para ler .12d proveniente do arquivo IO
+		//hydroForce_2ndOrd = hydrodynamicForce_2ndOrd_FullQTF(parametros);	
 	}
 
 	// Calculate the total force acting on the FOWT
