@@ -419,14 +419,14 @@ vec::fixed<12> FOWT::calcAcceleration(const ENVIR &envir)
 		acc_1stOrd = arma::solve(inertiaMatrix, force_1stOrd);
 	}
 
-	// TODO: Não precisa calcular de novo se for só 1a ordem, pq o resultado é igual ao de cima.
+	// TODO: Nï¿½o precisa calcular de novo se for sï¿½ 1a ordem, pq o resultado ï¿½ igual ao de cima.
 
 	// Calculate second order forces, if necessary
 	vec::fixed<6> hydroForce_2ndOrd(fill::zeros);
 	if (m_hydroMode > 1)
 	{		
 		m_floater.setNode1stAcc(acc_1stOrd);
-		hydroForce_2ndOrd = m_floater.hydrodynamicForce_2ndOrd(envir, hydrodynamicForce_1stOrd + hydrostaticForce_1stOrd + extLinDamp_1stOrd);	
+		hydroForce_2ndOrd = m_floater.hydrodynamicForce_2ndOrd_slenderbody(envir, hydrodynamicForce_1stOrd + hydrostaticForce_1stOrd + extLinDamp_1stOrd);	
 	}
 
 	// Calculate the total force acting on the FOWT

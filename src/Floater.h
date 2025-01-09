@@ -82,7 +82,7 @@ public:
 	vec::fixed<6> hydrodynamicForce_1stOrd(const ENVIR &envir) const;
 	vec::fixed<6> hydrodynamicForce_drag1stOrd(const ENVIR &envir) const;
 	vec::fixed<6> hydrodynamicForce_dragTotal(const ENVIR &envir) const;
-	vec::fixed<6> hydrodynamicForce_2ndOrd(const ENVIR &envir, const vec::fixed<6> &F_1stOrd) const;
+	vec::fixed<6> hydrodynamicForce_2ndOrd_slenderbody(const ENVIR &envir, const vec::fixed<6> &F_1stOrd) const;
 	vec::fixed<6> hydrostaticForce_stiffnessPart(bool flagUse1stOrd) const;
 	vec::fixed<6> hydrostaticForce_staticBuoyancy(const double rho, const double g) const;	
 };

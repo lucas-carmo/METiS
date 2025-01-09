@@ -360,7 +360,7 @@ vec::fixed<6> Floater::hydrodynamicForce_dragTotal(const ENVIR &envir) const
 }
 
 // Moments are output with respect to the CoG of the floater
-vec::fixed<6> Floater::hydrodynamicForce_2ndOrd(const ENVIR &envir, const vec::fixed<6> &F_1stOrd) const
+vec::fixed<6> Floater::hydrodynamicForce_2ndOrd_slenderbody(const ENVIR &envir, const vec::fixed<6> &F_1stOrd) const
 {	
 	// These forces below are used to output the different components to the output files and internally in MorisonElement.hydrodynamicForce().	
 	vec::fixed<6> force_eta(fill::zeros);  // Due to relative wave elevation
