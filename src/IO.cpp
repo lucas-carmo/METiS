@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <cstdlib> // for exit()
 #include <array>
+#include <armadillo>
 
 
 /*****************************************************
@@ -331,19 +332,13 @@ void IO::readInputFile(FOWT &fowt, ENVIR &envir)
 		*/
 		else if (caseInsCompare(getKeyword(strInput), "Hydro"))
 		{
-			fowt.setHydroMode(string2num<int>(getData(strInput)));
+			fowt.setHydroMode(string2num<int>(getData(strInput)));			
+		}
 
-			// Read next line, since current line is just the main keyword
-			IO::readLineInputFile(strInput);
-			if (caseInsCompare(getKeyword(strInput), "QTF"))
-				{
-					std::vector<std::string> inputQTF = stringTokenize(getData(strInput), ",");
-					std::string QTFPath = inputQTF.at(0);
-					fowt.betaQTF.push_back(inputQTF.at(1));
-					fowt.betaQTF.push_back(inputQTF.at(2));
-					fowt.readWAMIT_p12(QTFPath, fowt.betaQTF);
-
-				}
+		else if(caseInsCompare(getKeyword(strInput), "WAMITQTF")) 
+		{
+			std::string QTFPath = getData(strInput); // get .12d path
+			fowt.readWAMIT_p12(QTFPath); // read .12d file
 		}
 
 		else if (caseInsCompare(getKeyword(strInput), "Aero"))
