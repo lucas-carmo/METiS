@@ -112,7 +112,8 @@ public:
 	/*****************************************************
 		QTF and AppN
 	*****************************************************/
-
+	
+	// Create W12 struct
 	struct p12Struct {
 
         mat surgeAmp, swayAmp, heaveAmp, rollAmp, pitchAmp, yawAmp;
@@ -122,15 +123,18 @@ public:
         cx_mat surge, sway, heave, roll, pitch, yaw;
         vec omega;
         vec period;
+		vec beta;
 
     };
 
 	p12Struct m_p12;
-
+	p12Struct m_p12aux;
     p12Struct m_p12auxiliar;
+	vec betaQTF;
+	
+	void readWAMIT_p12(const std::string &QTFPath);
 
-	const vector<double> betaQTF;
-	void readWAMIT_p12(const std::string &QTFPath, const vector<double> &betaQTF);
+
 	/*****************************************************
 		Forces, acceleration, displacement, etc
 	*****************************************************/
