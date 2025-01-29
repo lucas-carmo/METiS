@@ -2,6 +2,9 @@
 #include <cctype> // This header declares a set of functions to classify and transform individual characters, like toupper
 #include <cwctype> // Same thing for wide characters
 #include <mkl.h>
+#include "ENVIR.h"
+
+using namespace arma;
 
 /*****************************************************
     Useful math/geometric operations
@@ -668,4 +671,84 @@ namespace tk
 		return interpol;
 	}
 
+}
+
+
+
+
+// função para calcular série temporal a partir da QTF
+
+vec fourier_coefficients_qtf(const ENVIR &envir, cx_mat &Xmn, cx_mat &AmpC) {
+
+    size_t m = Xmn.n_rows;
+    size_t n = Xmn.n_cols;
+	const vec &t = envir.getTimeArray();
+	int npts = t.size();
+
+    double rho = envir.watDensity(); // [kg/m³]
+    double g = envir.gravity(); // [m/s²]
+
+	int nWaves = envir.numberOfWaveComponents();
+
+	
+    // Gera matriz de QTF dimensional
+    cx_mat QTF = zeros<cx_mat>(m, n);
+
+    for (size_t ii = 0; ii < m; ++ii) { // Percorre todas as linhas da matriz
+        for (size_t kk = 0; kk < n; ++kk) { // Percorre todas as colunas da matriz
+            QTF(ii, kk) = g * rho * (AmpC(ii, 0) * conj(AmpC(kk, 0)) * Xmn(ii, kk));
+        }
+    }
+	
+    // AA = variável auxiliar
+    // Y  = vetor com os coeficientes de Fourier
+    cx_vec Y (npts, fill::zeros);
+	
+	
+    for (int ii = 0; ii < npts; ++ii) { // Percorre todos os coeficientes de Fourier
+        
+		cx_vec auxvec (npts - 1, fill::zeros);
+		cx_double auxsum1 = 0;
+		cx_double auxsum = 0;
+
+		if (ii == 0) {
+
+			cx_vec auxvec = QTF.diag();
+			
+			Y(ii) = sum(auxvec);
+
+		}
+		else if(ii >= 1 && ii < m){
+
+			cx_vec auxvec = QTF.diag(ii);
+
+			cx_double auxsum1 = sum(auxvec);
+
+			cx_double auxsum = 2.0 * auxsum1;
+
+            Y(ii) = conj(auxsum);
+
+        }
+		else {
+
+            Y(ii) = 0;
+
+        }
+		
+    }
+	
+
+	// Criar um cx_stdvec vazio
+	cx_stdvec YY;
+
+	// Converter o cx_vec para cx_stdvec
+	YY.reserve(Y.n_elem);  // Reservar o tamanho para evitar realocações desnecessárias
+	for (size_t ii = 0; ii < Y.n_elem; ++ii) {
+		YY.push_back(Y[ii]);
+	}
+
+	vec timeseriesAppN = nWaves * vec(mkl_ifft_real(YY));
+	
+
+    return timeseriesAppN;
 }
