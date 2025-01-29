@@ -458,3 +458,28 @@ vec::fixed<6> Floater::hydrostaticForce_staticBuoyancy(const double rho, const d
 	return { 0,0, rho * g * m_Vol, 0, 0, 0 };
 }
 
+
+vec::fixed<6> Floater::hydrodynamicForce_2ndOrd_AppN(const ENVIR& envir, vec& m_p12omega, vec& m_p12beta, const cx_mat& m_p12surge, const cx_mat& m_p12sway, const cx_mat& m_p12heave, const cx_mat& m_p12roll, const cx_mat& m_p12pitch, const cx_mat& m_p12yaw)
+{
+
+	vec::fixed<6> force(fill::zeros); // Vector to store the force at the requested time
+	
+    if (m_hydroForce_WAMIT_DiffLoads.is_empty()) // Check if it is necessary to generate the QTF matrix by Newman Approximation
+	{
+		m_hydroForce_WAMIT_DiffLoads = QTF_ToTime_AppN(envir, m_p12omega, m_p12beta, m_p12surge, m_p12sway, m_p12heave, m_p12roll, m_p12pitch, m_p12yaw); // Generates time series from Newman's Approximation
+		
+	}
+
+	uword ind1 = envir.getInd4interp1(); // Get the index of the requested time	
+	force = m_hydroForce_WAMIT_DiffLoads.row(ind1).t() * envir.ramp(); // Force at the requested time
+
+	if (envir.shouldInterp()) // Check if it is necessary to interpolate in time
+	{
+		uword ind2 = envir.getInd4interp2(); // Get the index of the requested time + 1
+		const vec &t = envir.getTimeArray(); // Get vector time
+		force += (m_hydroForce_WAMIT_DiffLoads.row(ind2).t() - m_hydroForce_WAMIT_DiffLoads.row(ind1).t()) * (envir.time() - t(ind1)) / (t(ind2) - t(ind1)) * envir.ramp(); // Interpolated the force at the requested time, it's a column vector
+
+	}
+
+	return force;
+}
