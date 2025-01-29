@@ -9,6 +9,7 @@
 #include <cassert>
 #include <vector>
 #include <algorithm>
+#include "ENVIR.h"
 
 
 // Define file separator for current platform
@@ -235,3 +236,5 @@ namespace tk
 		double operator() (double x) const;
 	};
 }
+
+vec fourier_coefficients_qtf(const ENVIR &envir, cx_mat &Xmn, cx_mat &AmpC);
