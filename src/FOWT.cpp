@@ -806,8 +806,7 @@ vec::fixed<12> FOWT::calcAcceleration(const ENVIR &envir)
 	// Calculate second order forcer with Newman's approximation
 	else if (m_hydroMode == 3)
 	{		
-		// chamar funcao para ler .12d proveniente do arquivo IO
-		hydroForce_2ndOrd = hydrodynamicForce_2ndOrd_AppN(p12);
+		hydroForce_2ndOrd = m_floater.hydrodynamicForce_2ndOrd_AppN(envir, m_p12.omega, m_p12.beta, m_p12.surge, m_p12.sway, m_p12.heave, m_p12.roll, m_p12.pitch, m_p12.yaw);
 	}
 	
 	// Calculate second order forcer with Full QTF
