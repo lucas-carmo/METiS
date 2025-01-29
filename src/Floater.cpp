@@ -1,13 +1,16 @@
-#include "Floater.h"
+//#include "Floater.h"
 #include "MorisonCirc.h"
 #include "MorisonRect.h"
 #include "IO.h"
+#include "FOWT.h"
+#include "Wave.h"
 
 #include <iostream>
 #include <vector>
 #include <algorithm>    // std::binary_search
 #include <utility> // For std::move
 #include <stdexcept> // For std::exception
+#include <armadillo>
 
 using namespace arma;
 
@@ -458,6 +461,259 @@ vec::fixed<6> Floater::hydrostaticForce_staticBuoyancy(const double rho, const d
 	return { 0,0, rho * g * m_Vol, 0, 0, 0 };
 }
 
+mat Floater::QTF_ToTime_AppN(const ENVIR& envir, vec& m_p12omega, vec& m_p12beta, const cx_mat& m_p12surge1, const cx_mat& m_p12sway1, const cx_mat& m_p12heave1, const cx_mat& m_p12roll1, const cx_mat& m_p12pitch1, const cx_mat& m_p12yaw1) // Generates time series from Newman's Approximation
+{
+	const Wave& waveQTF(envir.getWave(0));
+		
+	size_t nRows = m_p12omega.size();
+    size_t nCols = m_p12omega.size();
+
+	// Check the wave incidence requested in the input file
+	double findwavedir = waveQTF.direction();
+
+	uvec  wavedir = find(m_p12beta == findwavedir);
+		
+	// Assemble the QTF matrix for the requested wave incidence
+	cx_mat m_p12surge = reshape(m_p12surge1.col(wavedir(0)), nRows, nCols);
+	
+	cx_mat m_p12sway  = reshape(m_p12sway1.col(wavedir(0)), nRows, nCols);
+	cx_mat m_p12heave = reshape(m_p12heave1.col(wavedir(0)), nRows, nCols);
+	cx_mat m_p12roll  = reshape(m_p12roll1.col(wavedir(0)), nRows, nCols);
+	cx_mat m_p12pitch = reshape(m_p12pitch1.col(wavedir(0)), nRows, nCols);
+	cx_mat m_p12yaw   = reshape(m_p12yaw1.col(wavedir(0)), nRows, nCols);
+		
+	
+
+	mat m_p12surgeAmp = abs(m_p12surge);
+	mat m_p12surgePha = arg(m_p12surge);
+	mat m_p12surgeRe = real(m_p12surge);
+	mat m_p12surgeIm = imag(m_p12surge);
+		
+	mat m_p12swayAmp = abs(m_p12sway);
+	mat m_p12swayPha = arg(m_p12sway);
+	mat m_p12swayRe = real(m_p12sway);
+	mat m_p12swayIm = imag(m_p12sway);
+
+	mat m_p12heaveAmp = abs(m_p12heave);
+	mat m_p12heavePha = arg(m_p12heave);
+	mat m_p12heaveRe = real(m_p12heave);
+	mat m_p12heaveIm = imag(m_p12heave);
+
+	mat m_p12rollAmp = abs(m_p12roll);
+	mat m_p12rollPha = arg(m_p12roll);
+	mat m_p12rollRe = real(m_p12roll);
+	mat m_p12rollIm = imag(m_p12roll);
+
+	mat m_p12pitchAmp = abs(m_p12pitch);
+	mat m_p12pitchPha = arg(m_p12pitch);
+	mat m_p12pitchRe = real(m_p12pitch);
+	mat m_p12pitchIm = imag(m_p12pitch);
+
+	mat m_p12yawAmp = abs(m_p12yaw);
+	mat m_p12yawPha = arg(m_p12yaw);
+	mat m_p12yawRe = real(m_p12yaw);
+	mat m_p12yawIm = imag(m_p12yaw);
+
+	// Get the mean drift force from QTF
+	AppNauxiliar.surgeAmp = m_p12surgeAmp.diag();
+    AppNauxiliar.surgePha = m_p12surgePha.diag();
+    AppNauxiliar.surgeRe  = m_p12surgeRe.diag();
+    AppNauxiliar.surgeIm  = m_p12surgeIm.diag();
+	
+    AppNauxiliar.swayAmp = m_p12swayAmp.diag();
+    AppNauxiliar.swayPha = m_p12swayPha.diag();
+    AppNauxiliar.swayRe  = m_p12swayRe.diag();
+    AppNauxiliar.swayIm  = m_p12swayIm.diag();
+    
+    AppNauxiliar.heaveAmp = m_p12heaveAmp.diag();
+    AppNauxiliar.heavePha = m_p12heavePha.diag();
+    AppNauxiliar.heaveRe  = m_p12heaveRe.diag();
+    AppNauxiliar.heaveIm  = m_p12heaveIm.diag();
+
+    AppNauxiliar.rollAmp = m_p12rollAmp.diag();
+    AppNauxiliar.rollPha = m_p12rollPha.diag();
+    AppNauxiliar.rollRe  = m_p12rollRe.diag();
+    AppNauxiliar.rollIm  = m_p12rollIm.diag();
+
+    AppNauxiliar.pitchAmp = m_p12pitchAmp.diag();
+    AppNauxiliar.pitchPha = m_p12pitchPha.diag();
+    AppNauxiliar.pitchRe  = m_p12pitchRe.diag();
+    AppNauxiliar.pitchIm  = m_p12pitchIm.diag();
+
+    AppNauxiliar.yawAmp = m_p12yawAmp.diag();
+    AppNauxiliar.yawPha = m_p12yawPha.diag();
+    AppNauxiliar.yawRe  = m_p12yawRe.diag();
+    AppNauxiliar.yawIm  = m_p12yawIm.diag();
+
+	// Create a matrix with size nRows x nCols
+    AppN.surgeAmp = zeros<mat>(nRows, nCols);
+    AppN.swayAmp  = zeros<mat>(nRows, nCols);
+    AppN.heaveAmp = zeros<mat>(nRows, nCols);
+    AppN.rollAmp  = zeros<mat>(nRows, nCols);
+    AppN.pitchAmp = zeros<mat>(nRows, nCols);
+    AppN.yawAmp   = zeros<mat>(nRows, nCols);
+    
+    AppN.surgePha = zeros<mat>(nRows, nCols);
+    AppN.swayPha  = zeros<mat>(nRows, nCols);
+    AppN.heavePha = zeros<mat>(nRows, nCols);
+    AppN.rollPha  = zeros<mat>(nRows, nCols);
+    AppN.pitchPha = zeros<mat>(nRows, nCols);
+    AppN.yawPha   = zeros<mat>(nRows, nCols);
+    
+    AppN.surgeRe  = zeros<mat>(nRows, nCols);
+    AppN.swayRe   = zeros<mat>(nRows, nCols);
+    AppN.heaveRe  = zeros<mat>(nRows, nCols);
+    AppN.rollRe   = zeros<mat>(nRows, nCols);
+    AppN.pitchRe  = zeros<mat>(nRows, nCols);
+    AppN.yawRe    = zeros<mat>(nRows, nCols);
+    
+    AppN.surgeIm  = zeros<mat>(nRows, nCols);
+    AppN.swayIm   = zeros<mat>(nRows, nCols);
+    AppN.heaveIm  = zeros<mat>(nRows, nCols);
+    AppN.rollIm   = zeros<mat>(nRows, nCols);
+    AppN.pitchIm  = zeros<mat>(nRows, nCols);
+    AppN.yawIm    = zeros<mat>(nRows, nCols);
+
+	// Calculate Newman's Approximation
+    for (size_t ii = 0; ii < nRows; ++ii) {
+        for (size_t jj = 0; jj < nCols; ++jj) {
+
+            AppN.surgeRe(ii,jj) = (AppNauxiliar.surgeRe(ii) + AppNauxiliar.surgeRe(jj))*0.5;
+            AppN.surgeIm(ii,jj) = (AppNauxiliar.surgeIm(ii) + AppNauxiliar.surgeIm(jj))*0.5;
+
+            AppN.swayRe(ii,jj) = (AppNauxiliar.swayRe(ii) + AppNauxiliar.swayRe(jj))*0.5;
+            AppN.swayIm(ii,jj) = (AppNauxiliar.swayIm(ii) + AppNauxiliar.swayIm(jj))*0.5;
+
+            AppN.heaveRe(ii,jj) = (AppNauxiliar.heaveRe(ii) + AppNauxiliar.heaveRe(jj))*0.5;
+            AppN.heaveIm(ii,jj) = (AppNauxiliar.heaveIm(ii) + AppNauxiliar.heaveIm(jj))*0.5;
+
+            AppN.rollRe(ii,jj) = (AppNauxiliar.rollRe(ii) + AppNauxiliar.rollRe(jj))*0.5;
+            AppN.rollIm(ii,jj) = (AppNauxiliar.rollIm(ii) + AppNauxiliar.rollIm(jj))*0.5;
+
+            AppN.pitchRe(ii,jj) = (AppNauxiliar.pitchRe(ii) + AppNauxiliar.pitchRe(jj))*0.5;
+            AppN.pitchIm(ii,jj) = (AppNauxiliar.pitchIm(ii) + AppNauxiliar.pitchIm(jj))*0.5;
+
+            AppN.yawRe(ii,jj) = (AppNauxiliar.yawRe(ii) + AppNauxiliar.yawRe(jj))*0.5;
+            AppN.yawIm(ii,jj) = (AppNauxiliar.yawIm(ii) + AppNauxiliar.yawIm(jj))*0.5;
+            
+        }
+    }
+
+	// Store the matrix as a complex matrix
+	AppN.surge = cx_mat(AppN.surgeRe, AppN.surgeIm);
+	AppN.sway = cx_mat(AppN.swayRe, AppN.swayIm);
+	AppN.heave = cx_mat(AppN.heaveRe, AppN.heaveIm);
+	AppN.roll = cx_mat(AppN.rollRe, AppN.rollIm);
+	AppN.pitch = cx_mat(AppN.pitchRe, AppN.pitchIm);
+	AppN.yaw = cx_mat(AppN.yawRe, AppN.yawIm);
+	AppN.omega  = m_p12omega;
+	AppN.period = 2 * arma::datum::pi / m_p12omega;
+	
+
+	// Get start to perform QTF matrix interpolation
+	vec xfWamit = AppN.omega;
+
+	const vec &t = envir.getTimeArray();
+	int npts = t.size();
+
+	vec fFiltro1 = zeros<mat>(npts, 1);
+
+	double wmax = 2* datum::pi/envir.timeStep();
+	double dw = 2* datum::pi/envir.timeTotal();
+
+	vec fEspectro = linspace<vec>(0, wmax, npts);
+	int cont = 0;
+	
+
+    for (size_t ii = 0; ii < npts; ++ii) {
+        if (fEspectro(ii) >= xfWamit.min() && fEspectro(ii) <= xfWamit.max()) {
+            fFiltro1(cont) = fEspectro(ii);            
+            cont++;
+        }
+    }
+
+    
+	vec xfFiltro = fFiltro1(span(0, cont-1));
+
+	// Performs QTF matrix interpolation
+   	// SURGE
+    interp2(xfWamit, xfWamit, AppN.surgeRe, xfFiltro, xfFiltro, AppNInterp.surgeRe, "linear");
+    interp2(xfWamit, xfWamit, AppN.surgeIm, xfFiltro, xfFiltro, AppNInterp.surgeIm, "linear");
+
+    // SWAY
+    interp2(xfWamit, xfWamit, AppN.swayRe, xfFiltro, xfFiltro, AppNInterp.swayRe, "linear");
+    interp2(xfWamit, xfWamit, AppN.swayIm, xfFiltro, xfFiltro, AppNInterp.swayIm, "linear");
+
+    // HEAVE
+    interp2(xfWamit, xfWamit, AppN.heaveRe, xfFiltro, xfFiltro, AppNInterp.heaveRe, "linear");
+    interp2(xfWamit, xfWamit, AppN.heaveIm, xfFiltro, xfFiltro, AppNInterp.heaveIm, "linear");
+
+    // ROLL
+    interp2(xfWamit, xfWamit, AppN.rollRe, xfFiltro, xfFiltro, AppNInterp.rollRe, "linear");
+    interp2(xfWamit, xfWamit, AppN.rollIm, xfFiltro, xfFiltro, AppNInterp.rollIm, "linear");
+
+    // PITCH
+    interp2(xfWamit, xfWamit, AppN.pitchRe, xfFiltro, xfFiltro, AppNInterp.pitchRe, "linear");
+    interp2(xfWamit, xfWamit, AppN.pitchIm, xfFiltro, xfFiltro, AppNInterp.pitchIm, "linear");
+
+    // YAW
+    interp2(xfWamit, xfWamit, AppN.yawRe, xfFiltro, xfFiltro, AppNInterp.yawRe, "linear");
+    interp2(xfWamit, xfWamit, AppN.yawIm, xfFiltro, xfFiltro, AppNInterp.yawIm, "linear");
+
+	// Store the matrix as a complex matrix
+	AppNInterp.surge = cx_mat(AppNInterp.surgeRe, AppNInterp.surgeIm);
+	AppNInterp.sway = cx_mat(AppNInterp.swayRe, AppNInterp.swayIm);
+	AppNInterp.heave = cx_mat(AppNInterp.heaveRe, AppNInterp.heaveIm);
+	AppNInterp.roll = cx_mat(AppNInterp.rollRe, AppNInterp.rollIm);
+	AppNInterp.pitch = cx_mat(AppNInterp.pitchRe, AppNInterp.pitchIm);
+	AppNInterp.yaw = cx_mat(AppNInterp.yawRe, AppNInterp.yawIm);
+
+	AppNInterp.omega  = xfFiltro;
+	AppNInterp.period = 2* datum::pi / xfFiltro;
+
+	// Generates complex amplitudes
+	int nWaves = envir.numberOfWaveComponents();
+	cx_mat AmpC1 = zeros<cx_mat>(nWaves, 1);
+
+	for (unsigned int iWave = 0; iWave < nWaves; ++iWave)
+	{
+
+		AmpC1(iWave,0) = envir.waveElev_coef(0, 0, iWave);
+		//const Wave& waveQTF(envir.getWave(iWave));
+		//AmpC(iWave, 0) = waveQTF.amp() * std::exp( cx_double(0,1) * waveQTF.phase() );
+
+	}
+	cx_mat AmpC = AmpC1(span(0, cont - 1),0);
+	
+	mat timeseriesAppN (npts, 6, fill::zeros);
+
+	cx_mat AppNsurge = AppNInterp.surge;
+	cx_mat AppNsway = AppNInterp.sway;
+	cx_mat AppNheave = AppNInterp.heave;
+	cx_mat AppNroll = AppNInterp.roll;
+	cx_mat AppNpitch = AppNInterp.pitch;
+	cx_mat AppNyaw = AppNInterp.yaw;
+
+	// Generates time series from IFFT
+	vec Tsurge = fourier_coefficients_qtf(envir, AppNsurge, AmpC); // Generates the time series
+	vec Tsway  = fourier_coefficients_qtf(envir, AppNsway, AmpC); // Generates the time series
+	vec Theave = fourier_coefficients_qtf(envir, AppNheave, AmpC); // Generates the time series
+	vec Troll  = fourier_coefficients_qtf(envir, AppNroll, AmpC); // Generates the time series
+	vec Tpitch = fourier_coefficients_qtf(envir, AppNpitch, AmpC); // Generates the time series
+	vec Tyaw   = fourier_coefficients_qtf(envir, AppNyaw, AmpC); // Generates the time series
+
+	timeseriesAppN.col(0) = Tsurge;
+	timeseriesAppN.col(1) = Tsway;
+	timeseriesAppN.col(2) = Theave;
+	timeseriesAppN.col(3) = Troll;
+	timeseriesAppN.col(4) = Tpitch;
+	timeseriesAppN.col(5) = Tyaw;
+
+
+
+	return timeseriesAppN;
+
+}
 
 vec::fixed<6> Floater::hydrodynamicForce_2ndOrd_AppN(const ENVIR& envir, vec& m_p12omega, vec& m_p12beta, const cx_mat& m_p12surge, const cx_mat& m_p12sway, const cx_mat& m_p12heave, const cx_mat& m_p12roll, const cx_mat& m_p12pitch, const cx_mat& m_p12yaw)
 {
