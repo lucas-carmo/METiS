@@ -2,6 +2,8 @@
 
 #include "MorisonElement.h"
 #include "ENVIR.h"
+#include "FOWT.h"
+#include "Wave.h"
 
 #include <string>
 #include <vector> // For std::vector
@@ -14,6 +16,8 @@ using namespace arma; // For armadillo classes
 class Floater
 {
 private:
+
+	
 	double m_mass;
 	bool m_instantSD{ false }; // If FOWT.m_filterSD_omega < 0, the slow position is actually equal to the instantaneous position, which has an important effect in the functions of Floater class.
 	vec::fixed<3> m_CoG; // Coordinates of center of gravity.
@@ -26,6 +30,8 @@ private:
 	vec::fixed<6> m_disp; // Floater displacement (i.e. [instantaneous position] - [initial position])
 	vec::fixed<6> m_disp_sd; // Keep track of the slow position of the floater as well
 	vec::fixed<6> m_disp_1stOrd; // Same thing, but first order
+
+	
 
 public:
 	Floater();
@@ -85,5 +91,41 @@ public:
 	vec::fixed<6> hydrodynamicForce_2ndOrd_slenderbody(const ENVIR &envir, const vec::fixed<6> &F_1stOrd) const;
 	vec::fixed<6> hydrostaticForce_stiffnessPart(bool flagUse1stOrd) const;
 	vec::fixed<6> hydrostaticForce_staticBuoyancy(const double rho, const double g) const;	
+
+	struct AppNstruct {
+
+        mat surgeAmp, swayAmp, heaveAmp, rollAmp, pitchAmp, yawAmp;
+        mat surgePha, swayPha, heavePha, rollPha, pitchPha, yawPha;
+        mat surgeRe, swayRe, heaveRe, rollRe, pitchRe, yawRe;
+        mat surgeIm, swayIm, heaveIm, rollIm, pitchIm, yawIm;
+        cx_mat surge, sway, heave, roll, pitch, yaw;
+        vec omega;
+        vec period;
+		vec beta;
+
+    };
+	
+	struct AppNstructAux {
+
+        vec surgeAmp, swayAmp, heaveAmp, rollAmp, pitchAmp, yawAmp;
+        vec surgePha, swayPha, heavePha, rollPha, pitchPha, yawPha;
+        vec surgeRe, swayRe, heaveRe, rollRe, pitchRe, yawRe;
+        vec surgeIm, swayIm, heaveIm, rollIm, pitchIm, yawIm;
+        cx_double surge, sway, heave, roll, pitch, yaw;
+        vec omega;
+        vec period;
+
+    };
+
+    AppNstructAux AppNauxiliar;
+    AppNstruct AppN;
+	AppNstruct AppNInterp;
+
+	mat m_hydroForce_WAMIT_DiffLoads; // Auxiliary variable that stores the time series. Column 1-6: surge-yaw
+
+	mat timeseriesAppN;
+
+	vec::fixed<6> hydrodynamicForce_2ndOrd_AppN(const ENVIR &envir, vec& m_p12omega, vec& m_p12beta, const cx_mat& m_p12surge, const cx_mat& m_p12sway, const cx_mat& m_p12heave, const cx_mat& m_p12roll, const cx_mat& m_p12pitch, const cx_mat& m_p12yaw);
+	mat QTF_ToTime_AppN(const ENVIR& envir, vec& m_p12omega, vec& m_p12beta, const cx_mat& m_p12surge, const cx_mat& m_p12sway, const cx_mat& m_p12heave, const cx_mat& m_p12roll, const cx_mat& m_p12pitch, const cx_mat& m_p12yaw);
 };
 
